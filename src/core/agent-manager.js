@@ -75,6 +75,17 @@ class AgentManager {
 
         for (const session of sessionsData.sessions || []) {
           if (this.isProcessRunning(session.pid)) {
+            // Initialize logging arrays if they don't exist
+            if (!session.logs) {
+              session.logs = [];
+            }
+            if (!session.output) {
+              session.output = [];
+            }
+            
+            // Try to reattach to the existing process for log capture
+            await this.reattachToProcess(session);
+            
             this.agents.set(session.id, session);
             validSessions.push(session);
           } else {
@@ -90,6 +101,54 @@ class AgentManager {
     } catch (error) {
       logger.error('Failed to load sessions', { error: error.message });
       // Don't throw here, just log the error and continue
+    }
+  }
+
+  /**
+   * Reattach to existing process for log capture
+   * Note: This is limited by the fact that we can't directly reattach to existing stdio streams
+   * But we can at least ensure the session is properly initialized
+   */
+  async reattachToProcess(session) {
+    try {
+      // Unfortunately, we can't reattach to existing stdio streams of a running process
+      // This is a limitation of how processes work - once spawned, we can't capture their output
+      // unless we had the original process object
+      
+      // However, we can ensure the session is properly initialized for any new output
+      logger.debug('Attempting to reattach to process', {
+        agentId: session.id,
+        pid: session.pid
+      });
+      
+      // Set process to null since we can't reattach to existing streams
+      session.process = null;
+      
+      // Log that this session was restored but output capture is limited
+      // Only add this message if it's not already there (to avoid duplicates)
+      const alreadyHasRestoreMessage = session.logs.some(log => 
+        log.content && log.content.includes('Session restored - PID')
+      );
+      
+      if (!alreadyHasRestoreMessage) {
+        session.logs.push({
+          timestamp: new Date(),
+          content: `Session restored - PID ${session.pid} (previous output not captured)`,
+          type: 'info'
+        });
+      }
+      
+      logger.info('Session restored with limited output capture', {
+        agentId: session.id,
+        pid: session.pid
+      });
+      
+    } catch (error) {
+      logger.error('Failed to reattach to process', {
+        agentId: session.id,
+        pid: session.pid,
+        error: error.message
+      });
     }
   }
 
@@ -110,7 +169,8 @@ class AgentManager {
         worktreeName: session.worktreeName,
         gitRoot: session.gitRoot,
         lastActivity: session.lastActivity,
-        // Exclude process object as it cannot be serialized
+        logs: session.logs || [], // Include logs array for persistence
+        // Exclude process and output objects as they cannot be serialized
       }));
 
       const sessionsData = {
