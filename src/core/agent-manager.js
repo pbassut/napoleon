@@ -83,6 +83,9 @@ class AgentManager {
               session.output = [];
             }
             
+            // Mark this session as restored from previous run
+            session.wasRestored = true;
+            
             // Try to reattach to the existing process for log capture
             await this.reattachToProcess(session);
             
@@ -124,14 +127,14 @@ class AgentManager {
       // Set process to null since we can't reattach to existing streams
       session.process = null;
       
-      // Add comprehensive diagnostic information if logs are empty
-      // Only add this message if it's not already there (to avoid duplicates)
+      // Only add diagnostic info if logs are truly empty (no actual output was captured)
+      // and avoid duplicates by checking for restore message
       const alreadyHasRestoreMessage = session.logs.some(log => 
         log.content && log.content.includes('Session restored - PID')
       );
       
-      if (!alreadyHasRestoreMessage) {
-        // Add detailed diagnostic logs
+      if (!alreadyHasRestoreMessage && session.logs.length === 0) {
+        // Add detailed diagnostic logs only for truly restored sessions
         const diagnosticLogs = [
           {
             timestamp: new Date(session.spawnTime),
@@ -160,7 +163,7 @@ class AgentManager {
           },
           {
             timestamp: new Date(),
-            content: `⚠️  Note: Cannot capture output from processes started before logging was enabled`,
+            content: `⚠️  Previous output cannot be recovered - process was started before logging`,
             type: 'warning'
           },
           {
@@ -170,7 +173,7 @@ class AgentManager {
           },
           {
             timestamp: new Date(),
-            content: `💡 Tip: Future agent output will be captured in real-time`,
+            content: `💡 New agent output will be captured in real-time from this point forward`,
             type: 'info'
           }
         ];
@@ -1007,8 +1010,8 @@ class AgentManager {
     const session = this.agents.get(agentId);
     if (!session) return [];
 
-    // If logs are empty and this is an existing session, try to populate diagnostic info
-    if ((!session.logs || session.logs.length === 0) && session.pid) {
+    // If logs are empty and this is a restored session (not newly spawned), add diagnostic info
+    if ((!session.logs || session.logs.length === 0) && session.pid && session.wasRestored) {
       this.reattachToProcess(session);
     }
 
