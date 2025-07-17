@@ -1,0 +1,792 @@
+# ADD Manager Architecture Document
+
+## Introduction
+
+This document outlines the overall project architecture for ADD Manager, including backend systems, shared services, and non-UI specific concerns. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development, ensuring consistency and adherence to chosen patterns and technologies.
+
+**Relationship to Frontend Architecture:**
+Since ADD Manager is a terminal UI application using the blessed framework, this document covers the complete architecture including the terminal interface design. No separate frontend architecture document is required.
+
+### Starter Template or Existing Project
+
+N/A - ADD Manager is a greenfield project built from scratch without using any existing starter templates or boilerplate projects. The architecture is designed specifically for the terminal UI and Claude CLI integration requirements.
+
+### Change Log
+
+| Date | Version | Description | Author |
+|------|---------|-------------|---------|
+| 2025-07-17 | 1.0 | Initial architecture document creation | Claude Code |
+
+## High Level Architecture
+
+### Technical Summary
+
+ADD Manager follows a modular monolithic architecture implemented as a Node.js CLI application with a blessed-based terminal UI. The system employs a process management architecture where the main application manages multiple child processes (Claude CLI agents) with git worktree isolation. Core architectural patterns include command-query separation for terminal UI interactions, event-driven process monitoring, and resource-constrained concurrency control with a 3-agent limit. The architecture prioritizes developer experience through clean separation of concerns between CLI framework (commander.js), terminal UI (blessed), agent lifecycle management, and git integration layers.
+
+### High Level Overview
+
+1. **Architectural Style**: Modular Monolith - Single Node.js application with clearly separated modules
+2. **Repository Structure**: Monorepo - All components in single repository with organized module structure
+3. **Service Architecture**: Monolithic application with modular design for maintainability
+4. **User Interaction Flow**: CLI entry → Terminal UI → Agent Management → Git Worktree Operations
+5. **Key Architectural Decisions**:
+   - Terminal UI over web interface for developer-focused experience
+   - File-based session storage for simplicity and offline capability
+   - Native git commands via child_process for reliability
+   - Resource constraints (3-agent limit) for MVP stability
+   - Event-driven architecture for real-time status updates
+
+### High Level Project Diagram
+
+```mermaid
+graph TB
+    User[Developer] --> CLI[CLI Entry Point<br/>commander.js]
+    CLI --> TUI[Terminal UI<br/>blessed framework]
+    TUI --> AM[Agent Manager<br/>Process Control]
+    TUI --> GM[Git Manager<br/>Worktree Operations]
+    TUI --> SM[Session Manager<br/>State Persistence]
+    
+    AM --> CP1[Claude Process 1]
+    AM --> CP2[Claude Process 2]
+    AM --> CP3[Claude Process 3]
+    
+    GM --> WT1[Worktree 1<br/>feature/agent-1]
+    GM --> WT2[Worktree 2<br/>feature/agent-2]
+    GM --> WT3[Worktree 3<br/>feature/agent-3]
+    
+    SM --> FS[File System<br/>~/.add-manager/]
+    
+    CP1 --> WT1
+    CP2 --> WT2
+    CP3 --> WT3
+    
+    style User fill:#e1f5fe
+    style CLI fill:#f3e5f5
+    style TUI fill:#e8f5e8
+    style AM fill:#fff3e0
+    style GM fill:#fce4ec
+    style SM fill:#f1f8e9
+```
+
+### Architectural and Design Patterns
+
+- **Command Pattern:** CLI commands and terminal UI interactions use command pattern for consistent operation handling and undo/redo capabilities
+- **Observer Pattern:** Real-time status updates for agent processes and git operations using event-driven notifications
+- **Factory Pattern:** Agent spawning uses factory pattern to create standardized process configurations with proper isolation
+- **Repository Pattern:** Session data access abstracted through repository pattern for future storage backend flexibility
+- **Process Manager Pattern:** Centralized process lifecycle management with proper cleanup and resource monitoring
+- **Resource Pool Pattern:** 3-agent limit enforced through resource pool pattern ensuring system stability
+
+## Tech Stack
+
+### Cloud Infrastructure
+
+- **Provider:** N/A (Local development tool)
+- **Key Services:** Local file system, native git, Node.js process management
+- **Deployment Regions:** N/A (NPM global distribution)
+
+### Technology Stack Table
+
+| Category | Technology | Version | Purpose | Rationale |
+|----------|------------|---------|---------|-----------|
+| **Language** | JavaScript | ES2022 | Primary development language | Rapid development, Node.js ecosystem, team familiarity |
+| **Runtime** | Node.js | 16.0.0+ | JavaScript runtime | LTS support, child_process capabilities, CLI tooling |
+| **CLI Framework** | commander.js | 11.1.0 | Command-line interface | Industry standard, flexible argument parsing, sub-command support |
+| **Terminal UI** | blessed | 0.1.81 | Rich terminal interface | Cross-platform TUI, event-driven, widget-based layout |
+| **Process Management** | child_process | Built-in | Spawning Claude CLI agents | Native Node.js process control, no external dependencies |
+| **Git Integration** | git (native) | 2.20.0+ | Version control operations | Native git commands for reliability, worktree support |
+| **Storage** | fs (JSON) | Built-in | Session persistence | Simple file-based storage, no database dependencies |
+| **Testing** | Jest | 29.7.0 | Unit and integration testing | Comprehensive testing framework, mocking capabilities |
+| **Linting** | ESLint | 8.57.0 | Code quality | Consistent code style, error prevention |
+| **Package Manager** | npm | 8.0.0+ | Dependency management | Built-in with Node.js, package distribution |
+
+## Data Models
+
+### Agent Session Model
+
+**Purpose:** Represents an active or historical Claude CLI agent session with its configuration, state, and metadata.
+
+**Key Attributes:**
+- `id`: string - Unique identifier for the agent session
+- `name`: string - Human-readable name for the agent
+- `prompt`: string - Initial prompt/instructions given to the agent
+- `status`: enum - Current status (spawning, running, idle, error, terminated)
+- `pid`: number - Process ID of the Claude CLI instance
+- `workspacePath`: string - Path to the git worktree directory
+- `branchName`: string - Associated git branch name
+- `createdAt`: Date - Session creation timestamp
+- `updatedAt`: Date - Last status update timestamp
+- `resourceUsage`: object - CPU/memory usage statistics
+
+**Relationships:**
+- Has one GitWorktree (1:1 relationship)
+- Belongs to one ProcessGroup (N:1 relationship)
+- Has many ProcessLogs (1:N relationship)
+
+### Git Worktree Model
+
+**Purpose:** Represents a git worktree created for agent isolation with branch and cleanup metadata.
+
+**Key Attributes:**
+- `id`: string - Unique identifier for the worktree
+- `agentId`: string - Associated agent session ID
+- `path`: string - Absolute path to worktree directory
+- `branchName`: string - Git branch name
+- `baseBranch`: string - Original branch the worktree was created from
+- `createdAt`: Date - Worktree creation timestamp
+- `isClean`: boolean - Whether worktree has uncommitted changes
+- `mergeStatus`: enum - Status of merge operations (pending, completed, conflicted)
+
+**Relationships:**
+- Belongs to one AgentSession (1:1 relationship)
+- Has many CommitRecords (1:N relationship)
+
+### Process Monitor Model
+
+**Purpose:** Tracks process health, resource usage, and performance metrics for system monitoring.
+
+**Key Attributes:**
+- `agentId`: string - Associated agent session ID
+- `pid`: number - Process ID being monitored
+- `cpuUsage`: number - CPU usage percentage
+- `memoryUsage`: number - Memory usage in bytes
+- `uptime`: number - Process uptime in seconds
+- `status`: enum - Process health status (healthy, warning, critical)
+- `lastHeartbeat`: Date - Last successful health check
+- `errorCount`: number - Number of errors encountered
+
+**Relationships:**
+- Belongs to one AgentSession (1:1 relationship)
+- Has many HealthCheckRecords (1:N relationship)
+
+### Application Configuration Model
+
+**Purpose:** Stores user preferences, system settings, and configuration parameters.
+
+**Key Attributes:**
+- `maxConcurrentAgents`: number - Maximum allowed concurrent agents (default: 3)
+- `defaultWorktreeLocation`: string - Base directory for worktrees
+- `sessionStoragePath`: string - Location for session data files
+- `gitIntegrationEnabled`: boolean - Whether git integration is active
+- `uiTheme`: string - Terminal UI theme preference
+- `logLevel`: enum - Logging verbosity level
+- `autoCleanupEnabled`: boolean - Whether to auto-cleanup terminated sessions
+
+**Relationships:**
+- Has many UserPreferences (1:N relationship)
+- Configures ProcessLimits (1:1 relationship)
+
+## Components
+
+### CLI Entry Point
+
+**Responsibility:** Application entry point that handles command-line argument parsing, validates system requirements, and initializes the terminal UI or executes direct commands.
+
+**Key Interfaces:**
+- `parseArguments(argv)` - Parse command-line arguments and options
+- `validateEnvironment()` - Check Node.js version, git availability, and permissions
+- `initializeApplication()` - Bootstrap application modules and dependencies
+- `executeCommand(command, options)` - Execute direct CLI commands without UI
+
+**Dependencies:** commander.js, SystemValidator, ConfigurationManager
+
+**Technology Stack:** Node.js with commander.js framework, native fs for configuration validation
+
+### Terminal UI Manager
+
+**Responsibility:** Manages the blessed-based terminal interface including layout, widgets, keyboard navigation, and real-time updates for agent status and system information.
+
+**Key Interfaces:**
+- `renderDashboard()` - Render main dashboard with agent overview
+- `renderAgentDetail(agentId)` - Display detailed agent information and logs
+- `handleKeyboardInput(key, modifiers)` - Process keyboard shortcuts and navigation
+- `updateAgentStatus(agentId, status)` - Update agent status indicators in real-time
+- `showDialog(type, message, options)` - Display confirmation dialogs and prompts
+
+**Dependencies:** blessed, EventEmitter, AgentManager, GitManager
+
+**Technology Stack:** blessed framework for terminal UI, Node.js EventEmitter for component communication
+
+### Agent Manager
+
+**Responsibility:** Core process management for Claude CLI agents including spawning, monitoring, lifecycle control, and resource usage tracking with enforcement of the 3-agent concurrency limit.
+
+**Key Interfaces:**
+- `spawnAgent(config)` - Create new Claude CLI agent process with configuration
+- `terminateAgent(agentId)` - Gracefully terminate agent and cleanup resources
+- `pauseAgent(agentId)` - Pause agent execution (if supported by Claude CLI)
+- `resumeAgent(agentId)` - Resume paused agent execution
+- `getAgentStatus(agentId)` - Retrieve current agent status and metrics
+- `listActiveAgents()` - Return list of all active agent sessions
+- `enforceResourceLimits()` - Validate and enforce 3-agent concurrency limit
+
+**Dependencies:** child_process, ProcessMonitor, SessionManager, ResourceManager
+
+**Technology Stack:** Node.js child_process for process spawning, EventEmitter for status updates
+
+### Git Manager
+
+**Responsibility:** Handles git worktree operations including creation, cleanup, branch management, and basic merge coordination to provide proper isolation for each agent.
+
+**Key Interfaces:**
+- `createWorktree(agentId, branchName)` - Create new git worktree for agent
+- `removeWorktree(agentId)` - Clean up worktree and associated files
+- `createBranch(branchName, baseBranch)` - Create feature branch for agent work
+- `getWorktreeStatus(agentId)` - Check worktree status and changes
+- `listAgentBranches()` - Return all agent-created branches
+- `prepareMerge(agentId)` - Prepare agent branch for merge review
+- `detectConflicts(branchName)` - Check for potential merge conflicts
+
+**Dependencies:** child_process (git commands), fs, path utilities
+
+**Technology Stack:** Native git commands via child_process, Node.js fs for file operations
+
+### Session Manager
+
+**Responsibility:** Handles persistent storage of agent sessions, configuration, and application state using JSON files with proper error handling and data validation.
+
+**Key Interfaces:**
+- `saveSession(agentSession)` - Persist agent session data to storage
+- `loadSession(agentId)` - Retrieve agent session from storage
+- `updateSession(agentId, updates)` - Update specific session attributes
+- `deleteSession(agentId)` - Remove session data from storage
+- `listSessions()` - Return all stored sessions
+- `backupSessions()` - Create backup of session data
+- `validateSessionData(data)` - Validate session data integrity
+
+**Dependencies:** fs, path, JSON validation utilities
+
+**Technology Stack:** Node.js fs for file operations, JSON for data serialization
+
+### Process Monitor
+
+**Responsibility:** Continuously monitors agent processes for health, resource usage, and performance metrics while providing alerts for abnormal conditions.
+
+**Key Interfaces:**
+- `startMonitoring(agentId, pid)` - Begin monitoring agent process
+- `stopMonitoring(agentId)` - Stop monitoring and cleanup
+- `getResourceUsage(agentId)` - Get current CPU/memory usage
+- `checkProcessHealth(agentId)` - Verify process is running and responsive
+- `setResourceThresholds(limits)` - Configure resource usage alerts
+- `generatePerformanceReport()` - Create performance summary report
+
+**Dependencies:** ps-tree, pidusage, EventEmitter
+
+**Technology Stack:** Node.js process monitoring libraries, native process APIs
+
+### Component Diagrams
+
+```mermaid
+C4Container
+    title ADD Manager Component Architecture
+    
+    Container_Boundary(app, "ADD Manager Application") {
+        Component(cli, "CLI Entry Point", "commander.js", "Command parsing and app initialization")
+        Component(tui, "Terminal UI Manager", "blessed", "Terminal interface and user interaction")
+        Component(agent, "Agent Manager", "Node.js", "Process lifecycle management")
+        Component(git, "Git Manager", "git commands", "Worktree and branch operations")
+        Component(session, "Session Manager", "fs/JSON", "Data persistence and state")
+        Component(monitor, "Process Monitor", "Node.js", "Health and resource monitoring")
+    }
+    
+    Container_Boundary(external, "External Systems") {
+        Component(claude, "Claude CLI", "Anthropic", "AI agent processes")
+        Component(gitrepo, "Git Repository", "git", "Version control system")
+        Component(filesystem, "File System", "OS", "Session storage")
+    }
+    
+    Rel(cli, tui, "initializes")
+    Rel(tui, agent, "controls")
+    Rel(tui, git, "manages")
+    Rel(agent, monitor, "monitors")
+    Rel(agent, session, "persists")
+    Rel(git, session, "stores metadata")
+    Rel(agent, claude, "spawns")
+    Rel(git, gitrepo, "operates on")
+    Rel(session, filesystem, "reads/writes")
+```
+
+## External APIs
+
+### Claude CLI Integration
+
+- **Purpose:** Spawn and manage Claude CLI agent processes for AI-driven development tasks
+- **Documentation:** https://docs.anthropic.com/claude/reference/cli
+- **Base URL(s):** N/A (Local CLI tool)
+- **Authentication:** User's Claude API key via environment variables or CLI configuration
+- **Rate Limits:** Depends on user's Claude API plan
+
+**Key Commands Used:**
+- `claude --help` - Validate Claude CLI installation and version
+- `claude --interactive` - Start interactive Claude session
+- `claude --file <path>` - Process files with Claude
+
+**Integration Notes:** Claude CLI must be pre-installed and configured by user. Agent Manager spawns Claude processes with appropriate working directory and configuration.
+
+### Git Integration
+
+- **Purpose:** Version control operations for worktree management and branch isolation
+- **Documentation:** https://git-scm.com/docs
+- **Base URL(s):** N/A (Local git repository)
+- **Authentication:** Uses git configuration from user's environment
+- **Rate Limits:** N/A (Local operations)
+
+**Key Commands Used:**
+- `git worktree add <path> <branch>` - Create new worktree
+- `git worktree remove <path>` - Remove worktree
+- `git branch -D <branch>` - Delete branch
+- `git status --porcelain` - Check repository status
+- `git diff <branch>` - Show changes in branch
+
+**Integration Notes:** Requires git version 2.20.0+ for worktree support. All operations are local to the repository.
+
+## Core Workflows
+
+### Agent Spawning Workflow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant TUI as Terminal UI
+    participant Agent as Agent Manager
+    participant Git as Git Manager
+    participant Session as Session Manager
+    participant Claude as Claude CLI
+    
+    User->>TUI: Press 'n' for new agent
+    TUI->>TUI: Check agent limit (3)
+    TUI->>User: Prompt for agent instructions
+    User->>TUI: Enter agent prompt
+    TUI->>Git: Create worktree for agent
+    Git->>Git: Create feature branch
+    Git->>Git: Setup worktree directory
+    Git-->>TUI: Worktree created
+    TUI->>Agent: Spawn agent with config
+    Agent->>Claude: Start Claude CLI process
+    Claude-->>Agent: Process started (PID)
+    Agent->>Session: Save session data
+    Session-->>Agent: Session saved
+    Agent-->>TUI: Agent spawned successfully
+    TUI-->>User: Show agent in dashboard
+```
+
+### Agent Termination Workflow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant TUI as Terminal UI
+    participant Agent as Agent Manager
+    participant Git as Git Manager
+    participant Session as Session Manager
+    participant Monitor as Process Monitor
+    participant Claude as Claude CLI
+    
+    User->>TUI: Select agent and press 'd'
+    TUI->>User: Confirm termination
+    User->>TUI: Confirm
+    TUI->>Agent: Terminate agent
+    Agent->>Monitor: Stop monitoring
+    Monitor-->>Agent: Monitoring stopped
+    Agent->>Claude: Send SIGTERM
+    Claude-->>Agent: Process terminated
+    Agent->>Git: Cleanup worktree
+    Git->>Git: Remove worktree
+    Git-->>Agent: Worktree cleaned
+    Agent->>Session: Delete session data
+    Session-->>Agent: Session deleted
+    Agent-->>TUI: Termination complete
+    TUI-->>User: Update dashboard
+```
+
+## Database Schema
+
+ADD Manager uses file-based JSON storage instead of a traditional database. The schema is defined through TypeScript interfaces and stored in structured JSON files.
+
+### Session Storage Schema
+
+```json
+{
+  "sessions": {
+    "agent-001": {
+      "id": "agent-001",
+      "name": "Feature Development Agent",
+      "prompt": "Implement user authentication system",
+      "status": "running",
+      "pid": 12345,
+      "workspacePath": "/path/to/repo/.add-manager-worktrees/agent-001",
+      "branchName": "feature/agent-001",
+      "createdAt": "2025-07-17T10:00:00Z",
+      "updatedAt": "2025-07-17T10:30:00Z",
+      "resourceUsage": {
+        "cpuPercent": 15.2,
+        "memoryMB": 128.5,
+        "uptime": 1800
+      }
+    }
+  },
+  "worktrees": {
+    "agent-001": {
+      "id": "agent-001",
+      "agentId": "agent-001",
+      "path": "/path/to/repo/.add-manager-worktrees/agent-001",
+      "branchName": "feature/agent-001",
+      "baseBranch": "main",
+      "createdAt": "2025-07-17T10:00:00Z",
+      "isClean": false,
+      "mergeStatus": "pending"
+    }
+  },
+  "configuration": {
+    "maxConcurrentAgents": 3,
+    "defaultWorktreeLocation": ".add-manager-worktrees",
+    "sessionStoragePath": "~/.add-manager/sessions.json",
+    "gitIntegrationEnabled": true,
+    "uiTheme": "default",
+    "logLevel": "info",
+    "autoCleanupEnabled": true
+  }
+}
+```
+
+### File Structure
+- `~/.add-manager/sessions.json` - Active session data
+- `~/.add-manager/config.json` - User configuration
+- `~/.add-manager/logs/` - Application logs
+- `~/.add-manager/backups/` - Session data backups
+
+## Source Tree
+
+```
+add-manager/
+├── src/
+│   ├── cli/
+│   │   ├── index.js                 # CLI entry point
+│   │   ├── commands/                # CLI command implementations
+│   │   │   ├── start.js            # Start terminal UI
+│   │   │   ├── status.js           # Show agent status
+│   │   │   └── cleanup.js          # Manual cleanup command
+│   │   └── validators/              # System validation
+│   │       ├── environment.js      # Node.js/git validation
+│   │       └── permissions.js      # File system permissions
+│   ├── ui/
+│   │   ├── terminal-manager.js     # Main terminal UI controller
+│   │   ├── components/             # UI components
+│   │   │   ├── dashboard.js        # Main dashboard view
+│   │   │   ├── agent-detail.js     # Agent detail view
+│   │   │   ├── dialog.js           # Dialog components
+│   │   │   └── status-bar.js       # Status bar component
+│   │   ├── themes/                 # UI themes and styling
+│   │   │   └── default.js          # Default theme
+│   │   └── keyboard/               # Keyboard handling
+│   │       └── shortcuts.js        # Keyboard shortcuts
+│   ├── core/
+│   │   ├── agent-manager.js        # Agent lifecycle management
+│   │   ├── git-manager.js          # Git worktree operations
+│   │   ├── session-manager.js      # Session persistence
+│   │   ├── process-monitor.js      # Process monitoring
+│   │   └── resource-manager.js     # Resource limit enforcement
+│   ├── models/
+│   │   ├── agent-session.js        # Agent session model
+│   │   ├── git-worktree.js         # Git worktree model
+│   │   ├── process-monitor.js      # Process monitoring model
+│   │   └── configuration.js        # Configuration model
+│   └── utils/
+│       ├── logger.js               # Logging utilities
+│       ├── file-utils.js           # File system helpers
+│       ├── git-utils.js            # Git command utilities
+│       └── process-utils.js        # Process management utilities
+├── test/
+│   ├── unit/                       # Unit tests
+│   │   ├── core/                   # Core module tests
+│   │   ├── ui/                     # UI component tests
+│   │   └── models/                 # Model tests
+│   ├── integration/                # Integration tests
+│   │   ├── agent-lifecycle.test.js # Full agent lifecycle
+│   │   ├── git-integration.test.js # Git operations
+│   │   └── ui-interaction.test.js  # UI workflows
+│   └── fixtures/                   # Test data and mocks
+│       ├── git-repos/              # Test git repositories
+│       └── sessions/               # Test session data
+├── scripts/
+│   ├── build.js                    # Build script
+│   ├── test.js                     # Test runner
+│   └── publish.js                  # NPM publish script
+├── config/
+│   ├── default.json                # Default configuration
+│   └── test.json                   # Test configuration
+├── docs/
+│   ├── architecture.md             # This document
+│   ├── prd.md                      # Product requirements
+│   └── user-guide.md               # User documentation
+├── .eslintrc.js                    # ESLint configuration
+├── .gitignore                      # Git ignore rules
+├── package.json                    # NPM package configuration
+├── package-lock.json               # NPM lock file
+└── README.md                       # Project overview
+```
+
+## Infrastructure and Deployment
+
+### Infrastructure as Code
+
+- **Tool:** N/A (NPM package distribution)
+- **Location:** N/A
+- **Approach:** NPM registry deployment with semantic versioning
+
+### Deployment Strategy
+
+- **Strategy:** NPM package publishing with automated CI/CD
+- **CI/CD Platform:** GitHub Actions
+- **Pipeline Configuration:** `.github/workflows/publish.yml`
+
+### Environments
+
+- **Development:** Local development environment with test fixtures
+- **Testing:** Automated test environment with CI/CD pipeline
+- **Production:** NPM registry for global distribution
+
+### Environment Promotion Flow
+
+```
+Development → Testing → NPM Registry
+     ↓           ↓          ↓
+   Local      GitHub    Global
+ Testing      Actions   Install
+```
+
+### Rollback Strategy
+
+- **Primary Method:** NPM version deprecation and patch release
+- **Trigger Conditions:** Critical bugs, security issues, or major functionality failures
+- **Recovery Time Objective:** 4 hours for critical issues## Error Handling Strategy
+
+### General Approach
+
+- **Error Model:** Structured error objects with error codes, messages, and context
+- **Exception Hierarchy:** Custom error classes extending base Error for different categories
+- **Error Propagation:** Bubble up through component layers with proper context preservation
+
+### Logging Standards
+
+- **Library:** Winston 3.11.0
+- **Format:** JSON structured logging with timestamp, level, message, and context
+- **Levels:** error, warn, info, debug, trace
+- **Required Context:**
+  - Correlation ID: UUID v4 format for tracking operations across components
+  - Service Context: Component name, method, and operation type
+  - User Context: Anonymized user session without sensitive data
+
+### Error Handling Patterns
+
+#### External API Errors
+
+- **Retry Policy:** Exponential backoff with jitter, max 3 retries for transient failures
+- **Circuit Breaker:** N/A (Local operations only)
+- **Timeout Configuration:** 30 seconds for git operations, 10 seconds for process spawning
+- **Error Translation:** Map git error codes to user-friendly messages
+
+#### Business Logic Errors
+
+- **Custom Exceptions:** AgentLimitExceededError, WorktreeCreationError, ProcessSpawnError
+- **User-Facing Errors:** Clear, actionable error messages with suggested solutions
+- **Error Codes:** Structured error codes (e.g., AGENT_001, GIT_002, UI_003)
+
+#### Data Consistency
+
+- **Transaction Strategy:** File-based atomic operations with backup/restore on failure
+- **Compensation Logic:** Automatic cleanup of partial operations (processes, worktrees)
+- **Idempotency:** Agent operations can be safely retried without side effects
+
+## Coding Standards
+
+### Core Standards
+
+- **Languages & Runtimes:** JavaScript ES2022 with Node.js 16.0.0+
+- **Style & Linting:** ESLint with Airbnb config, Prettier for formatting
+- **Test Organization:** `*.test.js` files co-located with source code
+
+### Critical Rules
+
+- **Logging:** Never use console.log in production - use Winston logger with appropriate levels
+- **Process Management:** Always handle process cleanup in finally blocks or error handlers
+- **Git Operations:** Validate git repository state before any worktree operations
+- **Resource Limits:** Enforce 3-agent limit before spawning new processes
+- **Error Handling:** All async operations must have try-catch blocks with proper error context
+- **File Operations:** Use absolute paths and validate file existence before operations
+
+### Language-Specific Guidelines
+
+#### JavaScript Specifics
+
+- **Async/Await:** Prefer async/await over Promises for better error handling
+- **Process Spawning:** Use spawn() with proper stdio handling and error event listeners
+- **Memory Management:** Implement proper cleanup for event listeners and timers
+- **Error Objects:** Create custom error classes with proper stack traces and context
+
+## Test Strategy and Standards
+
+### Testing Philosophy
+
+- **Approach:** Test-driven development with comprehensive coverage
+- **Coverage Goals:** 90% line coverage, 100% branch coverage for critical paths
+- **Test Pyramid:** 70% unit tests, 20% integration tests, 10% end-to-end tests
+
+### Test Types and Organization
+
+#### Unit Tests
+
+- **Framework:** Jest 29.7.0
+- **File Convention:** `*.test.js` files co-located with source code
+- **Location:** Same directory as source files
+- **Mocking Library:** Jest built-in mocking
+- **Coverage Requirement:** 90% line coverage
+
+**AI Agent Requirements:**
+- Generate tests for all public methods and error conditions
+- Cover edge cases like process failures and git conflicts
+- Follow AAA pattern (Arrange, Act, Assert)
+- Mock all external dependencies (child_process, fs operations)
+
+#### Integration Tests
+
+- **Scope:** Component interactions, git operations, process lifecycle
+- **Location:** `test/integration/` directory
+- **Test Infrastructure:**
+  - **Git Operations:** Temporary git repositories for each test
+  - **Process Management:** Mock Claude CLI processes using test doubles
+  - **File System:** Temporary directories with proper cleanup
+
+#### End-to-End Tests
+
+- **Framework:** Jest with blessed-test helpers
+- **Scope:** Full user workflows through terminal interface
+- **Environment:** Isolated test environment with mock git repository
+- **Test Data:** Predefined session fixtures and git repository states
+
+### Test Data Management
+
+- **Strategy:** Factory pattern for creating test data objects
+- **Fixtures:** JSON files in `test/fixtures/` directory
+- **Factories:** Builder pattern for complex object creation
+- **Cleanup:** Automatic cleanup of temporary files and processes
+
+### Continuous Testing
+
+- **CI Integration:** GitHub Actions with test matrix for Node.js versions
+- **Performance Tests:** Basic resource usage validation
+- **Security Tests:** Dependency vulnerability scanning with npm audit
+
+## Security
+
+### Input Validation
+
+- **Validation Library:** Joi 17.11.0 for schema validation
+- **Validation Location:** At component boundaries before processing
+- **Required Rules:**
+  - All user inputs must be validated against predefined schemas
+  - File paths must be sanitized to prevent directory traversal
+  - Agent names must match alphanumeric pattern with hyphens
+
+### Authentication & Authorization
+
+- **Auth Method:** Local file system permissions only
+- **Session Management:** No authentication required for local tool
+- **Required Patterns:**
+  - Validate file system permissions before operations
+  - Ensure git repository access rights
+
+### Secrets Management
+
+- **Development:** Environment variables for Claude API keys
+- **Production:** User-managed Claude CLI configuration
+- **Code Requirements:**
+  - Never hardcode API keys or sensitive configuration
+  - Access Claude credentials through Claude CLI configuration
+  - No secrets in logs, error messages, or session storage
+
+### API Security
+
+- **Rate Limiting:** N/A (Local operations)
+- **CORS Policy:** N/A (Terminal application)
+- **Security Headers:** N/A (No web interface)
+- **HTTPS Enforcement:** N/A (Local application)
+
+### Data Protection
+
+- **Encryption at Rest:** File system encryption (OS-level)
+- **Encryption in Transit:** N/A (Local operations)
+- **PII Handling:** No PII collection beyond git user configuration
+- **Logging Restrictions:** No sensitive data in logs (API keys, file contents)
+
+### Dependency Security
+
+- **Scanning Tool:** npm audit for dependency vulnerabilities
+- **Update Policy:** Monthly dependency updates with security patches
+- **Approval Process:** Review dependencies for licensing and security
+
+### Security Testing
+
+- **SAST Tool:** ESLint security rules and CodeQL
+- **DAST Tool:** N/A (No network-exposed services)
+- **Penetration Testing:** N/A (Local development tool)
+
+## Next Steps
+
+### Implementation Guidance
+
+1. **Phase 1: Foundation (Week 1)**
+   - Set up project structure and CLI framework
+   - Implement basic terminal UI with blessed
+   - Create agent spawning with process management
+   - Add simple session storage
+
+2. **Phase 2: Git Integration (Week 2)**
+   - Implement git worktree creation and cleanup
+   - Add branch isolation and management
+   - Create basic merge coordination tools
+   - Add resource monitoring and limits
+
+3. **Phase 3: Polish & Testing (Week 3)**
+   - Enhance error handling and recovery
+   - Implement comprehensive test suite
+   - Add advanced UI features and shortcuts
+   - Complete documentation and user guide
+
+### Developer Agent Prompts
+
+**For Development Agent:**
+```
+You are implementing the ADD Manager CLI tool based on the comprehensive architecture document at /docs/architecture.md and PRD at /docs/prd.md. 
+
+Key architectural requirements:
+- Follow the modular monolithic structure defined in the architecture
+- Implement the tech stack exactly as specified (Node.js 16+, commander.js, blessed)
+- Enforce the 3-agent concurrency limit through ResourceManager
+- Use structured error handling with custom exception classes
+- Implement proper process cleanup and resource management
+- Follow the coding standards for logging, error handling, and async operations
+
+Start with the CLI Entry Point and Terminal UI Manager components, ensuring proper separation of concerns and adherence to the component interfaces defined in the architecture.
+```
+
+**For Testing Agent:**
+```
+Implement comprehensive test coverage for ADD Manager based on the test strategy in /docs/architecture.md. 
+
+Focus on:
+- Unit tests for all core components with 90% coverage
+- Integration tests for agent lifecycle and git operations
+- Mock external dependencies (child_process, git commands)
+- Test error conditions and edge cases
+- Use Jest framework with the specified test organization
+- Create test fixtures for git repositories and session data
+
+Ensure all tests follow the AAA pattern and properly clean up resources.
+```
+
+---
+
+**Document Version**: 1.0  
+**Last Updated**: July 17, 2025  
+**Next Review**: Upon implementation completion

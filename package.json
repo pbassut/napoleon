@@ -1,0 +1,53 @@
+{
+  "name": "add-manager",
+  "version": "1.0.0",
+  "description": "Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions",
+  "main": "src/cli/index.js",
+  "bin": {
+    "add-manager": "./bin/add-manager.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/ bin/ --ext .js",
+    "lint:fix": "eslint src/ bin/ --ext .js --fix",
+    "format": "prettier --write src/ bin/ __tests__/",
+    "start": "node bin/add-manager.js"
+  },
+  "dependencies": {
+    "commander": "^11.1.0",
+    "blessed": "^0.1.81",
+    "winston": "^3.11.0",
+    "joi": "^17.11.0",
+    "semver": "^7.5.4"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.29.0",
+    "prettier": "^3.0.0"
+  },
+  "keywords": [
+    "claude",
+    "cli",
+    "agent",
+    "development",
+    "terminal",
+    "ai"
+  ],
+  "author": "ADD Manager Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/add-manager"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/add-manager/issues"
+  },
+  "homepage": "https://github.com/your-org/add-manager#readme"
+}

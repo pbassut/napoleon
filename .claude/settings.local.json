@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__DesktopCommander__list_directory",
+      "mcp__DesktopCommander__read_file"
+    ],
+    "deny": []
+  }
+}
