@@ -20,5 +20,7 @@ module.exports = {
       lines: 90,
       statements: 90
     }
-  }
+  },
+  // Global setup to ensure timers are cleaned up
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
 };
