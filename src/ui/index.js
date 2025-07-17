@@ -21,6 +21,7 @@ class TerminalUI {
     this.showingHelp = false;
     this.agentManager = null;
     this.agents = [];
+    this.activeTimers = new Set(); // Track active timers for cleanup
   }
 
   /**
@@ -396,7 +397,7 @@ class TerminalUI {
       this.updateStatus(`Agent ${session.id} spawned successfully`, { fg: 'green', bold: true });
       
       // Hide status message after 3 seconds
-      setTimeout(() => {
+      this.setTimeout(() => {
         this.updateAgentsList();
       }, 3000);
     } catch (error) {
@@ -406,7 +407,7 @@ class TerminalUI {
       this.updateStatus(`Failed to spawn agent: ${error.message}`, { fg: 'red', bold: true });
       
       // Hide error message after 5 seconds
-      setTimeout(() => {
+      this.setTimeout(() => {
         this.updateAgentsList();
       }, 5000);
     }
@@ -516,12 +517,40 @@ class TerminalUI {
   }
 
   /**
+   * Set timeout with tracking for cleanup
+   */
+  setTimeout(callback, delay) {
+    const timerId = setTimeout(() => {
+      this.activeTimers.delete(timerId);
+      callback();
+    }, delay);
+    this.activeTimers.add(timerId);
+    return timerId;
+  }
+
+  /**
+   * Clear timeout and remove from tracking
+   */
+  clearTimeout(timerId) {
+    if (timerId) {
+      clearTimeout(timerId);
+      this.activeTimers.delete(timerId);
+    }
+  }
+
+  /**
    * Clean up and quit the application
    */
   quit() {
     logger.info('Shutting down terminal UI');
 
     try {
+      // Clean up all active timers
+      this.activeTimers.forEach(timerId => {
+        clearTimeout(timerId);
+      });
+      this.activeTimers.clear();
+
       if (this.screen) {
         this.screen.destroy();
       }

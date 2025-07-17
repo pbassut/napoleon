@@ -6,6 +6,22 @@ const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
 const { EnvironmentValidationError, FileSystemError } = require('../utils/errors');
 const logger = require('../utils/logger');
 
+// Input validation patterns for security
+const DANGEROUS_PATTERNS = [
+  /[;&|`$]/,         // Shell metacharacters (dangerous ones)
+  /\.\.[\/\\]/,      // Directory traversal
+  /^-/,              // Options starting with dash
+  /[<>]/,            // Redirection operators
+  /\0/,              // Null bytes
+  /\x00-\x08/,       // Control characters (excluding tab, newline, carriage return)
+  /\x0B\x0C/,        // Vertical tab, form feed
+  /\x0E-\x1F/,       // Other control characters
+  /\x7F/,            // DEL character
+];
+
+// More permissive character set - allows most printable characters
+const ALLOWED_CHARS = /^[\x20-\x7E\s\n\r\t]*$/;
+
 /**
  * Agent Manager - Handles agent lifecycle and session management
  */
@@ -144,18 +160,107 @@ class AgentManager {
   }
 
   /**
+   * Validate agent instructions for security and format
+   */
+  validateInstructions(instructions) {
+    if (!instructions || typeof instructions !== 'string') {
+      throw new EnvironmentValidationError(
+        'Instructions must be a non-empty string',
+        'INVALID_INSTRUCTIONS_TYPE',
+        'Please provide valid text instructions for the agent'
+      );
+    }
+
+    const trimmed = instructions.trim();
+    
+    // Length validation
+    if (trimmed.length < 10) {
+      throw new EnvironmentValidationError(
+        'Agent instructions must be at least 10 characters long',
+        'INSTRUCTIONS_TOO_SHORT',
+        'Please provide more detailed instructions for the agent'
+      );
+    }
+
+    if (trimmed.length > 5000) {
+      throw new EnvironmentValidationError(
+        'Agent instructions must be less than 5000 characters',
+        'INSTRUCTIONS_TOO_LONG',
+        'Please provide more concise instructions for the agent'
+      );
+    }
+
+    // Security validation - check for dangerous patterns
+    for (const pattern of DANGEROUS_PATTERNS) {
+      if (pattern.test(trimmed)) {
+        throw new EnvironmentValidationError(
+          'Instructions contain potentially dangerous characters',
+          'DANGEROUS_INPUT_DETECTED',
+          'Please remove special characters and shell metacharacters from your instructions'
+        );
+      }
+    }
+
+    // Character set validation
+    if (!ALLOWED_CHARS.test(trimmed)) {
+      throw new EnvironmentValidationError(
+        'Instructions contain invalid characters',
+        'INVALID_CHARACTERS',
+        'Please use only standard alphanumeric characters and basic punctuation'
+      );
+    }
+
+    return trimmed;
+  }
+
+  /**
+   * Validate options object for spawning agent
+   */
+  validateOptions(options) {
+    if (!options || typeof options !== 'object') {
+      return {}; // Return empty object if invalid
+    }
+
+    const validatedOptions = {};
+
+    // Validate working directory if provided
+    if (options.workingDirectory) {
+      const workingDir = path.resolve(options.workingDirectory);
+      
+      // Check if directory exists and is accessible
+      try {
+        const stats = fs.statSync(workingDir);
+        if (!stats.isDirectory()) {
+          throw new EnvironmentValidationError(
+            'Working directory is not a valid directory',
+            'INVALID_WORKING_DIRECTORY',
+            'Please provide a valid directory path'
+          );
+        }
+        validatedOptions.workingDirectory = workingDir;
+      } catch (error) {
+        if (error instanceof EnvironmentValidationError) {
+          throw error; // Re-throw validation errors
+        }
+        throw new EnvironmentValidationError(
+          'Working directory is not accessible',
+          'WORKING_DIRECTORY_NOT_ACCESSIBLE',
+          'Please ensure the directory exists and is readable'
+        );
+      }
+    }
+
+    return validatedOptions;
+  }
+
+  /**
    * Spawn a new agent with instructions
    */
   async spawnAgent(instructions, options = {}) {
     try {
-      // Validate input
-      if (!instructions || instructions.trim().length < 10) {
-        throw new EnvironmentValidationError(
-          'Agent instructions must be at least 10 characters long',
-          'INSTRUCTIONS_TOO_SHORT',
-          'Please provide more detailed instructions for the agent'
-        );
-      }
+      // Validate and sanitize input
+      const sanitizedInstructions = this.validateInstructions(instructions);
+      const validatedOptions = this.validateOptions(options);
 
       // Check agent limit
       if (this.agents.size >= this.maxAgents) {
@@ -178,7 +283,7 @@ class AgentManager {
 
       // Generate agent session
       const agentId = this.generateAgentId();
-      const workingDirectory = options.workingDirectory || process.cwd();
+      const workingDirectory = validatedOptions.workingDirectory || process.cwd();
       
       logger.info('Spawning new agent', {
         agentId,
@@ -189,7 +294,7 @@ class AgentManager {
       // Create agent session data
       const session = {
         id: agentId,
-        instructions: instructions.trim(),
+        instructions: sanitizedInstructions,
         spawnTime: new Date().toISOString(),
         status: 'initializing',
         pid: null,

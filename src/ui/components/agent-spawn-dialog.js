@@ -14,6 +14,7 @@ class AgentSpawnDialog {
     this.textbox = null;
     this.instructionsText = null;
     this.isVisible = false;
+    this.activeTimers = new Set(); // Track active timers for cleanup
   }
 
   /**
@@ -245,13 +246,15 @@ class AgentSpawnDialog {
     this.parent.render();
 
     // Reset footer after 3 seconds
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
+      this.activeTimers.delete(timerId);
       if (this.isVisible) {
         this.footer.setContent('Press Ctrl+S to spawn agent | Escape to cancel');
         this.footer.style.fg = 'yellow';
         this.parent.render();
       }
     }, 3000);
+    this.activeTimers.add(timerId);
   }
 
   /**
@@ -293,6 +296,12 @@ class AgentSpawnDialog {
    */
   destroy() {
     if (this.dialog) {
+      // Clean up all active timers
+      this.activeTimers.forEach(timerId => {
+        clearTimeout(timerId);
+      });
+      this.activeTimers.clear();
+
       this.dialog.destroy();
       this.dialog = null;
       this.textbox = null;
