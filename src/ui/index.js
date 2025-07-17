@@ -6,6 +6,7 @@ const AgentManager = require('../core/agent-manager');
 const { AgentStatus } = require('../core/agent-manager');
 const AgentSpawnDialog = require('./components/agent-spawn-dialog');
 const AgentTerminationDialog = require('./components/agent-termination-dialog');
+const AgentDetailView = require('./components/agent-detail-view');
 
 /**
  * Main Terminal UI Manager
@@ -20,6 +21,7 @@ class TerminalUI {
     this.helpOverlay = null;
     this.spawnDialog = null;
     this.terminationDialog = null;
+    this.detailView = null;
     this.config = null;
     this.showingHelp = false;
     this.agentManager = null;
@@ -65,6 +67,7 @@ class TerminalUI {
       this.createHelpOverlay();
       this.createSpawnDialog();
       this.createTerminationDialog();
+      this.createDetailView();
 
       // Set up event handlers
       this.setupEventHandlers();
@@ -230,7 +233,7 @@ class TerminalUI {
       left: 1,
       width: '100%-2',
       height: 1,
-      content: 'Press \'n\' to spawn new agent | \'d\' to terminate | \'↑↓\' to navigate | \'h\' for help | \'q\' to quit',
+      content: 'Press \'n\' to spawn new agent | \'d\' to terminate | \'Enter/i\' for details | \'↑↓\' to navigate | \'h\' for help | \'q\' to quit',
       style: {
         fg: 'cyan',
       },
@@ -258,6 +261,13 @@ class TerminalUI {
       this.handleTerminationConfirm.bind(this),
       this.handleTerminationCancel.bind(this),
     );
+  }
+
+  /**
+   * Create the agent detail view
+   */
+  createDetailView() {
+    this.detailView = new AgentDetailView(this.screen, this.agentManager);
   }
 
   /**
@@ -291,6 +301,7 @@ class TerminalUI {
       'Keyboard Shortcuts:',
       '  n - Spawn new agent',
       '  d - Terminate selected agent',
+      '  Enter/i - View detailed agent information',
       '  ↑/k - Navigate up in agent list',
       '  ↓/j - Navigate down in agent list',
       '  h - Show/hide this help',
@@ -300,6 +311,8 @@ class TerminalUI {
       '',
       'Features:',
       '  • Real-time agent status monitoring',
+      '  • Detailed agent view with logs and metrics',
+      '  • Scrollable log output with search',
       '  • Keyboard navigation with selection',
       '  • Status indicators (●=running, ○=idle, ✗=error)',
       '  • Runtime tracking for each agent',
@@ -360,6 +373,11 @@ class TerminalUI {
     // Agent termination (d key)
     this.screen.key(['d'], () => {
       this.terminateSelectedAgent();
+    });
+
+    // Agent detail view (Enter or i key)
+    this.screen.key(['enter', 'i'], () => {
+      this.showAgentDetail();
     });
 
     // Any key to close help when shown
@@ -446,7 +464,7 @@ class TerminalUI {
 
       // Reset footer message after 3 seconds
       this.setTimeout(() => {
-        this.footerText.setContent('Press \'n\' to spawn new agent | \'d\' to terminate | \'↑↓\' to navigate | \'h\' for help | \'q\' to quit');
+        this.footerText.setContent('Press \'n\' to spawn new agent | \'d\' to terminate | \'Enter/i\' for details | \'↑↓\' to navigate | \'h\' for help | \'q\' to quit');
         this.footerText.style.fg = 'cyan';
         this.render();
       }, 3000);
@@ -575,6 +593,21 @@ class TerminalUI {
     // Show confirmation dialog
     if (this.terminationDialog) {
       this.terminationDialog.show(selectedAgent);
+    }
+  }
+
+  /**
+   * Show agent detail view for selected agent
+   */
+  showAgentDetail() {
+    if (this.agents.length === 0) return;
+
+    const selectedAgent = this.agents[this.selectedAgentIndex];
+    if (!selectedAgent) return;
+
+    // Show detail view
+    if (this.detailView) {
+      this.detailView.show(selectedAgent);
     }
   }
 
@@ -834,12 +867,15 @@ class TerminalUI {
       });
       this.activeTimers.clear();
 
-      // Clean up dialogs
+      // Clean up dialogs and detail view
       if (this.spawnDialog) {
         this.spawnDialog.destroy();
       }
       if (this.terminationDialog) {
         this.terminationDialog.destroy();
+      }
+      if (this.detailView) {
+        this.detailView.destroy();
       }
 
       if (this.screen) {

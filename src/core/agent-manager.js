@@ -559,6 +559,7 @@ class AgentManager {
         worktreeName: worktreeInfo.worktreeName,
         gitRoot: gitValidation.rootPath,
         lastActivity: new Date().toISOString(),
+        logs: [], // Initialize logs array for detail view
       };
 
       // Spawn Claude CLI process
@@ -687,6 +688,11 @@ class AgentManager {
       session.output = [];
     }
 
+    // Initialize logs array if not exists (for detail view)
+    if (!session.logs) {
+      session.logs = [];
+    }
+
     // Add to output buffer
     session.output.push({
       type,
@@ -694,9 +700,25 @@ class AgentManager {
       timestamp: new Date().toISOString(),
     });
 
+    // Split output by lines and add each as separate log entry for detail view
+    const timestamp = new Date();
+    const lines = output.split('\n').filter(line => line.trim() !== '');
+    lines.forEach(line => {
+      session.logs.push({
+        timestamp: timestamp,
+        content: line.trim(),
+        type: type,
+      });
+    });
+
     // Keep only last 1000 output entries
     if (session.output.length > 1000) {
       session.output = session.output.slice(-1000);
+    }
+
+    // Keep only last 1000 log entries for detail view
+    if (session.logs.length > 1000) {
+      session.logs = session.logs.slice(-1000);
     }
 
     // Update last activity
@@ -854,6 +876,45 @@ class AgentManager {
       lastActivity: session.lastActivity,
       pid: session.pid,
     };
+  }
+
+  /**
+   * Get comprehensive agent details for detail view
+   */
+  getAgentDetails(agentId) {
+    const session = this.agents.get(agentId);
+    if (!session) return null;
+
+    return {
+      id: session.id,
+      status: session.status,
+      pid: session.pid,
+      spawnTime: session.spawnTime,
+      lastActivity: session.lastActivity,
+      instructions: session.instructions,
+      worktreePath: session.worktreePath,
+      worktreeName: session.worktreeName,
+      branch: session.branch || 'main',
+      environmentVars: session.environmentVars || {},
+      process: session.process,
+    };
+  }
+
+  /**
+   * Get agent logs for detail view
+   */
+  getAgentLogs(agentId) {
+    const session = this.agents.get(agentId);
+    if (!session) return [];
+
+    // Return logs with proper structure for detail view
+    const logs = session.logs || [];
+    return logs.map((log, index) => ({
+      line: index + 1,
+      timestamp: log.timestamp || new Date(),
+      content: log.content || log.toString(),
+      type: log.type || 'info',
+    }));
   }
 }
 
