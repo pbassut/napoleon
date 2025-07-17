@@ -135,13 +135,13 @@ class AgentSpawnDialog {
     // Handle Enter for new lines (allow multi-line input)
     this.textbox.key(['enter'], () => {
       const currentValue = this.textbox.getValue();
-      this.textbox.setValue(currentValue + '\n');
+      this.textbox.setValue(`${currentValue}\n`);
     });
 
     // Handle Tab for indentation
     this.textbox.key(['tab'], () => {
       const currentValue = this.textbox.getValue();
-      this.textbox.setValue(currentValue + '  ');
+      this.textbox.setValue(`${currentValue}  `);
     });
 
     // Focus handling
@@ -173,6 +173,11 @@ class AgentSpawnDialog {
     this.dialog.show();
     this.textbox.focus();
     this.textbox.setValue('');
+    
+    // Reset footer to default state
+    this.footer.setContent('Press Ctrl+S to spawn agent | Escape to cancel');
+    this.footer.style.fg = 'yellow';
+    
     this.parent.render();
 
     logger.debug('Agent spawn dialog shown');
@@ -196,7 +201,7 @@ class AgentSpawnDialog {
   async handleSpawnAgent() {
     try {
       const instructions = this.textbox.getValue().trim();
-      
+
       // Validate instructions
       if (!instructions) {
         this.showError('Please enter instructions for the agent');
@@ -220,6 +225,9 @@ class AgentSpawnDialog {
 
       // Hide dialog on success
       this.hide();
+
+      // Return focus to main screen to restore keyboard callbacks
+      this.parent.render();
     } catch (error) {
       logger.error('Failed to spawn agent from dialog', { error: error.message });
       this.showError(`Failed to spawn agent: ${error.message}`);
@@ -231,7 +239,10 @@ class AgentSpawnDialog {
    */
   handleCancel() {
     this.hide();
-    
+
+    // Return focus to main screen to restore keyboard callbacks
+    this.parent.render();
+
     if (this.onCancel) {
       this.onCancel();
     }
@@ -297,7 +308,7 @@ class AgentSpawnDialog {
   destroy() {
     if (this.dialog) {
       // Clean up all active timers
-      this.activeTimers.forEach(timerId => {
+      this.activeTimers.forEach((timerId) => {
         clearTimeout(timerId);
       });
       this.activeTimers.clear();

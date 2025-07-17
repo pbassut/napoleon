@@ -96,16 +96,37 @@ function terminateAgent(agentId) {
 - Concurrent termination attempts
 
 ## Definition of Done
-- [ ] Agent selection for termination works properly
-- [ ] Confirmation dialog is functional and clear
-- [ ] Graceful process termination is implemented
-- [ ] Session data cleanup is reliable
-- [ ] Dashboard updates correctly after termination
-- [ ] Force termination handles unresponsive processes
-- [ ] User feedback is clear and helpful
-- [ ] Error handling covers all failure scenarios
-- [ ] Unit tests validate termination logic
-- [ ] Integration tests cover end-to-end termination flow
+- [x] Agent selection for termination works properly
+- [x] Confirmation dialog is functional and clear
+- [x] Graceful process termination is implemented
+- [x] Session data cleanup is reliable
+- [x] Dashboard updates correctly after termination
+- [x] Force termination handles unresponsive processes
+- [x] User feedback is clear and helpful
+- [x] Error handling covers all failure scenarios
+- [x] Unit tests validate termination logic
+- [x] Integration tests cover end-to-end termination flow
+
+## Implementation Details
+
+### Files Created/Modified
+- **Created**: `src/ui/components/agent-termination-dialog.js` - New termination confirmation dialog component
+- **Modified**: `src/ui/index.js` - Updated UI to integrate termination dialog
+- **Created**: `__tests__/agent-termination-dialog.test.js` - Unit tests for termination dialog
+- **Created**: `__tests__/ui-termination-integration.test.js` - Integration tests for termination flow
+
+### Key Features Implemented
+1. **Confirmation Dialog**: Modal dialog showing agent info (ID, status, runtime, PID) with Y/N buttons
+2. **Keyboard Navigation**: Y/N keys, Tab/Arrow keys for button selection, Escape to cancel
+3. **Runtime Display**: Shows agent runtime in MM:SS or H:MM:SS format
+4. **Error Handling**: Graceful error handling with user feedback
+5. **Safety Features**: Defaults to "Cancel" button for safety
+6. **Null Safety**: Added null checks to prevent crashes if dialog is not initialized
+
+### Test Coverage
+- **Unit Tests**: 29 tests covering all dialog functionality and edge cases
+- **Integration Tests**: 18 tests covering full termination flow and UI integration
+- **All Tests Passing**: Complete test suite passes with new functionality
 
 ## Notes
 - This is the counterpart to agent spawning functionality

@@ -22,7 +22,7 @@ async function initializeApplication(program) {
       .action(async () => {
         // Set environment variable to indicate we're running in terminal UI mode
         process.env.TERMINAL_UI_MODE = 'true';
-        
+
         // eslint-disable-next-line global-require
         const TerminalUI = require('../ui/index');
         const ui = new TerminalUI();

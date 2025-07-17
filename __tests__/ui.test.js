@@ -23,6 +23,7 @@ describe('Terminal UI', () => {
       on: jest.fn(),
       render: jest.fn(),
       destroy: jest.fn(),
+      focus: jest.fn(),
       width: 80,
       height: 24,
     };
@@ -44,6 +45,8 @@ describe('Terminal UI', () => {
 
     mockList = {
       setItems: jest.fn(),
+      select: jest.fn(),
+      children: [],
       show: jest.fn(),
       hide: jest.fn(),
       on: jest.fn(),

@@ -12,20 +12,20 @@ const AgentStatus = {
   RUNNING: 'running',
   IDLE: 'idle',
   ERROR: 'error',
-  TERMINATING: 'terminating'
+  TERMINATING: 'terminating',
 };
 
 // Input validation patterns for security
 const DANGEROUS_PATTERNS = [
-  /[;&|`$]/,         // Shell metacharacters (dangerous ones)
-  /\.\.[\/\\]/,      // Directory traversal
-  /^-/,              // Options starting with dash
-  /[<>]/,            // Redirection operators
-  /\0/,              // Null bytes
-  /\x00-\x08/,       // Control characters (excluding tab, newline, carriage return)
-  /\x0B\x0C/,        // Vertical tab, form feed
-  /\x0E-\x1F/,       // Other control characters
-  /\x7F/,            // DEL character
+  /[;&|`$]/, // Shell metacharacters (dangerous ones)
+  /\.\.[\/\\]/, // Directory traversal
+  /^-/, // Options starting with dash
+  /[<>]/, // Redirection operators
+  /\0/, // Null bytes
+  /\x00-\x08/, // Control characters (excluding tab, newline, carriage return)
+  /\x0B\x0C/, // Vertical tab, form feed
+  /\x0E-\x1F/, // Other control characters
+  /\x7F/, // DEL character
 ];
 
 // More permissive character set - allows most printable characters
@@ -48,10 +48,10 @@ class AgentManager {
     try {
       this.config = loadConfig();
       this.maxAgents = this.config.maxAgents || 3;
-      
+
       // Load existing sessions
       await this.loadSessions();
-      
+
       logger.info('Agent manager initialized successfully', {
         maxAgents: this.maxAgents,
         activeSessions: this.agents.size,
@@ -69,10 +69,10 @@ class AgentManager {
     try {
       if (fs.existsSync(SESSIONS_FILE)) {
         const sessionsData = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
-        
+
         // Validate existing sessions (check if processes are still running)
         const validSessions = [];
-        
+
         for (const session of sessionsData.sessions || []) {
           if (this.isProcessRunning(session.pid)) {
             this.agents.set(session.id, session);
@@ -81,10 +81,10 @@ class AgentManager {
             logger.warn('Found stale session, removing', { sessionId: session.id });
           }
         }
-        
+
         // Update sessions file with only valid sessions
         await this.saveSessions();
-        
+
         logger.info('Loaded existing sessions', { count: validSessions.length });
       }
     } catch (error) {
@@ -99,7 +99,7 @@ class AgentManager {
   async saveSessions() {
     try {
       // Create serializable session data (exclude process objects)
-      const sessions = Array.from(this.agents.values()).map(session => ({
+      const sessions = Array.from(this.agents.values()).map((session) => ({
         id: session.id,
         instructions: session.instructions,
         spawnTime: session.spawnTime,
@@ -110,23 +110,23 @@ class AgentManager {
         lastActivity: session.lastActivity,
         // Exclude process object as it cannot be serialized
       }));
-      
+
       const sessionsData = {
         sessions,
         lastUpdated: new Date().toISOString(),
       };
-      
+
       fs.writeFileSync(SESSIONS_FILE, JSON.stringify(sessionsData, null, 2), {
         mode: 0o600,
       });
-      
+
       logger.debug('Sessions saved successfully', { count: this.agents.size });
     } catch (error) {
       logger.error('Failed to save sessions', { error: error.message });
       throw new FileSystemError(
         `Failed to save sessions: ${error.message}`,
         'SESSION_SAVE_FAILED',
-        'Please check file permissions for ~/.add-manager/'
+        'Please check file permissions for ~/.add-manager/',
       );
     }
   }
@@ -137,17 +137,17 @@ class AgentManager {
   validateGitRepository() {
     try {
       // Check if we're in a git repository
-      execSync('git rev-parse --is-inside-work-tree', { 
+      execSync('git rev-parse --is-inside-work-tree', {
         stdio: 'ignore',
         cwd: process.cwd(),
       });
-      
+
       // Get repository root
-      const repoRoot = execSync('git rev-parse --show-toplevel', { 
+      const repoRoot = execSync('git rev-parse --show-toplevel', {
         encoding: 'utf8',
         cwd: process.cwd(),
       }).trim();
-      
+
       return {
         isValid: true,
         rootPath: repoRoot,
@@ -189,18 +189,18 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Instructions must be a non-empty string',
         'INVALID_INSTRUCTIONS_TYPE',
-        'Please provide valid text instructions for the agent'
+        'Please provide valid text instructions for the agent',
       );
     }
 
     const trimmed = instructions.trim();
-    
+
     // Length validation
     if (trimmed.length < 10) {
       throw new EnvironmentValidationError(
         'Agent instructions must be at least 10 characters long',
         'INSTRUCTIONS_TOO_SHORT',
-        'Please provide more detailed instructions for the agent'
+        'Please provide more detailed instructions for the agent',
       );
     }
 
@@ -208,7 +208,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Agent instructions must be less than 5000 characters',
         'INSTRUCTIONS_TOO_LONG',
-        'Please provide more concise instructions for the agent'
+        'Please provide more concise instructions for the agent',
       );
     }
 
@@ -218,7 +218,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           'Instructions contain potentially dangerous characters',
           'DANGEROUS_INPUT_DETECTED',
-          'Please remove special characters and shell metacharacters from your instructions'
+          'Please remove special characters and shell metacharacters from your instructions',
         );
       }
     }
@@ -228,7 +228,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Instructions contain invalid characters',
         'INVALID_CHARACTERS',
-        'Please use only standard alphanumeric characters and basic punctuation'
+        'Please use only standard alphanumeric characters and basic punctuation',
       );
     }
 
@@ -248,7 +248,7 @@ class AgentManager {
     // Validate working directory if provided
     if (options.workingDirectory) {
       const workingDir = path.resolve(options.workingDirectory);
-      
+
       // Check if directory exists and is accessible
       try {
         const stats = fs.statSync(workingDir);
@@ -256,7 +256,7 @@ class AgentManager {
           throw new EnvironmentValidationError(
             'Working directory is not a valid directory',
             'INVALID_WORKING_DIRECTORY',
-            'Please provide a valid directory path'
+            'Please provide a valid directory path',
           );
         }
         validatedOptions.workingDirectory = workingDir;
@@ -267,7 +267,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           'Working directory is not accessible',
           'WORKING_DIRECTORY_NOT_ACCESSIBLE',
-          'Please ensure the directory exists and is readable'
+          'Please ensure the directory exists and is readable',
         );
       }
     }
@@ -289,7 +289,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           `Maximum ${this.maxAgents} agents already running`,
           'MAX_AGENTS_REACHED',
-          'Please terminate an existing agent before spawning a new one'
+          'Please terminate an existing agent before spawning a new one',
         );
       }
 
@@ -299,14 +299,14 @@ class AgentManager {
         throw new EnvironmentValidationError(
           gitValidation.error,
           'GIT_REPO_INVALID',
-          gitValidation.suggestion
+          gitValidation.suggestion,
         );
       }
 
       // Generate agent session
       const agentId = this.generateAgentId();
       const workingDirectory = validatedOptions.workingDirectory || process.cwd();
-      
+
       logger.info('Spawning new agent', {
         agentId,
         instructionsLength: instructions.length,
@@ -327,7 +327,7 @@ class AgentManager {
 
       // Spawn Claude CLI process
       const claudeProcess = await this.spawnClaudeProcess(session);
-      
+
       // Update session with process info
       session.pid = claudeProcess.pid;
       session.status = AgentStatus.RUNNING;
@@ -365,7 +365,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           'Claude CLI is not installed or not in PATH',
           'CLAUDE_CLI_NOT_FOUND',
-          'Please install Claude CLI: https://claude.ai/cli'
+          'Please install Claude CLI: https://claude.ai/cli',
         );
       }
 
@@ -445,7 +445,7 @@ class AgentManager {
     if (!session) return;
 
     const output = data.toString();
-    
+
     // Initialize output buffer if not exists
     if (!session.output) {
       session.output = [];
@@ -481,14 +481,14 @@ class AgentManager {
     if (session) {
       session.status = status;
       session.lastActivity = new Date().toISOString();
-      
+
       // If agent is terminated, remove from active sessions
       if (status === AgentStatus.TERMINATING || status === AgentStatus.ERROR) {
         this.agents.delete(agentId);
       }
-      
+
       // Save sessions
-      this.saveSessions().catch(error => {
+      this.saveSessions().catch((error) => {
         logger.error('Failed to save sessions after status update', {
           agentId,
           status,
@@ -525,7 +525,7 @@ class AgentManager {
       if (session.process && session.pid) {
         // Send SIGTERM first
         session.process.kill('SIGTERM');
-        
+
         // Wait a bit, then force kill if needed
         setTimeout(() => {
           if (this.isProcessRunning(session.pid)) {
@@ -535,7 +535,7 @@ class AgentManager {
       }
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
-      
+
       logger.info('Agent terminated', { agentId });
     } catch (error) {
       logger.error('Failed to terminate agent', {
@@ -566,19 +566,23 @@ class AgentManager {
   getAgentRuntime(agentId) {
     const session = this.agents.get(agentId);
     if (!session) return 0;
-    
+
     const startTime = new Date(session.spawnTime);
     const now = new Date();
     return Math.floor((now - startTime) / 1000); // Return in seconds
   }
 
   /**
-   * Format runtime duration in HH:MM format
+   * Format runtime duration in HH:MM format with 'min' label
    */
   formatRuntime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}min`;
   }
 
   /**

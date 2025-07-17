@@ -20,6 +20,7 @@ describe('AgentSpawnDialog', () => {
 
     mockScreen = {
       render: jest.fn(),
+      focus: jest.fn(),
     };
 
     mockBox = {
@@ -145,12 +146,15 @@ describe('AgentSpawnDialog', () => {
     });
 
     it('should show dialog and focus textbox', () => {
+      dialog.footer = mockText; // Add footer mock
       dialog.show();
 
       expect(dialog.isVisible).toBe(true);
       expect(mockBox.show).toHaveBeenCalled();
       expect(mockTextarea.focus).toHaveBeenCalled();
       expect(mockTextarea.setValue).toHaveBeenCalledWith('');
+      expect(mockText.setContent).toHaveBeenCalledWith('Press Ctrl+S to spawn agent | Escape to cancel');
+      expect(mockText.style.fg).toBe('yellow');
       expect(mockParent.render).toHaveBeenCalled();
     });
 

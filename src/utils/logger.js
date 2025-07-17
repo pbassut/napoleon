@@ -11,9 +11,9 @@ if (!fs.existsSync(logDir)) {
 }
 
 // Determine if we're running in terminal UI mode
-const isTerminalUI = process.env.TERMINAL_UI_MODE === 'true' || 
-                     process.argv.includes('start') || 
-                     process.argv.some(arg => arg.includes('add-manager.js'));
+const isTerminalUI = process.env.TERMINAL_UI_MODE === 'true'
+                     || process.argv.includes('start')
+                     || process.argv.some((arg) => arg.includes('add-manager.js'));
 
 // Create logger instance
 const logger = winston.createLogger({

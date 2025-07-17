@@ -7,9 +7,9 @@ const logger = require('../src/utils/logger');
 
 // Global error handlers for production stability
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception occurred', { 
-    error: error.message, 
-    stack: error.stack 
+  logger.error('Uncaught exception occurred', {
+    error: error.message,
+    stack: error.stack,
   });
   console.error('Fatal error: Application crashed due to uncaught exception');
   console.error('Error:', error.message);
@@ -17,9 +17,9 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled promise rejection', { 
+  logger.error('Unhandled promise rejection', {
     reason: reason instanceof Error ? reason.message : reason,
-    stack: reason instanceof Error ? reason.stack : 'No stack available'
+    stack: reason instanceof Error ? reason.stack : 'No stack available',
   });
   console.error('Fatal error: Application crashed due to unhandled promise rejection');
   console.error('Reason:', reason instanceof Error ? reason.message : reason);

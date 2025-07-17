@@ -64,7 +64,7 @@ describe('Terminal UI Extended Functionality', () => {
       canSpawnAgent: jest.fn().mockReturnValue(true),
       maxAgents: 3,
       getAgentRuntime: jest.fn().mockReturnValue(300), // 5 minutes
-      formatRuntime: jest.fn().mockReturnValue('05:00'),
+      formatRuntime: jest.fn().mockReturnValue('05min'),
     };
 
     blessed.screen.mockReturnValue(mockScreen);
@@ -102,8 +102,8 @@ describe('Terminal UI Extended Functionality', () => {
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '> ● agent-1            [running     ] Runtime: 05:00',
-        '  ○ agent-2            [idle        ] Runtime: 05:00',
+        '> ● agent-1            [running     ] PID: N/A   Runtime: 05min',
+        '  ○ agent-2            [idle        ] PID: N/A   Runtime: 05min',
       ]);
       expect(mockScreen.render).toHaveBeenCalled();
     });
@@ -144,9 +144,9 @@ describe('Terminal UI Extended Functionality', () => {
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '> ● agent-1            [running     ] Runtime: 05:00',
-        '  ✗ agent-2            [error       ] Runtime: 05:00',
-        '  ○ agent-3            [idle        ] Runtime: 05:00',
+        '> ● agent-1            [running     ] PID: N/A   Runtime: 05min',
+        '  ✗ agent-2            [error       ] PID: N/A   Runtime: 05min',
+        '  ○ agent-3            [idle        ] PID: N/A   Runtime: 05min',
       ]);
     });
   });
