@@ -9,9 +9,11 @@ jest.mock('fs');
 describe('Git Worktree Integration Tests', () => {
   let agentManager;
   let mockProcess;
+  let timers = [];
 
   beforeEach(() => {
     jest.clearAllMocks();
+    timers = [];
 
     // Mock file system
     fs.existsSync.mockReturnValue(false);
@@ -45,15 +47,29 @@ describe('Git Worktree Integration Tests', () => {
     // Mock exec for git worktree commands
     exec.mockImplementation((cmd, options, callback) => {
       if (cmd.includes('git worktree add')) {
-        setTimeout(() => callback(null, 'Preparing worktree (identifier: abc123)', ''), 10);
+        const timer = setTimeout(() => callback(null, 'Preparing worktree (identifier: abc123)', ''), 10);
+        timers.push(timer);
       } else if (cmd.includes('git worktree remove')) {
-        setTimeout(() => callback(null, '', ''), 10);
+        const timer = setTimeout(() => callback(null, '', ''), 10);
+        timers.push(timer);
       } else {
         callback(new Error('Unknown command'));
       }
     });
 
     agentManager = new AgentManager();
+  });
+
+  afterEach(() => {
+    // Clean up any pending timers
+    timers.forEach(timer => clearTimeout(timer));
+    timers = [];
+    
+    // Clean up any agent manager resources
+    if (agentManager) {
+      // Force cleanup of any remaining resources
+      agentManager = null;
+    }
   });
 
   it('should create complete worktree workflow', async () => {
@@ -77,8 +93,22 @@ describe('Git Worktree Integration Tests', () => {
       expect.any(Function)
     );
 
+    // Clear mock calls before testing termination
+    exec.mockClear();
+
+    // Mock fs.existsSync to return true for the worktree path so removal is attempted
+    fs.existsSync.mockImplementation((path) => {
+      if (path === session.worktreePath) {
+        return true; // Simulate that the worktree directory exists for removal
+      }
+      return false; // Default for other paths
+    });
+
     // Test termination with cleanup
     await agentManager.terminateAgent(session.id);
+
+    // Wait for async worktree removal to complete
+    await new Promise(resolve => setTimeout(resolve, 50));
 
     // Verify git worktree remove was called
     expect(exec).toHaveBeenCalledWith(
@@ -94,10 +124,19 @@ describe('Git Worktree Integration Tests', () => {
     // Mock worktree creation failure
     exec.mockImplementation((cmd, options, callback) => {
       if (cmd.includes('git worktree add')) {
-        setTimeout(() => callback(new Error('Branch already exists'), '', 'fatal: branch exists'), 10);
+        const timer = setTimeout(() => callback(new Error('Branch already exists'), '', 'fatal: branch exists'), 10);
+        timers.push(timer);
       } else {
         callback(null, '', '');
       }
+    });
+
+    // Mock fs.existsSync to return true for the failed worktree path so cleanup is attempted
+    fs.existsSync.mockImplementation((path) => {
+      if (path.includes('.add-manager-worktrees')) {
+        return true; // Simulate that the directory was partially created
+      }
+      return false;
     });
 
     const instructions = 'Test agent that should fail worktree creation';

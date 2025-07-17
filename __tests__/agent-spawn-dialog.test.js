@@ -97,10 +97,10 @@ describe('AgentSpawnDialog', () => {
       expect(blessed.textarea).toHaveBeenCalledWith({
         parent: mockBox,
         label: ' Agent Instructions ',
-        top: 6,
+        top: 7,
         left: 2,
         width: '100%-4',
-        height: 8,
+        height: 7,
         border: { type: 'line' },
         style: {
           fg: 'white',
@@ -242,7 +242,7 @@ describe('AgentSpawnDialog', () => {
       
       const spawnPromise = dialog.handleSpawnAgent();
       
-      expect(mockText.setContent).toHaveBeenCalledWith('Spawning agent...');
+      expect(mockText.setContent).toHaveBeenCalledWith('Creating git worktree and spawning agent...');
       expect(mockText.style.fg).toBe('yellow');
       
       jest.advanceTimersByTime(100);

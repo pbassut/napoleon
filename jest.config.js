@@ -22,5 +22,11 @@ module.exports = {
     }
   },
   // Global setup to ensure timers are cleaned up
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js']
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
+  // Force Node.js to use fake timers globally to prevent timer leaks
+  fakeTimers: {
+    enableGlobally: false // Let individual tests control timer mocking
+  },
+  // Add teardown timeout
+  testTimeout: 10000
 };

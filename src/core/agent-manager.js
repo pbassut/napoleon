@@ -124,18 +124,58 @@ class AgentManager {
       // Set process to null since we can't reattach to existing streams
       session.process = null;
       
-      // Log that this session was restored but output capture is limited
+      // Add comprehensive diagnostic information if logs are empty
       // Only add this message if it's not already there (to avoid duplicates)
       const alreadyHasRestoreMessage = session.logs.some(log => 
         log.content && log.content.includes('Session restored - PID')
       );
       
       if (!alreadyHasRestoreMessage) {
-        session.logs.push({
-          timestamp: new Date(),
-          content: `Session restored - PID ${session.pid} (previous output not captured)`,
-          type: 'info'
-        });
+        // Add detailed diagnostic logs
+        const diagnosticLogs = [
+          {
+            timestamp: new Date(session.spawnTime),
+            content: `🚀 Agent spawned: ${new Date(session.spawnTime).toLocaleString()}`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(session.spawnTime),
+            content: `📝 Instructions: "${session.instructions}"`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(session.spawnTime),
+            content: `📁 Working directory: ${session.workingDirectory}`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(session.spawnTime),
+            content: `🌿 Git worktree: ${session.worktreePath}`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(),
+            content: `🔄 Session restored - PID: ${session.pid}`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(),
+            content: `⚠️  Note: Cannot capture output from processes started before logging was enabled`,
+            type: 'warning'
+          },
+          {
+            timestamp: new Date(),
+            content: `📊 Status: ${session.status} | Last activity: ${new Date(session.lastActivity).toLocaleString()}`,
+            type: 'info'
+          },
+          {
+            timestamp: new Date(),
+            content: `💡 Tip: Future agent output will be captured in real-time`,
+            type: 'info'
+          }
+        ];
+        
+        session.logs.push(...diagnosticLogs);
       }
       
       logger.info('Session restored with limited output capture', {
@@ -966,6 +1006,11 @@ class AgentManager {
   getAgentLogs(agentId) {
     const session = this.agents.get(agentId);
     if (!session) return [];
+
+    // If logs are empty and this is an existing session, try to populate diagnostic info
+    if ((!session.logs || session.logs.length === 0) && session.pid) {
+      this.reattachToProcess(session);
+    }
 
     // Return logs with proper structure for detail view
     const logs = session.logs || [];

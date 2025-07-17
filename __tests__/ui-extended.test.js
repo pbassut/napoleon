@@ -2,11 +2,17 @@ const blessed = require('blessed');
 const TerminalUI = require('../src/ui/index');
 const { loadConfig } = require('../src/core/config');
 const AgentManager = require('../src/core/agent-manager');
+const AgentSpawnDialog = require('../src/ui/components/agent-spawn-dialog');
+const AgentTerminationDialog = require('../src/ui/components/agent-termination-dialog');
+const AgentDetailView = require('../src/ui/components/agent-detail-view');
 
 jest.mock('blessed');
 jest.mock('../src/core/config');
 jest.mock('../src/core/agent-manager');
 jest.mock('../src/utils/logger');
+jest.mock('../src/ui/components/agent-spawn-dialog');
+jest.mock('../src/ui/components/agent-termination-dialog');
+jest.mock('../src/ui/components/agent-detail-view');
 
 describe('Terminal UI Extended Functionality', () => {
   let ui;
@@ -72,6 +78,19 @@ describe('Terminal UI Extended Functionality', () => {
     blessed.text.mockReturnValue(mockText);
     blessed.list.mockReturnValue(mockList);
     AgentManager.mockImplementation(() => mockAgentManager);
+
+    // Mock dialog components
+    AgentSpawnDialog.mockImplementation(() => ({
+      destroy: jest.fn(),
+    }));
+    
+    AgentTerminationDialog.mockImplementation(() => ({
+      destroy: jest.fn(),
+    }));
+    
+    AgentDetailView.mockImplementation(() => ({
+      destroy: jest.fn(),
+    }));
 
     loadConfig.mockReturnValue({
       maxAgents: 3,
@@ -367,6 +386,9 @@ describe('Terminal UI Extended Functionality', () => {
     it('should clean up timers on quit', () => {
       const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
       const mockWrite = jest.spyOn(process.stdout, 'write').mockImplementation(() => {});
+      
+      // Ensure the screen is properly assigned from the mock
+      expect(ui.screen).toBe(mockScreen);
       
       // Add some timers
       ui.setTimeout(() => {}, 1000);

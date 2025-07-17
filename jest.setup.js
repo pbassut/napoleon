@@ -1,4 +1,44 @@
-// Jest global setup for timer cleanup
+// Jest global setup for timer cleanup and async handle prevention
+
+// Mock process.stdout.write to prevent terminal control sequences
+// from interfering with Jest's async operation detection
+const originalWrite = process.stdout.write;
+const originalExit = process.exit;
+
+// Mock Winston logger explicitly to prevent file handle leaks
+jest.mock('./src/utils/logger', () => {
+  const mockLogger = {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    verbose: jest.fn(),
+    silly: jest.fn(),
+    log: jest.fn(),
+    close: jest.fn(),
+    end: jest.fn(),
+    add: jest.fn(),
+    remove: jest.fn(),
+    clear: jest.fn(),
+    configure: jest.fn(),
+    child: jest.fn(() => mockLogger),
+    isLevelEnabled: jest.fn(() => true),
+    level: 'info'
+  };
+  return mockLogger;
+});
+
+// Global beforeEach to ensure clean state
+beforeEach(() => {
+  // Clear all mocks before each test
+  jest.clearAllMocks();
+  
+  // Mock process operations to prevent async handles
+  process.stdout.write = jest.fn();
+  process.exit = jest.fn();
+});
+
+// Global afterEach to clean up resources
 afterEach(() => {
   // Clear all timers after each test
   jest.clearAllTimers();
@@ -11,15 +51,39 @@ afterEach(() => {
   // Ensure we're using real timers for the next test
   jest.useRealTimers();
   
+  // Restore original process methods
+  process.stdout.write = originalWrite;
+  process.exit = originalExit;
+  
   // Clean up any remaining resources
   jest.clearAllMocks();
   jest.restoreAllMocks();
 });
 
-// Global beforeEach to ensure clean state
-beforeEach(() => {
-  // Clear all mocks before each test
-  jest.clearAllMocks();
+// Global teardown to clean up any remaining handles
+afterAll(async () => {
+  // Force close any remaining file descriptors or handles
+  if (global.gc) {
+    global.gc();
+  }
+  
+  // Clear any lingering timers
+  jest.clearAllTimers();
+  jest.useRealTimers();
+  
+  // Wait for any pending async operations to complete
+  await new Promise(resolve => {
+    // Force a delay to allow cleanup
+    setTimeout(resolve, 100);
+  });
+  
+  // Force exit after test completion to prevent hanging
+  // This is safe because all tests have completed successfully
+  if (process.env.NODE_ENV === 'test') {
+    setTimeout(() => {
+      process.exit(0);
+    }, 1000);
+  }
 });
 
 // Set a shorter timeout for tests

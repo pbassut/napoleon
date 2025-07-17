@@ -1,0 +1,1 @@
+- Never add forceExit: true to jest

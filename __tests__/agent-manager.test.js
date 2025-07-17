@@ -163,7 +163,7 @@ describe('AgentManager', () => {
       expect(session.status).toBe('running');
       expect(session.pid).toBe(12345);
       expect(spawn).toHaveBeenCalledWith('claude', [], {
-        cwd: process.cwd(),
+        cwd: expect.stringContaining('.add-manager-worktrees'),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: expect.objectContaining({
           CLAUDE_SESSION_ID: session.id,
@@ -487,7 +487,7 @@ describe('AgentManager', () => {
         const result = await agentManager.createWorktree(agentId);
         
         expect(result.agentId).toBe(agentId);
-        expect(result.worktreeName).toMatch(/^agent-test-agent-123-\d+$/);
+        expect(result.worktreeName).toMatch(/^agent-test-123-\d+$/);
         expect(result.worktreePath).toContain('.add-manager-worktrees');
         expect(exec).toHaveBeenCalledWith(
           expect.stringContaining('git worktree add'),
