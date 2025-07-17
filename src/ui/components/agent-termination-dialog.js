@@ -92,7 +92,6 @@ class AgentTerminationDialog {
           fg: 'green', // Default selection
         },
       },
-      align: 'center',
     });
 
     // Confirm button
@@ -113,7 +112,6 @@ class AgentTerminationDialog {
           fg: 'gray',
         },
       },
-      align: 'center',
     });
 
     // Set up event handlers
