@@ -98,8 +98,21 @@ class AgentManager {
    */
   async saveSessions() {
     try {
+      // Create serializable session data (exclude process objects)
+      const sessions = Array.from(this.agents.values()).map(session => ({
+        id: session.id,
+        instructions: session.instructions,
+        spawnTime: session.spawnTime,
+        status: session.status,
+        pid: session.pid,
+        workingDirectory: session.workingDirectory,
+        gitRoot: session.gitRoot,
+        lastActivity: session.lastActivity,
+        // Exclude process object as it cannot be serialized
+      }));
+      
       const sessionsData = {
-        sessions: Array.from(this.agents.values()),
+        sessions,
         lastUpdated: new Date().toISOString(),
       };
       
@@ -357,7 +370,7 @@ class AgentManager {
       }
 
       // Spawn the process
-      const claudeProcess = spawn('claude', ['--interactive'], {
+      const claudeProcess = spawn('claude', [], {
         cwd: session.workingDirectory,
         stdio: ['pipe', 'pipe', 'pipe'],
         env: {

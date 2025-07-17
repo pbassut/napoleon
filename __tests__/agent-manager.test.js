@@ -152,7 +152,7 @@ describe('AgentManager', () => {
       expect(session.instructions).toBe(instructions);
       expect(session.status).toBe('running');
       expect(session.pid).toBe(12345);
-      expect(spawn).toHaveBeenCalledWith('claude', ['--interactive'], {
+      expect(spawn).toHaveBeenCalledWith('claude', [], {
         cwd: process.cwd(),
         stdio: ['pipe', 'pipe', 'pipe'],
         env: expect.objectContaining({
