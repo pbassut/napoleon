@@ -6,6 +6,15 @@ const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
 const { EnvironmentValidationError, FileSystemError } = require('../utils/errors');
 const logger = require('../utils/logger');
 
+// Agent status types as per US004 requirements
+const AgentStatus = {
+  SPAWNING: 'spawning',
+  RUNNING: 'running',
+  IDLE: 'idle',
+  ERROR: 'error',
+  TERMINATING: 'terminating'
+};
+
 // Input validation patterns for security
 const DANGEROUS_PATTERNS = [
   /[;&|`$]/,         // Shell metacharacters (dangerous ones)
@@ -296,10 +305,11 @@ class AgentManager {
         id: agentId,
         instructions: sanitizedInstructions,
         spawnTime: new Date().toISOString(),
-        status: 'initializing',
+        status: AgentStatus.SPAWNING,
         pid: null,
         workingDirectory,
         gitRoot: gitValidation.rootPath,
+        lastActivity: new Date().toISOString(),
       };
 
       // Spawn Claude CLI process
@@ -307,7 +317,7 @@ class AgentManager {
       
       // Update session with process info
       session.pid = claudeProcess.pid;
-      session.status = 'running';
+      session.status = AgentStatus.RUNNING;
       session.process = claudeProcess;
 
       // Store session
@@ -362,7 +372,7 @@ class AgentManager {
           agentId: session.id,
           error: error.message,
         });
-        this.updateAgentStatus(session.id, 'error');
+        this.updateAgentStatus(session.id, AgentStatus.ERROR);
       });
 
       claudeProcess.on('exit', (code, signal) => {
@@ -371,7 +381,7 @@ class AgentManager {
           code,
           signal,
         });
-        this.updateAgentStatus(session.id, 'terminated');
+        this.updateAgentStatus(session.id, AgentStatus.TERMINATING);
       });
 
       // Set up stdout/stderr handlers
@@ -460,7 +470,7 @@ class AgentManager {
       session.lastActivity = new Date().toISOString();
       
       // If agent is terminated, remove from active sessions
-      if (status === 'terminated' || status === 'error') {
+      if (status === AgentStatus.TERMINATING || status === AgentStatus.ERROR) {
         this.agents.delete(agentId);
       }
       
@@ -511,7 +521,7 @@ class AgentManager {
         }, 5000);
       }
 
-      this.updateAgentStatus(agentId, 'terminated');
+      this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
       
       logger.info('Agent terminated', { agentId });
     } catch (error) {
@@ -536,6 +546,46 @@ class AgentManager {
   canSpawnAgent() {
     return this.agents.size < this.maxAgents;
   }
+
+  /**
+   * Get runtime duration for an agent
+   */
+  getAgentRuntime(agentId) {
+    const session = this.agents.get(agentId);
+    if (!session) return 0;
+    
+    const startTime = new Date(session.spawnTime);
+    const now = new Date();
+    return Math.floor((now - startTime) / 1000); // Return in seconds
+  }
+
+  /**
+   * Format runtime duration in HH:MM format
+   */
+  formatRuntime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+
+  /**
+   * Get detailed agent status for display
+   */
+  getAgentStatusDisplay(agentId) {
+    const session = this.agents.get(agentId);
+    if (!session) return null;
+
+    const runtime = this.getAgentRuntime(agentId);
+    return {
+      id: session.id,
+      status: session.status,
+      runtime: this.formatRuntime(runtime),
+      spawnTime: session.spawnTime,
+      lastActivity: session.lastActivity,
+      pid: session.pid,
+    };
+  }
 }
 
 module.exports = AgentManager;
+module.exports.AgentStatus = AgentStatus;

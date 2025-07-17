@@ -3,6 +3,7 @@ const { loadConfig } = require('../core/config');
 const logger = require('../utils/logger');
 const packageInfo = require('../../package.json');
 const AgentManager = require('../core/agent-manager');
+const { AgentStatus } = require('../core/agent-manager');
 const AgentSpawnDialog = require('./components/agent-spawn-dialog');
 
 /**
@@ -22,6 +23,8 @@ class TerminalUI {
     this.agentManager = null;
     this.agents = [];
     this.activeTimers = new Set(); // Track active timers for cleanup
+    this.selectedAgentIndex = 0; // Track selected agent for navigation
+    this.statusUpdateInterval = null; // For real-time updates
   }
 
   /**
@@ -62,6 +65,9 @@ class TerminalUI {
       // Initial render and update
       this.updateAgentsList();
       this.render();
+
+      // Start status polling for real-time updates
+      this.startStatusPolling();
 
       logger.info('Terminal UI initialized successfully');
     } catch (error) {
@@ -217,7 +223,7 @@ class TerminalUI {
       left: 1,
       width: '100%-2',
       height: 1,
-      content: 'Press \'n\' to spawn new agent | \'h\' for help | \'q\' to quit',
+      content: 'Press \'n\' to spawn new agent | \'d\' to terminate | \'↑↓\' to navigate | \'h\' for help | \'q\' to quit',
       style: {
         fg: 'cyan',
       },
@@ -265,15 +271,20 @@ class TerminalUI {
       'ADD Manager - Agent Driven Development',
       '',
       'Keyboard Shortcuts:',
-      '  n - Spawn new agent (Coming soon)',
+      '  n - Spawn new agent',
+      '  d - Terminate selected agent',
+      '  ↑/k - Navigate up in agent list',
+      '  ↓/j - Navigate down in agent list',
       '  h - Show/hide this help',
       '  q - Quit application',
       '  Ctrl+C - Force quit',
       '  Escape - Return to main view',
       '',
       'Features:',
-      '  • Terminal UI with blessed framework',
-      '  • Agent status monitoring',
+      '  • Real-time agent status monitoring',
+      '  • Keyboard navigation with selection',
+      '  • Status indicators (●=running, ○=idle, ✗=error)',
+      '  • Runtime tracking for each agent',
       '  • Git worktree isolation',
       '  • Session persistence',
       '',
@@ -317,6 +328,20 @@ class TerminalUI {
       if (this.showingHelp) {
         this.toggleHelp();
       }
+    });
+
+    // Arrow key navigation for agent selection
+    this.screen.key(['up', 'k'], () => {
+      this.navigateAgents('up');
+    });
+
+    this.screen.key(['down', 'j'], () => {
+      this.navigateAgents('down');
+    });
+
+    // Agent termination (d key)
+    this.screen.key(['d'], () => {
+      this.terminateSelectedAgent();
     });
 
     // Any key to close help when shown
@@ -422,6 +447,77 @@ class TerminalUI {
   }
 
   /**
+   * Start status polling for real-time updates
+   */
+  startStatusPolling() {
+    // Poll every 1.5 seconds as per US004 requirement
+    this.statusUpdateInterval = setInterval(() => {
+      this.updateAgentsList();
+    }, 1500);
+  }
+
+  /**
+   * Stop status polling
+   */
+  stopStatusPolling() {
+    if (this.statusUpdateInterval) {
+      clearInterval(this.statusUpdateInterval);
+      this.statusUpdateInterval = null;
+    }
+  }
+
+  /**
+   * Navigate agents list with keyboard
+   */
+  navigateAgents(direction) {
+    if (this.agents.length === 0) return;
+
+    if (direction === 'up') {
+      this.selectedAgentIndex = this.selectedAgentIndex > 0 
+        ? this.selectedAgentIndex - 1 
+        : this.agents.length - 1; // Wrap around to bottom
+    } else if (direction === 'down') {
+      this.selectedAgentIndex = this.selectedAgentIndex < this.agents.length - 1 
+        ? this.selectedAgentIndex + 1 
+        : 0; // Wrap around to top
+    }
+
+    // Update the list selection
+    this.agentsList.select(this.selectedAgentIndex);
+    this.render();
+  }
+
+  /**
+   * Terminate selected agent
+   */
+  async terminateSelectedAgent() {
+    if (this.agents.length === 0) return;
+
+    const selectedAgent = this.agents[this.selectedAgentIndex];
+    if (!selectedAgent) return;
+
+    try {
+      await this.agentManager.terminateAgent(selectedAgent.id);
+      this.updateStatus(`Agent ${selectedAgent.id} terminated`, { fg: 'yellow', bold: true });
+      
+      // Reset selection if needed
+      if (this.selectedAgentIndex >= this.agents.length - 1) {
+        this.selectedAgentIndex = Math.max(0, this.agents.length - 2);
+      }
+      
+      // Hide status message after 3 seconds
+      this.setTimeout(() => {
+        this.updateAgentsList();
+      }, 3000);
+    } catch (error) {
+      this.updateStatus(`Failed to terminate agent: ${error.message}`, { fg: 'red', bold: true });
+      this.setTimeout(() => {
+        this.updateAgentsList();
+      }, 5000);
+    }
+  }
+
+  /**
    * Update agents list display
    */
   updateAgentsList() {
@@ -432,43 +528,92 @@ class TerminalUI {
 
     if (agents.length === 0) {
       // Show empty state
+      this.statusText.setContent('No active agents - Press \'n\' to spawn new agent');
       this.statusText.show();
-      this.instructionText.show();
+      this.instructionText.hide();
       this.agentsList.hide();
+      this.selectedAgentIndex = 0;
     } else {
       // Show agents list
       this.statusText.hide();
       this.instructionText.hide();
       this.agentsList.show();
 
-      // Update list items
-      const items = agents.map(agent => {
-        const status = this.getStatusIcon(agent.status);
-        const timeAgo = this.getTimeAgo(agent.spawnTime);
-        return `${status} ${agent.id} - ${agent.status} (${timeAgo})`;
+      // Ensure selected index is within bounds
+      if (this.selectedAgentIndex >= agents.length) {
+        this.selectedAgentIndex = Math.max(0, agents.length - 1);
+      }
+
+      // Update list items with proper formatting as per US004
+      const items = agents.map((agent, index) => {
+        const statusIcon = this.getStatusIcon(agent.status);
+        const runtime = this.agentManager.formatRuntime(this.agentManager.getAgentRuntime(agent.id));
+        const statusText = agent.status.padEnd(12); // Pad for alignment
+        const isSelected = index === this.selectedAgentIndex;
+        const prefix = isSelected ? '> ' : '  ';
+        return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] Runtime: ${runtime}`;
       });
 
       this.agentsList.setItems(items);
+      
+      // Update selection highlighting
+      this.agentsList.select(this.selectedAgentIndex);
+      
+      // Update styling based on status
+      this.agentsList.children.forEach((item, index) => {
+        if (agents[index]) {
+          const color = this.getStatusColor(agents[index].status);
+          const isSelected = index === this.selectedAgentIndex;
+          item.style = {
+            ...item.style,
+            fg: color,
+            bg: isSelected ? 'blue' : 'black',
+            bold: isSelected,
+          };
+        }
+      });
     }
 
     this.render();
   }
 
   /**
-   * Get status icon for agent
+   * Get status icon for agent as per US004 requirements
    */
   getStatusIcon(status) {
     switch (status) {
-      case 'running':
-        return '🟢';
-      case 'initializing':
-        return '🟡';
-      case 'error':
-        return '🔴';
-      case 'terminated':
-        return '⚫';
+      case AgentStatus.RUNNING:
+        return '●'; // Running - solid circle
+      case AgentStatus.IDLE:
+        return '○'; // Idle - hollow circle
+      case AgentStatus.ERROR:
+        return '✗'; // Error - X mark
+      case AgentStatus.SPAWNING:
+        return '◐'; // Spawning - half circle
+      case AgentStatus.TERMINATING:
+        return '◯'; // Terminating - hollow circle
       default:
-        return '⚪';
+        return '○'; // Default to idle
+    }
+  }
+
+  /**
+   * Get status color for agent
+   */
+  getStatusColor(status) {
+    switch (status) {
+      case AgentStatus.RUNNING:
+        return 'green'; // Running - green
+      case AgentStatus.IDLE:
+        return 'yellow'; // Idle - yellow
+      case AgentStatus.ERROR:
+        return 'red'; // Error - red
+      case AgentStatus.SPAWNING:
+        return 'blue'; // Spawning - blue
+      case AgentStatus.TERMINATING:
+        return 'gray'; // Terminating - gray
+      default:
+        return 'white'; // Default
     }
   }
 
@@ -545,6 +690,9 @@ class TerminalUI {
     logger.info('Shutting down terminal UI');
 
     try {
+      // Stop status polling
+      this.stopStatusPolling();
+
       // Clean up all active timers
       this.activeTimers.forEach(timerId => {
         clearTimeout(timerId);

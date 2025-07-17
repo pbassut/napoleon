@@ -52,7 +52,9 @@ describe('Terminal UI Extended Functionality', () => {
       on: jest.fn(),
       key: jest.fn(),
       focus: jest.fn(),
+      select: jest.fn(),
       style: {},
+      children: [],
     };
 
     mockAgentManager = {
@@ -61,6 +63,8 @@ describe('Terminal UI Extended Functionality', () => {
       spawnAgent: jest.fn().mockResolvedValue({ id: 'test-agent', status: 'running' }),
       canSpawnAgent: jest.fn().mockReturnValue(true),
       maxAgents: 3,
+      getAgentRuntime: jest.fn().mockReturnValue(300), // 5 minutes
+      formatRuntime: jest.fn().mockReturnValue('05:00'),
     };
 
     blessed.screen.mockReturnValue(mockScreen);
@@ -91,21 +95,15 @@ describe('Terminal UI Extended Functionality', () => {
     it('should update agents list display', () => {
       const mockAgents = [
         { id: 'agent-1', status: 'running', spawnTime: new Date().toISOString() },
-        { id: 'agent-2', status: 'stopped', spawnTime: new Date().toISOString() },
+        { id: 'agent-2', status: 'idle', spawnTime: new Date().toISOString() },
       ];
       mockAgentManager.getActiveAgents.mockReturnValue(mockAgents);
-      
-      // Mock the helper methods
-      ui.getStatusIcon = jest.fn().mockImplementation((status) => {
-        return status === 'running' ? '🟢' : '⚪';
-      });
-      ui.getTimeAgo = jest.fn().mockReturnValue('0s ago');
       
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '🟢 agent-1 - running (0s ago)',
-        '⚪ agent-2 - stopped (0s ago)',
+        '> ● agent-1            [running     ] Runtime: 05:00',
+        '  ○ agent-2            [idle        ] Runtime: 05:00',
       ]);
       expect(mockScreen.render).toHaveBeenCalled();
     });
@@ -114,7 +112,11 @@ describe('Terminal UI Extended Functionality', () => {
       mockAgentManager.getActiveAgents.mockReturnValue([]);
       
       // Create separate mock objects
-      const mockStatusText = { show: jest.fn(), hide: jest.fn() };
+      const mockStatusText = { 
+        show: jest.fn(), 
+        hide: jest.fn(), 
+        setContent: jest.fn() 
+      };
       const mockInstructionText = { show: jest.fn(), hide: jest.fn() };
       
       // Mock the UI components
@@ -124,8 +126,9 @@ describe('Terminal UI Extended Functionality', () => {
       
       ui.updateAgentsList();
       
+      expect(mockStatusText.setContent).toHaveBeenCalledWith('No active agents - Press \'n\' to spawn new agent');
       expect(mockStatusText.show).toHaveBeenCalled();
-      expect(mockInstructionText.show).toHaveBeenCalled();
+      expect(mockInstructionText.hide).toHaveBeenCalled();
       expect(mockList.hide).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
@@ -134,24 +137,16 @@ describe('Terminal UI Extended Functionality', () => {
       const mockAgents = [
         { id: 'agent-1', status: 'running', spawnTime: new Date().toISOString() },
         { id: 'agent-2', status: 'error', spawnTime: new Date().toISOString() },
-        { id: 'agent-3', status: 'stopped', spawnTime: new Date().toISOString() },
+        { id: 'agent-3', status: 'idle', spawnTime: new Date().toISOString() },
       ];
       mockAgentManager.getActiveAgents.mockReturnValue(mockAgents);
-      
-      // Mock the helper methods
-      ui.getStatusIcon = jest.fn().mockImplementation((status) => {
-        if (status === 'running') return '🟢';
-        if (status === 'error') return '🔴';
-        return '⚪';
-      });
-      ui.getTimeAgo = jest.fn().mockReturnValue('0s ago');
       
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '🟢 agent-1 - running (0s ago)',
-        '🔴 agent-2 - error (0s ago)',
-        '⚪ agent-3 - stopped (0s ago)',
+        '> ● agent-1            [running     ] Runtime: 05:00',
+        '  ✗ agent-2            [error       ] Runtime: 05:00',
+        '  ○ agent-3            [idle        ] Runtime: 05:00',
       ]);
     });
   });
