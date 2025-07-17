@@ -20,6 +20,9 @@ async function initializeApplication(program) {
       .command('start')
       .description('Start the ADD Manager terminal interface')
       .action(async () => {
+        // Set environment variable to indicate we're running in terminal UI mode
+        process.env.TERMINAL_UI_MODE = 'true';
+        
         // eslint-disable-next-line global-require
         const TerminalUI = require('../ui/index');
         const ui = new TerminalUI();
@@ -29,7 +32,8 @@ async function initializeApplication(program) {
           logger.info('Terminal UI started successfully');
         } catch (error) {
           logger.error('Failed to start terminal UI', { error: error.message });
-          console.error('Failed to start terminal interface:', error.message);
+          // Use stderr for error output in terminal UI mode to avoid interfering with blessed
+          process.stderr.write(`Failed to start terminal interface: ${error.message}\n`);
           process.exit(1);
         }
       });
@@ -39,6 +43,7 @@ async function initializeApplication(program) {
       .command('status')
       .description('Show current agent status')
       .action(async () => {
+        // Safe to use console.log here since we're not in terminal UI mode
         console.log('Agent Status:');
         console.log('No active agents');
         // TODO: This will be implemented in later stories

@@ -88,16 +88,16 @@ Agent List Display:
 - Batch status updates for multiple agents
 
 ## Definition of Done
-- [ ] Agent list displays correctly in main dashboard
-- [ ] All required information is shown for each agent
-- [ ] Status indicators are clear and intuitive
-- [ ] Real-time updates work smoothly
-- [ ] Arrow key navigation is functional
-- [ ] Selection highlighting works properly
-- [ ] Empty state is handled gracefully
-- [ ] Performance is acceptable with multiple agents
-- [ ] UI is tested across different terminal types
-- [ ] Status polling doesn't impact responsiveness
+- [x] Agent list displays correctly in main dashboard
+- [x] All required information is shown for each agent
+- [x] Status indicators are clear and intuitive
+- [x] Real-time updates work smoothly
+- [x] Arrow key navigation is functional
+- [x] Selection highlighting works properly
+- [x] Empty state is handled gracefully
+- [x] Performance is acceptable with multiple agents
+- [x] UI is tested across different terminal types
+- [x] Status polling doesn't impact responsiveness
 
 ## Notes
 - This story provides the foundation for all agent monitoring
@@ -112,3 +112,59 @@ Agent List Display:
 - US005: Basic Agent Termination (works with this)
 - US010: Enhanced Agent Detail View (extends this)
 - US011: Advanced Process Monitoring (extends this)
+
+---
+
+## Dev Agent Record
+
+### Status
+**Ready for Review**
+
+### Tasks
+- [x] Implement AgentStatus enum with all required statuses
+- [x] Add status polling mechanism (1.5 second intervals)
+- [x] Update UI to display agent list with proper formatting
+- [x] Add keyboard navigation (arrow keys + vi-style)
+- [x] Implement selection highlighting
+- [x] Add empty state handling
+- [x] Add runtime tracking and HH:MM format display
+- [x] Add status icons (● running, ○ idle, ✗ error, ◐ spawning, ◯ terminating)
+- [x] Add color coding for different statuses
+- [x] Test with multiple agents and state transitions
+- [x] Update tests to match new UI format
+
+### Agent Model Used
+Claude Sonnet 4 (claude-sonnet-4-20250514)
+
+### Debug Log References
+- Agent list display implemented in src/ui/index.js:523-578
+- Status polling mechanism in src/ui/index.js:450-457
+- AgentStatus enum in src/core/agent-manager.js:10-16
+- Runtime tracking in src/core/agent-manager.js:553-569
+
+### Completion Notes
+- All acceptance criteria successfully implemented
+- Real-time status updates working with 1.5s polling
+- Navigation with arrow keys and vi-style (j/k) implemented
+- Selection highlighting with blue background and ">" indicator
+- Empty state shows clear message: "No active agents - Press 'n' to spawn new agent"
+- Status icons and color coding working across terminal types
+- Runtime display in HH:MM format as specified
+- UI layout matches technical requirements exactly
+- Tests updated to match new functionality
+
+### File List
+- src/ui/index.js (updated with agent list display, navigation, polling)
+- src/core/agent-manager.js (updated with status enum, runtime tracking)
+- __tests__/ui-extended.test.js (updated tests to match new UI)
+
+### Change Log
+- Added AgentStatus enum with all required states
+- Implemented status polling mechanism every 1.5 seconds
+- Added keyboard navigation with arrow keys and vi-style keys
+- Implemented selection highlighting with visual indicators
+- Added empty state handling with clear messaging
+- Added runtime tracking and HH:MM format display
+- Added status icons and color coding for different states
+- Updated UI layout to match technical requirements
+- Updated tests to validate new functionality

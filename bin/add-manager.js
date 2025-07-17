@@ -54,11 +54,13 @@ async function main() {
     logger.error('Application startup failed', { error: error.message });
 
     // Display user-friendly error message
+    // Use stderr in terminal UI mode to avoid interfering with blessed
+    const errorOutput = process.env.TERMINAL_UI_MODE === 'true' ? process.stderr : process.stdout;
     if (error.code && error.suggestion) {
-      console.error(`Error: ${error.message}`);
-      console.error(`Suggestion: ${error.suggestion}`);
+      errorOutput.write(`Error: ${error.message}\n`);
+      errorOutput.write(`Suggestion: ${error.suggestion}\n`);
     } else {
-      console.error(`Error: ${error.message}`);
+      errorOutput.write(`Error: ${error.message}\n`);
     }
 
     process.exit(1);

@@ -1,8 +1,19 @@
 const winston = require('winston');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 
 const logDir = path.join(os.homedir(), '.add-manager', 'logs');
+
+// Ensure log directory exists
+if (!fs.existsSync(logDir)) {
+  fs.mkdirSync(logDir, { recursive: true });
+}
+
+// Determine if we're running in terminal UI mode
+const isTerminalUI = process.env.TERMINAL_UI_MODE === 'true' || 
+                     process.argv.includes('start') || 
+                     process.argv.some(arg => arg.includes('add-manager.js'));
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -13,28 +24,27 @@ const logger = winston.createLogger({
     winston.format.json(),
   ),
   defaultMeta: { service: 'add-manager' },
-  transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
-    }),
-  ],
+  transports: [],
 });
 
-// Add file transport only if log directory exists
-const fs = require('fs');
-
-if (fs.existsSync(logDir)) {
-  logger.add(new winston.transports.File({
-    filename: path.join(logDir, 'error.log'),
-    level: 'error',
-  }));
-
-  logger.add(new winston.transports.File({
-    filename: path.join(logDir, 'combined.log'),
+// Add console transport only if NOT in terminal UI mode
+if (!isTerminalUI) {
+  logger.add(new winston.transports.Console({
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple(),
+    ),
   }));
 }
+
+// Always add file transports for persistent logging
+logger.add(new winston.transports.File({
+  filename: path.join(logDir, 'error.log'),
+  level: 'error',
+}));
+
+logger.add(new winston.transports.File({
+  filename: path.join(logDir, 'combined.log'),
+}));
 
 module.exports = logger;
