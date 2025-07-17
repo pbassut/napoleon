@@ -77,6 +77,10 @@ describe('AgentDetailView', () => {
   });
 
   afterEach(() => {
+    // Ensure AgentDetailView is properly destroyed to clean up timers
+    if (agentDetailView) {
+      agentDetailView.destroy();
+    }
     jest.useRealTimers();
     jest.clearAllMocks();
     delete global.setInterval;

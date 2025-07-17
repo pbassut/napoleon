@@ -28,5 +28,7 @@ module.exports = {
     enableGlobally: false // Let individual tests control timer mocking
   },
   // Add teardown timeout
-  testTimeout: 10000
+  testTimeout: 10000,
+  // Enable open handle detection to help Jest clean up properly
+  detectOpenHandles: true
 };

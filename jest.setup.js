@@ -58,32 +58,28 @@ afterEach(() => {
   // Clean up any remaining resources
   jest.clearAllMocks();
   jest.restoreAllMocks();
+  
+  // Force garbage collection if available
+  if (global.gc) {
+    global.gc();
+  }
 });
 
-// Global teardown to clean up any remaining handles
+// Global teardown to clean up any remaining handles  
 afterAll(async () => {
+  // Clear any lingering timers before teardown
+  jest.clearAllTimers();
+  jest.useRealTimers();
+  
   // Force close any remaining file descriptors or handles
   if (global.gc) {
     global.gc();
   }
   
-  // Clear any lingering timers
-  jest.clearAllTimers();
-  jest.useRealTimers();
-  
-  // Wait for any pending async operations to complete
+  // Wait briefly for cleanup
   await new Promise(resolve => {
-    // Force a delay to allow cleanup
-    setTimeout(resolve, 100);
+    setImmediate(resolve);
   });
-  
-  // Force exit after test completion to prevent hanging
-  // This is safe because all tests have completed successfully
-  if (process.env.NODE_ENV === 'test') {
-    setTimeout(() => {
-      process.exit(0);
-    }, 1000);
-  }
 });
 
 // Set a shorter timeout for tests
