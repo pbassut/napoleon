@@ -53,13 +53,14 @@ class AgentSpawnDialog {
       top: 1,
       left: 2,
       width: '100%-4',
-      height: 4,
+      height: 5,
       content: [
         'Enter detailed instructions for the Claude agent:',
         '',
         '• Be specific about the task you want the agent to perform',
         '• Include any relevant context or constraints',
         '• Minimum 10 characters required',
+        '• Agent will work in isolated git worktree in .add-manager-worktrees/',
       ].join('\n'),
       style: {
         fg: 'cyan',
@@ -70,10 +71,10 @@ class AgentSpawnDialog {
     this.textbox = blessed.textarea({
       parent: this.dialog,
       label: ' Agent Instructions ',
-      top: 6,
+      top: 7,
       left: 2,
       width: '100%-4',
-      height: 8,
+      height: 7,
       border: {
         type: 'line',
       },
@@ -214,7 +215,7 @@ class AgentSpawnDialog {
       }
 
       // Update footer to show processing
-      this.footer.setContent('Spawning agent...');
+      this.footer.setContent('Creating git worktree and spawning agent...');
       this.footer.style.fg = 'yellow';
       this.parent.render();
 

@@ -439,7 +439,8 @@ class TerminalUI {
       this.updateAgentsList();
       
       // Show brief success message in footer without hiding the agent list
-      this.footerText.setContent(`Agent ${session.id} spawned successfully | Press 'n' to spawn new agent | 'd' to terminate | '↑↓' to navigate | 'h' for help | 'q' to quit`);
+      const worktreeInfo = session.worktreeName ? ` in worktree ${session.worktreeName}` : '';
+      this.footerText.setContent(`Agent ${session.id} spawned successfully${worktreeInfo} | Press 'n' to spawn new agent | 'd' to terminate | '↑↓' to navigate | 'h' for help | 'q' to quit`);
       this.footerText.style.fg = 'green';
       this.render();
 
