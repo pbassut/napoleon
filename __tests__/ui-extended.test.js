@@ -113,14 +113,19 @@ describe('Terminal UI Extended Functionality', () => {
     it('should display empty state when no agents', () => {
       mockAgentManager.getActiveAgents.mockReturnValue([]);
       
+      // Create separate mock objects
+      const mockStatusText = { show: jest.fn(), hide: jest.fn() };
+      const mockInstructionText = { show: jest.fn(), hide: jest.fn() };
+      
       // Mock the UI components
-      ui.statusText = mockText;
-      ui.instructionText = mockText;
+      ui.statusText = mockStatusText;
+      ui.instructionText = mockInstructionText;
       ui.agentsList = mockList;
       
       ui.updateAgentsList();
       
-      expect(mockText.show).toHaveBeenCalledTimes(2); // statusText and instructionText
+      expect(mockStatusText.show).toHaveBeenCalled();
+      expect(mockInstructionText.show).toHaveBeenCalled();
       expect(mockList.hide).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
@@ -187,8 +192,17 @@ describe('Terminal UI Extended Functionality', () => {
     });
 
     it('should show spawn dialog', () => {
+      // Mock the spawn dialog creation
+      const mockSpawnDialog = {
+        show: jest.fn(),
+        hide: jest.fn(),
+        create: jest.fn(),
+      };
+      ui.spawnDialog = mockSpawnDialog;
+      
       ui.showSpawnDialog();
       
+      expect(mockSpawnDialog.show).toHaveBeenCalled();
       expect(mockScreen.render).toHaveBeenCalled();
     });
 
@@ -337,7 +351,16 @@ describe('Terminal UI Extended Functionality', () => {
       await ui.initialize();
       mockAgentManager.spawnAgent.mockRejectedValue(new Error('Spawn failed'));
       
-      await expect(ui.handleSpawnAgent('test')).rejects.toThrow('Spawn failed');
+      const updateStatusSpy = jest.spyOn(ui, 'updateStatus').mockImplementation(() => {});
+      
+      // The method should handle the error internally, not throw
+      await expect(ui.handleSpawnAgent('test')).resolves.toBeUndefined();
+      
+      // Should show error message
+      expect(updateStatusSpy).toHaveBeenCalledWith(
+        'Failed to spawn agent: Spawn failed',
+        { fg: 'red', bold: true }
+      );
     });
   });
 
