@@ -1,5 +1,5 @@
 const { spawn } = require('child_process');
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
@@ -106,6 +106,8 @@ class AgentManager {
         status: session.status,
         pid: session.pid,
         workingDirectory: session.workingDirectory,
+        worktreePath: session.worktreePath,
+        worktreeName: session.worktreeName,
         gitRoot: session.gitRoot,
         lastActivity: session.lastActivity,
         // Exclude process object as it cannot be serialized
@@ -179,6 +181,230 @@ class AgentManager {
    */
   generateAgentId() {
     return `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }
+
+  /**
+   * Generate worktree name following the naming convention
+   * Pattern: agent-{id}-{timestamp}
+   */
+  generateWorktreeName(agentId) {
+    const timestamp = Date.now();
+    return `agent-${agentId.replace('agent-', '')}-${timestamp}`;
+  }
+
+  /**
+   * Ensure worktree directory structure exists
+   */
+  ensureWorktreeDirectory() {
+    const worktreesDir = path.join(process.cwd(), '.add-manager-worktrees');
+    
+    if (!fs.existsSync(worktreesDir)) {
+      try {
+        fs.mkdirSync(worktreesDir, { recursive: true, mode: 0o755 });
+        logger.info('Created worktrees directory', { path: worktreesDir });
+      } catch (error) {
+        throw new FileSystemError(
+          `Failed to create worktrees directory: ${error.message}`,
+          'WORKTREE_DIR_CREATION_FAILED',
+          'Please check write permissions for the project directory'
+        );
+      }
+    }
+    
+    return worktreesDir;
+  }
+
+  /**
+   * Validate git repository state for worktree creation
+   */
+  validateGitForWorktree() {
+    try {
+      // Check if we're in a git repository
+      const gitValidation = this.validateGitRepository();
+      if (!gitValidation.isValid) {
+        return gitValidation;
+      }
+
+      // Check for uncommitted changes
+      try {
+        execSync('git diff-index --quiet HEAD --', { 
+          stdio: 'ignore',
+          cwd: process.cwd() 
+        });
+      } catch (error) {
+        return {
+          isValid: false,
+          error: 'Repository has uncommitted changes',
+          suggestion: 'Please commit or stash your changes before creating worktrees',
+          hasUncommittedChanges: true
+        };
+      }
+
+      // Check for untracked files that might interfere
+      try {
+        const untrackedFiles = execSync('git ls-files --others --exclude-standard', {
+          encoding: 'utf8',
+          cwd: process.cwd()
+        }).trim();
+        
+        if (untrackedFiles.length > 0) {
+          logger.warn('Repository has untracked files', { 
+            files: untrackedFiles.split('\n').length 
+          });
+        }
+      } catch (error) {
+        // Non-critical, just log
+        logger.debug('Could not check untracked files', { error: error.message });
+      }
+
+      return {
+        isValid: true,
+        rootPath: gitValidation.rootPath,
+        currentPath: gitValidation.currentPath,
+        clean: true
+      };
+    } catch (error) {
+      return {
+        isValid: false,
+        error: `Git validation failed: ${error.message}`,
+        suggestion: 'Please ensure you are in a valid git repository'
+      };
+    }
+  }
+
+  /**
+   * Create git worktree for agent
+   */
+  async createWorktree(agentId) {
+    return new Promise((resolve, reject) => {
+      try {
+        // Validate git state
+        const gitValidation = this.validateGitForWorktree();
+        if (!gitValidation.isValid) {
+          reject(new EnvironmentValidationError(
+            gitValidation.error,
+            'GIT_WORKTREE_VALIDATION_FAILED',
+            gitValidation.suggestion
+          ));
+          return;
+        }
+
+        // Ensure worktree directory exists
+        const worktreesDir = this.ensureWorktreeDirectory();
+
+        // Generate worktree name and path
+        const worktreeName = this.generateWorktreeName(agentId);
+        const worktreePath = path.join(worktreesDir, worktreeName);
+
+        logger.info('Creating git worktree', { 
+          agentId, 
+          worktreeName, 
+          worktreePath 
+        });
+
+        // Create the worktree
+        exec(`git worktree add "${worktreePath}"`, { 
+          cwd: process.cwd(),
+          timeout: 30000 // 30 second timeout
+        }, (error, stdout, stderr) => {
+          if (error) {
+            logger.error('Git worktree creation failed', {
+              agentId,
+              worktreePath,
+              error: error.message,
+              stderr
+            });
+
+            // Clean up any partial directory creation
+            this.cleanupFailedWorktree(worktreePath);
+
+            reject(new EnvironmentValidationError(
+              `Worktree creation failed: ${stderr || error.message}`,
+              'WORKTREE_CREATION_FAILED',
+              'Please check git repository state and try again'
+            ));
+          } else {
+            logger.info('Git worktree created successfully', {
+              agentId,
+              worktreeName,
+              worktreePath,
+              stdout: stdout.trim()
+            });
+
+            resolve({
+              worktreeName,
+              worktreePath,
+              agentId
+            });
+          }
+        });
+      } catch (error) {
+        reject(error);
+      }
+    });
+  }
+
+  /**
+   * Clean up failed worktree creation
+   */
+  cleanupFailedWorktree(worktreePath) {
+    try {
+      if (fs.existsSync(worktreePath)) {
+        fs.rmSync(worktreePath, { recursive: true, force: true });
+        logger.info('Cleaned up failed worktree directory', { worktreePath });
+      }
+    } catch (error) {
+      logger.warn('Failed to clean up failed worktree', { 
+        worktreePath, 
+        error: error.message 
+      });
+    }
+  }
+
+  /**
+   * Remove git worktree
+   */
+  async removeWorktree(worktreePath) {
+    return new Promise((resolve, reject) => {
+      if (!worktreePath || !fs.existsSync(worktreePath)) {
+        resolve(); // Already cleaned up
+        return;
+      }
+
+      logger.info('Removing git worktree', { worktreePath });
+
+      exec(`git worktree remove "${worktreePath}" --force`, { 
+        cwd: process.cwd(),
+        timeout: 15000 // 15 second timeout
+      }, (error, stdout, stderr) => {
+        if (error) {
+          logger.warn('Git worktree removal failed, attempting manual cleanup', {
+            worktreePath,
+            error: error.message,
+            stderr
+          });
+
+          // Fallback: manual directory removal
+          try {
+            fs.rmSync(worktreePath, { recursive: true, force: true });
+            logger.info('Manually cleaned up worktree directory', { worktreePath });
+            resolve();
+          } catch (cleanupError) {
+            logger.error('Failed to manually clean up worktree', {
+              worktreePath,
+              error: cleanupError.message
+            });
+            reject(cleanupError);
+          }
+        } else {
+          logger.info('Git worktree removed successfully', {
+            worktreePath,
+            stdout: stdout.trim()
+          });
+          resolve();
+        }
+      });
+    });
   }
 
   /**
@@ -305,11 +531,19 @@ class AgentManager {
 
       // Generate agent session
       const agentId = this.generateAgentId();
-      const workingDirectory = validatedOptions.workingDirectory || process.cwd();
 
       logger.info('Spawning new agent', {
         agentId,
         instructionsLength: instructions.length,
+      });
+
+      // Create git worktree for agent isolation
+      const worktreeInfo = await this.createWorktree(agentId);
+      const workingDirectory = worktreeInfo.worktreePath;
+
+      logger.info('Agent worktree created', {
+        agentId,
+        worktreeName: worktreeInfo.worktreeName,
         workingDirectory,
       });
 
@@ -321,6 +555,8 @@ class AgentManager {
         status: AgentStatus.SPAWNING,
         pid: null,
         workingDirectory,
+        worktreePath: worktreeInfo.worktreePath,
+        worktreeName: worktreeInfo.worktreeName,
         gitRoot: gitValidation.rootPath,
         lastActivity: new Date().toISOString(),
       };
@@ -532,6 +768,23 @@ class AgentManager {
             session.process.kill('SIGKILL');
           }
         }, 5000);
+      }
+
+      // Clean up worktree if it exists
+      if (session.worktreePath) {
+        try {
+          await this.removeWorktree(session.worktreePath);
+          logger.info('Agent worktree cleaned up', { 
+            agentId, 
+            worktreePath: session.worktreePath 
+          });
+        } catch (error) {
+          logger.warn('Failed to clean up agent worktree', {
+            agentId,
+            worktreePath: session.worktreePath,
+            error: error.message
+          });
+        }
       }
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
