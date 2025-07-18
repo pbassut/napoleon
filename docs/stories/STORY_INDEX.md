@@ -44,7 +44,7 @@ These stories implement the original ADD Manager functionality within the Napole
 | US023 | Error Handling and Recovery | Robust error handling when agents fail | MEDIUM | ✅ **Approved** |
 | US024 | Enhanced Keyboard Shortcuts and Navigation | Efficient keyboard shortcuts for all operations | LOW | ✅ **Approved** |
 
-### Phase 3: UX Improvements and Startup Reliability (US025-US027)
+### Phase 3: UX Improvements and Startup Reliability (US025-US028)
 
 These stories address critical UX issues and startup reliability improvements for Napoleon.
 
@@ -53,6 +53,16 @@ These stories address critical UX issues and startup reliability improvements fo
 | US025 | Git Working Tree Status Warning | Warn users about dirty git state on startup that prevents agent spawning | HIGH | ✅ **Approved** |
 | US026 | Anthropic API Key Validation | Validate Anthropic API key before app startup to prevent SDK failures | HIGH | ✅ **Approved** |
 | US027 | Terminal Focus Recovery After Agent Spawning | Fix terminal focus loss after agent spawning that breaks keyboard workflow | HIGH | ✅ **Approved** |
+| US028 | Spawn Dialog UX Improvements | Improve agent spawn dialog with intuitive keyboard shortcuts and flexible validation | HIGH | ✅ **Approved** |
+
+### Phase 4: Critical Bug Fixes (US029-US030)
+
+These stories address critical bugs discovered in the agent spawn dialog functionality.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US029 | Agent Spawn Dialog Modal Close Bug | Fix modal not closing immediately during agent spawn, causing poor UX | CRITICAL | 🐛 **Bug Report** |
+| US030 | Agent Spawn Dialog Input Duplication Bug | Fix keystroke duplication on second modal use causing double input | CRITICAL | 🐛 **Bug Report** |
 
 ## Development Notes
 
@@ -75,10 +85,12 @@ These stories address critical UX issues and startup reliability improvements fo
 
 ## Approval Status Summary
 
-- **✅ All 27 total stories approved** by Scrum Master Bob on 2025-07-18
+- **✅ 28 stories approved**: US001-US028 approved by Scrum Master Bob on 2025-07-18
+- **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues
 - **3 stories already completed**: US007, US008, US013
-- **24 stories ready for implementation**: US001-US006, US009-US012, US014-US027
-- **Phase 3 UX improvements**: US025-US027 approved for critical startup reliability and terminal focus issues
+- **25 stories ready for implementation**: US001-US006, US009-US012, US014-US028
+- **2 critical bug fixes needed**: US029-US030 address modal close and input duplication bugs
+- **Phase 4 bug priority**: Critical bugs should be addressed before continuing with new features
 - **Ready for development handoff**: All approved stories include detailed acceptance criteria and integration verification requirements
 
 ## File Locations
