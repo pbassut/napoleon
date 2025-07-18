@@ -12,12 +12,12 @@ class CrossPlatformFocus {
     this.isWindows = this.platform === 'win32';
     this.isMacOS = this.platform === 'darwin';
     this.isLinux = this.platform === 'linux';
-    
+
     // Platform-specific timing constants
     this.focusDelay = this.getFocusDelay();
     this.retryDelay = this.getRetryDelay();
     this.validationDelay = this.getValidationDelay();
-    
+
     logger.debug('Cross-platform focus initialized', {
       platform: this.platform,
       focusDelay: this.focusDelay,
@@ -33,13 +33,12 @@ class CrossPlatformFocus {
     if (this.isWindows) {
       // Windows terminals often need more time for focus operations
       return 50;
-    } else if (this.isMacOS) {
+    } if (this.isMacOS) {
       // macOS terminals are generally responsive
       return 25;
-    } else {
-      // Linux terminals vary, use moderate delay
-      return 35;
     }
+    // Linux terminals vary, use moderate delay
+    return 35;
   }
 
   /**
@@ -48,11 +47,10 @@ class CrossPlatformFocus {
   getRetryDelay() {
     if (this.isWindows) {
       return 75;
-    } else if (this.isMacOS) {
+    } if (this.isMacOS) {
       return 50;
-    } else {
-      return 60;
     }
+    return 60;
   }
 
   /**
@@ -61,11 +59,10 @@ class CrossPlatformFocus {
   getValidationDelay() {
     if (this.isWindows) {
       return 100;
-    } else if (this.isMacOS) {
+    } if (this.isMacOS) {
       return 75;
-    } else {
-      return 85;
     }
+    return 85;
   }
 
   /**
@@ -73,7 +70,7 @@ class CrossPlatformFocus {
    */
   setFocus(element, options = {}) {
     const { retries = 3, immediate = false } = options;
-    
+
     if (!element) {
       logger.warn('Cannot set focus: element is null');
       return Promise.resolve(false);
@@ -82,6 +79,16 @@ class CrossPlatformFocus {
     return new Promise((resolve) => {
       const attemptFocus = (remainingRetries) => {
         try {
+          // Check if element has focus method before calling
+          if (typeof element.focus !== 'function') {
+            logger.warn('Element does not have focus method', {
+              elementType: element.constructor ? element.constructor.name : 'unknown',
+              platform: this.platform,
+            });
+            resolve(false);
+            return;
+          }
+
           // Platform-specific focus handling
           if (this.isWindows) {
             // Windows needs explicit focus and render cycle
@@ -99,24 +106,23 @@ class CrossPlatformFocus {
           // Validate focus was set correctly
           setTimeout(() => {
             const focusSuccess = this.screen.focused === element;
-            
+
             if (focusSuccess || remainingRetries <= 0) {
               resolve(focusSuccess);
             } else {
-              logger.debug('Focus retry needed', { 
+              logger.debug('Focus retry needed', {
                 platform: this.platform,
                 remainingRetries: remainingRetries - 1,
               });
               attemptFocus(remainingRetries - 1);
             }
           }, immediate ? 0 : this.validationDelay);
-
         } catch (error) {
-          logger.error('Focus setting failed', { 
+          logger.error('Focus setting failed', {
             error: error.message,
             platform: this.platform,
           });
-          
+
           if (remainingRetries > 0) {
             setTimeout(() => attemptFocus(remainingRetries - 1), this.retryDelay);
           } else {
@@ -140,7 +146,7 @@ class CrossPlatformFocus {
     // Enhanced resize handling for cross-platform compatibility
     this.screen.on('resize', () => {
       logger.debug('Terminal resize detected', { platform: this.platform });
-      
+
       // Platform-specific resize handling
       if (this.isWindows) {
         // Windows might need extra time after resize
@@ -163,7 +169,7 @@ class CrossPlatformFocus {
    */
   preserveFocusAfterResize() {
     const currentFocus = this.screen.focused;
-    
+
     if (!currentFocus) {
       logger.debug('No focus to preserve after resize');
       return;
@@ -187,13 +193,12 @@ class CrossPlatformFocus {
     if (this.isWindows) {
       // Windows terminals benefit from more frequent validation
       return 1500;
-    } else if (this.isMacOS) {
+    } if (this.isMacOS) {
       // macOS is stable, less frequent validation needed
       return 2500;
-    } else {
-      // Linux terminals need moderate validation
-      return 2000;
     }
+    // Linux terminals need moderate validation
+    return 2000;
   }
 
   /**
@@ -208,7 +213,7 @@ class CrossPlatformFocus {
         platform: this.platform,
         element: element.constructor.name,
       });
-      
+
       if (onFocus) {
         // Platform-specific timing for focus events
         if (this.isWindows) {
@@ -225,7 +230,7 @@ class CrossPlatformFocus {
         platform: this.platform,
         element: element.constructor.name,
       });
-      
+
       if (onBlur) {
         onBlur(element);
       }
@@ -279,7 +284,7 @@ class CrossPlatformFocus {
    */
   recoverFocus(targetElement) {
     const capabilities = this.validateTerminalCapabilities();
-    
+
     if (!capabilities.supportsFocusEvents) {
       logger.warn('Focus recovery not supported in this terminal');
       return Promise.resolve(false);
@@ -288,11 +293,10 @@ class CrossPlatformFocus {
     // Use appropriate recovery strategy based on platform
     if (this.isWindows) {
       return this.recoverFocusWindows(targetElement);
-    } else if (this.isMacOS) {
+    } if (this.isMacOS) {
       return this.recoverFocusMacOS(targetElement);
-    } else {
-      return this.recoverFocusLinux(targetElement);
     }
+    return this.recoverFocusLinux(targetElement);
   }
 
   /**
@@ -305,12 +309,21 @@ class CrossPlatformFocus {
       const maxAttempts = 5;
 
       const attemptRecovery = () => {
-        attempts++;
-        
+        attempts += 1;
+
         try {
+          // Check if element has focus method before calling
+          if (typeof element.focus !== 'function') {
+            logger.warn('Windows focus recovery failed: element has no focus method', {
+              elementType: element.constructor ? element.constructor.name : 'unknown',
+            });
+            resolve(false);
+            return;
+          }
+
           element.focus();
           this.screen.render();
-          
+
           setTimeout(() => {
             if (this.screen.focused === element) {
               resolve(true);
@@ -351,11 +364,20 @@ class CrossPlatformFocus {
     // Linux needs focus with process.nextTick for stability
     return new Promise((resolve) => {
       try {
+        // Check if element has focus method before calling
+        if (typeof element.focus !== 'function') {
+          logger.warn('Linux focus recovery failed: element has no focus method', {
+            elementType: element.constructor ? element.constructor.name : 'unknown',
+          });
+          resolve(false);
+          return;
+        }
+
         element.focus();
-        
+
         process.nextTick(() => {
           this.screen.render();
-          
+
           setTimeout(() => {
             const success = this.screen.focused === element;
             if (!success) {

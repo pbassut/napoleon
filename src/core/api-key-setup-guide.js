@@ -115,7 +115,7 @@ class ApiKeySetupGuide {
       setEnvStep: '2. Set the environment variable:',
       verifyStep: '3. Verify the setup:',
       securityNote: '⚠️  Security Note:',
-      helpLink: 'docs/API-KEY-SETUP.md'
+      helpLink: 'docs/API-KEY-SETUP.md',
     };
   }
 
@@ -148,14 +148,14 @@ class ApiKeySetupGuide {
         'API key copied with extra spaces or characters',
         'API key truncated during copy/paste',
         'Wrong environment variable name',
-        'API key enclosed in quotes when not needed'
+        'API key enclosed in quotes when not needed',
       ],
       tips: [
         'Copy the entire API key from console.anthropic.com',
         'Ensure no extra spaces before or after the key',
         'Use ANTHROPIC_API_KEY as the environment variable name',
-        'API key should start with "sk-ant-"'
-      ]
+        'API key should start with "sk-ant-"',
+      ],
     };
   }
 }

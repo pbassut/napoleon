@@ -15,7 +15,7 @@ class AgentSpawnDialog {
     this.instructionsText = null;
     this.isVisible = false;
     this.activeTimers = new Set(); // Track active timers for cleanup
-    
+
     // Focus management properties
     this.previouslyFocused = null;
     this.focusRestoreTimeout = null;
@@ -179,7 +179,7 @@ class AgentSpawnDialog {
 
     this.isVisible = true;
     this.dialog.show();
-    
+
     // Ensure focus is properly set with retry mechanism
     this.setFocusWithRetry(this.textbox);
     this.textbox.setValue('');
@@ -239,7 +239,7 @@ class AgentSpawnDialog {
    */
   handleCancel() {
     this.hideWithFocusRestore();
-    
+
     if (this.onCancel) {
       this.onCancel();
     }
@@ -349,10 +349,10 @@ class AgentSpawnDialog {
     if (this.dialog) {
       this.isVisible = false;
       this.dialog.hide();
-      
+
       // Restore focus to main UI with retry mechanism
       this.restoreFocusToParent();
-      
+
       this.parent.render();
     }
   }
@@ -382,21 +382,28 @@ class AgentSpawnDialog {
     if (!element || retries <= 0) return;
 
     try {
-      element.focus();
-      
+      // Check if element has focus method before calling
+      if (typeof element.focus === 'function') {
+        element.focus();
+      } else {
+        logger.warn('Element does not have focus method', {
+          elementType: element.constructor.name,
+        });
+        return;
+      }
+
       // Verify focus was set correctly
       setTimeout(() => {
         if (element !== this.parent.focused) {
           this.setFocusWithRetry(element, retries - 1);
         }
       }, 10);
-      
     } catch (error) {
-      logger.warn('Focus setting failed, retrying', { 
-        error: error.message, 
+      logger.warn('Focus setting failed, retrying', {
+        error: error.message,
         retries: retries - 1,
       });
-      
+
       setTimeout(() => {
         this.setFocusWithRetry(element, retries - 1);
       }, 20);
@@ -410,8 +417,15 @@ class AgentSpawnDialog {
     // Validate that parent has focus
     if (this.parent.focused !== this.parent) {
       logger.debug('Parent focus lost, restoring');
-      this.parent.focus();
-      
+
+      // Check if parent has focus method before calling
+      if (typeof this.parent.focus === 'function') {
+        this.parent.focus();
+      } else {
+        // For blessed screen objects, set focused property directly
+        this.parent.focused = this.parent;
+      }
+
       // Force render to ensure focus state is reflected
       setTimeout(() => {
         this.parent.render();

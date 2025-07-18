@@ -152,6 +152,21 @@ describe('CrossPlatformFocus', () => {
       expect(result).toBe(false);
       expect(logger.error).toHaveBeenCalledWith('Focus setting failed', expect.any(Object));
     });
+
+    it('should handle elements without focus method', async () => {
+      const mockElement = { 
+        constructor: { name: 'NoFocusElement' },
+        // No focus method
+      };
+
+      const result = await crossPlatformFocus.setFocus(mockElement, { immediate: true });
+      
+      expect(result).toBe(false);
+      expect(logger.warn).toHaveBeenCalledWith('Element does not have focus method', {
+        elementType: 'NoFocusElement',
+        platform: 'darwin',
+      });
+    });
   });
 
   describe('resize handling', () => {

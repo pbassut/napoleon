@@ -35,7 +35,7 @@ class TerminalUI {
     this.blinkCounter = 0; // Counter for blinking animation
     this.agentsCache = null; // Cache for performance optimization
     this.renderPending = false; // Throttle rendering
-    
+
     // Focus management properties
     this.focusHistory = [];
     this.focusValidationInterval = null;
@@ -475,9 +475,6 @@ class TerminalUI {
    */
   async handleSpawnAgent(instructions) {
     try {
-      // Store focus state before spawning
-      const preFocusState = this.screen.focused;
-      
       const session = await this.agentManager.spawnAgent(instructions);
       logger.info('Agent spawned successfully from UI', { agentId: session.id });
 
@@ -485,14 +482,14 @@ class TerminalUI {
       this.updateAgentsList();
 
       // Ensure focus is maintained
-      await this.ensureFocusAfterSpawn(preFocusState);
+      await this.ensureFocusAfterSpawn();
 
       // Success feedback
       this.showSpawnSuccess(session);
     } catch (error) {
       logger.error('Failed to spawn agent from UI', { error: error.message });
       this.updateStatus(`Failed to spawn agent: ${error.message}`, { fg: 'red', bold: true });
-      
+
       // Ensure focus is restored even on error
       await this.restoreMainFocus();
 
@@ -1005,10 +1002,10 @@ class TerminalUI {
    */
   hasActiveDialog() {
     return (
-      (this.spawnDialog && typeof this.spawnDialog.isShown === 'function' && this.spawnDialog.isShown()) ||
-      (this.terminationDialog && typeof this.terminationDialog.isShown === 'function' && this.terminationDialog.isShown()) ||
-      (this.detailView && typeof this.detailView.isShown === 'function' && this.detailView.isShown()) ||
-      this.showingHelp
+      (this.spawnDialog && typeof this.spawnDialog.isShown === 'function' && this.spawnDialog.isShown())
+      || (this.terminationDialog && typeof this.terminationDialog.isShown === 'function' && this.terminationDialog.isShown())
+      || (this.detailView && typeof this.detailView.isShown === 'function' && this.detailView.isShown())
+      || this.showingHelp
     );
   }
 
@@ -1018,9 +1015,9 @@ class TerminalUI {
   async restoreMainFocus() {
     try {
       this.focusDebugger.logFocusState('main-focus-restore-requested');
-      
+
       const success = await this.crossPlatformFocus.recoverFocus(this.screen);
-      
+
       if (success) {
         this.focusDebugger.logFocusState('main-focus-restored');
       } else {
@@ -1043,7 +1040,7 @@ class TerminalUI {
   startFocusValidation() {
     // Use platform-specific validation interval
     const validationInterval = this.crossPlatformFocus.getFocusValidationInterval();
-    
+
     this.focusValidationInterval = setInterval(() => {
       this.validateFocusState();
     }, validationInterval);
@@ -1065,7 +1062,7 @@ class TerminalUI {
   /**
    * Ensure focus is maintained after agent spawn operations
    */
-  async ensureFocusAfterSpawn(preFocusState) {
+  async ensureFocusAfterSpawn() {
     // Verify focus state hasn't been lost
     if (this.screen.focused !== this.screen) {
       logger.debug('Focus lost during spawn, restoring');

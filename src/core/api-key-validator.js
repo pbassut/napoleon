@@ -22,7 +22,7 @@ class ApiKeyValidator {
         throw new EnvironmentValidationError(
           'API key not found in environment variables',
           'API_KEY_NOT_FOUND',
-          'Set ANTHROPIC_API_KEY environment variable with your Anthropic API key'
+          'Set ANTHROPIC_API_KEY environment variable with your Anthropic API key',
         );
       }
 
@@ -32,7 +32,7 @@ class ApiKeyValidator {
         throw new ConfigurationError(
           `Invalid API key format: ${validation.reason}`,
           'INVALID_API_KEY_FORMAT',
-          'Please check your API key format and try again'
+          'Please check your API key format and try again',
         );
       }
 
@@ -41,9 +41,8 @@ class ApiKeyValidator {
 
       return {
         isValid: true,
-        maskedKey: this.maskApiKey(apiKey)
+        maskedKey: this.maskApiKey(apiKey),
       };
-
     } catch (error) {
       this.logger.error(`API key validation failed: ${error.message}`);
       throw error;
@@ -59,7 +58,7 @@ class ApiKeyValidator {
     const possibleKeys = [
       'ANTHROPIC_API_KEY',
       'CLAUDE_API_KEY',
-      'CLAUDE_CODE_API_KEY'
+      'CLAUDE_CODE_API_KEY',
     ];
 
     for (const keyName of possibleKeys) {
@@ -82,31 +81,31 @@ class ApiKeyValidator {
     const validations = [
       {
         test: apiKey.length >= 50,
-        reason: 'API key appears too short'
+        reason: 'API key appears too short',
       },
       {
         test: apiKey.length <= 200,
-        reason: 'API key appears too long'
+        reason: 'API key appears too long',
       },
       {
         test: !apiKey.includes(' '),
-        reason: 'API key contains spaces'
+        reason: 'API key contains spaces',
       },
       {
         test: /^[a-zA-Z0-9\-_]+$/.test(apiKey),
-        reason: 'API key contains invalid characters'
+        reason: 'API key contains invalid characters',
       },
       {
         test: apiKey.startsWith('sk-ant-'),
-        reason: 'API key does not start with expected prefix'
-      }
+        reason: 'API key does not start with expected prefix',
+      },
     ];
 
     for (const validation of validations) {
       if (!validation.test) {
         return {
           isValid: false,
-          reason: validation.reason
+          reason: validation.reason,
         };
       }
     }
