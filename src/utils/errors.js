@@ -1,5 +1,5 @@
 /**
- * Custom error classes for ADD Manager
+ * Custom error classes for Napoleon
  */
 /* eslint-disable max-classes-per-file */
 

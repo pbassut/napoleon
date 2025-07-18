@@ -83,7 +83,7 @@ describe('Git Worktree Integration Tests', () => {
     expect(session.worktreePath).toBeDefined();
     expect(session.worktreeName).toBeDefined();
     expect(session.workingDirectory).toBe(session.worktreePath);
-    expect(session.worktreePath).toContain('.add-manager-worktrees');
+    expect(session.worktreePath).toContain('.napoleon-worktrees');
     expect(session.worktreeName).toMatch(/^agent-.*-\d+$/);
 
     // Verify git worktree add was called
@@ -133,7 +133,7 @@ describe('Git Worktree Integration Tests', () => {
 
     // Mock fs.existsSync to return true for the failed worktree path so cleanup is attempted
     fs.existsSync.mockImplementation((path) => {
-      if (path.includes('.add-manager-worktrees')) {
+      if (path.includes('.napoleon-worktrees')) {
         return true; // Simulate that the directory was partially created
       }
       return false;
@@ -180,7 +180,7 @@ describe('Git Worktree Integration Tests', () => {
 
     // Verify directory creation was called
     expect(fs.mkdirSync).toHaveBeenCalledWith(
-      expect.stringContaining('.add-manager-worktrees'),
+      expect.stringContaining('.napoleon-worktrees'),
       { recursive: true, mode: 0o755 }
     );
   });

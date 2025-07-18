@@ -1,13 +1,14 @@
 {
-  "name": "add-manager",
+  "name": "napoleon",
   "version": "1.0.0",
-  "description": "Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions",
+  "description": "Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions",
   "main": "src/cli/index.js",
   "bin": {
-    "add-manager": "./bin/add-manager.js"
+    "napoleon": "./bin/napoleon.js",
+    "migrate-to-napoleon": "./bin/migrate-to-napoleon.js"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "test": "jest",
@@ -16,20 +17,21 @@
     "lint": "eslint src/ bin/ --ext .js",
     "lint:fix": "eslint src/ bin/ --ext .js --fix",
     "format": "prettier --write src/ bin/ __tests__/",
-    "start": "node bin/add-manager.js"
+    "start": "node bin/napoleon.js"
   },
   "dependencies": {
-    "commander": "^11.1.0",
+    "@anthropic-ai/claude-code": "^1.0.53",
     "blessed": "^0.1.81",
-    "winston": "^3.11.0",
+    "commander": "^11.1.0",
     "joi": "^17.11.0",
-    "semver": "^7.5.4"
+    "semver": "^7.5.4",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.0",
+    "jest": "^29.7.0",
     "prettier": "^3.0.0"
   },
   "keywords": [
@@ -40,14 +42,14 @@
     "terminal",
     "ai"
   ],
-  "author": "ADD Manager Team",
+  "author": "Napoleon Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/add-manager"
+    "url": "https://github.com/your-org/napoleon"
   },
   "bugs": {
-    "url": "https://github.com/your-org/add-manager/issues"
+    "url": "https://github.com/your-org/napoleon/issues"
   },
-  "homepage": "https://github.com/your-org/add-manager#readme"
+  "homepage": "https://github.com/your-org/napoleon#readme"
 }

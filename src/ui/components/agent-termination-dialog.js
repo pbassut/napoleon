@@ -201,7 +201,7 @@ class AgentTerminationDialog {
 
     // Format agent runtime
     const runtime = this.formatRuntime(agent.createdAt);
-    
+
     // Update agent information display
     const agentText = [
       '',
@@ -241,7 +241,7 @@ class AgentTerminationDialog {
   async handleConfirm() {
     try {
       logger.debug('Agent termination confirmed');
-      
+
       // Hide dialog immediately
       this.hide();
 
@@ -298,26 +298,25 @@ class AgentTerminationDialog {
    */
   formatRuntime(createdAt) {
     if (!createdAt) return 'Unknown';
-    
+
     const now = new Date();
     const created = new Date(createdAt);
-    
+
     // Check if created date is invalid
     if (isNaN(created.getTime())) return 'Unknown';
-    
+
     const diffMs = now - created;
-    
+
     if (diffMs < 0) return 'Unknown';
-    
+
     const seconds = Math.floor(diffMs / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
-    
+
     if (hours > 0) {
       return `${hours}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
-    } else {
-      return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
     }
+    return `${minutes}:${(seconds % 60).toString().padStart(2, '0')}`;
   }
 
   /**

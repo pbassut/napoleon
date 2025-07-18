@@ -1,792 +1,500 @@
-# ADD Manager Architecture Document
+# Napoleon Brownfield Enhancement Architecture
 
 ## Introduction
 
-This document outlines the overall project architecture for ADD Manager, including backend systems, shared services, and non-UI specific concerns. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development, ensuring consistency and adherence to chosen patterns and technologies.
+This document outlines the architectural approach for enhancing ADD Manager with the Napoleon rebrand and Claude Code SDK integration. Its primary goal is to serve as the guiding architectural blueprint for the migration from CLI-based process management to SDK-based agent orchestration while ensuring seamless integration with the existing terminal UI system.
 
-**Relationship to Frontend Architecture:**
-Since ADD Manager is a terminal UI application using the blessed framework, this document covers the complete architecture including the terminal interface design. No separate frontend architecture document is required.
+**Relationship to Existing Architecture:**
+This document supplements the existing ADD Manager architecture by defining how the SDK integration will replace the current CLI process spawning mechanism. Where the existing system uses child process management, this document provides guidance on maintaining all current functionality while implementing a cleaner, more reliable SDK-based approach.
 
-### Starter Template or Existing Project
+## Change Log
 
-N/A - ADD Manager is a greenfield project built from scratch without using any existing starter templates or boilerplate projects. The architecture is designed specifically for the terminal UI and Claude CLI integration requirements.
+| Change | Date | Version | Description | Author |
+|--------|------|---------|-------------|---------|
+| Initial | 2025-01-17 | 1.0.0 | Created brownfield architecture for Napoleon transformation | Architect |
 
-### Change Log
+## Existing Project Analysis
 
-| Date | Version | Description | Author |
-|------|---------|-------------|---------|
-| 2025-07-17 | 1.0 | Initial architecture document creation | Claude Code |
+### Current Project State
 
-## High Level Architecture
+- **Primary Purpose:** Agent Driven Development Manager - A CLI tool for managing multiple Claude CLI sessions with isolated git worktrees
+- **Current Tech Stack:** Node.js (16+), blessed (terminal UI), commander.js (CLI), winston (logging), git worktrees
+- **Architecture Style:** Modular monolithic with clear separation between CLI, UI, Core logic, and utilities
+- **Deployment Method:** NPM package with global CLI command (`add-manager`)
 
-### Technical Summary
+### Available Documentation
 
-ADD Manager follows a modular monolithic architecture implemented as a Node.js CLI application with a blessed-based terminal UI. The system employs a process management architecture where the main application manages multiple child processes (Claude CLI agents) with git worktree isolation. Core architectural patterns include command-query separation for terminal UI interactions, event-driven process monitoring, and resource-constrained concurrency control with a 3-agent limit. The architecture prioritizes developer experience through clean separation of concerns between CLI framework (commander.js), terminal UI (blessed), agent lifecycle management, and git integration layers.
+- Package.json with project metadata and dependencies
+- Comprehensive inline code documentation
+- Clear module separation with dedicated directories
+- Well-structured error handling and logging system
 
-### High Level Overview
+### Identified Constraints
 
-1. **Architectural Style**: Modular Monolith - Single Node.js application with clearly separated modules
-2. **Repository Structure**: Monorepo - All components in single repository with organized module structure
-3. **Service Architecture**: Monolithic application with modular design for maintainability
-4. **User Interaction Flow**: CLI entry → Terminal UI → Agent Management → Git Worktree Operations
-5. **Key Architectural Decisions**:
-   - Terminal UI over web interface for developer-focused experience
-   - File-based session storage for simplicity and offline capability
-   - Native git commands via child_process for reliability
-   - Resource constraints (3-agent limit) for MVP stability
-   - Event-driven architecture for real-time status updates
+- Node.js 16.0.0+ requirement for modern JavaScript features
+- Git 2.20.0+ required for worktree operations
+- Claude CLI must be installed and accessible in PATH
+- Maximum 3 concurrent agents (configurable)
+- Process management complexity with stdin/stdout handling
+- Limited ability to reattach to existing processes after restart
 
-### High Level Project Diagram
+## Enhancement Scope and Integration Strategy
 
-```mermaid
-graph TB
-    User[Developer] --> CLI[CLI Entry Point<br/>commander.js]
-    CLI --> TUI[Terminal UI<br/>blessed framework]
-    TUI --> AM[Agent Manager<br/>Process Control]
-    TUI --> GM[Git Manager<br/>Worktree Operations]
-    TUI --> SM[Session Manager<br/>State Persistence]
-    
-    AM --> CP1[Claude Process 1]
-    AM --> CP2[Claude Process 2]
-    AM --> CP3[Claude Process 3]
-    
-    GM --> WT1[Worktree 1<br/>feature/agent-1]
-    GM --> WT2[Worktree 2<br/>feature/agent-2]
-    GM --> WT3[Worktree 3<br/>feature/agent-3]
-    
-    SM --> FS[File System<br/>~/.add-manager/]
-    
-    CP1 --> WT1
-    CP2 --> WT2
-    CP3 --> WT3
-    
-    style User fill:#e1f5fe
-    style CLI fill:#f3e5f5
-    style TUI fill:#e8f5e8
-    style AM fill:#fff3e0
-    style GM fill:#fce4ec
-    style SM fill:#f1f8e9
-```
+### Enhancement Overview
 
-### Architectural and Design Patterns
+**Enhancement Type:** Core Communication Layer Replacement  
+**Scope:** Replace CLI child process spawning with Claude Code SDK while maintaining all existing functionality  
+**Integration Impact:** Medium - Core change but with minimal surface area impact
 
-- **Command Pattern:** CLI commands and terminal UI interactions use command pattern for consistent operation handling and undo/redo capabilities
-- **Observer Pattern:** Real-time status updates for agent processes and git operations using event-driven notifications
-- **Factory Pattern:** Agent spawning uses factory pattern to create standardized process configurations with proper isolation
-- **Repository Pattern:** Session data access abstracted through repository pattern for future storage backend flexibility
-- **Process Manager Pattern:** Centralized process lifecycle management with proper cleanup and resource monitoring
-- **Resource Pool Pattern:** 3-agent limit enforced through resource pool pattern ensuring system stability
+### Integration Approach
 
-## Tech Stack
+**Code Integration Strategy:** Surgical replacement of process management methods in AgentManager class
+- Replace `spawnClaudeProcess()` with SDK initialization
+- Adapt `sendInstructions()` to use SDK query methods
+- Transform `handleAgentOutput()` to process SDK responses
+- Maintain all existing method signatures for UI compatibility
 
-### Cloud Infrastructure
+**Database Integration:** No changes - Session JSON structure remains compatible
 
-- **Provider:** N/A (Local development tool)
-- **Key Services:** Local file system, native git, Node.js process management
-- **Deployment Regions:** N/A (NPM global distribution)
+**API Integration:** Internal API remains unchanged - AgentManager public methods maintain same interface
 
-### Technology Stack Table
+**UI Integration:** Zero changes required - Terminal UI continues to receive same data format
 
-| Category | Technology | Version | Purpose | Rationale |
-|----------|------------|---------|---------|-----------|
-| **Language** | JavaScript | ES2022 | Primary development language | Rapid development, Node.js ecosystem, team familiarity |
-| **Runtime** | Node.js | 16.0.0+ | JavaScript runtime | LTS support, child_process capabilities, CLI tooling |
-| **CLI Framework** | commander.js | 11.1.0 | Command-line interface | Industry standard, flexible argument parsing, sub-command support |
-| **Terminal UI** | blessed | 0.1.81 | Rich terminal interface | Cross-platform TUI, event-driven, widget-based layout |
-| **Process Management** | child_process | Built-in | Spawning Claude CLI agents | Native Node.js process control, no external dependencies |
-| **Git Integration** | git (native) | 2.20.0+ | Version control operations | Native git commands for reliability, worktree support |
-| **Storage** | fs (JSON) | Built-in | Session persistence | Simple file-based storage, no database dependencies |
-| **Testing** | Jest | 29.7.0 | Unit and integration testing | Comprehensive testing framework, mocking capabilities |
-| **Linting** | ESLint | 8.57.0 | Code quality | Consistent code style, error prevention |
-| **Package Manager** | npm | 8.0.0+ | Dependency management | Built-in with Node.js, package distribution |
+### Compatibility Requirements
 
-## Data Models
+- **Existing API Compatibility:** 100% - All AgentManager public methods retain same signatures
+- **Database Schema Compatibility:** Full compatibility - Session data structure unchanged
+- **UI/UX Consistency:** Complete preservation - No user-visible changes except improved reliability
+- **Performance Impact:** Positive - Reduced overhead from process spawning, faster response times
 
-### Agent Session Model
+## Tech Stack Alignment
 
-**Purpose:** Represents an active or historical Claude CLI agent session with its configuration, state, and metadata.
+### Existing Technology Stack
+
+| Category | Current Technology | Version | Usage in Enhancement | Notes |
+|----------|-------------------|---------|---------------------|-------|
+| Runtime | Node.js | >=16.0.0 | Unchanged | Required for SDK compatibility |
+| UI Framework | blessed | ^0.1.81 | Unchanged | Terminal UI remains intact |
+| CLI Framework | commander | ^11.1.0 | Unchanged | CLI entry point preserved |
+| Logging | winston | ^3.11.0 | Unchanged | Continue using for consistency |
+| Validation | joi | ^17.11.0 | Unchanged | Input validation patterns |
+| Version Check | semver | ^7.5.4 | Unchanged | Dependency version validation |
+| Process Management | child_process (native) | N/A | **REPLACED** | Core change - removed |
+| External Dependency | Claude CLI | Latest | **REPLACED** | No longer required |
+
+### New Technology Additions
+
+| Technology | Version | Purpose | Rationale | Integration Method |
+|------------|---------|---------|-----------|-------------------|
+| @anthropic-ai/claude-code | ^1.0.53 | SDK communication | Official SDK provides structured API, better reliability than CLI parsing | Direct replacement of spawn/stdin/stdout |
+
+## Data Models and Schema Changes
+
+### New Data Models
+
+#### SDK Session Model
+**Purpose:** Replace process-based session tracking with SDK-based session management  
+**Integration:** Replaces process-specific fields in existing session structure
 
 **Key Attributes:**
-- `id`: string - Unique identifier for the agent session
-- `name`: string - Human-readable name for the agent
-- `prompt`: string - Initial prompt/instructions given to the agent
-- `status`: enum - Current status (spawning, running, idle, error, terminated)
-- `pid`: number - Process ID of the Claude CLI instance
-- `workspacePath`: string - Path to the git worktree directory
-- `branchName`: string - Associated git branch name
-- `createdAt`: Date - Session creation timestamp
-- `updatedAt`: Date - Last status update timestamp
-- `resourceUsage`: object - CPU/memory usage statistics
+- `sessionId`: String - Unique SDK session identifier (reuses existing agent ID)
+- `sdkStatus`: String - SDK-specific status tracking
+- `lastMessageId`: String - Track last SDK message for recovery
 
 **Relationships:**
-- Has one GitWorktree (1:1 relationship)
-- Belongs to one ProcessGroup (N:1 relationship)
-- Has many ProcessLogs (1:N relationship)
+- **With Existing:** Direct replacement of process-related fields
+- **With New:** None - self-contained session structure
 
-### Git Worktree Model
+### Schema Integration Strategy
 
-**Purpose:** Represents a git worktree created for agent isolation with branch and cleanup metadata.
+**Database Changes Required:**
+- **New Tables:** None - using existing session storage
+- **Modified Tables:** Session structure simplified
+- **New Indexes:** None - existing lookup patterns unchanged
+- **Migration Strategy:** Clean break - new sessions use new structure
 
-**Key Attributes:**
-- `id`: string - Unique identifier for the worktree
-- `agentId`: string - Associated agent session ID
-- `path`: string - Absolute path to worktree directory
-- `branchName`: string - Git branch name
-- `baseBranch`: string - Original branch the worktree was created from
-- `createdAt`: Date - Worktree creation timestamp
-- `isClean`: boolean - Whether worktree has uncommitted changes
-- `mergeStatus`: enum - Status of merge operations (pending, completed, conflicted)
+**Breaking Changes:**
+- Remove `pid` field entirely
+- Remove `process` reference (was never persisted anyway)
+- Simplify status tracking for SDK model
 
-**Relationships:**
-- Belongs to one AgentSession (1:1 relationship)
-- Has many CommitRecords (1:N relationship)
+### Session Data Evolution
 
-### Process Monitor Model
-
-**Purpose:** Tracks process health, resource usage, and performance metrics for system monitoring.
-
-**Key Attributes:**
-- `agentId`: string - Associated agent session ID
-- `pid`: number - Process ID being monitored
-- `cpuUsage`: number - CPU usage percentage
-- `memoryUsage`: number - Memory usage in bytes
-- `uptime`: number - Process uptime in seconds
-- `status`: enum - Process health status (healthy, warning, critical)
-- `lastHeartbeat`: Date - Last successful health check
-- `errorCount`: number - Number of errors encountered
-
-**Relationships:**
-- Belongs to one AgentSession (1:1 relationship)
-- Has many HealthCheckRecords (1:N relationship)
-
-### Application Configuration Model
-
-**Purpose:** Stores user preferences, system settings, and configuration parameters.
-
-**Key Attributes:**
-- `maxConcurrentAgents`: number - Maximum allowed concurrent agents (default: 3)
-- `defaultWorktreeLocation`: string - Base directory for worktrees
-- `sessionStoragePath`: string - Location for session data files
-- `gitIntegrationEnabled`: boolean - Whether git integration is active
-- `uiTheme`: string - Terminal UI theme preference
-- `logLevel`: enum - Logging verbosity level
-- `autoCleanupEnabled`: boolean - Whether to auto-cleanup terminated sessions
-
-**Relationships:**
-- Has many UserPreferences (1:N relationship)
-- Configures ProcessLimits (1:1 relationship)
-
-## Components
-
-### CLI Entry Point
-
-**Responsibility:** Application entry point that handles command-line argument parsing, validates system requirements, and initializes the terminal UI or executes direct commands.
-
-**Key Interfaces:**
-- `parseArguments(argv)` - Parse command-line arguments and options
-- `validateEnvironment()` - Check Node.js version, git availability, and permissions
-- `initializeApplication()` - Bootstrap application modules and dependencies
-- `executeCommand(command, options)` - Execute direct CLI commands without UI
-
-**Dependencies:** commander.js, SystemValidator, ConfigurationManager
-
-**Technology Stack:** Node.js with commander.js framework, native fs for configuration validation
-
-### Terminal UI Manager
-
-**Responsibility:** Manages the blessed-based terminal interface including layout, widgets, keyboard navigation, and real-time updates for agent status and system information.
-
-**Key Interfaces:**
-- `renderDashboard()` - Render main dashboard with agent overview
-- `renderAgentDetail(agentId)` - Display detailed agent information and logs
-- `handleKeyboardInput(key, modifiers)` - Process keyboard shortcuts and navigation
-- `updateAgentStatus(agentId, status)` - Update agent status indicators in real-time
-- `showDialog(type, message, options)` - Display confirmation dialogs and prompts
-
-**Dependencies:** blessed, EventEmitter, AgentManager, GitManager
-
-**Technology Stack:** blessed framework for terminal UI, Node.js EventEmitter for component communication
-
-### Agent Manager
-
-**Responsibility:** Core process management for Claude CLI agents including spawning, monitoring, lifecycle control, and resource usage tracking with enforcement of the 3-agent concurrency limit.
-
-**Key Interfaces:**
-- `spawnAgent(config)` - Create new Claude CLI agent process with configuration
-- `terminateAgent(agentId)` - Gracefully terminate agent and cleanup resources
-- `pauseAgent(agentId)` - Pause agent execution (if supported by Claude CLI)
-- `resumeAgent(agentId)` - Resume paused agent execution
-- `getAgentStatus(agentId)` - Retrieve current agent status and metrics
-- `listActiveAgents()` - Return list of all active agent sessions
-- `enforceResourceLimits()` - Validate and enforce 3-agent concurrency limit
-
-**Dependencies:** child_process, ProcessMonitor, SessionManager, ResourceManager
-
-**Technology Stack:** Node.js child_process for process spawning, EventEmitter for status updates
-
-### Git Manager
-
-**Responsibility:** Handles git worktree operations including creation, cleanup, branch management, and basic merge coordination to provide proper isolation for each agent.
-
-**Key Interfaces:**
-- `createWorktree(agentId, branchName)` - Create new git worktree for agent
-- `removeWorktree(agentId)` - Clean up worktree and associated files
-- `createBranch(branchName, baseBranch)` - Create feature branch for agent work
-- `getWorktreeStatus(agentId)` - Check worktree status and changes
-- `listAgentBranches()` - Return all agent-created branches
-- `prepareMerge(agentId)` - Prepare agent branch for merge review
-- `detectConflicts(branchName)` - Check for potential merge conflicts
-
-**Dependencies:** child_process (git commands), fs, path utilities
-
-**Technology Stack:** Native git commands via child_process, Node.js fs for file operations
-
-### Session Manager
-
-**Responsibility:** Handles persistent storage of agent sessions, configuration, and application state using JSON files with proper error handling and data validation.
-
-**Key Interfaces:**
-- `saveSession(agentSession)` - Persist agent session data to storage
-- `loadSession(agentId)` - Retrieve agent session from storage
-- `updateSession(agentId, updates)` - Update specific session attributes
-- `deleteSession(agentId)` - Remove session data from storage
-- `listSessions()` - Return all stored sessions
-- `backupSessions()` - Create backup of session data
-- `validateSessionData(data)` - Validate session data integrity
-
-**Dependencies:** fs, path, JSON validation utilities
-
-**Technology Stack:** Node.js fs for file operations, JSON for data serialization
-
-### Process Monitor
-
-**Responsibility:** Continuously monitors agent processes for health, resource usage, and performance metrics while providing alerts for abnormal conditions.
-
-**Key Interfaces:**
-- `startMonitoring(agentId, pid)` - Begin monitoring agent process
-- `stopMonitoring(agentId)` - Stop monitoring and cleanup
-- `getResourceUsage(agentId)` - Get current CPU/memory usage
-- `checkProcessHealth(agentId)` - Verify process is running and responsive
-- `setResourceThresholds(limits)` - Configure resource usage alerts
-- `generatePerformanceReport()` - Create performance summary report
-
-**Dependencies:** ps-tree, pidusage, EventEmitter
-
-**Technology Stack:** Node.js process monitoring libraries, native process APIs
-
-### Component Diagrams
-
-```mermaid
-C4Container
-    title ADD Manager Component Architecture
-    
-    Container_Boundary(app, "ADD Manager Application") {
-        Component(cli, "CLI Entry Point", "commander.js", "Command parsing and app initialization")
-        Component(tui, "Terminal UI Manager", "blessed", "Terminal interface and user interaction")
-        Component(agent, "Agent Manager", "Node.js", "Process lifecycle management")
-        Component(git, "Git Manager", "git commands", "Worktree and branch operations")
-        Component(session, "Session Manager", "fs/JSON", "Data persistence and state")
-        Component(monitor, "Process Monitor", "Node.js", "Health and resource monitoring")
-    }
-    
-    Container_Boundary(external, "External Systems") {
-        Component(claude, "Claude CLI", "Anthropic", "AI agent processes")
-        Component(gitrepo, "Git Repository", "git", "Version control system")
-        Component(filesystem, "File System", "OS", "Session storage")
-    }
-    
-    Rel(cli, tui, "initializes")
-    Rel(tui, agent, "controls")
-    Rel(tui, git, "manages")
-    Rel(agent, monitor, "monitors")
-    Rel(agent, session, "persists")
-    Rel(git, session, "stores metadata")
-    Rel(agent, claude, "spawns")
-    Rel(git, gitrepo, "operates on")
-    Rel(session, filesystem, "reads/writes")
-```
-
-## External APIs
-
-### Claude CLI Integration
-
-- **Purpose:** Spawn and manage Claude CLI agent processes for AI-driven development tasks
-- **Documentation:** https://docs.anthropic.com/claude/reference/cli
-- **Base URL(s):** N/A (Local CLI tool)
-- **Authentication:** User's Claude API key via environment variables or CLI configuration
-- **Rate Limits:** Depends on user's Claude API plan
-
-**Key Commands Used:**
-- `claude --help` - Validate Claude CLI installation and version
-- `claude --interactive` - Start interactive Claude session
-- `claude --file <path>` - Process files with Claude
-
-**Integration Notes:** Claude CLI must be pre-installed and configured by user. Agent Manager spawns Claude processes with appropriate working directory and configuration.
-
-### Git Integration
-
-- **Purpose:** Version control operations for worktree management and branch isolation
-- **Documentation:** https://git-scm.com/docs
-- **Base URL(s):** N/A (Local git repository)
-- **Authentication:** Uses git configuration from user's environment
-- **Rate Limits:** N/A (Local operations)
-
-**Key Commands Used:**
-- `git worktree add <path> <branch>` - Create new worktree
-- `git worktree remove <path>` - Remove worktree
-- `git branch -D <branch>` - Delete branch
-- `git status --porcelain` - Check repository status
-- `git diff <branch>` - Show changes in branch
-
-**Integration Notes:** Requires git version 2.20.0+ for worktree support. All operations are local to the repository.
-
-## Core Workflows
-
-### Agent Spawning Workflow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant TUI as Terminal UI
-    participant Agent as Agent Manager
-    participant Git as Git Manager
-    participant Session as Session Manager
-    participant Claude as Claude CLI
-    
-    User->>TUI: Press 'n' for new agent
-    TUI->>TUI: Check agent limit (3)
-    TUI->>User: Prompt for agent instructions
-    User->>TUI: Enter agent prompt
-    TUI->>Git: Create worktree for agent
-    Git->>Git: Create feature branch
-    Git->>Git: Setup worktree directory
-    Git-->>TUI: Worktree created
-    TUI->>Agent: Spawn agent with config
-    Agent->>Claude: Start Claude CLI process
-    Claude-->>Agent: Process started (PID)
-    Agent->>Session: Save session data
-    Session-->>Agent: Session saved
-    Agent-->>TUI: Agent spawned successfully
-    TUI-->>User: Show agent in dashboard
-```
-
-### Agent Termination Workflow
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant TUI as Terminal UI
-    participant Agent as Agent Manager
-    participant Git as Git Manager
-    participant Session as Session Manager
-    participant Monitor as Process Monitor
-    participant Claude as Claude CLI
-    
-    User->>TUI: Select agent and press 'd'
-    TUI->>User: Confirm termination
-    User->>TUI: Confirm
-    TUI->>Agent: Terminate agent
-    Agent->>Monitor: Stop monitoring
-    Monitor-->>Agent: Monitoring stopped
-    Agent->>Claude: Send SIGTERM
-    Claude-->>Agent: Process terminated
-    Agent->>Git: Cleanup worktree
-    Git->>Git: Remove worktree
-    Git-->>Agent: Worktree cleaned
-    Agent->>Session: Delete session data
-    Session-->>Agent: Session deleted
-    Agent-->>TUI: Termination complete
-    TUI-->>User: Update dashboard
-```
-
-## Database Schema
-
-ADD Manager uses file-based JSON storage instead of a traditional database. The schema is defined through TypeScript interfaces and stored in structured JSON files.
-
-### Session Storage Schema
-
-```json
+**New Session Structure:**
+```javascript
 {
-  "sessions": {
-    "agent-001": {
-      "id": "agent-001",
-      "name": "Feature Development Agent",
-      "prompt": "Implement user authentication system",
-      "status": "running",
-      "pid": 12345,
-      "workspacePath": "/path/to/repo/.add-manager-worktrees/agent-001",
-      "branchName": "feature/agent-001",
-      "createdAt": "2025-07-17T10:00:00Z",
-      "updatedAt": "2025-07-17T10:30:00Z",
-      "resourceUsage": {
-        "cpuPercent": 15.2,
-        "memoryMB": 128.5,
-        "uptime": 1800
-      }
-    }
-  },
-  "worktrees": {
-    "agent-001": {
-      "id": "agent-001",
-      "agentId": "agent-001",
-      "path": "/path/to/repo/.add-manager-worktrees/agent-001",
-      "branchName": "feature/agent-001",
-      "baseBranch": "main",
-      "createdAt": "2025-07-17T10:00:00Z",
-      "isClean": false,
-      "mergeStatus": "pending"
-    }
-  },
-  "configuration": {
-    "maxConcurrentAgents": 3,
-    "defaultWorktreeLocation": ".add-manager-worktrees",
-    "sessionStoragePath": "~/.add-manager/sessions.json",
-    "gitIntegrationEnabled": true,
-    "uiTheme": "default",
-    "logLevel": "info",
-    "autoCleanupEnabled": true
-  }
+  id: "agent-xxx",
+  instructions: "...",
+  spawnTime: "ISO-8601",
+  status: "running",       // Simplified: running, idle, error
+  workingDirectory: "/path",
+  worktreePath: "/path",
+  worktreeName: "agent-xxx",
+  gitRoot: "/path",
+  lastActivity: "ISO-8601",
+  logs: [],
+  
+  // SDK-specific fields:
+  sdkStatus: "active",     // active, aborted, completed
+  lastMessageId: "msg-xxx" // For recovery/resume
 }
 ```
 
-### File Structure
-- `~/.add-manager/sessions.json` - Active session data
-- `~/.add-manager/config.json` - User configuration
-- `~/.add-manager/logs/` - Application logs
-- `~/.add-manager/backups/` - Session data backups
+## Component Architecture
 
-## Source Tree
+### New Components
 
+#### SDK Communication Manager
+**Responsibility:** Handles all Claude Code SDK interactions, replacing CLI process communication  
+**Integration Points:** Direct replacement of process spawning methods in AgentManager
+
+**Key Interfaces:**
+- `initializeSDKSession(agentId, workingDirectory)` - Creates new SDK session
+- `executeQuery(agentId, prompt, options)` - Sends instructions via SDK
+- `handleSDKMessage(agentId, message)` - Processes SDK responses
+- `terminateSession(agentId)` - Cleanly ends SDK session
+
+**Dependencies:**
+- **Existing Components:** Logger, Config, Error handlers
+- **New Components:** None - self-contained within AgentManager
+
+**Technology Stack:** Node.js, @anthropic-ai/claude-code SDK
+
+#### Message Transformer
+**Responsibility:** Adapts SDK message format to existing log/output format for UI compatibility  
+**Integration Points:** Sits between SDK responses and existing UI data flow
+
+**Key Interfaces:**
+- `transformSDKMessage(sdkMessage)` - Converts SDK format to UI format
+- `extractContent(message)` - Pulls text content from SDK messages
+- `mapMessageType(sdkType)` - Maps SDK types to UI log types
+
+**Dependencies:**
+- **Existing Components:** UI data structures
+- **New Components:** SDK Communication Manager
+
+**Technology Stack:** Pure JavaScript transformation logic
+
+### Component Interaction Diagram
+
+```mermaid
+graph TD
+    UI[Terminal UI - blessed] -->|unchanged interface| AM[AgentManager]
+    AM -->|method calls| SCM[SDK Communication Manager]
+    SCM -->|SDK queries| SDK[Claude Code SDK]
+    SDK -->|responses| SCM
+    SCM -->|raw messages| MT[Message Transformer]
+    MT -->|UI format| AM
+    AM -->|formatted data| UI
+    
+    AM -->|worktree ops| Git[Git Worktree Manager]
+    AM -->|persistence| SP[Session Persistence]
+    
+    style SCM fill:#e1f5e1
+    style MT fill:#e1f5e1
+    style SDK fill:#ffe4b5
 ```
-add-manager/
+
+## Source Tree Integration
+
+### Existing Project Structure
+
+```plaintext
+terragon/
+├── bin/
+│   └── add-manager.js           # CLI entry point
 ├── src/
-│   ├── cli/
-│   │   ├── index.js                 # CLI entry point
-│   │   ├── commands/                # CLI command implementations
-│   │   │   ├── start.js            # Start terminal UI
-│   │   │   ├── status.js           # Show agent status
-│   │   │   └── cleanup.js          # Manual cleanup command
-│   │   └── validators/              # System validation
-│   │       ├── environment.js      # Node.js/git validation
-│   │       └── permissions.js      # File system permissions
-│   ├── ui/
-│   │   ├── terminal-manager.js     # Main terminal UI controller
-│   │   ├── components/             # UI components
-│   │   │   ├── dashboard.js        # Main dashboard view
-│   │   │   ├── agent-detail.js     # Agent detail view
-│   │   │   ├── dialog.js           # Dialog components
-│   │   │   └── status-bar.js       # Status bar component
-│   │   ├── themes/                 # UI themes and styling
-│   │   │   └── default.js          # Default theme
-│   │   └── keyboard/               # Keyboard handling
-│   │       └── shortcuts.js        # Keyboard shortcuts
+│   ├── cli/                     # Command-line interface
+│   ├── core/                    # Business logic
+│   │   ├── agent-manager.js     # Main modification target
+│   │   └── config.js
+│   ├── ui/                      # Terminal UI (blessed)
+│   └── utils/                   # Shared utilities
+├── __tests__/
+├── .bmad-core/                  # Agent system files
+└── package.json
+```
+
+### New File Organization
+
+```plaintext
+terragon/
+├── bin/
+│   └── napoleon.js              # Renamed CLI entry point
+├── src/
 │   ├── core/
-│   │   ├── agent-manager.js        # Agent lifecycle management
-│   │   ├── git-manager.js          # Git worktree operations
-│   │   ├── session-manager.js      # Session persistence
-│   │   ├── process-monitor.js      # Process monitoring
-│   │   └── resource-manager.js     # Resource limit enforcement
-│   ├── models/
-│   │   ├── agent-session.js        # Agent session model
-│   │   ├── git-worktree.js         # Git worktree model
-│   │   ├── process-monitor.js      # Process monitoring model
-│   │   └── configuration.js        # Configuration model
+│   │   ├── agent-manager.js     # Modified: SDK integration
+│   │   ├── sdk/                 # New SDK-specific code
+│   │   │   ├── communication-manager.js
+│   │   │   ├── message-transformer.js
+│   │   │   └── sdk-types.js    # SDK type definitions
+│   │   └── config.js
 │   └── utils/
-│       ├── logger.js               # Logging utilities
-│       ├── file-utils.js           # File system helpers
-│       ├── git-utils.js            # Git command utilities
-│       └── process-utils.js        # Process management utilities
-├── test/
-│   ├── unit/                       # Unit tests
-│   │   ├── core/                   # Core module tests
-│   │   ├── ui/                     # UI component tests
-│   │   └── models/                 # Model tests
-│   ├── integration/                # Integration tests
-│   │   ├── agent-lifecycle.test.js # Full agent lifecycle
-│   │   ├── git-integration.test.js # Git operations
-│   │   └── ui-interaction.test.js  # UI workflows
-│   └── fixtures/                   # Test data and mocks
-│       ├── git-repos/              # Test git repositories
-│       └── sessions/               # Test session data
-├── scripts/
-│   ├── build.js                    # Build script
-│   ├── test.js                     # Test runner
-│   └── publish.js                  # NPM publish script
-├── config/
-│   ├── default.json                # Default configuration
-│   └── test.json                   # Test configuration
-├── docs/
-│   ├── architecture.md             # This document
-│   ├── prd.md                      # Product requirements
-│   └── user-guide.md               # User documentation
-├── .eslintrc.js                    # ESLint configuration
-├── .gitignore                      # Git ignore rules
-├── package.json                    # NPM package configuration
-├── package-lock.json               # NPM lock file
-└── README.md                       # Project overview
+│       └── sdk-helpers.js       # New: SDK utility functions
+├── __tests__/
+│   └── core/
+│       └── sdk/                 # New: SDK component tests
+│           ├── communication-manager.test.js
+│           └── message-transformer.test.js
+└── docs/
+    └── architecture.md          # This document
 ```
 
-## Infrastructure and Deployment
+### Integration Guidelines
 
-### Infrastructure as Code
+- **File Naming:** Follow existing kebab-case convention (e.g., `communication-manager.js`)
+- **Folder Organization:** Group SDK-related code in `core/sdk/` subdirectory for clear separation
+- **Import/Export Patterns:** Use existing CommonJS pattern (`module.exports`) for consistency
 
-- **Tool:** N/A (NPM package distribution)
-- **Location:** N/A
-- **Approach:** NPM registry deployment with semantic versioning
+## Infrastructure and Deployment Integration
 
-### Deployment Strategy
+### Existing Infrastructure
 
-- **Strategy:** NPM package publishing with automated CI/CD
-- **CI/CD Platform:** GitHub Actions
-- **Pipeline Configuration:** `.github/workflows/publish.yml`
+**Current Deployment:** NPM package with global CLI installation
+**Infrastructure Tools:** npm registry, git for version control
+**Environments:** Local development, npm published package
 
-### Environments
+### Enhancement Deployment Strategy
 
-- **Development:** Local development environment with test fixtures
-- **Testing:** Automated test environment with CI/CD pipeline
-- **Production:** NPM registry for global distribution
+**Deployment Approach:** 
+- Publish as entirely new npm package: "napoleon"
+- Not an update to add-manager, but a new package
+- Start at version 1.0.0 (fresh start)
 
-### Environment Promotion Flow
+**Infrastructure Changes:** 
+- None - deployment pipeline remains identical
+- Same npm publish process
+- Same global installation method
 
-```
-Development → Testing → NPM Registry
-     ↓           ↓          ↓
-   Local      GitHub    Global
- Testing      Actions   Install
-```
+**Pipeline Integration:**
+- Update package.json with new name "napoleon"
+- Set initial version to 1.0.0
+- Publish as new npm package
 
 ### Rollback Strategy
 
-- **Primary Method:** NPM version deprecation and patch release
-- **Trigger Conditions:** Critical bugs, security issues, or major functionality failures
-- **Recovery Time Objective:** 4 hours for critical issues## Error Handling Strategy
+**Rollback Method:** 
+- N/A - New package, no existing users
+- Development-only at this stage
 
-### General Approach
+**Risk Mitigation:**
+- Comprehensive testing before initial release
+- Clear documentation of requirements
 
-- **Error Model:** Structured error objects with error codes, messages, and context
-- **Exception Hierarchy:** Custom error classes extending base Error for different categories
-- **Error Propagation:** Bubble up through component layers with proper context preservation
+**Monitoring:**
+- npm download statistics for adoption tracking
+- GitHub issues for feedback
+- Community feedback channels
 
-### Logging Standards
+## Coding Standards and Conventions
 
-- **Library:** Winston 3.11.0
-- **Format:** JSON structured logging with timestamp, level, message, and context
-- **Levels:** error, warn, info, debug, trace
-- **Required Context:**
-  - Correlation ID: UUID v4 format for tracking operations across components
-  - Service Context: Component name, method, and operation type
-  - User Context: Anonymized user session without sensitive data
+### Existing Standards Compliance
 
-### Error Handling Patterns
+**Code Style:** 
+- ESLint with airbnb-base configuration
+- 2-space indentation
+- Semicolons required
+- Single quotes for strings
 
-#### External API Errors
+**Linting Rules:** 
+- Existing `.eslintrc` configuration
+- Run via `npm run lint`
+- Pre-commit linting recommended
 
-- **Retry Policy:** Exponential backoff with jitter, max 3 retries for transient failures
-- **Circuit Breaker:** N/A (Local operations only)
-- **Timeout Configuration:** 30 seconds for git operations, 10 seconds for process spawning
-- **Error Translation:** Map git error codes to user-friendly messages
+**Testing Patterns:**
+- Jest framework
+- Test files adjacent to source with `.test.js` suffix
+- Mock external dependencies
+- Focus on unit tests with some integration tests
 
-#### Business Logic Errors
+**Documentation Style:**
+- JSDoc comments for public methods
+- Inline comments for complex logic
+- README for user-facing documentation
+- Detailed error messages with suggestions
 
-- **Custom Exceptions:** AgentLimitExceededError, WorktreeCreationError, ProcessSpawnError
-- **User-Facing Errors:** Clear, actionable error messages with suggested solutions
-- **Error Codes:** Structured error codes (e.g., AGENT_001, GIT_002, UI_003)
+### Critical Integration Rules - Napoleon Rebrand
 
-#### Data Consistency
+- **Global Rename Required:** All references to "add-manager" → "napoleon" throughout codebase
+- **Package Name:** Update package.json name field to "napoleon"
+- **CLI Command:** Change from `add-manager` to `napoleon`
+- **Directory Names:** `.add-manager/` → `.napoleon/` for config and session storage
+- **Environment Variables:** Any ADD_MANAGER_* vars → NAPOLEON_*
+- **Error Messages:** Update all user-facing text to reference Napoleon
+- **Documentation:** Complete find/replace in all docs and comments
 
-- **Transaction Strategy:** File-based atomic operations with backup/restore on failure
-- **Compensation Logic:** Automatic cleanup of partial operations (processes, worktrees)
-- **Idempotency:** Agent operations can be safely retried without side effects
+### Critical Integration Rules
 
-## Coding Standards
+- **Existing API Compatibility:** All public AgentManager methods maintain exact signatures
+- **Database Integration:** Session JSON structure remains readable, new fields are additive
+- **Error Handling:** SDK errors wrapped in existing EnvironmentValidationError or FileSystemError classes
+- **Logging Consistency:** Use winston logger with same log levels and formatting
 
-### Core Standards
+## Testing Strategy
 
-- **Languages & Runtimes:** JavaScript ES2022 with Node.js 16.0.0+
-- **Style & Linting:** ESLint with Airbnb config, Prettier for formatting
-- **Test Organization:** `*.test.js` files co-located with source code
+### Integration with Existing Tests
 
-### Critical Rules
+**Existing Test Framework:** Jest with standard configuration
+**Test Organization:** Tests in `__tests__/` directory, parallel to source
+**Coverage Requirements:** Maintain current coverage levels
 
-- **Logging:** Never use console.log in production - use Winston logger with appropriate levels
-- **Process Management:** Always handle process cleanup in finally blocks or error handlers
-- **Git Operations:** Validate git repository state before any worktree operations
-- **Resource Limits:** Enforce 3-agent limit before spawning new processes
-- **Error Handling:** All async operations must have try-catch blocks with proper error context
-- **File Operations:** Use absolute paths and validate file existence before operations
+### New Testing Requirements
 
-### Language-Specific Guidelines
+#### Unit Tests for New Components
 
-#### JavaScript Specifics
-
-- **Async/Await:** Prefer async/await over Promises for better error handling
-- **Process Spawning:** Use spawn() with proper stdio handling and error event listeners
-- **Memory Management:** Implement proper cleanup for event listeners and timers
-- **Error Objects:** Create custom error classes with proper stack traces and context
-
-## Test Strategy and Standards
-
-### Testing Philosophy
-
-- **Approach:** Test-driven development with comprehensive coverage
-- **Coverage Goals:** 90% line coverage, 100% branch coverage for critical paths
-- **Test Pyramid:** 70% unit tests, 20% integration tests, 10% end-to-end tests
-
-### Test Types and Organization
-
-#### Unit Tests
-
-- **Framework:** Jest 29.7.0
-- **File Convention:** `*.test.js` files co-located with source code
-- **Location:** Same directory as source files
-- **Mocking Library:** Jest built-in mocking
-- **Coverage Requirement:** 90% line coverage
-
-**AI Agent Requirements:**
-- Generate tests for all public methods and error conditions
-- Cover edge cases like process failures and git conflicts
-- Follow AAA pattern (Arrange, Act, Assert)
-- Mock all external dependencies (child_process, fs operations)
+- **Framework:** Jest (existing)
+- **Location:** `__tests__/core/sdk/` for SDK components
+- **Coverage Target:** 80%+ for new SDK code
+- **Integration with Existing:** Follow same patterns, mocking conventions
 
 #### Integration Tests
 
-- **Scope:** Component interactions, git operations, process lifecycle
-- **Location:** `test/integration/` directory
-- **Test Infrastructure:**
-  - **Git Operations:** Temporary git repositories for each test
-  - **Process Management:** Mock Claude CLI processes using test doubles
-  - **File System:** Temporary directories with proper cleanup
+- **Scope:** End-to-end flow from UI command to SDK response
+- **Existing System Verification:** Ensure worktree creation still works with SDK
+- **New Feature Testing:** Full agent lifecycle with SDK communication
 
-#### End-to-End Tests
+#### Regression Testing
 
-- **Framework:** Jest with blessed-test helpers
-- **Scope:** Full user workflows through terminal interface
-- **Environment:** Isolated test environment with mock git repository
-- **Test Data:** Predefined session fixtures and git repository states
+- **Existing Feature Verification:** All current UI interactions work unchanged
+- **Automated Regression Suite:** Extend existing Jest suite
+- **Manual Testing Requirements:** Terminal UI interaction flows
 
-### Test Data Management
+## Security Integration
 
-- **Strategy:** Factory pattern for creating test data objects
-- **Fixtures:** JSON files in `test/fixtures/` directory
-- **Factories:** Builder pattern for complex object creation
-- **Cleanup:** Automatic cleanup of temporary files and processes
+### Existing Security Measures
 
-### Continuous Testing
+**Authentication:** Currently relies on Claude CLI authentication (system-level)
+**Authorization:** No multi-user auth - single user local tool
+**Data Protection:** Local file storage with standard OS permissions
+**Security Tools:** Git for version control isolation, file system permissions
 
-- **CI Integration:** GitHub Actions with test matrix for Node.js versions
-- **Performance Tests:** Basic resource usage validation
-- **Security Tests:** Dependency vulnerability scanning with npm audit
+### Enhancement Security Requirements
 
-## Security
+**New Security Measures:** 
+- API key management for Claude Code SDK
+- Environment variable security for `ANTHROPIC_API_KEY`
+- Secure key storage recommendations
 
-### Input Validation
+**Integration Points:**
+- API key validation on startup
+- Secure error messages (don't expose key)
+- Environment variable best practices
 
-- **Validation Library:** Joi 17.11.0 for schema validation
-- **Validation Location:** At component boundaries before processing
-- **Required Rules:**
-  - All user inputs must be validated against predefined schemas
-  - File paths must be sanitized to prevent directory traversal
-  - Agent names must match alphanumeric pattern with hyphens
-
-### Authentication & Authorization
-
-- **Auth Method:** Local file system permissions only
-- **Session Management:** No authentication required for local tool
-- **Required Patterns:**
-  - Validate file system permissions before operations
-  - Ensure git repository access rights
-
-### Secrets Management
-
-- **Development:** Environment variables for Claude API keys
-- **Production:** User-managed Claude CLI configuration
-- **Code Requirements:**
-  - Never hardcode API keys or sensitive configuration
-  - Access Claude credentials through Claude CLI configuration
-  - No secrets in logs, error messages, or session storage
-
-### API Security
-
-- **Rate Limiting:** N/A (Local operations)
-- **CORS Policy:** N/A (Terminal application)
-- **Security Headers:** N/A (No web interface)
-- **HTTPS Enforcement:** N/A (Local application)
-
-### Data Protection
-
-- **Encryption at Rest:** File system encryption (OS-level)
-- **Encryption in Transit:** N/A (Local operations)
-- **PII Handling:** No PII collection beyond git user configuration
-- **Logging Restrictions:** No sensitive data in logs (API keys, file contents)
-
-### Dependency Security
-
-- **Scanning Tool:** npm audit for dependency vulnerabilities
-- **Update Policy:** Monthly dependency updates with security patches
-- **Approval Process:** Review dependencies for licensing and security
+**Compliance Requirements:** 
+- Never log or display API keys
+- Secure storage recommendations in documentation
+- Clear security warnings for key handling
 
 ### Security Testing
 
-- **SAST Tool:** ESLint security rules and CodeQL
-- **DAST Tool:** N/A (No network-exposed services)
-- **Penetration Testing:** N/A (Local development tool)
+**Existing Security Tests:** 
+- Input validation tests (dangerous patterns)
+- File system access restrictions
+- Command injection prevention
+
+**New Security Test Requirements:**
+- API key masking in logs
+- Environment variable handling
+- Error messages don't leak sensitive info
+- Abort controller prevents resource leaks
+
+## Checklist Results Report - Napoleon Architecture Validation
+
+### Executive Summary
+
+**Overall Architecture Readiness: HIGH**
+- The architecture is well-designed for a brownfield enhancement
+- Clean SDK migration strategy with minimal disruption
+- Strong focus on maintaining existing functionality
+- **Project Type:** Backend enhancement (CLI/SDK) - Frontend sections skipped
+
+### Risk Assessment
+
+**Top Risks:**
+1. Node.js Version Upgrade (16 → 18) - Medium
+2. API Key Management - Medium
+3. Breaking Changes - Low (no external users)
+
+### AI Implementation Readiness
+
+**Excellent suitability for AI implementation:**
+- Clear file structure and naming conventions
+- Predictable patterns throughout
+- Minimal complexity in changes
+- Well-defined component boundaries
 
 ## Next Steps
 
-### Implementation Guidance
+### Story Manager Handoff
 
-1. **Phase 1: Foundation (Week 1)**
-   - Set up project structure and CLI framework
-   - Implement basic terminal UI with blessed
-   - Create agent spawning with process management
-   - Add simple session storage
+**Prompt for Story Manager:**
 
-2. **Phase 2: Git Integration (Week 2)**
-   - Implement git worktree creation and cleanup
-   - Add branch isolation and management
-   - Create basic merge coordination tools
-   - Add resource monitoring and limits
+"I need to create implementation stories for the Napoleon project enhancement. This involves:
 
-3. **Phase 3: Polish & Testing (Week 3)**
-   - Enhance error handling and recovery
-   - Implement comprehensive test suite
-   - Add advanced UI features and shortcuts
-   - Complete documentation and user guide
+1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for the complete technical approach
+2. **Key Integration Requirements** (validated):
+   - Replace child process spawning with Claude Code SDK in `agent-manager.js`
+   - Maintain exact same UI interface (no Terminal UI changes)
+   - Preserve git worktree isolation mechanism
+   - Keep session persistence compatible (with updated structure)
 
-### Developer Agent Prompts
+3. **Existing System Constraints**:
+   - CommonJS module system (no ES modules)
+   - Blessed-based terminal UI must remain unchanged
+   - Jest testing framework in place
+   - Node.js upgrade from 16 to 18 required
 
-**For Development Agent:**
-```
-You are implementing the ADD Manager CLI tool based on the comprehensive architecture document at /docs/architecture.md and PRD at /docs/prd.md. 
+4. **First Story to Implement**:
+   - Global rename from 'add-manager' to 'napoleon' throughout codebase
+   - This includes package name, CLI command, directories, and all references
+   - Must be completed before SDK integration begins
 
-Key architectural requirements:
-- Follow the modular monolithic structure defined in the architecture
-- Implement the tech stack exactly as specified (Node.js 16+, commander.js, blessed)
-- Enforce the 3-agent concurrency limit through ResourceManager
-- Use structured error handling with custom exception classes
-- Implement proper process cleanup and resource management
-- Follow the coding standards for logging, error handling, and async operations
+5. **Implementation Sequence**:
+   - Story 1: Napoleon rebrand (global rename)
+   - Story 2: Node.js 18 upgrade and SDK dependency addition
+   - Story 3: SDK communication manager implementation
+   - Story 4: Replace process spawning with SDK initialization
+   - Story 5: Message transformation and UI integration
+   - Story 6: Testing and validation
 
-Start with the CLI Entry Point and Terminal UI Manager components, ensuring proper separation of concerns and adherence to the component interfaces defined in the architecture.
-```
+Emphasis on maintaining existing system integrity throughout implementation - each story must leave the system in a working state."
 
-**For Testing Agent:**
-```
-Implement comprehensive test coverage for ADD Manager based on the test strategy in /docs/architecture.md. 
+### Developer Handoff
 
-Focus on:
-- Unit tests for all core components with 90% coverage
-- Integration tests for agent lifecycle and git operations
-- Mock external dependencies (child_process, git commands)
-- Test error conditions and edge cases
-- Use Jest framework with the specified test organization
-- Create test fixtures for git repositories and session data
+**Prompt for Developers:**
 
-Ensure all tests follow the AAA pattern and properly clean up resources.
-```
+"Starting implementation of Napoleon (formerly add-manager) enhancement:
 
----
+1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
+2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:
+   - CommonJS modules (no ES modules)
+   - 2-space indentation, semicolons required
+   - ESLint with airbnb-base configuration
+   - Jest for testing
 
-**Document Version**: 1.0  
-**Last Updated**: July 17, 2025  
-**Next Review**: Upon implementation completion
+3. **Key Technical Decisions**:
+   - Claude Code SDK replaces CLI process spawning
+   - Git worktree isolation remains unchanged
+   - Terminal UI (blessed) stays exactly the same
+   - Session JSON structure updated (no PID field)
+
+4. **Integration Requirements**:
+   - Only modify methods in `agent-manager.js`
+   - Create new `src/core/sdk/` directory for SDK code
+   - Maintain all existing method signatures
+   - Transform SDK responses to match current UI format
+
+5. **Implementation Sequence**:
+   - First: Complete napoleon rebrand globally
+   - Second: Add SDK dependency and update Node to v18
+   - Third: Implement SDK communication in isolation
+   - Fourth: Wire up SDK to replace process spawning
+   - Finally: Comprehensive testing
+
+6. **Verification Steps**:
+   - All existing UI interactions work unchanged
+   - Multiple agents can run concurrently
+   - Session persistence and recovery functions
+   - No regressions in terminal UI behavior
+
+Remember: This is a surgical replacement - change only what's necessary for SDK integration."

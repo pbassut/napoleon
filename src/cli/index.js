@@ -11,14 +11,14 @@ async function initializeApplication(program) {
 
     // Set up CLI commands
     program
-      .name('add-manager')
-      .description('Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions')
+      .name('napoleon')
+      .description('Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions')
       .version('1.0.0');
 
     // Start command (main TUI)
     program
       .command('start')
-      .description('Start the ADD Manager terminal interface')
+      .description('Start the Napoleon terminal interface')
       .action(async () => {
         // Set environment variable to indicate we're running in terminal UI mode
         process.env.TERMINAL_UI_MODE = 'true';

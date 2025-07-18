@@ -11,14 +11,14 @@ class AgentDetailView {
     this.screen = screen;
     this.agentManager = agentManager;
     this.currentAgent = null;
-    
+
     // UI components
     this.overlay = null;
     this.headerBox = null;
     this.logsBox = null;
     this.footerBox = null;
     this.searchBox = null;
-    
+
     // State management
     this.isVisible = false;
     this.isSearchMode = false;
@@ -29,7 +29,7 @@ class AgentDetailView {
     this.searchPattern = '';
     this.autoScroll = true;
     this.updateInterval = null;
-    
+
     this.createComponents();
     this.setupEventHandlers();
   }
@@ -279,22 +279,22 @@ class AgentDetailView {
 
     this.currentAgent = agent;
     this.isVisible = true;
-    
+
     // Load agent logs
     this.loadAgentLogs();
-    
+
     // Update agent information
     this.updateAgentInfo();
-    
+
     // Show the overlay
     this.overlay.show();
     this.overlay.focus();
-    
+
     // Start real-time updates
     this.startRealTimeUpdates();
-    
+
     this.render();
-    
+
     logger.debug('Agent detail view shown', { agentId: agent.id });
   }
 
@@ -304,20 +304,20 @@ class AgentDetailView {
   hide() {
     this.isVisible = false;
     this.currentAgent = null;
-    
+
     // Stop real-time updates
     this.stopRealTimeUpdates();
-    
+
     // Clear search state
     this.clearSearch();
-    
+
     // Hide the overlay
     this.overlay.hide();
-    
+
     // Return focus to parent
     this.screen.realloc();
     this.render();
-    
+
     logger.debug('Agent detail view hidden');
   }
 
@@ -329,27 +329,27 @@ class AgentDetailView {
 
     const agent = this.currentAgent;
     const runtime = this.agentManager.formatRuntime(
-      this.agentManager.getAgentRuntime(agent.id)
+      this.agentManager.getAgentRuntime(agent.id),
     );
-    
+
     // Get additional agent details with error handling
     let agentDetails = null;
     try {
       agentDetails = this.agentManager.getAgentDetails(agent.id);
     } catch (error) {
-      logger.error('Failed to get agent details', { 
-        agentId: agent.id, 
-        error: error.message 
+      logger.error('Failed to get agent details', {
+        agentId: agent.id,
+        error: error.message,
       });
     }
-    
+
     const worktreePath = agentDetails?.worktreePath || 'N/A';
     const branchInfo = agentDetails?.branch || 'N/A';
-    
+
     // Get system resource usage (mock for now)
     const cpuUsage = this.getCpuUsage(agent);
     const memoryUsage = this.getMemoryUsage(agent);
-    
+
     const info = [
       `Agent: ${agent.id} [${branchInfo}] │ CPU: ${cpuUsage}% │ RAM: ${memoryUsage}MB`,
       `Started: ${this.formatTimestamp(agent.startTime)} │ Runtime: ${runtime}`,
@@ -370,15 +370,15 @@ class AgentDetailView {
       // Get logs from agent manager
       this.logs = this.agentManager.getAgentLogs(this.currentAgent.id) || [];
       this.updateLogsDisplay();
-      
+
       // Auto-scroll to bottom if enabled
       if (this.autoScroll) {
         this.scrollToBottom();
       }
     } catch (error) {
-      logger.error('Failed to load agent logs', { 
-        agentId: this.currentAgent.id, 
-        error: error.message 
+      logger.error('Failed to load agent logs', {
+        agentId: this.currentAgent.id,
+        error: error.message,
       });
       this.logs = [{
         timestamp: new Date(),
@@ -403,9 +403,9 @@ class AgentDetailView {
       const timestamp = this.formatLogTimestamp(log.timestamp);
       const isSearchResult = this.searchResults.includes(index);
       const isCurrentResult = this.searchResults[this.currentSearchIndex] === index;
-      
+
       let content = `${lineNum} │ ${timestamp} │ ${log.content}`;
-      
+
       // Highlight search results
       if (isSearchResult) {
         if (isCurrentResult) {
@@ -414,7 +414,7 @@ class AgentDetailView {
           content = `{yellow-fg}${content}{/yellow-fg}`;
         }
       }
-      
+
       return content;
     }).join('\n');
 
@@ -434,12 +434,12 @@ class AgentDetailView {
         const oldLogsLength = this.logs.length;
         this.loadAgentLogs();
         this.updateAgentInfo();
-        
+
         // If new logs were added and auto-scroll is enabled, scroll to bottom
         if (this.autoScroll && this.logs.length > oldLogsLength) {
           this.scrollToBottom();
         }
-        
+
         this.render();
       }
     }, 1000); // Update every second
@@ -512,7 +512,7 @@ class AgentDetailView {
 
     this.searchPattern = pattern;
     this.searchResults = [];
-    
+
     try {
       const regex = new RegExp(pattern, 'gi');
       this.logs.forEach((log, index) => {
@@ -520,10 +520,10 @@ class AgentDetailView {
           this.searchResults.push(index);
         }
       });
-      
+
       this.currentSearchIndex = 0;
       this.updateLogsDisplay();
-      
+
       if (this.searchResults.length > 0) {
         this.scrollToSearchResult(this.searchResults[0]);
         this.updateFooterWithSearchResults();
@@ -533,7 +533,7 @@ class AgentDetailView {
     } catch (error) {
       this.footerText.setContent(`Invalid regex pattern: ${error.message}`);
     }
-    
+
     this.render();
   }
 
@@ -542,7 +542,7 @@ class AgentDetailView {
    */
   nextSearchResult() {
     if (this.searchResults.length === 0) return;
-    
+
     this.currentSearchIndex = (this.currentSearchIndex + 1) % this.searchResults.length;
     this.scrollToSearchResult(this.searchResults[this.currentSearchIndex]);
     this.updateLogsDisplay();
@@ -555,9 +555,9 @@ class AgentDetailView {
    */
   previousSearchResult() {
     if (this.searchResults.length === 0) return;
-    
-    this.currentSearchIndex = this.currentSearchIndex === 0 
-      ? this.searchResults.length - 1 
+
+    this.currentSearchIndex = this.currentSearchIndex === 0
+      ? this.searchResults.length - 1
       : this.currentSearchIndex - 1;
     this.scrollToSearchResult(this.searchResults[this.currentSearchIndex]);
     this.updateLogsDisplay();
@@ -579,11 +579,11 @@ class AgentDetailView {
    */
   updateFooterWithSearchResults() {
     if (this.searchResults.length === 0) return;
-    
+
     const current = this.currentSearchIndex + 1;
     const total = this.searchResults.length;
     this.footerText.setContent(
-      `Search: "${this.searchPattern}" (${current}/${total}) | [n] Next | [N] Previous | [ESC] Clear`
+      `Search: "${this.searchPattern}" (${current}/${total}) | [n] Next | [N] Previous | [ESC] Clear`,
     );
   }
 
@@ -596,7 +596,7 @@ class AgentDetailView {
     this.currentSearchIndex = 0;
     this.updateLogsDisplay();
     this.footerText.setContent(
-      '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help'
+      '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help',
     );
     this.render();
   }
@@ -608,14 +608,14 @@ class AgentDetailView {
     this.autoScroll = !this.autoScroll;
     const status = this.autoScroll ? 'enabled' : 'disabled';
     this.footerText.setContent(`Auto-scroll ${status} | [a] Toggle | [ESC/q] Back`);
-    
+
     setTimeout(() => {
       this.footerText.setContent(
-        '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help'
+        '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help',
       );
       this.render();
     }, 2000);
-    
+
     this.render();
   }
 
@@ -649,7 +649,7 @@ class AgentDetailView {
       '',
       'Navigation:',
       '  j/↓        - Scroll down one line',
-      '  k/↑        - Scroll up one line', 
+      '  k/↑        - Scroll up one line',
       '  PageDown   - Scroll down one page',
       '  PageUp     - Scroll up one page',
       '  G          - Go to bottom of logs',
@@ -704,7 +704,7 @@ class AgentDetailView {
    * Get memory usage for agent (mock implementation)
    */
   getMemoryUsage(agent) {
-    // TODO: Implement actual memory monitoring  
+    // TODO: Implement actual memory monitoring
     return Math.floor(Math.random() * 100) + 20; // Mock 20-120MB
   }
 

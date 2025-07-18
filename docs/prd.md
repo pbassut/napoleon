@@ -22,6 +22,9 @@ The solution provides a terminal UI application that enables spawning AI agents 
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-07-17 | 1.0 | Initial PRD creation | Claude Code |
+| 2025-01-17 | 1.1 | Updated to note Napoleon enhancement project | John (PM) |
+
+> **Note**: A brownfield enhancement project "Napoleon" has been initiated to replace the CLI child process spawning with Claude Code SDK integration. See [Napoleon Brownfield PRD](./napoleon-brownfield-prd.md) for details. The original ADD Manager will continue to be available while Napoleon is developed as a separate package.
 
 ## Requirements
 

@@ -1,59 +1,62 @@
-# ADD Manager
+# Napoleon
 
-Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions with git worktree isolation.
+Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions with git worktree isolation.
 
-> **Note**: ADD Manager is being superseded by [Napoleon](https://github.com/your-org/napoleon), which uses the Claude Code SDK instead of CLI processes. See the [Migration Guide](./MIGRATION.md) for upgrade instructions.
+Napoleon is a powerful development tool that leverages the Claude Code SDK to manage multiple AI agents working on different parts of your project simultaneously, each in their own isolated git worktree.
 
 ## Installation
 
 ### Global Installation
 ```bash
-npm install -g add-manager
+npm install -g napoleon
 ```
 
 ### Direct Usage (NPX)
 ```bash
-npx add-manager
+npx napoleon
 ```
 
 ## Requirements
 
-- Node.js >= 16.0.0
+- Node.js >= 18.0.0
 - Git >= 2.20.0
-- Claude CLI (optional, for full functionality)
+- Claude Code SDK (automatically managed)
 - Anthropic API key - [Setup Guide](./API-KEY-SETUP.md)
 
 ## Usage
 
 ### Start the terminal interface
 ```bash
-add-manager start
+napoleon start
 ```
 
 ### Check agent status
 ```bash
-add-manager status
+napoleon status
 ```
 
 ### Show help
 ```bash
-add-manager --help
+napoleon --help
 ```
 
 ## Features
 
 - Terminal-based user interface
-- Multiple concurrent Claude CLI sessions
+- Multiple concurrent Claude Code SDK sessions
 - Git worktree isolation for each agent
 - Session persistence and recovery
 - Cross-platform compatibility (macOS, Linux, Windows)
+- Enhanced API key management and authentication
+- Real-time agent communication and coordination
 
 ## Configuration
 
-Configuration files are stored in `~/.add-manager/`:
+Configuration files are stored in `~/.napoleon/`:
 - `config.json` - Application configuration
 - `sessions.json` - Active session data
 - `logs/` - Application logs
+- `api-keys.json` - Encrypted API key storage
 
 ## Development
 

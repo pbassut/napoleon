@@ -124,7 +124,7 @@ describe('Terminal UI', () => {
 
       expect(blessed.screen).toHaveBeenCalledWith({
         smartCSR: true,
-        title: 'ADD Manager',
+        title: 'Napoleon',
         cursor: {
           artificial: true,
           shape: 'line',

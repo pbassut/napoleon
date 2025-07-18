@@ -1,17 +1,42 @@
 # Anthropic API Key Setup Tutorial
 
-This tutorial will guide you through obtaining and configuring your Anthropic API key for use with ADD Manager (and the upcoming Napoleon project).
+This tutorial will guide you through obtaining and configuring your Anthropic API key for use with Napoleon (formerly ADD Manager).
 
 ## Table of Contents
 
-1. [Obtaining Your API Key](#obtaining-your-api-key)
-2. [Security Best Practices](#security-best-practices)
-3. [Platform-Specific Setup](#platform-specific-setup)
+1. [System Requirements](#system-requirements)
+2. [Obtaining Your API Key](#obtaining-your-api-key)
+3. [Security Best Practices](#security-best-practices)
+4. [Platform-Specific Setup](#platform-specific-setup)
    - [macOS](#macos)
    - [Linux](#linux)
    - [Windows](#windows)
-4. [Verification Steps](#verification-steps)
-5. [Troubleshooting](#troubleshooting)
+5. [Verification Steps](#verification-steps)
+6. [Troubleshooting](#troubleshooting)
+
+## System Requirements
+
+**Node.js Version**: Napoleon requires Node.js 18.0.0 or higher.
+
+### Check Your Node.js Version
+
+```bash
+node --version
+```
+
+If you need to upgrade Node.js:
+
+- **macOS**: Use [Homebrew](https://brew.sh/) - `brew install node`
+- **Linux**: Use your package manager or download from [nodejs.org](https://nodejs.org/)
+- **Windows**: Download from [nodejs.org](https://nodejs.org/) or use [Chocolatey](https://chocolatey.org/) - `choco install nodejs`
+
+**Alternative**: Use [Node Version Manager (nvm)](https://github.com/nvm-sh/nvm) to manage multiple Node.js versions:
+
+```bash
+# Install Node.js 18 (or latest LTS)
+nvm install 18
+nvm use 18
+```
 
 ## Obtaining Your API Key
 
@@ -44,11 +69,18 @@ Ensure your `.gitignore` file includes:
 .env
 .env.local
 .env.*.local
+.env.development.local
+.env.production.local
 
 # API keys and secrets
 **/api-key.txt
 **/*secret*
 **/*key*
+config/secrets.json
+config/keys.json
+*.key
+*.pem
+.anthropic-key
 ```
 
 ## Platform-Specific Setup
@@ -173,14 +205,43 @@ echo $env:ANTHROPIC_API_KEY
 echo %ANTHROPIC_API_KEY%
 ```
 
-### 2. Test with Node.js
+### 2. Verify Node.js Version
 
-If you have Node.js installed, test with:
+Check that you have Node.js 18.0.0 or higher:
+
+```bash
+node --version
+```
+
+### 3. Test with Node.js
+
+Create a test script to verify your API key:
 
 ```javascript
 // test-api-key.js
+const nodeVersion = process.version;
+const majorVersion = parseInt(nodeVersion.replace('v', '').split('.')[0]);
+
+console.log('Node.js Version:', nodeVersion);
+console.log('Node.js 18+ Required:', majorVersion >= 18 ? '✅ Yes' : '❌ No (Please upgrade)');
 console.log('API Key present:', !!process.env.ANTHROPIC_API_KEY);
-console.log('API Key format:', process.env.ANTHROPIC_API_KEY ? 'Correct format' : 'Not found');
+console.log('API Key format:', process.env.ANTHROPIC_API_KEY ? '✅ Correct format' : '❌ Not found');
+
+// Test SDK environment check
+try {
+  const sdkTypes = require('./src/core/sdk/sdk-types');
+  const envCheck = sdkTypes.checkSDKEnvironment();
+  console.log('SDK Environment Check:');
+  console.log('  - Node.js version valid:', envCheck.nodeVersionValid ? '✅' : '❌');
+  console.log('  - API key present:', envCheck.apiKeyPresent ? '✅' : '❌');
+  console.log('  - SDK package present:', envCheck.sdkPackagePresent ? '✅' : '❌');
+  
+  if (envCheck.errors.length > 0) {
+    console.log('  - Errors:', envCheck.errors.join(', '));
+  }
+} catch (error) {
+  console.log('SDK Types module not found - this is expected during initial setup');
+}
 ```
 
 Run with:

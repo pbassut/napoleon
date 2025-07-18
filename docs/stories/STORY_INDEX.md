@@ -1,0 +1,83 @@
+# Napoleon Project - Story Index
+
+## Overview
+
+This index provides a complete list of all user stories for the Napoleon project (formerly ADD Manager). The stories are organized in development sequence, with the Napoleon SDK integration stories coming first, followed by the original ADD Manager functionality stories.
+
+## Story Sequence
+
+### Phase 1: Napoleon SDK Integration (US001-US010)
+
+These stories focus on rebranding to Napoleon and replacing CLI child process spawning with SDK integration.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US001 | Global Napoleon Rebrand | Rebrand ADD Manager to Napoleon across entire codebase | HIGH | ✅ **Approved** |
+| US002 | Node.js 18 Upgrade and SDK Setup | Upgrade to Node.js 18 and add Claude Code SDK dependency | HIGH | ✅ **Approved** |
+| US003 | SDK Communication Manager Implementation | Implement SDK communication manager module | HIGH | ✅ **Approved** |
+| US004 | Message Transformer Implementation | Implement message transformation between SDK and UI formats | HIGH | ✅ **Approved** |
+| US005 | AgentManager SDK Integration | Replace process spawning with SDK calls in AgentManager | HIGH | ✅ **Approved** |
+| US006 | End-to-End Testing and Validation | Comprehensive testing of SDK integration | HIGH | ✅ **Approved** |
+| US007 | Create Migration Guide | Comprehensive guide for users switching from ADD Manager to Napoleon | MEDIUM | ✅ **Done** |
+| US008 | Create API Key Setup Tutorial | Step-by-step tutorial for obtaining and configuring API keys | MEDIUM | ✅ **Done** |
+| US009 | Create CLI to SDK Migration Helper | Automated script to migrate session data and configuration | MEDIUM | ✅ **Approved** |
+| US010 | Update User Documentation | Update all user-facing documentation with Napoleon branding | MEDIUM | ✅ **Approved** |
+
+### Phase 2: Core ADD Manager Functionality (US011-US024)
+
+These stories implement the original ADD Manager functionality within the Napoleon framework.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US011 | Project Setup and CLI Framework | Install and initialize the application with CLI framework | HIGH | ✅ **Approved** |
+| US012 | Basic Terminal UI Foundation | Create clean terminal interface using blessed framework | HIGH | ✅ **Approved** |
+| US013 | Agent Spawning Core Functionality | Spawn new agent sessions with proper isolation | HIGH | ✅ **Done** |
+| US014 | Basic Agent Status Display | Display status of all active agents at a glance | HIGH | ✅ **Approved** |
+| US015 | Basic Agent Termination | Terminate agent sessions and free up resources | HIGH | ✅ **Approved** |
+| US016 | Git Worktree Creation | Automatically create git worktrees for each agent | HIGH | ✅ **Approved** |
+| US017 | Branch Isolation Management | Ensure each agent works on its own feature branch | HIGH | ✅ **Approved** |
+| US018 | Worktree Cleanup on Agent Termination | Clean up worktrees when agents are terminated | MEDIUM | ✅ **Approved** |
+| US019 | Basic Merge Coordination Tools | Review and merge agent changes from different branches | MEDIUM | ✅ **Approved** |
+| US020 | Enhanced Agent Detail View | See detailed information about individual agents | MEDIUM | ✅ **Approved** |
+| US021 | Advanced Process Monitoring | Comprehensive monitoring of agent processes | MEDIUM | ✅ **Approved** |
+| US022 | Session Persistence and Recovery | Basic session persistence across application restarts | MEDIUM | ✅ **Approved** |
+| US023 | Error Handling and Recovery | Robust error handling when agents fail | MEDIUM | ✅ **Approved** |
+| US024 | Enhanced Keyboard Shortcuts and Navigation | Efficient keyboard shortcuts for all operations | LOW | ✅ **Approved** |
+
+## Development Notes
+
+1. **Phase 1 Must Complete First**: The Napoleon SDK integration stories (US001-US010) must be completed before Phase 2, as they establish the new foundation.
+
+2. **Story Dependencies**:
+   - US002 depends on US001 (rebrand must happen first)
+   - US003-US005 depend on US002 (SDK setup required)
+   - US006 depends on US001-US005 (testing requires all components)
+   - US011-US024 can proceed after US006 is complete
+
+3. **Testing Approach**:
+   - Each story includes integration verification criteria
+   - US006 provides comprehensive end-to-end testing
+   - Phase 2 stories should be tested against the SDK implementation
+
+4. **Migration Support**:
+   - US007-US010 provide user migration support
+   - These can be developed in parallel with Phase 2 if needed
+
+## Approval Status Summary
+
+- **✅ All 21 pending stories approved** by Scrum Master Bob on 2025-07-18
+- **3 stories already completed**: US007, US008, US013
+- **21 stories ready for implementation**: US001-US006, US009-US012, US014-US024
+- **Ready for development handoff**: All approved stories include detailed acceptance criteria and integration verification requirements
+
+## File Locations
+
+All story files are located in: `/docs/stories/`
+
+Format: `US###_story_title.md`
+
+## Related Documents
+
+- [Napoleon Brownfield PRD](/docs/napoleon-brownfield-prd.md)
+- [Architecture Document](/docs/architecture.md)
+- [Original ADD Manager PRD](/docs/prd.md)

@@ -83,9 +83,20 @@ typings/
 .vscode-test
 
 # Application-specific
-# ADD Manager session storage
+# Session storage
 .add-manager/
+.napoleon/
 sessions.json
+
+# API key files
+.env.local
+.env.development
+.env.production
+api-key.txt
+anthropic-key.txt
+claude-key.txt
+test-api-key.js
+*.key
 
 # Logs
 logs/

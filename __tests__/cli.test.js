@@ -18,7 +18,7 @@ describe('CLI Application', () => {
 
       await initializeApplication(program);
 
-      expect(program.name()).toBe('add-manager');
+      expect(program.name()).toBe('napoleon');
       expect(program.version()).toBe('1.0.0');
     });
 
@@ -29,7 +29,7 @@ describe('CLI Application', () => {
 
       const startCommand = program.commands.find(cmd => cmd.name() === 'start');
       expect(startCommand).toBeDefined();
-      expect(startCommand.description()).toBe('Start the ADD Manager terminal interface');
+      expect(startCommand.description()).toBe('Start the Napoleon terminal interface');
     });
 
     it('should register status command', async () => {

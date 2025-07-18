@@ -14,7 +14,7 @@ describe('Environment Validation', () => {
       // Mock Node.js version
       const originalVersion = process.version;
       Object.defineProperty(process, 'version', {
-        value: 'v16.0.0',
+        value: 'v18.0.0',
         writable: false,
         configurable: true,
       });
@@ -56,7 +56,7 @@ describe('Environment Validation', () => {
       // Mock Node.js version
       const originalVersion = process.version;
       Object.defineProperty(process, 'version', {
-        value: 'v16.0.0',
+        value: 'v18.0.0',
         writable: false,
         configurable: true,
       });
@@ -79,7 +79,7 @@ describe('Environment Validation', () => {
       // Mock Node.js version
       const originalVersion = process.version;
       Object.defineProperty(process, 'version', {
-        value: 'v16.0.0',
+        value: 'v18.0.0',
         writable: false,
         configurable: true,
       });
@@ -104,7 +104,7 @@ describe('Environment Validation', () => {
       // Mock Node.js version
       const originalVersion = process.version;
       Object.defineProperty(process, 'version', {
-        value: 'v16.0.0',
+        value: 'v18.0.0',
         writable: false,
         configurable: true,
       });

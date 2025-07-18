@@ -33,6 +33,9 @@ beforeEach(() => {
   // Clear all mocks before each test
   jest.clearAllMocks();
   
+  // Set required environment variables for testing
+  process.env.ANTHROPIC_API_KEY = 'test-api-key';
+  
   // Mock process operations to prevent async handles
   process.stdout.write = jest.fn();
   process.exit = jest.fn();

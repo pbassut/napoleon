@@ -2,6 +2,7 @@ const { spawn } = require('child_process');
 const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { query } = require('@anthropic-ai/claude-code');
 const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
 const { EnvironmentValidationError, FileSystemError } = require('../utils/errors');
 const logger = require('../utils/logger');
@@ -82,13 +83,13 @@ class AgentManager {
             if (!session.output) {
               session.output = [];
             }
-            
+
             // Mark this session as restored from previous run
             session.wasRestored = true;
-            
+
             // Try to reattach to the existing process for log capture
             await this.reattachToProcess(session);
-            
+
             this.agents.set(session.id, session);
             validSessions.push(session);
           } else {
@@ -117,80 +118,77 @@ class AgentManager {
       // Unfortunately, we can't reattach to existing stdio streams of a running process
       // This is a limitation of how processes work - once spawned, we can't capture their output
       // unless we had the original process object
-      
+
       // However, we can ensure the session is properly initialized for any new output
       logger.debug('Attempting to reattach to process', {
         agentId: session.id,
-        pid: session.pid
+        pid: session.pid,
       });
-      
+
       // Set process to null since we can't reattach to existing streams
       session.process = null;
-      
+
       // Only add diagnostic info if logs are truly empty (no actual output was captured)
       // and avoid duplicates by checking for restore message
-      const alreadyHasRestoreMessage = session.logs.some(log => 
-        log.content && log.content.includes('Session restored - PID')
-      );
-      
+      const alreadyHasRestoreMessage = session.logs.some((log) => log.content && log.content.includes('Session restored - PID'));
+
       if (!alreadyHasRestoreMessage && session.logs.length === 0) {
         // Add detailed diagnostic logs only for truly restored sessions
         const diagnosticLogs = [
           {
             timestamp: new Date(session.spawnTime),
             content: `🚀 Agent spawned: ${new Date(session.spawnTime).toLocaleString()}`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(session.spawnTime),
             content: `📝 Instructions: "${session.instructions}"`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(session.spawnTime),
             content: `📁 Working directory: ${session.workingDirectory}`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(session.spawnTime),
             content: `🌿 Git worktree: ${session.worktreePath}`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(),
             content: `🔄 Session restored - PID: ${session.pid}`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(),
-            content: `⚠️  Previous output cannot be recovered - process was started before logging`,
-            type: 'warning'
+            content: '⚠️  Previous output cannot be recovered - process was started before logging',
+            type: 'warning',
           },
           {
             timestamp: new Date(),
             content: `📊 Status: ${session.status} | Last activity: ${new Date(session.lastActivity).toLocaleString()}`,
-            type: 'info'
+            type: 'info',
           },
           {
             timestamp: new Date(),
-            content: `💡 New agent output will be captured in real-time from this point forward`,
-            type: 'info'
-          }
+            content: '💡 New agent output will be captured in real-time from this point forward',
+            type: 'info',
+          },
         ];
-        
+
         session.logs.push(...diagnosticLogs);
       }
-      
+
       logger.info('Session restored with limited output capture', {
         agentId: session.id,
-        pid: session.pid
+        pid: session.pid,
       });
-      
     } catch (error) {
       logger.error('Failed to reattach to process', {
         agentId: session.id,
         pid: session.pid,
-        error: error.message
+        error: error.message,
       });
     }
   }
@@ -231,7 +229,7 @@ class AgentManager {
       throw new FileSystemError(
         `Failed to save sessions: ${error.message}`,
         'SESSION_SAVE_FAILED',
-        'Please check file permissions for ~/.add-manager/',
+        'Please check file permissions for ~/.napoleon/',
       );
     }
   }
@@ -262,7 +260,7 @@ class AgentManager {
       return {
         isValid: false,
         error: 'Not in a git repository',
-        suggestion: 'Please run ADD Manager from within a git repository directory',
+        suggestion: 'Please run Napoleon from within a git repository directory',
       };
     }
   }
@@ -299,8 +297,8 @@ class AgentManager {
    * Ensure worktree directory structure exists
    */
   ensureWorktreeDirectory() {
-    const worktreesDir = path.join(process.cwd(), '.add-manager-worktrees');
-    
+    const worktreesDir = path.join(process.cwd(), '.napoleon-worktrees');
+
     if (!fs.existsSync(worktreesDir)) {
       try {
         fs.mkdirSync(worktreesDir, { recursive: true, mode: 0o755 });
@@ -309,11 +307,11 @@ class AgentManager {
         throw new FileSystemError(
           `Failed to create worktrees directory: ${error.message}`,
           'WORKTREE_DIR_CREATION_FAILED',
-          'Please check write permissions for the project directory'
+          'Please check write permissions for the project directory',
         );
       }
     }
-    
+
     return worktreesDir;
   }
 
@@ -330,16 +328,16 @@ class AgentManager {
 
       // Check for uncommitted changes
       try {
-        execSync('git diff-index --quiet HEAD --', { 
+        execSync('git diff-index --quiet HEAD --', {
           stdio: 'ignore',
-          cwd: process.cwd() 
+          cwd: process.cwd(),
         });
       } catch (error) {
         return {
           isValid: false,
           error: 'Repository has uncommitted changes',
           suggestion: 'Please commit or stash your changes before creating worktrees',
-          hasUncommittedChanges: true
+          hasUncommittedChanges: true,
         };
       }
 
@@ -347,12 +345,12 @@ class AgentManager {
       try {
         const untrackedFiles = execSync('git ls-files --others --exclude-standard', {
           encoding: 'utf8',
-          cwd: process.cwd()
+          cwd: process.cwd(),
         }).trim();
-        
+
         if (untrackedFiles.length > 0) {
-          logger.warn('Repository has untracked files', { 
-            files: untrackedFiles.split('\n').length 
+          logger.warn('Repository has untracked files', {
+            files: untrackedFiles.split('\n').length,
           });
         }
       } catch (error) {
@@ -364,13 +362,13 @@ class AgentManager {
         isValid: true,
         rootPath: gitValidation.rootPath,
         currentPath: gitValidation.currentPath,
-        clean: true
+        clean: true,
       };
     } catch (error) {
       return {
         isValid: false,
         error: `Git validation failed: ${error.message}`,
-        suggestion: 'Please ensure you are in a valid git repository'
+        suggestion: 'Please ensure you are in a valid git repository',
       };
     }
   }
@@ -387,7 +385,7 @@ class AgentManager {
           reject(new EnvironmentValidationError(
             gitValidation.error,
             'GIT_WORKTREE_VALIDATION_FAILED',
-            gitValidation.suggestion
+            gitValidation.suggestion,
           ));
           return;
         }
@@ -399,23 +397,23 @@ class AgentManager {
         const worktreeName = this.generateWorktreeName(agentId);
         const worktreePath = path.join(worktreesDir, worktreeName);
 
-        logger.info('Creating git worktree', { 
-          agentId, 
-          worktreeName, 
-          worktreePath 
+        logger.info('Creating git worktree', {
+          agentId,
+          worktreeName,
+          worktreePath,
         });
 
         // Create the worktree
-        exec(`git worktree add "${worktreePath}"`, { 
+        exec(`git worktree add "${worktreePath}"`, {
           cwd: process.cwd(),
-          timeout: 30000 // 30 second timeout
+          timeout: 30000, // 30 second timeout
         }, (error, stdout, stderr) => {
           if (error) {
             logger.error('Git worktree creation failed', {
               agentId,
               worktreePath,
               error: error.message,
-              stderr
+              stderr,
             });
 
             // Clean up any partial directory creation
@@ -424,20 +422,20 @@ class AgentManager {
             reject(new EnvironmentValidationError(
               `Worktree creation failed: ${stderr || error.message}`,
               'WORKTREE_CREATION_FAILED',
-              'Please check git repository state and try again'
+              'Please check git repository state and try again',
             ));
           } else {
             logger.info('Git worktree created successfully', {
               agentId,
               worktreeName,
               worktreePath,
-              stdout: stdout.trim()
+              stdout: stdout.trim(),
             });
 
             resolve({
               worktreeName,
               worktreePath,
-              agentId
+              agentId,
             });
           }
         });
@@ -457,9 +455,9 @@ class AgentManager {
         logger.info('Cleaned up failed worktree directory', { worktreePath });
       }
     } catch (error) {
-      logger.warn('Failed to clean up failed worktree', { 
-        worktreePath, 
-        error: error.message 
+      logger.warn('Failed to clean up failed worktree', {
+        worktreePath,
+        error: error.message,
       });
     }
   }
@@ -476,15 +474,15 @@ class AgentManager {
 
       logger.info('Removing git worktree', { worktreePath });
 
-      exec(`git worktree remove "${worktreePath}" --force`, { 
+      exec(`git worktree remove "${worktreePath}" --force`, {
         cwd: process.cwd(),
-        timeout: 15000 // 15 second timeout
+        timeout: 15000, // 15 second timeout
       }, (error, stdout, stderr) => {
         if (error) {
           logger.warn('Git worktree removal failed, attempting manual cleanup', {
             worktreePath,
             error: error.message,
-            stderr
+            stderr,
           });
 
           // Fallback: manual directory removal
@@ -495,14 +493,14 @@ class AgentManager {
           } catch (cleanupError) {
             logger.error('Failed to manually clean up worktree', {
               worktreePath,
-              error: cleanupError.message
+              error: cleanupError.message,
             });
             reject(cleanupError);
           }
         } else {
           logger.info('Git worktree removed successfully', {
             worktreePath,
-            stdout: stdout.trim()
+            stdout: stdout.trim(),
           });
           resolve();
         }
@@ -694,87 +692,141 @@ class AgentManager {
   }
 
   /**
-   * Spawn Claude CLI process
+   * Initialize Claude SDK session
    */
   async spawnClaudeProcess(session) {
     try {
-      // Check if Claude CLI is available
-      try {
-        execSync('claude --version', { stdio: 'ignore' });
-      } catch (error) {
+      // Check if Claude API key is available
+      if (!process.env.ANTHROPIC_API_KEY) {
         throw new EnvironmentValidationError(
-          'Claude CLI is not installed or not in PATH',
-          'CLAUDE_CLI_NOT_FOUND',
-          'Please install Claude CLI: https://claude.ai/cli',
+          'ANTHROPIC_API_KEY environment variable is not set',
+          'CLAUDE_API_KEY_NOT_FOUND',
+          'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here',
         );
       }
 
-      // Spawn the process
-      const claudeProcess = spawn('claude', [], {
-        cwd: session.workingDirectory,
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: {
-          ...process.env,
-          CLAUDE_SESSION_ID: session.id,
+      // Initialize SDK session object
+      const claudeSession = {
+        sessionId: session.id,
+        workingDirectory: session.workingDirectory,
+        abortController: new AbortController(),
+        isActive: true,
+      };
+
+      // Store SDK session reference
+      session.claudeSession = claudeSession;
+
+      logger.info('Claude SDK session initialized', {
+        agentId: session.id,
+        workingDirectory: session.workingDirectory,
+      });
+
+      // Return a mock process object to maintain compatibility with existing code
+      return {
+        pid: Date.now(), // Use timestamp as mock PID for SDK sessions
+        kill: (signal) => {
+          logger.info('Terminating Claude SDK session', { agentId: session.id, signal });
+          claudeSession.abortController.abort();
+          claudeSession.isActive = false;
+          this.updateAgentStatus(session.id, AgentStatus.TERMINATING);
         },
-      });
-
-      // Handle process events
-      claudeProcess.on('error', (error) => {
-        logger.error('Claude process error', {
-          agentId: session.id,
-          error: error.message,
-        });
-        this.updateAgentStatus(session.id, AgentStatus.ERROR);
-      });
-
-      claudeProcess.on('exit', (code, signal) => {
-        logger.info('Claude process exited', {
-          agentId: session.id,
-          code,
-          signal,
-        });
-        this.updateAgentStatus(session.id, AgentStatus.TERMINATING);
-      });
-
-      // Set up stdout/stderr handlers
-      claudeProcess.stdout.on('data', (data) => {
-        this.handleAgentOutput(session.id, 'stdout', data);
-      });
-
-      claudeProcess.stderr.on('data', (data) => {
-        this.handleAgentOutput(session.id, 'stderr', data);
-      });
-
-      return claudeProcess;
+        stdin: {
+          write: (data) => {
+            // This will be handled by the new sendInstructions method
+            logger.debug('SDK stdin write called', { agentId: session.id });
+          },
+        },
+      };
     } catch (error) {
-      logger.error('Failed to spawn Claude process', { error: error.message });
+      logger.error('Failed to initialize Claude SDK session', { error: error.message });
       throw error;
     }
   }
 
   /**
-   * Send instructions to agent
+   * Send instructions to agent using Claude SDK
    */
   async sendInstructions(agentId, instructions) {
     const session = this.agents.get(agentId);
-    if (!session || !session.process) {
-      throw new Error('Agent session not found or process not available');
+    if (!session || !session.claudeSession) {
+      throw new Error('Agent session not found or Claude SDK session not available');
     }
 
     try {
-      session.process.stdin.write(`${instructions}\n`);
-      logger.debug('Instructions sent to agent', {
+      logger.debug('Sending instructions to agent via SDK', {
         agentId,
         instructionsLength: instructions.length,
       });
+
+      // Update session status to indicate processing
+      this.updateAgentStatus(agentId, AgentStatus.RUNNING);
+
+      // Execute query using Claude Code SDK
+      const messages = [];
+
+      for await (const message of query({
+        prompt: instructions,
+        abortController: session.claudeSession.abortController,
+        options: {
+          maxTurns: 10,
+          workingDirectory: session.workingDirectory,
+        },
+      })) {
+        messages.push(message);
+
+        // Handle real-time output from SDK
+        this.handleSDKMessage(agentId, message);
+      }
+
+      logger.info('SDK query completed', {
+        agentId,
+        messageCount: messages.length,
+      });
+
+      // Mark session as idle after completion
+      this.updateAgentStatus(agentId, AgentStatus.IDLE);
     } catch (error) {
-      logger.error('Failed to send instructions to agent', {
+      logger.error('Failed to send instructions to agent via SDK', {
         agentId,
         error: error.message,
       });
+      this.updateAgentStatus(agentId, AgentStatus.ERROR);
       throw error;
     }
+  }
+
+  /**
+   * Handle SDK message output
+   */
+  handleSDKMessage(agentId, message) {
+    const session = this.agents.get(agentId);
+    if (!session) return;
+
+    // Initialize logs array if not exists (for detail view)
+    if (!session.logs) {
+      session.logs = [];
+    }
+
+    // Add message to logs
+    session.logs.push({
+      timestamp: new Date(),
+      content: message.content || JSON.stringify(message),
+      type: message.type || 'info',
+    });
+
+    // Keep only last 1000 log entries for detail view
+    if (session.logs.length > 1000) {
+      session.logs = session.logs.slice(-1000);
+    }
+
+    // Update last activity
+    session.lastActivity = new Date().toISOString();
+
+    logger.debug('SDK message received', {
+      agentId,
+      type: message.type,
+      length: message.content?.length || 0,
+    });
   }
 
   /**
@@ -805,12 +857,12 @@ class AgentManager {
 
     // Split output by lines and add each as separate log entry for detail view
     const timestamp = new Date();
-    const lines = output.split('\n').filter(line => line.trim() !== '');
-    lines.forEach(line => {
+    const lines = output.split('\n').filter((line) => line.trim() !== '');
+    lines.forEach((line) => {
       session.logs.push({
-        timestamp: timestamp,
+        timestamp,
         content: line.trim(),
-        type: type,
+        type,
       });
     });
 
@@ -899,15 +951,15 @@ class AgentManager {
       if (session.worktreePath) {
         try {
           await this.removeWorktree(session.worktreePath);
-          logger.info('Agent worktree cleaned up', { 
-            agentId, 
-            worktreePath: session.worktreePath 
+          logger.info('Agent worktree cleaned up', {
+            agentId,
+            worktreePath: session.worktreePath,
           });
         } catch (error) {
           logger.warn('Failed to clean up agent worktree', {
             agentId,
             worktreePath: session.worktreePath,
-            error: error.message
+            error: error.message,
           });
         }
       }

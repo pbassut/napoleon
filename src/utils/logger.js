@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs');
 
-const logDir = path.join(os.homedir(), '.add-manager', 'logs');
+const logDir = path.join(os.homedir(), '.napoleon', 'logs');
 
 // Ensure log directory exists
 if (!fs.existsSync(logDir)) {
@@ -13,7 +13,7 @@ if (!fs.existsSync(logDir)) {
 // Determine if we're running in terminal UI mode
 const isTerminalUI = process.env.TERMINAL_UI_MODE === 'true'
                      || process.argv.includes('start')
-                     || process.argv.some((arg) => arg.includes('add-manager.js'));
+                     || process.argv.some((arg) => arg.includes('napoleon.js'));
 
 // Create logger instance
 const logger = winston.createLogger({
@@ -23,7 +23,7 @@ const logger = winston.createLogger({
     winston.format.errors({ stack: true }),
     winston.format.json(),
   ),
-  defaultMeta: { service: 'add-manager' },
+  defaultMeta: { service: 'napoleon' },
   transports: [],
 });
 

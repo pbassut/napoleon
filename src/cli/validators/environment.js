@@ -3,16 +3,16 @@ const { execSync } = require('child_process');
 const { EnvironmentValidationError } = require('../../utils/errors');
 
 /**
- * Validates the system environment for ADD Manager
+ * Validates the system environment for Napoleon
  */
 async function validateEnvironment() {
   // Node.js version check
   const nodeVersion = process.version;
-  if (!semver.gte(nodeVersion, '16.0.0')) {
+  if (!semver.gte(nodeVersion, '18.0.0')) {
     throw new EnvironmentValidationError(
-      `Node.js version ${nodeVersion} is not supported. Required: >=16.0.0`,
+      `Node.js version ${nodeVersion} is not supported. Required: >=18.0.0`,
       'NODE_VERSION_UNSUPPORTED',
-      'Please upgrade Node.js to version 16.0.0 or higher',
+      'Please upgrade Node.js to version 18.0.0 or higher',
     );
   }
 
@@ -38,13 +38,13 @@ async function validateEnvironment() {
     );
   }
 
-  // Claude CLI check (optional for now)
+  // Claude Code SDK check (optional for now)
   try {
     execSync('claude --version', { encoding: 'utf8', stdio: 'ignore' });
   } catch (error) {
-    // Claude CLI is not required for basic functionality
+    // Claude Code SDK is not required for basic functionality
     // This is just a warning for now
-    console.warn('Warning: Claude CLI not found. Some features may be limited.');
+    console.warn('Warning: Claude Code SDK not found. Some features may be limited.');
   }
 }
 

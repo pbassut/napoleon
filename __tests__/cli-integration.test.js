@@ -38,7 +38,7 @@ describe('CLI Integration with Terminal UI', () => {
 
       const startCommand = program.commands.find(cmd => cmd.name() === 'start');
       expect(startCommand).toBeDefined();
-      expect(startCommand.description()).toBe('Start the ADD Manager terminal interface');
+      expect(startCommand.description()).toBe('Start the Napoleon terminal interface');
     });
 
     it('should have TerminalUI available in CLI module', () => {
@@ -54,7 +54,7 @@ describe('CLI Integration with Terminal UI', () => {
       await initializeApplication(program);
 
       const startCommand = program.commands.find(cmd => cmd.name() === 'start');
-      expect(startCommand.description()).toBe('Start the ADD Manager terminal interface');
+      expect(startCommand.description()).toBe('Start the Napoleon terminal interface');
     });
   });
 });

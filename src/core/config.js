@@ -3,7 +3,7 @@ const path = require('path');
 const os = require('os');
 const { FileSystemError } = require('../utils/errors');
 
-const CONFIG_DIR = path.join(os.homedir(), '.add-manager');
+const CONFIG_DIR = path.join(os.homedir(), '.napoleon');
 const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
 const SESSIONS_FILE = path.join(CONFIG_DIR, 'sessions.json');
 const LOGS_DIR = path.join(CONFIG_DIR, 'logs');

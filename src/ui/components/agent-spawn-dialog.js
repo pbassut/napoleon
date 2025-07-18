@@ -60,7 +60,7 @@ class AgentSpawnDialog {
         '• Be specific about the task you want the agent to perform',
         '• Include any relevant context or constraints',
         '• Minimum 10 characters required',
-        '• Agent will work in isolated git worktree in .add-manager-worktrees/',
+        '• Agent will work in isolated git worktree in .napoleon-worktrees/',
       ].join('\n'),
       style: {
         fg: 'cyan',
@@ -174,11 +174,11 @@ class AgentSpawnDialog {
     this.dialog.show();
     this.textbox.focus();
     this.textbox.setValue('');
-    
+
     // Reset footer to default state
     this.footer.setContent('Press Ctrl+S to spawn agent | Escape to cancel');
     this.footer.style.fg = 'yellow';
-    
+
     this.parent.render();
 
     logger.debug('Agent spawn dialog shown');

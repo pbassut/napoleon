@@ -50,7 +50,7 @@ class TerminalUI {
       // Create blessed screen
       this.screen = blessed.screen({
         smartCSR: true,
-        title: 'ADD Manager',
+        title: 'Napoleon',
         cursor: {
           artificial: true,
           shape: 'line',
@@ -92,7 +92,7 @@ class TerminalUI {
   createHeader() {
     this.header = blessed.box({
       parent: this.screen,
-      label: ' ADD Manager ',
+      label: ' Napoleon ',
       top: 0,
       left: 0,
       width: '100%',
@@ -116,7 +116,7 @@ class TerminalUI {
       left: 1,
       width: '100%-2',
       height: 1,
-      content: `ADD Manager v${packageInfo.version} - Agent Driven Development`,
+      content: `Napoleon v${packageInfo.version} - Agent Driven Development`,
       style: {
         fg: 'white',
         bg: 'blue',
@@ -296,7 +296,7 @@ class TerminalUI {
     });
 
     const helpContent = [
-      'ADD Manager - Agent Driven Development',
+      'Napoleon - Agent Driven Development',
       '',
       'Keyboard Shortcuts:',
       '  n - Spawn new agent',
@@ -318,6 +318,8 @@ class TerminalUI {
       '  • Runtime tracking for each agent',
       '  • Git worktree isolation',
       '  • Session persistence',
+      '  • Claude Code SDK integration',
+      '  • Enhanced API key management',
       '',
       'Press any key to close this help...',
     ];
@@ -455,7 +457,7 @@ class TerminalUI {
 
       // Update the UI to show the new agent immediately
       this.updateAgentsList();
-      
+
       // Show brief success message in footer without hiding the agent list
       const worktreeInfo = session.worktreeName ? ` in worktree ${session.worktreeName}` : '';
       this.footerText.setContent(`Agent ${session.id} spawned successfully${worktreeInfo} | Press 'n' to spawn new agent | 'd' to terminate | '↑↓' to navigate | 'h' for help | 'q' to quit`);

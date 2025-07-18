@@ -16,6 +16,9 @@ describe('AgentManager', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     
+    // Set up environment
+    process.env.ANTHROPIC_API_KEY = 'test-key';
+    
     // Mock configuration
     loadConfig.mockReturnValue({
       maxAgents: 3,
@@ -149,9 +152,8 @@ describe('AgentManager', () => {
     it('should spawn agent with valid instructions', async () => {
       const instructions = 'Please help me implement a new feature';
       
-      // Mock Claude CLI availability
+      // Mock git commands
       execSync.mockImplementation((cmd) => {
-        if (cmd === 'claude --version') return 'claude 1.0.0';
         if (cmd.includes('git rev-parse')) return 'true';
         return '/path/to/repo';
       });
@@ -160,15 +162,10 @@ describe('AgentManager', () => {
 
       expect(session).toBeDefined();
       expect(session.instructions).toBe(instructions);
-      expect(session.status).toBe('running');
-      expect(session.pid).toBe(12345);
-      expect(spawn).toHaveBeenCalledWith('claude', [], {
-        cwd: expect.stringContaining('.add-manager-worktrees'),
-        stdio: ['pipe', 'pipe', 'pipe'],
-        env: expect.objectContaining({
-          CLAUDE_SESSION_ID: session.id,
-        }),
-      });
+      expect(session.status).toBe('idle'); // SDK completes and goes to idle
+      expect(session.pid).toBeDefined(); // SDK generates a timestamp-based PID
+      expect(session.claudeSession).toBeDefined(); // Should have SDK session
+      expect(session.claudeSession.isActive).toBe(true);
     });
 
     it('should reject instructions that are too short', async () => {
@@ -196,27 +193,36 @@ describe('AgentManager', () => {
       await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow(EnvironmentValidationError);
     });
 
-    it('should reject spawning when Claude CLI not found', async () => {
+    it('should reject spawning when API key not found', async () => {
+      // Remove API key from environment
+      delete process.env.ANTHROPIC_API_KEY;
+      
       execSync.mockImplementation((cmd) => {
-        if (cmd === 'claude --version') throw new Error('Command not found');
-        return 'true';
+        if (cmd.includes('git rev-parse')) return 'true';
+        return '/path/to/repo';
       });
 
       await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow(EnvironmentValidationError);
-      await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow('Claude CLI is not installed');
+      await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow('ANTHROPIC_API_KEY');
+      
+      // Restore API key for other tests
+      process.env.ANTHROPIC_API_KEY = 'test-key';
     });
 
     it('should send instructions to spawned agent', async () => {
       const instructions = 'Please help me implement a new feature';
       
       execSync.mockImplementation((cmd) => {
-        if (cmd === 'claude --version') return 'claude 1.0.0';
-        return 'true';
+        if (cmd.includes('git rev-parse')) return 'true';
+        return '/path/to/repo';
       });
 
-      await agentManager.spawnAgent(instructions);
+      const session = await agentManager.spawnAgent(instructions);
 
-      expect(mockProcess.stdin.write).toHaveBeenCalledWith(`${instructions}\n`);
+      // With SDK, instructions are sent directly via the query function
+      expect(session.logs).toBeDefined();
+      expect(session.logs.length).toBeGreaterThan(0);
+      expect(session.logs[0].content).toBe('Mock response from Claude SDK');
     });
   });
 
@@ -346,15 +352,16 @@ describe('AgentManager', () => {
       const instructions = 'Test instructions';
       
       execSync.mockImplementation((cmd) => {
-        if (cmd === 'claude --version') return 'claude 1.0.0';
-        return 'true';
+        if (cmd.includes('git rev-parse')) return 'true';
+        return '/path/to/repo';
       });
 
       const session = await agentManager.spawnAgent(instructions);
       
       await agentManager.terminateAgent(session.id);
       
-      expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
+      // With SDK, the abort controller is used instead of process.kill
+      expect(session.claudeSession.isActive).toBe(false);
       expect(agentManager.getAgent(session.id)).toBeUndefined();
     });
   });
@@ -398,10 +405,10 @@ describe('AgentManager', () => {
         const result = agentManager.ensureWorktreeDirectory();
         
         expect(fs.mkdirSync).toHaveBeenCalledWith(
-          expect.stringContaining('.add-manager-worktrees'),
+          expect.stringContaining('.napoleon-worktrees'),
           { recursive: true, mode: 0o755 }
         );
-        expect(result).toContain('.add-manager-worktrees');
+        expect(result).toContain('.napoleon-worktrees');
       });
 
       it('should not create directory if it already exists', () => {
@@ -410,7 +417,7 @@ describe('AgentManager', () => {
         const result = agentManager.ensureWorktreeDirectory();
         
         expect(fs.mkdirSync).not.toHaveBeenCalled();
-        expect(result).toContain('.add-manager-worktrees');
+        expect(result).toContain('.napoleon-worktrees');
       });
 
       it('should throw error if directory creation fails', () => {
@@ -488,7 +495,7 @@ describe('AgentManager', () => {
         
         expect(result.agentId).toBe(agentId);
         expect(result.worktreeName).toMatch(/^agent-test-123-\d+$/);
-        expect(result.worktreePath).toContain('.add-manager-worktrees');
+        expect(result.worktreePath).toContain('.napoleon-worktrees');
         expect(exec).toHaveBeenCalledWith(
           expect.stringContaining('git worktree add'),
           expect.any(Object),
@@ -628,7 +635,7 @@ describe('AgentManager', () => {
 
       const session = await agentManager.spawnAgent(instructions);
       
-      expect(session.worktreePath).toContain('.add-manager-worktrees');
+      expect(session.worktreePath).toContain('.napoleon-worktrees');
       expect(session.worktreeName).toMatch(/^agent-.*-\d+$/);
       expect(session.workingDirectory).toBe(session.worktreePath);
       expect(exec).toHaveBeenCalledWith(
