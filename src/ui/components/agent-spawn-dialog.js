@@ -59,11 +59,11 @@ class AgentSpawnDialog {
       width: '100%-4',
       height: 5,
       content: [
-        'Enter detailed instructions for the Claude agent:',
+        'Enter instructions for the Claude agent:',
         '',
         '• Be specific about the task you want the agent to perform',
         '• Include any relevant context or constraints',
-        '• Minimum 10 characters required',
+        '• Any non-empty instruction is valid (no minimum length)',
         '• Agent will work in isolated git worktree in .napoleon-worktrees/',
       ].join('\n'),
       style: {
@@ -109,7 +109,7 @@ class AgentSpawnDialog {
       left: 2,
       width: '100%-4',
       height: 1,
-      content: 'Press Ctrl+S to spawn agent | Escape to cancel',
+      content: 'Press Enter to spawn agent | Shift+Enter for new line | Escape to cancel',
       style: {
         fg: 'yellow',
         bold: true,
@@ -127,9 +127,25 @@ class AgentSpawnDialog {
    * Set up event handlers
    */
   setupEventHandlers() {
-    // Handle Ctrl+S to spawn agent
-    this.textbox.key(['C-s'], () => {
-      this.handleSpawnAgent();
+    // Track shift key state for Enter handling
+    this.isShiftPressed = false;
+
+    // Handle Enter to spawn agent (primary action)
+    this.textbox.key(['enter'], () => {
+      // Only spawn if not holding Shift for multi-line
+      if (!this.isShiftPressed) {
+        this.handleSpawnAgent();
+      } else {
+        // Allow multi-line input with Shift+Enter
+        const currentValue = this.textbox.getValue();
+        this.textbox.setValue(`${currentValue}\n`);
+      }
+    });
+
+    // Handle Shift+Enter for multi-line input
+    this.textbox.key(['S-enter'], () => {
+      const currentValue = this.textbox.getValue();
+      this.textbox.setValue(`${currentValue}\n`);
     });
 
     // Handle Escape to cancel
@@ -137,10 +153,9 @@ class AgentSpawnDialog {
       this.handleCancel();
     });
 
-    // Handle Enter for new lines (allow multi-line input)
-    this.textbox.key(['enter'], () => {
-      const currentValue = this.textbox.getValue();
-      this.textbox.setValue(`${currentValue}\n`);
+    // Track shift key state for Enter handling
+    this.textbox.on('keypress', (ch, key) => {
+      this.isShiftPressed = key && key.shift;
     });
 
     // Handle Tab for indentation
@@ -185,7 +200,7 @@ class AgentSpawnDialog {
     this.textbox.setValue('');
 
     // Reset footer to default state
-    this.footer.setContent('Press Ctrl+S to spawn agent | Escape to cancel');
+    this.footer.setContent('Press Enter to spawn agent | Shift+Enter for new line | Escape to cancel');
     this.footer.style.fg = 'yellow';
 
     this.parent.render();
@@ -294,7 +309,7 @@ class AgentSpawnDialog {
     const timerId = setTimeout(() => {
       this.activeTimers.delete(timerId);
       if (this.isVisible) {
-        this.footer.setContent('Press Ctrl+S to spawn agent | Escape to cancel');
+        this.footer.setContent('Press Enter to spawn agent | Shift+Enter for new line | Escape to cancel');
         this.footer.style.fg = 'yellow';
         this.parent.render();
       }
@@ -366,16 +381,13 @@ class AgentSpawnDialog {
    * Validate instructions with error display
    */
   validateInstructions(instructions) {
-    if (!instructions) {
+    // Check for empty or whitespace-only input
+    if (!instructions || instructions.trim().length === 0) {
       this.showError('Please enter instructions for the agent');
       return false;
     }
 
-    if (instructions.length < 10) {
-      this.showError('Instructions must be at least 10 characters long');
-      return false;
-    }
-
+    // Remove minimum character requirement - allow any non-empty input
     return true;
   }
 
@@ -395,78 +407,154 @@ class AgentSpawnDialog {
   }
 
   /**
-   * Restore focus to parent with retry
+   * Enhanced parent focus restoration with multiple fallbacks
    */
   restoreFocusToParent() {
-    // Clear any existing timeout
-    if (this.focusRestoreTimeout) {
-      clearTimeout(this.focusRestoreTimeout);
-    }
-
-    // Immediate focus restoration
-    this.setFocusWithRetry(this.parent);
-
-    // Backup focus restoration after render
-    this.focusRestoreTimeout = setTimeout(() => {
-      this.ensureParentFocus();
-    }, 50);
-  }
-
-  /**
-   * Set focus with retry mechanism
-   */
-  setFocusWithRetry(element, retries = 3) {
-    if (!element || retries <= 0) return;
-
     try {
-      // Check if element has focus method before calling
-      if (typeof element.focus === 'function') {
-        element.focus();
-      } else {
-        logger.warn('Element does not have focus method', {
-          elementType: element.constructor.name,
+      // Clear any existing timeout
+      if (this.focusRestoreTimeout) {
+        clearTimeout(this.focusRestoreTimeout);
+        this.focusRestoreTimeout = null;
+      }
+
+      // Validate parent before attempting focus
+      if (!this.isValidParent()) {
+        logger.warn('Parent is invalid for focus restoration', {
+          hasParent: !!this.parent,
+          parentType: this.parent ? this.parent.constructor.name : 'null',
         });
         return;
       }
 
-      // Verify focus was set correctly
-      setTimeout(() => {
-        if (element !== this.parent.focused) {
-          this.setFocusWithRetry(element, retries - 1);
-        }
-      }, 10);
-    } catch (error) {
-      logger.warn('Focus setting failed, retrying', {
-        error: error.message,
-        retries: retries - 1,
-      });
+      // Immediate focus restoration with validation
+      const focusSuccess = this.setFocusWithRetry(this.parent);
 
-      setTimeout(() => {
-        this.setFocusWithRetry(element, retries - 1);
-      }, 20);
+      if (!focusSuccess) {
+        // Fallback: set focused property directly for blessed screen
+        if (this.parent.screen && this.parent === this.parent.screen) {
+          this.parent.focused = this.parent;
+          logger.debug('Used direct focus assignment fallback');
+        }
+      }
+
+      // Backup focus restoration after render
+      this.focusRestoreTimeout = setTimeout(() => {
+        this.ensureParentFocus();
+      }, 50);
+    } catch (error) {
+      logger.error('Critical error in focus restoration', {
+        error: error.message,
+        stack: error.stack,
+      });
+      // Do not re-throw - prevent crashes
     }
   }
 
   /**
-   * Ensure parent has focus
+   * Set focus with retry mechanism and comprehensive validation
    */
-  ensureParentFocus() {
-    // Validate that parent has focus
-    if (this.parent.focused !== this.parent) {
-      logger.debug('Parent focus lost, restoring');
+  setFocusWithRetry(element, retries = 3) {
+    if (!element || retries <= 0) {
+      logger.debug('Focus retry exhausted or invalid element');
+      return false;
+    }
 
-      // Check if parent has focus method before calling
-      if (typeof this.parent.focus === 'function') {
-        this.parent.focus();
-      } else {
-        // For blessed screen objects, set focused property directly
-        this.parent.focused = this.parent;
+    try {
+      // Comprehensive element validation
+      if (!AgentSpawnDialog.isValidFocusableElement(element)) {
+        logger.warn('Element is not focusable', {
+          elementType: element ? element.constructor.name : 'null',
+          hasFocusMethod: element && typeof element.focus === 'function',
+          isScreenElement: element && element.screen !== undefined,
+        });
+        return false;
       }
 
-      // Force render to ensure focus state is reflected
+      // Safe focus call with error handling
+      element.focus();
+
+      // Verify focus was set correctly
       setTimeout(() => {
-        this.parent.render();
+        if (this.isValidParent() && element !== this.parent.focused) {
+          this.setFocusWithRetry(element, retries - 1);
+        }
       }, 10);
+
+      return true;
+    } catch (error) {
+      logger.error('Focus setting failed', {
+        error: error.message,
+        elementType: element ? element.constructor.name : 'null',
+        retries: retries - 1,
+        stack: error.stack,
+      });
+
+      // Retry with exponential backoff
+      setTimeout(() => {
+        this.setFocusWithRetry(element, retries - 1);
+      }, (2 ** (4 - retries)) * 10);
+
+      return false;
+    }
+  }
+
+  /**
+   * Element validation helper
+   */
+  static isValidFocusableElement(element) {
+    return !!(element
+           && typeof element === 'object'
+           && typeof element.focus === 'function'
+           && !element.destroyed
+           && element.screen);
+  }
+
+  /**
+   * Parent validation helper
+   */
+  isValidParent() {
+    return !!(this.parent
+           && typeof this.parent === 'object'
+           && !this.parent.destroyed
+           && this.parent.screen);
+  }
+
+  /**
+   * Ensure parent has focus with comprehensive validation
+   */
+  ensureParentFocus() {
+    try {
+      if (!this.isValidParent()) {
+        return;
+      }
+
+      // Check current focus state
+      if (this.parent.focused !== this.parent) {
+        logger.debug('Parent focus lost, attempting restoration');
+
+        // Try standard focus method first
+        if (typeof this.parent.focus === 'function') {
+          this.parent.focus();
+        } else if (this.parent.screen) {
+          // Fallback for blessed screen objects
+          this.parent.focused = this.parent;
+        } else {
+          logger.warn('Unable to restore parent focus - no valid method available');
+          return;
+        }
+
+        // Force render to reflect focus state
+        setTimeout(() => {
+          if (this.isValidParent()) {
+            this.parent.render();
+          }
+        }, 10);
+      }
+    } catch (error) {
+      logger.error('Error in parent focus validation', {
+        error: error.message,
+      });
+      // Do not re-throw - prevent crashes
     }
   }
 }

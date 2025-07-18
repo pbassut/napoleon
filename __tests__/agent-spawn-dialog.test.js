@@ -21,6 +21,8 @@ describe('AgentSpawnDialog', () => {
     mockScreen = {
       render: jest.fn(),
       focus: jest.fn(),
+      focused: null,
+      screen: true,
     };
 
     mockBox = {
@@ -40,6 +42,7 @@ describe('AgentSpawnDialog', () => {
       focus: jest.fn(),
       key: jest.fn(),
       on: jest.fn(),
+      removeAllListeners: jest.fn(),
       style: { border: { fg: 'gray' } },
     };
 
@@ -130,10 +133,11 @@ describe('AgentSpawnDialog', () => {
     it('should set up event handlers', () => {
       dialog.create();
       
-      expect(mockTextarea.key).toHaveBeenCalledWith(['C-s'], expect.any(Function));
-      expect(mockTextarea.key).toHaveBeenCalledWith(['escape'], expect.any(Function));
       expect(mockTextarea.key).toHaveBeenCalledWith(['enter'], expect.any(Function));
+      expect(mockTextarea.key).toHaveBeenCalledWith(['S-enter'], expect.any(Function));
+      expect(mockTextarea.key).toHaveBeenCalledWith(['escape'], expect.any(Function));
       expect(mockTextarea.key).toHaveBeenCalledWith(['tab'], expect.any(Function));
+      expect(mockTextarea.on).toHaveBeenCalledWith('keypress', expect.any(Function));
       expect(mockTextarea.on).toHaveBeenCalledWith('focus', expect.any(Function));
       expect(mockTextarea.on).toHaveBeenCalledWith('blur', expect.any(Function));
       expect(mockTextarea.on).toHaveBeenCalledWith('submit', expect.any(Function));
@@ -147,13 +151,14 @@ describe('AgentSpawnDialog', () => {
 
     it('should show dialog and focus textbox', () => {
       dialog.footer = mockText; // Add footer mock
+      const setFocusSpy = jest.spyOn(dialog, 'setFocusWithRetry').mockImplementation(() => {});
       dialog.show();
 
       expect(dialog.isVisible).toBe(true);
       expect(mockBox.show).toHaveBeenCalled();
-      expect(mockTextarea.focus).toHaveBeenCalled();
+      expect(setFocusSpy).toHaveBeenCalledWith(mockTextarea);
       expect(mockTextarea.setValue).toHaveBeenCalledWith('');
-      expect(mockText.setContent).toHaveBeenCalledWith('Press Ctrl+S to spawn agent | Escape to cancel');
+      expect(mockText.setContent).toHaveBeenCalledWith('Press Enter to spawn agent | Shift+Enter for new line | Escape to cancel');
       expect(mockText.style.fg).toBe('yellow');
       expect(mockParent.render).toHaveBeenCalled();
     });
@@ -196,12 +201,13 @@ describe('AgentSpawnDialog', () => {
 
     it('should spawn agent with valid instructions', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for the agent');
+      dialog.footer = mockText;
+      const hideWithFocusRestoreSpy = jest.spyOn(dialog, 'hideWithFocusRestore').mockImplementation(() => {});
       
       await dialog.handleSpawnAgent();
 
       expect(mockOnSpawn).toHaveBeenCalledWith('Valid instructions for the agent');
-      expect(dialog.isVisible).toBe(false);
-      expect(mockBox.hide).toHaveBeenCalled();
+      expect(hideWithFocusRestoreSpy).toHaveBeenCalled();
     });
 
     it('should show error for empty instructions', async () => {
@@ -215,19 +221,21 @@ describe('AgentSpawnDialog', () => {
       expect(dialog.isVisible).toBe(false); // Dialog hides itself after error
     });
 
-    it('should show error for instructions too short', async () => {
-      mockTextarea.getValue.mockReturnValue('short');
+    it('should accept short instructions (no minimum length requirement)', async () => {
+      mockTextarea.getValue.mockReturnValue('hi');
+      dialog.footer = mockText;
+      const hideWithFocusRestoreSpy = jest.spyOn(dialog, 'hideWithFocusRestore').mockImplementation(() => {});
       
       await dialog.handleSpawnAgent();
 
-      expect(mockOnSpawn).not.toHaveBeenCalled();
-      expect(mockText.setContent).toHaveBeenCalledWith('Error: Instructions must be at least 10 characters long | Press Escape to cancel');
-      expect(mockText.style.fg).toBe('red');
+      expect(mockOnSpawn).toHaveBeenCalledWith('hi');
+      expect(hideWithFocusRestoreSpy).toHaveBeenCalled();
     });
 
     it('should handle spawn callback errors', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for the agent');
       mockOnSpawn.mockRejectedValue(new Error('Spawn failed'));
+      dialog.footer = mockText;
       
       await dialog.handleSpawnAgent();
 
@@ -239,10 +247,11 @@ describe('AgentSpawnDialog', () => {
     it('should show processing message during spawn', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for the agent');
       mockOnSpawn.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+      dialog.footer = mockText;
       
       const spawnPromise = dialog.handleSpawnAgent();
       
-      expect(mockText.setContent).toHaveBeenCalledWith('Creating git worktree and spawning agent...');
+      expect(mockText.setContent).toHaveBeenCalledWith('Creating git worktree and spawning agent... (Press Escape to cancel)');
       expect(mockText.style.fg).toBe('yellow');
       
       jest.advanceTimersByTime(100);
@@ -292,7 +301,7 @@ describe('AgentSpawnDialog', () => {
       // Fast-forward time
       jest.advanceTimersByTime(3000);
 
-      expect(mockText.setContent).toHaveBeenCalledWith('Press Ctrl+S to spawn agent | Escape to cancel');
+      expect(mockText.setContent).toHaveBeenCalledWith('Press Enter to spawn agent | Shift+Enter for new line | Escape to cancel');
       expect(mockText.style.fg).toBe('yellow');
     });
 
@@ -412,18 +421,118 @@ describe('AgentSpawnDialog', () => {
     });
   });
 
+  describe('focus management', () => {
+    beforeEach(() => {
+      dialog.create();
+    });
+
+    it('should validate focusable elements correctly', () => {
+      const validElement = {
+        focus: jest.fn(),
+        destroyed: false,
+        screen: mockScreen
+      };
+      
+      const invalidElement = {
+        // missing focus method
+        destroyed: false,
+        screen: mockScreen
+      };
+
+      expect(AgentSpawnDialog.isValidFocusableElement(validElement)).toBe(true);
+      expect(AgentSpawnDialog.isValidFocusableElement(invalidElement)).toBe(false);
+      expect(AgentSpawnDialog.isValidFocusableElement(null)).toBe(false);
+    });
+
+    it('should validate parent correctly', () => {
+      const validParent = {
+        destroyed: false,
+        screen: mockScreen
+      };
+
+      dialog.parent = validParent;
+      expect(dialog.isValidParent()).toBe(true);
+      
+      dialog.parent = null;
+      expect(dialog.isValidParent()).toBe(false);
+      
+      dialog.parent = validParent;
+      expect(dialog.isValidParent()).toBe(true);
+    });
+
+    it('should set focus with retry and handle failures gracefully', () => {
+      const element = {
+        focus: jest.fn(),
+        destroyed: false,
+        screen: mockScreen
+      };
+
+      const result = dialog.setFocusWithRetry(element);
+      
+      expect(element.focus).toHaveBeenCalled();
+      expect(result).toBe(true);
+    });
+
+    it('should handle focus failures without crashing', () => {
+      const element = {
+        focus: jest.fn(() => { throw new Error('Focus failed'); }),
+        destroyed: false,
+        screen: mockScreen
+      };
+
+      expect(() => {
+        dialog.setFocusWithRetry(element);
+      }).not.toThrow();
+    });
+
+    it('should restore parent focus safely', () => {
+      const validParent = {
+        destroyed: false,
+        screen: mockScreen
+      };
+      dialog.parent = validParent;
+      const focusSpy = jest.spyOn(dialog, 'setFocusWithRetry').mockReturnValue(true);
+      
+      dialog.restoreFocusToParent();
+      
+      expect(focusSpy).toHaveBeenCalledWith(validParent);
+    });
+  });
+
   describe('event handlers', () => {
     beforeEach(() => {
       dialog.create();
     });
 
-    it('should handle Ctrl+S keypress', () => {
-      const ctrlSHandler = mockTextarea.key.mock.calls.find(call => call[0][0] === 'C-s')[1];
+    it('should handle Enter keypress to spawn agent when shift not pressed', () => {
+      const enterHandler = mockTextarea.key.mock.calls.find(call => call[0][0] === 'enter')[1];
       const handleSpawnSpy = jest.spyOn(dialog, 'handleSpawnAgent').mockImplementation(() => {});
+      dialog.isShiftPressed = false;
       
-      ctrlSHandler();
+      enterHandler();
       
       expect(handleSpawnSpy).toHaveBeenCalled();
+    });
+
+    it('should handle Enter keypress for newline when shift is pressed', () => {
+      const enterHandler = mockTextarea.key.mock.calls.find(call => call[0][0] === 'enter')[1];
+      const handleSpawnSpy = jest.spyOn(dialog, 'handleSpawnAgent').mockImplementation(() => {});
+      mockTextarea.getValue.mockReturnValue('Current text');
+      dialog.isShiftPressed = true;
+      
+      enterHandler();
+      
+      expect(handleSpawnSpy).not.toHaveBeenCalled();
+      expect(mockTextarea.setValue).toHaveBeenCalledWith('Current text\n');
+    });
+
+    it('should handle Shift+Enter keypress for newlines', () => {
+      const shiftEnterHandler = mockTextarea.key.mock.calls.find(call => call[0][0] === 'S-enter')[1];
+      mockTextarea.getValue.mockReturnValue('Current text');
+      
+      shiftEnterHandler();
+      
+      expect(mockTextarea.setValue).toHaveBeenCalledWith('Current text\n');
     });
 
     it('should handle Escape keypress', () => {
@@ -435,13 +544,20 @@ describe('AgentSpawnDialog', () => {
       expect(handleCancelSpy).toHaveBeenCalled();
     });
 
-    it('should handle Enter keypress for newlines', () => {
-      const enterHandler = mockTextarea.key.mock.calls.find(call => call[0][0] === 'enter')[1];
-      mockTextarea.getValue.mockReturnValue('Current text');
+    it('should handle keypress events to track shift key state', () => {
+      const keypressHandler = mockTextarea.on.mock.calls.find(call => call[0] === 'keypress')[1];
       
-      enterHandler();
+      // Test shift key pressed
+      keypressHandler('a', { shift: true });
+      expect(dialog.isShiftPressed).toBe(true);
       
-      expect(mockTextarea.setValue).toHaveBeenCalledWith('Current text\n');
+      // Test shift key not pressed
+      keypressHandler('a', { shift: false });
+      expect(dialog.isShiftPressed).toBe(false);
+      
+      // Test no key object - should handle gracefully
+      keypressHandler('a', null);
+      expect(dialog.isShiftPressed).toBe(null); // Returns the actual value from keypress
     });
 
     it('should handle Tab keypress for indentation', () => {
