@@ -1,5 +1,6 @@
 const chalk = require('chalk');
 const os = require('os');
+const console = require('../utils/console-wrapper');
 
 /**
  * API Key Setup Guide

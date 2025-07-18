@@ -1,6 +1,7 @@
 const { initializeSessionStorage } = require('../core/config');
 const { validateEnvironment } = require('./validators/environment');
 const logger = require('../utils/logger');
+const console = require('../utils/console-wrapper');
 
 /**
  * Initializes the CLI application
