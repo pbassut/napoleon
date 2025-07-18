@@ -1,8 +1,10 @@
 const { program } = require('commander');
 const { initializeApplication } = require('../src/cli/index');
 const { initializeSessionStorage } = require('../src/core/config');
+const { validateEnvironment } = require('../src/cli/validators/environment');
 
 jest.mock('../src/core/config');
+jest.mock('../src/cli/validators/environment');
 
 describe('CLI Application', () => {
   beforeEach(() => {
@@ -10,6 +12,8 @@ describe('CLI Application', () => {
     // Reset commander program
     program.commands = [];
     program._name = undefined;
+    // Mock environment validation to succeed
+    validateEnvironment.mockResolvedValue();
   });
 
   describe('initializeApplication', () => {

@@ -1,9 +1,11 @@
 const { program } = require('commander');
 const { initializeApplication } = require('../src/cli/index');
 const { initializeSessionStorage } = require('../src/core/config');
+const { validateEnvironment } = require('../src/cli/validators/environment');
 const TerminalUI = require('../src/ui/index');
 
 jest.mock('../src/core/config');
+jest.mock('../src/cli/validators/environment');
 jest.mock('../src/ui/index');
 
 describe('CLI Integration with Terminal UI', () => {
@@ -21,6 +23,9 @@ describe('CLI Integration with Terminal UI', () => {
     
     // Mock session storage
     initializeSessionStorage.mockResolvedValue();
+    
+    // Mock environment validation to succeed
+    validateEnvironment.mockResolvedValue();
     
     // Reset commander program
     program.commands = [];

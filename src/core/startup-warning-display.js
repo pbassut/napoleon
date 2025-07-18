@@ -2,7 +2,6 @@ const chalk = require('chalk');
 const inquirer = require('inquirer');
 const GitStatusChecker = require('./git-status-checker');
 const logger = require('../utils/logger');
-const console = require('../utils/console-wrapper');
 
 /**
  * Startup Warning Display System

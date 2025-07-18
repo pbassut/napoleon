@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const winston = require('winston');
+const logger = require('../src/utils/logger');
 
 // Configuration paths factory functions
 function getAddManagerDir() {
@@ -35,16 +35,7 @@ function getNapoleonConfig() {
   return path.join(getNapoleonDir(), 'config.json');
 }
 
-// Logger setup
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.colorize(),
-    winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`),
-  ),
-  transports: [new winston.transports.Console()],
-});
+// Note: logger is imported from shared utils/logger.js
 
 /**
  * CLI Arguments parser
