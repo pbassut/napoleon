@@ -1,6 +1,35 @@
 const semver = require('semver');
 const { execSync } = require('child_process');
+const chalk = require('chalk');
 const { EnvironmentValidationError } = require('../../utils/errors');
+const ApiKeyValidator = require('../../core/api-key-validator');
+const ApiKeySetupGuide = require('../../core/api-key-setup-guide');
+
+/**
+ * Validates Anthropic API key
+ */
+async function validateApiKey() {
+  const validator = new ApiKeyValidator();
+  const setupGuide = new ApiKeySetupGuide();
+
+  try {
+    const result = await validator.validateApiKey();
+
+    console.log(chalk.green(`✅ API key validated (${result.maskedKey})`));
+
+    return result;
+  } catch (error) {
+    if (error.message.includes('not found in environment')) {
+      setupGuide.displaySetupInstructions();
+    } else if (error.message.includes('Invalid API key format')) {
+      setupGuide.displayFormatError(error.message);
+    } else {
+      console.error(chalk.red(`❌ API key validation failed: ${error.message}`));
+    }
+
+    throw error;
+  }
+}
 
 /**
  * Validates the system environment for Napoleon
@@ -46,8 +75,12 @@ async function validateEnvironment() {
     // This is just a warning for now
     console.warn('Warning: Claude Code SDK not found. Some features may be limited.');
   }
+
+  // API key validation
+  await validateApiKey();
 }
 
 module.exports = {
   validateEnvironment,
+  validateApiKey,
 };

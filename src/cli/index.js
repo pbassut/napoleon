@@ -1,4 +1,5 @@
 const { initializeSessionStorage } = require('../core/config');
+const { validateEnvironment } = require('./validators/environment');
 const logger = require('../utils/logger');
 
 /**
@@ -6,6 +7,9 @@ const logger = require('../utils/logger');
  */
 async function initializeApplication(program) {
   try {
+    // Validate environment before initialization
+    await validateEnvironment();
+
     // Initialize session storage
     await initializeSessionStorage();
 
@@ -59,6 +63,14 @@ async function initializeApplication(program) {
     logger.info('CLI application initialized successfully');
   } catch (error) {
     logger.error('Failed to initialize CLI application', { error: error.message });
+
+    // Handle startup validation failures gracefully
+    if (error.name === 'EnvironmentValidationError' || error.name === 'ConfigurationError') {
+      console.log('\n❌ Napoleon startup failed');
+      console.log('Please resolve the above issues and try again.\n');
+      process.exit(1);
+    }
+
     throw error;
   }
 }
