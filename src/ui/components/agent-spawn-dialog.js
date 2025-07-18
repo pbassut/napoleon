@@ -15,6 +15,10 @@ class AgentSpawnDialog {
     this.instructionsText = null;
     this.isVisible = false;
     this.activeTimers = new Set(); // Track active timers for cleanup
+    
+    // Focus management properties
+    this.previouslyFocused = null;
+    this.focusRestoreTimeout = null;
   }
 
   /**
@@ -170,9 +174,14 @@ class AgentSpawnDialog {
       this.create();
     }
 
+    // Store current focus state
+    this.previouslyFocused = this.parent.focused;
+
     this.isVisible = true;
     this.dialog.show();
-    this.textbox.focus();
+    
+    // Ensure focus is properly set with retry mechanism
+    this.setFocusWithRetry(this.textbox);
     this.textbox.setValue('');
 
     // Reset footer to default state
@@ -203,14 +212,7 @@ class AgentSpawnDialog {
     try {
       const instructions = this.textbox.getValue().trim();
 
-      // Validate instructions
-      if (!instructions) {
-        this.showError('Please enter instructions for the agent');
-        return;
-      }
-
-      if (instructions.length < 10) {
-        this.showError('Instructions must be at least 10 characters long');
+      if (!this.validateInstructions(instructions)) {
         return;
       }
 
@@ -219,16 +221,13 @@ class AgentSpawnDialog {
       this.footer.style.fg = 'yellow';
       this.parent.render();
 
-      // Call the spawn callback
+      // Call spawn callback while maintaining focus context
       if (this.onSpawn) {
         await this.onSpawn(instructions);
       }
 
-      // Hide dialog on success
-      this.hide();
-
-      // Return focus to main screen to restore keyboard callbacks
-      this.parent.render();
+      // Hide dialog and restore focus
+      this.hideWithFocusRestore();
     } catch (error) {
       logger.error('Failed to spawn agent from dialog', { error: error.message });
       this.showError(`Failed to spawn agent: ${error.message}`);
@@ -239,11 +238,8 @@ class AgentSpawnDialog {
    * Handle dialog cancellation
    */
   handleCancel() {
-    this.hide();
-
-    // Return focus to main screen to restore keyboard callbacks
-    this.parent.render();
-
+    this.hideWithFocusRestore();
+    
     if (this.onCancel) {
       this.onCancel();
     }
@@ -314,12 +310,112 @@ class AgentSpawnDialog {
       });
       this.activeTimers.clear();
 
+      // Clear focus restore timeout
+      if (this.focusRestoreTimeout) {
+        clearTimeout(this.focusRestoreTimeout);
+        this.focusRestoreTimeout = null;
+      }
+
       this.dialog.destroy();
       this.dialog = null;
       this.textbox = null;
       this.instructionsText = null;
       this.footer = null;
       this.isVisible = false;
+    }
+  }
+
+  /**
+   * Validate instructions with error display
+   */
+  validateInstructions(instructions) {
+    if (!instructions) {
+      this.showError('Please enter instructions for the agent');
+      return false;
+    }
+
+    if (instructions.length < 10) {
+      this.showError('Instructions must be at least 10 characters long');
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Hide dialog with focus restoration
+   */
+  hideWithFocusRestore() {
+    if (this.dialog) {
+      this.isVisible = false;
+      this.dialog.hide();
+      
+      // Restore focus to main UI with retry mechanism
+      this.restoreFocusToParent();
+      
+      this.parent.render();
+    }
+  }
+
+  /**
+   * Restore focus to parent with retry
+   */
+  restoreFocusToParent() {
+    // Clear any existing timeout
+    if (this.focusRestoreTimeout) {
+      clearTimeout(this.focusRestoreTimeout);
+    }
+
+    // Immediate focus restoration
+    this.setFocusWithRetry(this.parent);
+
+    // Backup focus restoration after render
+    this.focusRestoreTimeout = setTimeout(() => {
+      this.ensureParentFocus();
+    }, 50);
+  }
+
+  /**
+   * Set focus with retry mechanism
+   */
+  setFocusWithRetry(element, retries = 3) {
+    if (!element || retries <= 0) return;
+
+    try {
+      element.focus();
+      
+      // Verify focus was set correctly
+      setTimeout(() => {
+        if (element !== this.parent.focused) {
+          this.setFocusWithRetry(element, retries - 1);
+        }
+      }, 10);
+      
+    } catch (error) {
+      logger.warn('Focus setting failed, retrying', { 
+        error: error.message, 
+        retries: retries - 1,
+      });
+      
+      setTimeout(() => {
+        this.setFocusWithRetry(element, retries - 1);
+      }, 20);
+    }
+  }
+
+  /**
+   * Ensure parent has focus
+   */
+  ensureParentFocus() {
+    // Validate that parent has focus
+    if (this.parent.focused !== this.parent) {
+      logger.debug('Parent focus lost, restoring');
+      this.parent.focus();
+      
+      // Force render to ensure focus state is reflected
+      setTimeout(() => {
+        this.parent.render();
+      }, 10);
     }
   }
 }
