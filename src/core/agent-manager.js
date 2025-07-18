@@ -913,6 +913,63 @@ class AgentManager {
   }
 
   /**
+   * Add a pending agent to the UI immediately for loading state display
+   * Used when starting agent creation process to show immediate feedback
+   */
+  addPendingAgent(agentConfig) {
+    const pendingAgent = {
+      ...agentConfig,
+      status: AgentStatus.SPAWNING,
+      createdAt: new Date().toISOString(),
+      progress: 'Initializing...',
+      spawnTime: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+    };
+
+    this.agents.set(pendingAgent.id, pendingAgent);
+    logger.debug('Added pending agent for immediate UI feedback', { 
+      agentId: pendingAgent.id,
+      instructions: pendingAgent.instructions.substring(0, 50) 
+    });
+    
+    return pendingAgent;
+  }
+
+  /**
+   * Update pending agent status with progress information
+   * Used for background process status updates during spawn
+   */
+  updatePendingAgentStatus(agentId, status, errorMessage = null) {
+    const agent = this.agents.get(agentId);
+    if (agent) {
+      agent.status = status;
+      agent.lastActivity = new Date().toISOString();
+      
+      if (errorMessage) {
+        agent.error = errorMessage;
+        agent.progress = `Error: ${errorMessage}`;
+      } else if (status === AgentStatus.IDLE) {
+        agent.progress = 'Ready';
+      } else if (status === AgentStatus.RUNNING) {
+        agent.progress = 'Active';
+      } else if (status === AgentStatus.SPAWNING) {
+        agent.progress = agent.progress || 'Creating...';
+      }
+      
+      logger.debug('Updated pending agent status', { 
+        agentId, 
+        status, 
+        error: errorMessage 
+      });
+
+      // If agent has error or terminating status, handle removal
+      if (status === AgentStatus.ERROR || status === AgentStatus.TERMINATING) {
+        this.agents.delete(agentId);
+      }
+    }
+  }
+
+  /**
    * Get agent by ID
    */
   getAgent(agentId) {
