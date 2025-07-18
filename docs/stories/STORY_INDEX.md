@@ -44,14 +44,15 @@ These stories implement the original ADD Manager functionality within the Napole
 | US023 | Error Handling and Recovery | Robust error handling when agents fail | MEDIUM | ✅ **Approved** |
 | US024 | Enhanced Keyboard Shortcuts and Navigation | Efficient keyboard shortcuts for all operations | LOW | ✅ **Approved** |
 
-### Phase 3: UX Improvements and Startup Reliability (US025-US026)
+### Phase 3: UX Improvements and Startup Reliability (US025-US027)
 
-These stories address critical UX issues and startup reliability improvements.
+These stories address critical UX issues and startup reliability improvements for Napoleon.
 
 | Story ID | Title | Description | Priority | Status |
 |----------|-------|-------------|----------|---------|
-| US025 | Git Working Tree Status Warning | Warn users about dirty git working tree state on startup | HIGH | 🔄 **Draft** |
-| US026 | Anthropic API Key Validation | Validate API key before app startup to prevent SDK failures | HIGH | 🔄 **Draft** |
+| US025 | Git Working Tree Status Warning | Warn users about dirty git state on startup that prevents agent spawning | HIGH | ✅ **Approved** |
+| US026 | Anthropic API Key Validation | Validate Anthropic API key before app startup to prevent SDK failures | HIGH | ✅ **Approved** |
+| US027 | Terminal Focus Recovery After Agent Spawning | Fix terminal focus loss after agent spawning that breaks keyboard workflow | HIGH | ✅ **Approved** |
 
 ## Development Notes
 
@@ -74,10 +75,10 @@ These stories address critical UX issues and startup reliability improvements.
 
 ## Approval Status Summary
 
-- **✅ All 24 pending stories approved** by Scrum Master Bob on 2025-07-18
+- **✅ All 27 total stories approved** by Scrum Master Bob on 2025-07-18
 - **3 stories already completed**: US007, US008, US013
-- **21 stories ready for implementation**: US001-US006, US009-US012, US014-US024
-- **2 new stories in draft**: US025, US026 (Phase 3: UX Improvements and Startup Reliability)
+- **24 stories ready for implementation**: US001-US006, US009-US012, US014-US027
+- **Phase 3 UX improvements**: US025-US027 approved for critical startup reliability and terminal focus issues
 - **Ready for development handoff**: All approved stories include detailed acceptance criteria and integration verification requirements
 
 ## File Locations
