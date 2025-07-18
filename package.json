@@ -17,11 +17,12 @@
     "lint": "eslint src/ bin/ --ext .js",
     "lint:fix": "eslint src/ bin/ --ext .js --fix",
     "format": "prettier --write src/ bin/ __tests__/",
-    "start": "node bin/napoleon.js"
+    "start": "node bin/napoleon.js start"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.53",
     "blessed": "^0.1.81",
+    "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "joi": "^17.11.0",
     "semver": "^7.5.4",
