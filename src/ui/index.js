@@ -471,24 +471,49 @@ class TerminalUI {
   }
 
   /**
-   * Handle agent spawning
+   * Handle agent spawning with immediate UI feedback
    */
   async handleSpawnAgent(instructions) {
     try {
-      const session = await this.agentManager.spawnAgent(instructions);
-      logger.info('Agent spawned successfully from UI', { agentId: session.id });
+      // Add pending agent to UI immediately
+      const agentId = this.agentManager.generateAgentId();
+      const pendingAgent = this.agentManager.addPendingAgent({
+        id: agentId,
+        instructions: instructions,
+        startTime: Date.now()
+      });
 
-      // Update UI
+      // Update UI immediately to show loading state
       this.updateAgentsList();
 
       // Ensure focus is maintained
       await this.ensureFocusAfterSpawn();
 
-      // Success feedback
-      this.showSpawnSuccess(session);
+      // Start actual creation process in background
+      this.performAgentCreation(pendingAgent)
+        .then(agent => {
+          // Update UI with completed agent
+          this.agentManager.updatePendingAgentStatus(agent.id, 'idle');
+          this.updateAgentsList();
+          this.showSpawnSuccess(agent);
+          logger.info('Agent spawned successfully from UI', { agentId: agent.id });
+        })
+        .catch(error => {
+          // Update UI with error state
+          this.agentManager.updatePendingAgentStatus(pendingAgent.id, 'error', error.message);
+          this.updateAgentsList();
+          this.updateStatus(`Failed to spawn agent: ${error.message}`, { fg: 'red', bold: true });
+          logger.error('Failed to spawn agent from UI', { error: error.message });
+
+          // Hide error message after 5 seconds
+          this.setTimeout(() => {
+            this.updateAgentsList();
+          }, 5000);
+        });
+
     } catch (error) {
-      logger.error('Failed to spawn agent from UI', { error: error.message });
-      this.updateStatus(`Failed to spawn agent: ${error.message}`, { fg: 'red', bold: true });
+      logger.error('Agent spawn initiation failed', { error: error.message });
+      this.updateStatus(`Failed to start agent creation: ${error.message}`, { fg: 'red', bold: true });
 
       // Ensure focus is restored even on error
       await this.restoreMainFocus();
@@ -497,6 +522,33 @@ class TerminalUI {
       this.setTimeout(() => {
         this.updateAgentsList();
       }, 5000);
+    }
+  }
+
+  /**
+   * Perform actual agent creation in background
+   */
+  async performAgentCreation(pendingAgent) {
+    try {
+      // Update progress
+      this.agentManager.updatePendingAgentStatus(pendingAgent.id, 'spawning');
+      pendingAgent.progress = 'Creating git worktree...';
+      this.updateAgentsList();
+
+      // Call the actual spawn method
+      const session = await this.agentManager.spawnAgent(pendingAgent.instructions);
+      
+      // Replace the pending agent with the real session
+      this.agentManager.agents.delete(pendingAgent.id);
+      this.agentManager.agents.set(session.id, session);
+      
+      return session;
+    } catch (error) {
+      logger.error('Background agent creation failed', { 
+        agentId: pendingAgent.id,
+        error: error.message 
+      });
+      throw error;
     }
   }
 
@@ -752,7 +804,13 @@ class TerminalUI {
       const pidText = agent.pid ? `PID: ${agent.pid}`.padEnd(10) : 'PID: N/A'.padEnd(10);
       const isSelected = index === this.selectedAgentIndex;
       const prefix = isSelected ? '> ' : '  ';
-      return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] ${pidText} Runtime: ${runtime}`;
+      
+      // Show progress for spawning agents
+      const progressText = agent.status === AgentStatus.SPAWNING && agent.progress 
+        ? ` - ${agent.progress}` 
+        : '';
+      
+      return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] ${pidText} Runtime: ${runtime}${progressText}`;
     });
 
     this.agentsList.setItems(items);
