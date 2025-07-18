@@ -129,3 +129,4 @@ test-output/
 # Build artifacts
 dist/
 build/
+.napoleon-worktrees/
