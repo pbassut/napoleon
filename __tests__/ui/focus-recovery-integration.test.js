@@ -84,6 +84,15 @@ describe('Focus Recovery Integration Tests', () => {
     };
     FocusDebugger.mockImplementation(() => mockFocusDebugger);
 
+    // Mock cross-platform focus
+    const mockCrossPlatformFocus = {
+      getFocusValidationInterval: jest.fn(() => 2000),
+      setupBlessedEventHandling: jest.fn(),
+      setupResizeHandling: jest.fn(),
+      recoverFocus: jest.fn(async () => true),
+    };
+    CrossPlatformFocus.mockImplementation(() => mockCrossPlatformFocus);
+
     ui = new TerminalUI();
     await ui.initialize();
 
@@ -117,15 +126,16 @@ describe('Focus Recovery Integration Tests', () => {
       mockScreen.focused = null; // Simulate focus loss during spawn
       await ui.handleSpawnAgent('Test instructions for agent');
       
-      // Verify focus recovery was attempted
-      expect(mockScreen.focus).toHaveBeenCalled();
+      // Verify focus recovery was attempted through cross-platform focus
+      const CrossPlatformFocusInstance = ui.crossPlatformFocus;
+      expect(CrossPlatformFocusInstance.recoverFocus).toHaveBeenCalled();
       
       // Verify dialog was hidden and focus restored
       mockSpawnDialog.isShown.mockReturnValue(false);
       expect(ui.ensureFocusAfterSpawn).toBeDefined();
     });
 
-    it('should handle focus loss during heavy UI operations', () => {
+    it('should handle focus loss during heavy UI operations', async () => {
       // Start with focus on main screen
       mockScreen.focused = mockScreen;
       
@@ -142,33 +152,23 @@ describe('Focus Recovery Integration Tests', () => {
       ui.updateAgentsList();
       
       // Focus validation should trigger after render
-      const renderHandler = mockScreen.on.mock.calls.find(call => call[0] === 'render')[1];
-      renderHandler();
+      const setupCall = ui.crossPlatformFocus.setupBlessedEventHandling.mock.calls[0];
+      const handlers = setupCall[0];
+      await handlers.onRender();
       
-      // Verify focus restoration was attempted
-      expect(mockScreen.focus).toHaveBeenCalled();
+      // Verify focus restoration was attempted through cross-platform focus
+      expect(ui.crossPlatformFocus.recoverFocus).toHaveBeenCalledWith(mockScreen);
     });
 
-    it('should handle repeated focus loss with retry mechanism', () => {
-      let focusAttempts = 0;
-      mockScreen.focus.mockImplementation(() => {
-        focusAttempts++;
-      });
-      
+    it('should handle repeated focus loss with retry mechanism', async () => {
       // Initially no focus
       mockScreen.focused = null;
       
-      ui.restoreMainFocus();
+      // Trigger focus restoration
+      await ui.restoreMainFocus();
       
-      // The retry mechanism in restoreMainFocus uses setTimeout(25ms)
-      // Fast-forward through retry timeout to trigger the retry
-      jest.advanceTimersByTime(30);
-      
-      // Should have attempted focus at least twice (initial + retry)
-      expect(focusAttempts).toBeGreaterThanOrEqual(1);
-      
-      // Verify the force focus assignment occurred
-      expect(mockScreen.focused).toBe(mockScreen);
+      // Should have attempted cross-platform focus recovery
+      expect(ui.crossPlatformFocus.recoverFocus).toHaveBeenCalledWith(mockScreen);
     });
 
     it('should validate focus state periodically', () => {
@@ -255,34 +255,31 @@ describe('Focus Recovery Integration Tests', () => {
       expect(ui.hasActiveDialog()).toBe(false);
     });
 
-    it('should handle help overlay focus correctly', () => {
+    it('should handle help overlay focus correctly', async () => {
       ui.showingHelp = true;
       expect(ui.hasActiveDialog()).toBe(true);
       
       // Should not restore main focus when help is shown
       mockScreen.focused = null;
-      ui.validateFocusState();
-      expect(mockScreen.focus).not.toHaveBeenCalled();
+      await ui.validateFocusState();
+      expect(ui.crossPlatformFocus.recoverFocus).not.toHaveBeenCalled();
       
       // Should restore focus when help is hidden
       ui.showingHelp = false;
-      ui.validateFocusState();
-      expect(mockScreen.focus).toHaveBeenCalled();
+      await ui.validateFocusState();
+      expect(ui.crossPlatformFocus.recoverFocus).toHaveBeenCalledWith(mockScreen);
     });
   });
 
   describe('performance and timing requirements', () => {
-    it('should restore focus within 100ms requirement', () => {
+    it('should restore focus within 100ms requirement', async () => {
       mockScreen.focused = null;
       
       const startTime = Date.now();
-      ui.restoreMainFocus();
+      await ui.restoreMainFocus();
       
-      // Focus should be attempted immediately
-      expect(mockScreen.focus).toHaveBeenCalled();
-      
-      // Validation happens after 25ms
-      jest.advanceTimersByTime(25);
+      // Focus should be attempted immediately through cross-platform focus
+      expect(ui.crossPlatformFocus.recoverFocus).toHaveBeenCalledWith(mockScreen);
       
       const elapsed = Date.now() - startTime;
       expect(elapsed).toBeLessThan(100); // Should be well under 100ms

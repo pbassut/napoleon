@@ -3,10 +3,57 @@ const { validateEnvironment } = require('../src/cli/validators/environment');
 const { EnvironmentValidationError } = require('../src/utils/errors');
 
 jest.mock('child_process');
+jest.mock('../src/core/api-key-validator');
+jest.mock('../src/core/api-key-setup-guide');
+jest.mock('../src/core/git-status-checker');
+jest.mock('../src/core/startup-warning-display');
+jest.mock('../src/utils/logger');
+
+const ApiKeyValidator = require('../src/core/api-key-validator');
+const GitStatusChecker = require('../src/core/git-status-checker');
+const StartupWarningDisplay = require('../src/core/startup-warning-display');
 
 describe('Environment Validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock environment variable
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-api03-valid-key-12345';
+
+    // Setup API key validator mock
+    const mockApiValidator = {
+      validateApiKey: jest.fn().mockResolvedValue({
+        isValid: true,
+        maskedKey: 'sk-ant-***12345'
+      })
+    };
+    ApiKeyValidator.mockImplementation(() => mockApiValidator);
+
+    // Setup git status checker mocks
+    const mockGitChecker = {
+      validateGitRepository: jest.fn().mockResolvedValue({
+        isValid: true,
+        gitDir: '/project/.git'
+      }),
+      checkWorkingTreeStatus: jest.fn().mockResolvedValue({
+        isClean: true,
+        hasUncommittedChanges: false,
+        hasUntrackedFiles: false,
+        hasStagedChanges: false,
+        details: { modified: [], untracked: [], staged: [] }
+      })
+    };
+    GitStatusChecker.mockImplementation(() => mockGitChecker);
+
+    // Setup warning display mocks
+    const mockWarningDisplay = {
+      displayGitValidationError: jest.fn(),
+      displayGitWarning: jest.fn(),
+      displayExitMessage: jest.fn(),
+      displayContinueMessage: jest.fn(),
+      displayNonGitRepoError: jest.fn()
+    };
+    StartupWarningDisplay.mockImplementation(() => mockWarningDisplay);
   });
 
   describe('validateEnvironment', () => {

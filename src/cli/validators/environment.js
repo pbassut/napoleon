@@ -4,6 +4,54 @@ const chalk = require('chalk');
 const { EnvironmentValidationError } = require('../../utils/errors');
 const ApiKeyValidator = require('../../core/api-key-validator');
 const ApiKeySetupGuide = require('../../core/api-key-setup-guide');
+const GitStatusChecker = require('../../core/git-status-checker');
+const StartupWarningDisplay = require('../../core/startup-warning-display');
+
+/**
+ * Validates git working tree status
+ */
+async function validateGitWorkingTree() {
+  const gitChecker = new GitStatusChecker();
+  const warningDisplay = new StartupWarningDisplay();
+
+  try {
+    // First validate git repository context
+    const repositoryValidation = await gitChecker.validateGitRepository();
+    
+    if (!repositoryValidation.isValid) {
+      await warningDisplay.displayGitValidationError(repositoryValidation);
+      throw new EnvironmentValidationError(
+        repositoryValidation.message,
+        repositoryValidation.error,
+        'Please ensure you are in a git repository with proper access'
+      );
+    }
+
+    // Check working tree status
+    const gitStatus = await gitChecker.checkWorkingTreeStatus();
+    
+    if (!gitStatus.isClean) {
+      const userChoice = await warningDisplay.displayGitWarning(gitStatus);
+      
+      if (userChoice === 'exit') {
+        warningDisplay.displayExitMessage();
+        process.exit(0);
+      } else {
+        await warningDisplay.displayContinueMessage();
+        console.log(chalk.yellow('⚠️  Continuing with dirty working tree...'));
+      }
+    }
+
+    return gitStatus;
+  } catch (error) {
+    if (error.message.includes('Not in a git repository')) {
+      warningDisplay.displayNonGitRepoError();
+      process.exit(1);
+    }
+    
+    throw error;
+  }
+}
 
 /**
  * Validates Anthropic API key
@@ -76,6 +124,9 @@ async function validateEnvironment() {
     console.warn('Warning: Claude Code SDK not found. Some features may be limited.');
   }
 
+  // Git working tree status validation
+  await validateGitWorkingTree();
+
   // API key validation
   await validateApiKey();
 }
@@ -83,4 +134,5 @@ async function validateEnvironment() {
 module.exports = {
   validateEnvironment,
   validateApiKey,
+  validateGitWorkingTree,
 };

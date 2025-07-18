@@ -217,20 +217,57 @@ class AgentSpawnDialog {
       }
 
       // Update footer to show processing
-      this.footer.setContent('Creating git worktree and spawning agent...');
+      this.footer.setContent('Creating git worktree and spawning agent... (Press Escape to cancel)');
       this.footer.style.fg = 'yellow';
       this.parent.render();
 
-      // Call spawn callback while maintaining focus context
-      if (this.onSpawn) {
-        await this.onSpawn(instructions);
+      // Set up cancellation mechanism during spawn
+      let spawnCancelled = false;
+      const escapeHandler = () => {
+        spawnCancelled = true;
+        this.showError('Agent spawning cancelled by user');
+        this.hideWithFocusRestore();
+      };
+
+      // Temporarily override escape key to allow cancellation during spawn
+      this.textbox.removeAllListeners('keypress');
+      this.textbox.on('keypress', (ch, key) => {
+        if (key && key.name === 'escape') {
+          escapeHandler();
+        }
+      });
+
+      // Call spawn callback with timeout and cancellation handling
+      if (this.onSpawn && !spawnCancelled) {
+        // Add timeout wrapper to prevent indefinite blocking
+        const spawnPromise = this.onSpawn(instructions);
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Spawn operation timed out after 30 seconds')), 30000);
+        });
+
+        // Race between spawn completion and timeout
+        await Promise.race([spawnPromise, timeoutPromise]);
       }
 
-      // Hide dialog and restore focus
-      this.hideWithFocusRestore();
+      // Only hide dialog if operation wasn't cancelled
+      if (!spawnCancelled) {
+        this.hideWithFocusRestore();
+      }
     } catch (error) {
       logger.error('Failed to spawn agent from dialog', { error: error.message });
       this.showError(`Failed to spawn agent: ${error.message}`);
+
+      // Ensure modal doesn't stay stuck on error
+      setTimeout(() => {
+        if (this.isVisible) {
+          this.footer.setContent('Press Escape to cancel');
+          this.footer.style.fg = 'red';
+          this.parent.render();
+        }
+      }, 3000);
+    } finally {
+      // Always restore original event handlers
+      this.setupEventHandlers();
     }
   }
 
