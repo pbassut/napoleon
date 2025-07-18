@@ -44,9 +44,10 @@ describe('AgentManager Input Validation', () => {
       expect(() => agentManager.validateInstructions([])).toThrow(EnvironmentValidationError);
     });
 
-    it('should reject instructions that are too short', () => {
-      expect(() => agentManager.validateInstructions('short')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('short')).toThrow('Agent instructions must be at least 10 characters long');
+    it('should accept short instructions (no minimum length)', () => {
+      expect(() => agentManager.validateInstructions('hi')).not.toThrow();
+      expect(() => agentManager.validateInstructions('x')).not.toThrow();
+      expect(() => agentManager.validateInstructions('test')).not.toThrow();
     });
 
     it('should reject instructions that are too long', () => {

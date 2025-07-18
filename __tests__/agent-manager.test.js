@@ -168,11 +168,13 @@ describe('AgentManager', () => {
       expect(session.claudeSession.isActive).toBe(true);
     });
 
-    it('should reject instructions that are too short', async () => {
-      const instructions = 'short';
+    it('should accept short instructions (no minimum length)', async () => {
+      const instructions = 'hi';
 
-      await expect(agentManager.spawnAgent(instructions)).rejects.toThrow(EnvironmentValidationError);
-      await expect(agentManager.spawnAgent(instructions)).rejects.toThrow('at least 10 characters');
+      const agent = await agentManager.spawnAgent(instructions);
+      expect(agent).toBeDefined();
+      expect(agent.instructions).toBe('hi');
+      expect(agent.status).toBe('idle');
     });
 
     it('should reject spawning when maximum agents reached', async () => {

@@ -522,14 +522,8 @@ class AgentManager {
 
     const trimmed = instructions.trim();
 
-    // Length validation
-    if (trimmed.length < 10) {
-      throw new EnvironmentValidationError(
-        'Agent instructions must be at least 10 characters long',
-        'INSTRUCTIONS_TOO_SHORT',
-        'Please provide more detailed instructions for the agent',
-      );
-    }
+    // Remove minimum length validation - allow any non-empty instructions
+    // This aligns with US028 requirements
 
     if (trimmed.length > 5000) {
       throw new EnvironmentValidationError(
