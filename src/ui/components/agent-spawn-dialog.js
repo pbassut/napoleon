@@ -231,58 +231,30 @@ class AgentSpawnDialog {
         return;
       }
 
-      // Update footer to show processing
-      this.footer.setContent('Creating git worktree and spawning agent... (Press Escape to cancel)');
-      this.footer.style.fg = 'yellow';
-      this.parent.render();
-
-      // Set up cancellation mechanism during spawn
-      let spawnCancelled = false;
-      const escapeHandler = () => {
-        spawnCancelled = true;
-        this.showError('Agent spawning cancelled by user');
-        this.hideWithFocusRestore();
-      };
-
-      // Temporarily override escape key to allow cancellation during spawn
-      this.textbox.removeAllListeners('keypress');
-      this.textbox.on('keypress', (ch, key) => {
-        if (key && key.name === 'escape') {
-          escapeHandler();
-        }
-      });
-
-      // Call spawn callback with timeout and cancellation handling
-      if (this.onSpawn && !spawnCancelled) {
-        // Add timeout wrapper to prevent indefinite blocking
-        const spawnPromise = this.onSpawn(instructions);
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Spawn operation timed out after 30 seconds')), 30000);
+      // Hide modal immediately - don't wait for spawn completion
+      this.hideWithFocusRestore();
+      
+      // Start background agent creation process
+      // Use callback/promise to handle completion/errors
+      if (this.onSpawn) {
+        const agentCreationPromise = this.onSpawn(instructions);
+        
+        // Handle background completion (don't block modal dismissal)
+        agentCreationPromise.catch(error => {
+          logger.error('Agent spawn failed during background creation', {
+            error: error.message,
+            instructions: instructions.substring(0, 50)
+          });
+          // Error handling happens in agent list, not modal
         });
-
-        // Race between spawn completion and timeout
-        await Promise.race([spawnPromise, timeoutPromise]);
       }
 
-      // Only hide dialog if operation wasn't cancelled
-      if (!spawnCancelled) {
-        this.hideWithFocusRestore();
-      }
     } catch (error) {
-      logger.error('Failed to spawn agent from dialog', { error: error.message });
-      this.showError(`Failed to spawn agent: ${error.message}`);
-
-      // Ensure modal doesn't stay stuck on error
-      setTimeout(() => {
-        if (this.isVisible) {
-          this.footer.setContent('Press Escape to cancel');
-          this.footer.style.fg = 'red';
-          this.parent.render();
-        }
-      }, 3000);
-    } finally {
-      // Always restore original event handlers
-      this.setupEventHandlers();
+      logger.error('Agent spawn initiation failed', {
+        error: error.message
+      });
+      this.showError(`Failed to start agent creation: ${error.message}`);
+      // Keep modal open for immediate failures
     }
   }
 
@@ -395,14 +367,42 @@ class AgentSpawnDialog {
    * Hide dialog with focus restoration
    */
   hideWithFocusRestore() {
-    if (this.dialog) {
-      this.isVisible = false;
+    if (!this.dialog) {
+      return;
+    }
+
+    try {
+      // Clear any existing timers
+      this.activeTimers.forEach(timer => clearTimeout(timer));
+      this.activeTimers.clear();
+
+      // Clear focus restore timeout
+      if (this.focusRestoreTimeout) {
+        clearTimeout(this.focusRestoreTimeout);
+        this.focusRestoreTimeout = null;
+      }
+
+      // Hide the dialog
       this.dialog.hide();
+      this.isVisible = false;
 
       // Restore focus to main UI with retry mechanism
       this.restoreFocusToParent();
 
-      this.parent.render();
+      // Trigger parent render to update display
+      if (this.parent && typeof this.parent.render === 'function') {
+        this.parent.render();
+      }
+
+      logger.debug('Agent spawn dialog hidden successfully');
+
+    } catch (error) {
+      logger.error('Error hiding agent spawn dialog', {
+        error: error.message,
+        stack: error.stack
+      });
+      // Ensure isVisible is false even if hide fails
+      this.isVisible = false;
     }
   }
 
