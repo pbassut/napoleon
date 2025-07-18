@@ -2,6 +2,8 @@
 
 Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions with git worktree isolation.
 
+> **Note**: ADD Manager is being superseded by [Napoleon](https://github.com/your-org/napoleon), which uses the Claude Code SDK instead of CLI processes. See the [Migration Guide](./MIGRATION.md) for upgrade instructions.
+
 ## Installation
 
 ### Global Installation
@@ -19,6 +21,7 @@ npx add-manager
 - Node.js >= 16.0.0
 - Git >= 2.20.0
 - Claude CLI (optional, for full functionality)
+- Anthropic API key - [Setup Guide](./API-KEY-SETUP.md)
 
 ## Usage
 
