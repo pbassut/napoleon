@@ -1,6 +1,7 @@
 const { spawn, execSync, exec } = require('child_process');
 const fs = require('fs');
 const AgentManager = require('../src/core/agent-manager');
+const { AgentStatus } = require('../src/core/agent-manager');
 const { loadConfig, SESSIONS_FILE } = require('../src/core/config');
 const { EnvironmentValidationError } = require('../src/utils/errors');
 
@@ -365,6 +366,75 @@ describe('AgentManager', () => {
       // With SDK, the abort controller is used instead of process.kill
       expect(session.claudeSession.isActive).toBe(false);
       expect(agentManager.getAgent(session.id)).toBeUndefined();
+    });
+  });
+
+  describe('pending agent management', () => {
+    beforeEach(async () => {
+      await agentManager.initialize();
+    });
+
+    it('should add pending agent with spawning status', () => {
+      const agentConfig = {
+        id: 'test-pending-agent',
+        instructions: 'Test pending instructions',
+        startTime: Date.now()
+      };
+
+      const pendingAgent = agentManager.addPendingAgent(agentConfig);
+
+      expect(pendingAgent.id).toBe('test-pending-agent');
+      expect(pendingAgent.status).toBe(AgentStatus.SPAWNING);
+      expect(pendingAgent.instructions).toBe('Test pending instructions');
+      expect(pendingAgent.progress).toBe('Initializing...');
+      expect(pendingAgent.spawnTime).toBeDefined();
+      expect(pendingAgent.lastActivity).toBeDefined();
+      expect(agentManager.getAgent(pendingAgent.id)).toBe(pendingAgent);
+    });
+
+    it('should update pending agent status with progress', () => {
+      const agentConfig = {
+        id: 'test-pending-agent',
+        instructions: 'Test instructions',
+        startTime: Date.now()
+      };
+      const pendingAgent = agentManager.addPendingAgent(agentConfig);
+
+      agentManager.updatePendingAgentStatus(pendingAgent.id, AgentStatus.IDLE);
+
+      const updatedAgent = agentManager.getAgent(pendingAgent.id);
+      expect(updatedAgent.status).toBe(AgentStatus.IDLE);
+      expect(updatedAgent.progress).toBe('Ready');
+      expect(updatedAgent.lastActivity).toBeDefined();
+    });
+
+    it('should update pending agent with error status and message', () => {
+      const agentConfig = {
+        id: 'test-pending-agent',
+        instructions: 'Test instructions',
+        startTime: Date.now()
+      };
+      const pendingAgent = agentManager.addPendingAgent(agentConfig);
+
+      agentManager.updatePendingAgentStatus(pendingAgent.id, AgentStatus.ERROR, 'Test error message');
+
+      // Agent should be removed when status is error
+      expect(agentManager.getAgent(pendingAgent.id)).toBeUndefined();
+    });
+
+    it('should preserve existing progress for spawning status', () => {
+      const agentConfig = {
+        id: 'test-pending-agent',
+        instructions: 'Test instructions',
+        startTime: Date.now()
+      };
+      const pendingAgent = agentManager.addPendingAgent(agentConfig);
+      pendingAgent.progress = 'Creating git worktree...';
+
+      agentManager.updatePendingAgentStatus(pendingAgent.id, AgentStatus.SPAWNING);
+
+      const updatedAgent = agentManager.getAgent(pendingAgent.id);
+      expect(updatedAgent.progress).toBe('Creating git worktree...');
     });
   });
 

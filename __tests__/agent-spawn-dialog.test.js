@@ -243,62 +243,50 @@ describe('AgentSpawnDialog', () => {
       expect(hideWithFocusRestoreSpy).toHaveBeenCalled();
     });
 
-    it('should handle spawn callback errors', async () => {
+    it('should handle spawn callback errors in background', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for the agent');
       mockOnSpawn.mockRejectedValue(new Error('Spawn failed'));
       dialog.footer = mockText;
       
       await dialog.handleSpawnAgent();
 
-      expect(mockText.setContent).toHaveBeenCalledWith('Error: Failed to spawn agent: Spawn failed | Press Escape to cancel');
-      expect(mockText.style.fg).toBe('red');
-      expect(dialog.isVisible).toBe(false); // Dialog hides itself after error
+      // Dialog should close immediately regardless of background errors
+      expect(dialog.isVisible).toBe(false);
+      // No error message shown in modal - errors handled in main UI
+      expect(mockText.setContent).not.toHaveBeenCalledWith(expect.stringContaining('Error: Failed to spawn agent'));
     });
 
-    it('should show processing message during spawn', async () => {
+    it('should close modal immediately without showing processing message', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for the agent');
       mockOnSpawn.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
       dialog.footer = mockText;
       
-      const spawnPromise = dialog.handleSpawnAgent();
+      await dialog.handleSpawnAgent();
       
-      expect(mockText.setContent).toHaveBeenCalledWith('Creating git worktree and spawning agent... (Press Escape to cancel)');
-      expect(mockText.style.fg).toBe('yellow');
-      
-      jest.advanceTimersByTime(100);
-      await spawnPromise;
+      // Modal should close immediately, no processing message shown
+      expect(dialog.isVisible).toBe(false);
+      expect(mockText.setContent).not.toHaveBeenCalledWith('Creating git worktree and spawning agent... (Press Escape to cancel)');
     });
 
-    it('should handle escape key cancellation during spawn', async () => {
+    it('should close modal immediately - escape cancellation no longer applies', async () => {
       mockTextarea.getValue.mockReturnValue('Valid instructions for agent');
       dialog.footer = mockText;
       
       // Mock slow spawn operation
-      let resolveSpawn;
       mockOnSpawn.mockImplementation(() => new Promise((resolve) => {
-        resolveSpawn = resolve;
+        setTimeout(resolve, 100);
       }));
       
-      const hideWithFocusRestoreSpy = jest.spyOn(dialog, 'hideWithFocusRestore').mockImplementation(() => {});
+      const hideWithFocusRestoreSpy = jest.spyOn(dialog, 'hideWithFocusRestore');
       
       // Start spawn operation
-      const spawnPromise = dialog.handleSpawnAgent();
+      await dialog.handleSpawnAgent();
       
-      // Let the spawn process start
-      await Promise.resolve(); // Allow microtask queue to process
-      
-      // Simulate escape key press during spawn by accessing the most recent keypress handler
-      const allKeypressCalls = mockTextarea.on.mock.calls.filter(call => call[0] === 'keypress');
-      const latestKeypressHandler = allKeypressCalls[allKeypressCalls.length - 1][1];
-      latestKeypressHandler('', { name: 'escape' });
-      
-      // Verify cancellation behavior
-      expect(mockText.setContent).toHaveBeenCalledWith('Error: Agent spawning cancelled by user | Press Escape to cancel');
+      // Modal should close immediately, escape cancellation is no longer possible
       expect(hideWithFocusRestoreSpy).toHaveBeenCalled();
-      
-      // Complete the spawn promise to clean up
-      resolveSpawn();
-      await spawnPromise;
+      expect(dialog.isVisible).toBe(false);
+      // No cancellation message since modal closes immediately
+      expect(mockText.setContent).not.toHaveBeenCalledWith(expect.stringContaining('cancelled by user'));
     });
 
     // Note: Timeout test commented out due to Jest timer handling complexity
