@@ -55,7 +55,7 @@ class TerminalUI {
       this.agentManager = new AgentManager();
       await this.agentManager.initialize();
 
-      // Create blessed screen
+      // Create blessed screen with defensive terminal handling
       this.screen = blessed.screen({
         smartCSR: true,
         title: 'Napoleon',
@@ -66,6 +66,8 @@ class TerminalUI {
         },
         dockBorders: true,
         ignoreLocked: ['C-c'],
+        // Disable advanced color features that can cause terminal issues
+        warnings: false,
       });
 
       // Initialize focus debugging and cross-platform handling
@@ -980,7 +982,19 @@ class TerminalUI {
       }
 
       if (this.screen) {
-        this.screen.destroy();
+        try {
+          this.screen.destroy();
+        } catch (error) {
+          // Ignore blessed terminal color capability errors during cleanup
+          // These are cosmetic and don't affect functionality
+          if (error.message && error.message.includes('Setulc')) {
+            logger.debug('Ignoring blessed terminal color error during cleanup', {
+              error: error.message,
+            });
+          } else {
+            logger.warn('Error during screen cleanup', { error: error.message });
+          }
+        }
       }
 
       // Restore terminal state

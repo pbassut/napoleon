@@ -132,6 +132,7 @@ describe('Terminal UI', () => {
         },
         dockBorders: true,
         ignoreLocked: ['C-c'],
+        warnings: false,
       });
     });
 
