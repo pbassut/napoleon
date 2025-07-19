@@ -1,0 +1,293 @@
+{
+  "summary": {
+    "totalTests": 59,
+    "passed": 48,
+    "failed": 11,
+    "errors": 0,
+    "successRate": "81.4%",
+    "testDuration": 24
+  },
+  "keyboard": {
+    "totalTests": 43,
+    "categories": {
+      "General": {
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "errors": 0
+      },
+      "Navigation": {
+        "total": 12,
+        "passed": 8,
+        "failed": 4,
+        "errors": 0
+      },
+      "Agent Management": {
+        "total": 9,
+        "passed": 9,
+        "failed": 0,
+        "errors": 0
+      },
+      "View Control": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "errors": 0
+      },
+      "Special Keys": {
+        "total": 7,
+        "passed": 0,
+        "failed": 7,
+        "errors": 0
+      },
+      "Edge Cases": {
+        "total": 5,
+        "passed": 5,
+        "failed": 0,
+        "errors": 0
+      },
+      "Focus Management": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "errors": 0
+      }
+    },
+    "criticalIssues": [
+      {
+        "test": "Navigation Key: pageup",
+        "status": "FAIL",
+        "details": "Page up navigation - Key 'pageup' has no handler defined",
+        "keyCode": "pageup",
+        "category": "Navigation"
+      },
+      {
+        "test": "Navigation Key: pagedown",
+        "status": "FAIL",
+        "details": "Page down navigation - Key 'pagedown' has no handler defined",
+        "keyCode": "pagedown",
+        "category": "Navigation"
+      },
+      {
+        "test": "Navigation Key: home",
+        "status": "FAIL",
+        "details": "Home key navigation - Key 'home' has no handler defined",
+        "keyCode": "home",
+        "category": "Navigation"
+      },
+      {
+        "test": "Navigation Key: end",
+        "status": "FAIL",
+        "details": "End key navigation - Key 'end' has no handler defined",
+        "keyCode": "end",
+        "category": "Navigation"
+      },
+      {
+        "test": "Special Key: tab",
+        "status": "FAIL",
+        "details": "Tab navigation - Key 'tab' has no handler defined",
+        "keyCode": "tab",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: S-tab",
+        "status": "FAIL",
+        "details": "Shift+Tab navigation - Key 'S-tab' has no handler defined",
+        "keyCode": "S-tab",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: space",
+        "status": "FAIL",
+        "details": "Space key action - Key 'space' has no handler defined",
+        "keyCode": "space",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: backspace",
+        "status": "FAIL",
+        "details": "Backspace handling - Key 'backspace' has no handler defined",
+        "keyCode": "backspace",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: delete",
+        "status": "FAIL",
+        "details": "Delete key handling - Key 'delete' has no handler defined",
+        "keyCode": "delete",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: f1",
+        "status": "FAIL",
+        "details": "F1 function key - Key 'f1' has no handler defined",
+        "keyCode": "f1",
+        "category": "Special Keys"
+      },
+      {
+        "test": "Special Key: f5",
+        "status": "FAIL",
+        "details": "F5 refresh key - Key 'f5' has no handler defined",
+        "keyCode": "f5",
+        "category": "Special Keys"
+      }
+    ]
+  },
+  "agentRefresh": {
+    "totalTests": 4,
+    "issues": []
+  },
+  "detailView": {
+    "totalTests": 12,
+    "issues": []
+  },
+  "issues": [
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Navigation Key: pageup",
+      "details": "Page up navigation - Key 'pageup' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Navigation Key: pagedown",
+      "details": "Page down navigation - Key 'pagedown' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Navigation Key: home",
+      "details": "Home key navigation - Key 'home' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Navigation Key: end",
+      "details": "End key navigation - Key 'end' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: tab",
+      "details": "Tab navigation - Key 'tab' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: S-tab",
+      "details": "Shift+Tab navigation - Key 'S-tab' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: space",
+      "details": "Space key action - Key 'space' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: backspace",
+      "details": "Backspace handling - Key 'backspace' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: delete",
+      "details": "Delete key handling - Key 'delete' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: f1",
+      "details": "F1 function key - Key 'f1' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Keyboard",
+      "severity": "Medium",
+      "test": "Special Key: f5",
+      "details": "F5 refresh key - Key 'f5' has no handler defined",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "recommendation": "Review and fix keyboard event handling for this scenario"
+    },
+    {
+      "category": "Performance",
+      "severity": "Medium",
+      "test": "Animation Performance",
+      "details": "Animation interval runs every 200ms which may be excessive for terminal rendering",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "line": 624,
+      "recommendation": "Consider increasing animation interval to 500ms or making it configurable"
+    },
+    {
+      "category": "User Experience",
+      "severity": "Low",
+      "test": "Help Text Consistency",
+      "details": "Footer help text is very long and may not fit on smaller terminals",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "line": 252,
+      "recommendation": "Implement responsive help text that adapts to terminal width"
+    },
+    {
+      "category": "Error Handling",
+      "severity": "Medium",
+      "test": "Agent Detail Error Handling",
+      "details": "Error handling in agent detail view could be more robust",
+      "file": "/Users/patrickbassut/Programming/terragon/src/ui/components/agent-detail-view.js",
+      "line": 340,
+      "recommendation": "Add more comprehensive error handling and user feedback"
+    }
+  ],
+  "recommendations": [
+    {
+      "category": "Performance",
+      "priority": "High",
+      "recommendation": "Optimize animation intervals and implement frame rate limiting",
+      "impact": "Reduced CPU usage and smoother terminal rendering"
+    },
+    {
+      "category": "User Experience",
+      "priority": "Medium",
+      "recommendation": "Implement responsive help system that adapts to terminal size",
+      "impact": "Better usability on different terminal sizes"
+    },
+    {
+      "category": "Accessibility",
+      "priority": "Medium",
+      "recommendation": "Add keyboard shortcut customization and screen reader support",
+      "impact": "Improved accessibility for users with disabilities"
+    },
+    {
+      "category": "Error Handling",
+      "priority": "High",
+      "recommendation": "Add comprehensive error handling and recovery mechanisms",
+      "impact": "More robust application with better error recovery"
+    },
+    {
+      "category": "Testing",
+      "priority": "High",
+      "recommendation": "Add automated UI testing with blessed test helpers",
+      "impact": "Better test coverage and regression prevention"
+    }
+  ]
+}

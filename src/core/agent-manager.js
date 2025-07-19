@@ -6,6 +6,7 @@ const { query } = require('@anthropic-ai/claude-code');
 const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
 const { EnvironmentValidationError, FileSystemError } = require('../utils/errors');
 const logger = require('../utils/logger');
+const WorktreeLifecycleManager = require('./worktree-lifecycle-manager');
 
 // Agent status types as per US004 requirements
 const AgentStatus = {
@@ -40,6 +41,8 @@ class AgentManager {
     this.agents = new Map();
     this.config = null;
     this.maxAgents = 3;
+    this.worktreeLifecycle = null;
+    this.orphanScanInterval = null;
   }
 
   /**
@@ -50,12 +53,25 @@ class AgentManager {
       this.config = loadConfig();
       this.maxAgents = this.config.maxAgents || 3;
 
+      // Initialize worktree lifecycle management
+      this.worktreeLifecycle = new WorktreeLifecycleManager({
+        maxConcurrentCleanups: this.config.maxConcurrentCleanups || 2,
+        retryAttempts: this.config.cleanupRetryAttempts || 3
+      });
+
+      // Initialize worktree lifecycle (discovery and cleanup of orphans)
+      await this.worktreeLifecycle.initialize();
+
       // Load existing sessions
       await this.loadSessions();
+
+      // Start background orphan scanning
+      this.startBackgroundOrphanScanning();
 
       logger.info('Agent manager initialized successfully', {
         maxAgents: this.maxAgents,
         activeSessions: this.agents.size,
+        worktreeMetrics: this.worktreeLifecycle.getMetrics()
       });
     } catch (error) {
       logger.error('Failed to initialize agent manager', { error: error.message });
@@ -669,6 +685,12 @@ class AgentManager {
       this.agents.set(agentId, session);
       await this.saveSessions();
 
+      // Register with worktree lifecycle manager
+      if (this.worktreeLifecycle) {
+        this.worktreeLifecycle.registerActiveAgent(agentId, session);
+        logger.debug('Agent registered with worktree lifecycle manager', { agentId });
+      }
+
       // Send initial instructions to agent
       await this.sendInstructions(agentId, instructions);
 
@@ -979,7 +1001,7 @@ class AgentManager {
   /**
    * Terminate agent
    */
-  async terminateAgent(agentId) {
+  async terminateAgent(agentId, options = {}) {
     const session = this.agents.get(agentId);
     if (!session) {
       throw new Error('Agent not found');
@@ -998,20 +1020,40 @@ class AgentManager {
         }, 5000);
       }
 
-      // Clean up worktree if it exists
-      if (session.worktreePath) {
+      // Use worktree lifecycle manager for cleanup
+      if (this.worktreeLifecycle && session.worktreePath) {
         try {
-          await this.removeWorktree(session.worktreePath);
-          logger.info('Agent worktree cleaned up', {
+          const cleanupId = await this.worktreeLifecycle.unregisterAgent(agentId, {
+            force: options.force || false,
+            preserveBranch: options.preserveBranch || false
+          });
+          
+          logger.info('Agent worktree queued for cleanup via lifecycle manager', {
             agentId,
             worktreePath: session.worktreePath,
+            cleanupId
           });
         } catch (error) {
-          logger.warn('Failed to clean up agent worktree', {
+          logger.warn('Failed to queue agent worktree for cleanup, falling back to direct cleanup', {
             agentId,
             worktreePath: session.worktreePath,
             error: error.message,
           });
+          
+          // Fallback to direct cleanup
+          try {
+            await this.removeWorktree(session.worktreePath);
+            logger.info('Agent worktree cleaned up directly', {
+              agentId,
+              worktreePath: session.worktreePath,
+            });
+          } catch (fallbackError) {
+            logger.error('Failed direct worktree cleanup', {
+              agentId,
+              worktreePath: session.worktreePath,
+              error: fallbackError.message,
+            });
+          }
         }
       }
 
@@ -1126,6 +1168,110 @@ class AgentManager {
       content: log.content || log.toString(),
       type: log.type || 'info',
     }));
+  }
+
+  /**
+   * Start background orphan scanning for unexpected agent deaths
+   */
+  startBackgroundOrphanScanning() {
+    // Scan every 5 minutes for orphaned worktrees
+    const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
+    
+    this.orphanScanInterval = setInterval(async () => {
+      try {
+        if (this.worktreeLifecycle) {
+          const result = await this.worktreeLifecycle.scanForOrphans();
+          
+          if (result.newOrphans > 0) {
+            logger.info('Background orphan scan found new orphaned worktrees', {
+              scanned: result.scanned,
+              newOrphans: result.newOrphans
+            });
+          } else {
+            logger.debug('Background orphan scan completed', {
+              scanned: result.scanned,
+              newOrphans: result.newOrphans
+            });
+          }
+        }
+      } catch (error) {
+        logger.error('Background orphan scan failed', { error: error.message });
+      }
+    }, scanIntervalMs);
+
+    logger.info('Background orphan scanning started', { 
+      intervalMinutes: Math.round(scanIntervalMs / (60 * 1000))
+    });
+  }
+
+  /**
+   * Stop background orphan scanning
+   */
+  stopBackgroundOrphanScanning() {
+    if (this.orphanScanInterval) {
+      clearInterval(this.orphanScanInterval);
+      this.orphanScanInterval = null;
+      logger.info('Background orphan scanning stopped');
+    }
+  }
+
+  /**
+   * Force cleanup of a specific worktree (manual emergency cleanup)
+   */
+  async forceCleanupWorktree(worktreePath, options = {}) {
+    if (!this.worktreeLifecycle) {
+      throw new Error('Worktree lifecycle manager not initialized');
+    }
+
+    return this.worktreeLifecycle.forceCleanupWorktree(worktreePath, options);
+  }
+
+  /**
+   * Get worktree lifecycle status and metrics
+   */
+  getWorktreeLifecycleStatus() {
+    if (!this.worktreeLifecycle) {
+      return { enabled: false };
+    }
+
+    return {
+      enabled: true,
+      ...this.worktreeLifecycle.getStatus()
+    };
+  }
+
+  /**
+   * Shutdown agent manager and cleanup resources
+   */
+  async shutdown() {
+    logger.info('Shutting down agent manager');
+
+    try {
+      // Stop background scanning
+      this.stopBackgroundOrphanScanning();
+
+      // Shutdown worktree lifecycle manager
+      if (this.worktreeLifecycle) {
+        await this.worktreeLifecycle.shutdown();
+      }
+
+      // Terminate all active agents
+      const activeAgents = Array.from(this.agents.keys());
+      if (activeAgents.length > 0) {
+        logger.info('Terminating active agents during shutdown', { 
+          count: activeAgents.length 
+        });
+
+        await Promise.allSettled(
+          activeAgents.map(agentId => this.terminateAgent(agentId, { force: true }))
+        );
+      }
+
+      logger.info('Agent manager shutdown completed');
+    } catch (error) {
+      logger.error('Error during agent manager shutdown', { error: error.message });
+      throw error;
+    }
   }
 }
 
