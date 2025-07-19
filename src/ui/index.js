@@ -78,6 +78,10 @@ class TerminalUI {
       baseOptions.useBCE = false;
       baseOptions.fastCSR = false;
       baseOptions.resizeTimeout = 300;
+      // Disable extended color support that causes Setulc parsing errors
+      baseOptions.colors = 256;
+      baseOptions.forceUnicode = false;
+      baseOptions.tput = false;
 
       logger.debug('Applied xterm/screen compatibility fixes');
     }
