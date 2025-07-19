@@ -343,7 +343,6 @@ class AgentDetailView {
       });
     }
 
-    const worktreePath = agentDetails?.worktreePath || 'N/A';
     const branchInfo = agentDetails?.branch || 'N/A';
 
     // Get system resource usage (mock for now)
@@ -353,7 +352,6 @@ class AgentDetailView {
     const info = [
       `Agent: ${agent.id} [${branchInfo}] │ SDK Status: ${sdkStatus}`,
       `Started: ${AgentDetailView.formatTimestamp(agent.spawnTime || agent.startTime)} │ Runtime: ${runtime}`,
-      `${worktreePath}`,
       `Session ID: ${sessionId} │ Status: ${agent.status} │ Instructions: "${agent.instructions || 'N/A'}"`,
     ].join('\n');
 

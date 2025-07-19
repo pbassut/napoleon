@@ -535,18 +535,18 @@ class TerminalUI {
       pendingAgent.progress = 'Creating git worktree...';
       this.updateAgentsList();
 
-      // Call the actual spawn method
-      const session = await this.agentManager.spawnAgent(pendingAgent.instructions);
-      
-      // Replace the pending agent with the real session
-      this.agentManager.agents.delete(pendingAgent.id);
-      this.agentManager.agents.set(session.id, session);
-      
+      // Call the actual spawn method with the pending agent's ID
+      const session = await this.agentManager.spawnAgent(
+        pendingAgent.instructions,
+        { agentId: pendingAgent.id },
+      );
+
+      // Session automatically replaces the pending agent since they have the same ID
       return session;
     } catch (error) {
-      logger.error('Background agent creation failed', { 
+      logger.error('Background agent creation failed', {
         agentId: pendingAgent.id,
-        error: error.message 
+        error: error.message,
       });
       throw error;
     }

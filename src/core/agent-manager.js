@@ -721,8 +721,8 @@ class AgentManager {
         );
       }
 
-      // Generate agent session
-      const agentId = this.generateAgentId();
+      // Generate agent session (or use provided one for pending agent replacement)
+      const agentId = options.agentId || this.generateAgentId();
 
       logger.info('Spawning new agent', {
         agentId,
