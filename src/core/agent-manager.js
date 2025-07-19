@@ -7,6 +7,7 @@ const logger = require('../utils/logger');
 const WorktreeLifecycleManager = require('./worktree-lifecycle-manager');
 const SDKCommunicationManager = require('./sdk/communication-manager');
 const { SDKStatus } = require('./sdk/sdk-types');
+const AgentLogManager = require('./logging/agent-log-manager');
 
 // Agent status types as per US004 requirements
 const AgentStatus = {
@@ -44,6 +45,7 @@ class AgentManager {
     this.worktreeLifecycle = null;
     this.orphanScanInterval = null;
     this.sdkManager = new SDKCommunicationManager();
+    this.agentLogManager = null; // Will be initialized based on config
   }
 
   /**
@@ -63,6 +65,9 @@ class AgentManager {
       // Initialize worktree lifecycle (discovery and cleanup of orphans)
       await this.worktreeLifecycle.initialize();
 
+      // Initialize persistent agent logging
+      await this.initializeAgentLogging();
+
       // Load existing sessions
       await this.loadSessions();
 
@@ -73,10 +78,42 @@ class AgentManager {
         maxAgents: this.maxAgents,
         activeSessions: this.agents.size,
         worktreeMetrics: this.worktreeLifecycle.getMetrics(),
+        persistentLogging: this.agentLogManager ? 'enabled' : 'disabled',
       });
     } catch (error) {
       logger.error('Failed to initialize agent manager', { error: error.message });
       throw error;
+    }
+  }
+
+  /**
+   * Initialize persistent agent logging with graceful degradation
+   */
+  async initializeAgentLogging() {
+    try {
+      // Check if persistent logging is enabled in config
+      const loggingConfig = this.config.logging?.agents;
+      if (!loggingConfig?.enabled) {
+        logger.info('Persistent agent logging disabled via configuration');
+        return;
+      }
+
+      // Create and initialize AgentLogManager
+      this.agentLogManager = new AgentLogManager({
+        napoleonDir: path.dirname(loggingConfig.directory),
+        maxPromptLength: loggingConfig.maxPromptLength || 50,
+      });
+
+      await this.agentLogManager.initialize();
+      logger.info('Persistent agent logging enabled', {
+        directory: loggingConfig.directory,
+        maxPromptLength: loggingConfig.maxPromptLength || 50,
+      });
+    } catch (error) {
+      logger.warn('Persistent agent logging disabled due to initialization failure', {
+        error: error.message,
+      });
+      this.agentLogManager = null; // Disable feature on failure
     }
   }
 
@@ -773,7 +810,7 @@ class AgentManager {
       // Add SDK initialization log
       session.logs.push({
         timestamp: new Date(),
-        content: `SDK session initialized - preparing to process instructions...`,
+        content: 'SDK session initialized - preparing to process instructions...',
         type: 'info',
       });
 
@@ -785,6 +822,19 @@ class AgentManager {
       // Store session
       this.agents.set(agentId, session);
       await this.saveSessions();
+
+      // Create persistent log file for the agent
+      if (this.agentLogManager) {
+        try {
+          const logPath = await this.agentLogManager.createAgentLog(agentId, sanitizedInstructions);
+          logger.debug('Persistent log created for agent', { agentId, logPath });
+        } catch (error) {
+          logger.warn('Failed to create persistent log for agent', {
+            agentId,
+            error: error.message,
+          });
+        }
+      }
 
       // Register with worktree lifecycle manager
       if (this.worktreeLifecycle) {
@@ -903,6 +953,22 @@ class AgentManager {
     // Keep only last 1000 log entries for detail view
     if (session.logs.length > 1000) {
       session.logs = session.logs.slice(-1000);
+    }
+
+    // Add persistent logging after existing session.logs update
+    if (this.agentLogManager) {
+      this.agentLogManager.writeLogEntry(agentId, {
+        type: message.type || 'sdk_message',
+        source: 'claude_sdk',
+        content: message.content || JSON.stringify(message),
+        metadata: {
+          messageId: message.id,
+          sdkType: message.type,
+          timestamp: new Date().toISOString(),
+        },
+      }).catch((error) => {
+        logger.warn('Failed to write persistent log entry', { agentId, error: error.message });
+      });
     }
 
     // Update last activity
@@ -1078,6 +1144,16 @@ class AgentManager {
     }
 
     try {
+      // Terminate persistent log before session cleanup
+      if (this.agentLogManager) {
+        try {
+          const finalLogPath = await this.agentLogManager.terminateAgentLog(agentId);
+          logger.debug('Persistent log terminated', { agentId, finalLogPath });
+        } catch (error) {
+          logger.warn('Failed to terminate persistent log', { agentId, error: error.message });
+        }
+      }
+
       // Terminate SDK session gracefully
       if (session.sessionId || session.id) {
         const terminationSuccess = await this.sdkManager.terminateSession(session.sessionId || session.id);
