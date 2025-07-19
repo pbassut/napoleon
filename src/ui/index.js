@@ -733,8 +733,8 @@ class TerminalUI {
         : 0; // Wrap around to top
     }
 
-    // Only update if selection actually changed
-    if (oldIndex !== this.selectedAgentIndex && this.agents.length > 0) {
+    // Always update selection highlight when navigation happens
+    if (this.agents.length > 0) {
       this.updateSelectionHighlight();
     }
   }
