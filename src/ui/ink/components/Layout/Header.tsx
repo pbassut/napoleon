@@ -1,14 +1,20 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
-const Header: React.FC = () => {
+export const Header: React.FC = () => {
+  const packageJson = require('../../../../../package.json');
+  const version = packageJson.version;
+  
   return (
-    <Box borderStyle="single" paddingX={1}>
-      <Text color="cyan" bold>
-        Napoleon - Agent Driven Development Manager
+    <Box 
+      borderStyle="single" 
+      borderColor="blue" 
+      paddingX={1}
+      width="100%"
+    >
+      <Text color="white" bold>
+        Napoleon v{version}
       </Text>
     </Box>
   );
 };
-
-export default Header;

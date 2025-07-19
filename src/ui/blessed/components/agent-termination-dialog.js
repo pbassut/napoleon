@@ -1,5 +1,5 @@
 const blessed = require('blessed');
-const logger = require('../../utils/logger');
+const logger = require('../../../utils/logger');
 
 /**
  * Agent Termination Confirmation Dialog Component

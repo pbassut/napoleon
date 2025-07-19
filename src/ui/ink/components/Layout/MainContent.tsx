@@ -1,13 +1,18 @@
 import React from 'react';
-import { Box, Text } from 'ink';
+import { Box } from 'ink';
 
-const MainContent: React.FC = () => {
+interface MainContentProps {
+  children: React.ReactNode;
+}
+
+export const MainContent: React.FC<MainContentProps> = ({ children }) => {
   return (
-    <Box flexDirection="column" padding={1} flexGrow={1}>
-      <Text>Welcome to Napoleon Ink UI!</Text>
-      <Text color="gray">This is a placeholder for the main content area.</Text>
+    <Box 
+      flexDirection="column" 
+      flexGrow={1}
+      overflow="hidden"
+    >
+      {children}
     </Box>
   );
 };
-
-export default MainContent;

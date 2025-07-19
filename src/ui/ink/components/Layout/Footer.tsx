@@ -1,12 +1,25 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
-const Footer: React.FC = () => {
+interface FooterProps {
+  agentCount: number;
+}
+
+export const Footer: React.FC<FooterProps> = ({ agentCount }) => {
   return (
-    <Box borderStyle="single" paddingX={1}>
-      <Text color="gray">Press q to quit | h for help</Text>
+    <Box 
+      borderStyle="single" 
+      borderColor="blue" 
+      paddingX={1}
+      width="100%"
+      justifyContent="space-between"
+    >
+      <Text color="white">
+        q=quit | n=new agent | k=kill agent | Enter=view details | h=help
+      </Text>
+      <Text color="gray">
+        {agentCount} agent{agentCount !== 1 ? 's' : ''} running
+      </Text>
     </Box>
   );
 };
-
-export default Footer;

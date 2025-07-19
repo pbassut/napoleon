@@ -157,8 +157,8 @@ class LogsCommand {
               context: lines.slice(contextStart, contextEnd + 1)
                 .map((l, i) => ({
                   lineNumber: contextStart + i + 1,
-                  content: contextStart + i === index 
-                    ? LogsCommand.highlightSearchTerm(l, term) 
+                  content: contextStart + i === index
+                    ? LogsCommand.highlightSearchTerm(l, term)
                     : l,
                   isMatch: contextStart + i === index,
                 })),

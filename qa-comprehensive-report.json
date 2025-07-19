@@ -5,7 +5,7 @@
     "failed": 11,
     "errors": 0,
     "successRate": "81.4%",
-    "testDuration": 24
+    "testDuration": 61
   },
   "keyboard": {
     "totalTests": 43,

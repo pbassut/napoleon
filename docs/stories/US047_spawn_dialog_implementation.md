@@ -202,7 +202,7 @@ const handleSubmit = async (prompt: string) => {
 ```
 
 ## Status
-**Approved**
+**In Progress**
 
 ## Change Log
 

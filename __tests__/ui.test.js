@@ -2,17 +2,17 @@ const blessed = require('blessed');
 const TerminalUI = require('../src/ui/index');
 const { loadConfig } = require('../src/core/config');
 const AgentManager = require('../src/core/agent-manager');
-const AgentSpawnDialog = require('../src/ui/components/agent-spawn-dialog');
-const AgentTerminationDialog = require('../src/ui/components/agent-termination-dialog');
-const AgentDetailView = require('../src/ui/components/agent-detail-view');
+const AgentSpawnDialog = require('../src/ui/blessed/components/agent-spawn-dialog');
+const AgentTerminationDialog = require('../src/ui/blessed/components/agent-termination-dialog');
+const AgentDetailView = require('../src/ui/blessed/components/agent-detail-view');
 
 jest.mock('blessed');
 jest.mock('../src/core/config');
 jest.mock('../src/core/agent-manager');
 jest.mock('../src/utils/logger');
-jest.mock('../src/ui/components/agent-spawn-dialog');
-jest.mock('../src/ui/components/agent-termination-dialog');
-jest.mock('../src/ui/components/agent-detail-view');
+jest.mock('../src/ui/blessed/components/agent-spawn-dialog');
+jest.mock('../src/ui/blessed/components/agent-termination-dialog');
+jest.mock('../src/ui/blessed/components/agent-detail-view');
 
 describe('Terminal UI', () => {
   let ui;

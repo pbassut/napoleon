@@ -1,5 +1,5 @@
 const blessed = require('blessed');
-const logger = require('../../utils/logger');
+const logger = require('../../../utils/logger');
 
 /**
  * Agent Detail View Component
@@ -381,7 +381,7 @@ class AgentDetailView {
   getLogFileInfo(agentId) {
     try {
       // Get AgentLogManager instance from agent manager
-      const agentLogManager = this.agentManager.agentLogManager;
+      const { agentLogManager } = this.agentManager;
       if (!agentLogManager) {
         return 'Log File: {red-fg}Persistent logging disabled{/red-fg}';
       }
@@ -405,10 +405,10 @@ class AgentDetailView {
       const fileStatus = this.getLogFileStatus(logPath);
       const path = require('path');
       const filename = path.basename(logPath);
-      
+
       let statusIndicator;
       let sizeInfo = '';
-      
+
       switch (fileStatus.status) {
         case 'active':
           statusIndicator = '{green-fg}●{/green-fg} Active';
@@ -449,23 +449,23 @@ class AgentDetailView {
   getLogFileStatus(logPath) {
     try {
       const fs = require('fs');
-      
+
       if (!fs.existsSync(logPath)) {
         return { status: 'missing', sizeKB: 0 };
       }
 
       const stats = fs.statSync(logPath);
       const sizeKB = Math.round(stats.size / 1024);
-      
+
       // Check if file is writable (indicates active logging)
       try {
         fs.accessSync(logPath, fs.constants.W_OK);
-        
+
         // Check if file was modified recently (within last 30 seconds)
         const now = Date.now();
         const lastModified = stats.mtime.getTime();
         const isRecentlyActive = (now - lastModified) < 30000;
-        
+
         return {
           status: isRecentlyActive ? 'active' : 'readonly',
           sizeKB,
@@ -499,7 +499,7 @@ class AgentDetailView {
     try {
       // Get logs from agent manager
       const allLogs = this.agentManager.getAgentLogs(this.currentAgent.id) || [];
-      
+
       // Filter logs based on MESSAGE_TYPES environment variable
       this.logs = this.filterLogsByMessageTypes(allLogs);
       this.updateLogsDisplay();
@@ -531,14 +531,14 @@ class AgentDetailView {
     // Get allowed message types from environment variable
     // Default to showing only 'assistant' type messages
     const messageTypesEnv = process.env.MESSAGE_TYPES || 'assistant';
-    const allowedTypes = messageTypesEnv.split(',').map(type => type.trim().toLowerCase());
+    const allowedTypes = messageTypesEnv.split(',').map((type) => type.trim().toLowerCase());
 
-    return logs.filter(log => {
+    return logs.filter((log) => {
       if (!log || typeof log !== 'object') return false;
 
       // Check the log type field
       const logType = log.type ? log.type.toLowerCase() : '';
-      
+
       // Check the SDK type in metadata
       const sdkType = log.metadata?.sdkType ? log.metadata.sdkType.toLowerCase() : '';
 
@@ -562,8 +562,8 @@ class AgentDetailView {
         if (parsedContent.message && parsedContent.message.content) {
           // Extract text from content array and join with newlines
           const textParts = parsedContent.message.content
-            .filter(item => item.type === 'text')
-            .map(item => item.text);
+            .filter((item) => item.type === 'text')
+            .map((item) => item.text);
           return textParts.join('\n');
         }
       } catch (error) {
@@ -599,15 +599,15 @@ class AgentDetailView {
 
       // Format content based on message type
       const formattedContent = this.formatLogContent(log);
-      
+
       // Split content into lines and format each line with the same timestamp
       const contentLines = formattedContent.split('\n');
       const formattedLines = contentLines.map((line, lineIndex) => {
         // First line gets the full prefix, subsequent lines get indented alignment
-        const prefix = lineIndex === 0 
+        const prefix = lineIndex === 0
           ? `${lineNum} │ ${timestamp} │ `
           : `${' '.repeat(3)} │ ${' '.repeat(timestamp.length)} │ `;
-        
+
         let fullLine = `${prefix}${line}`;
 
         // Apply search highlighting to the entire line if this log entry is a search result
@@ -858,7 +858,7 @@ class AgentDetailView {
 
     try {
       // Get AgentLogManager instance from agent manager
-      const agentLogManager = this.agentManager.agentLogManager;
+      const { agentLogManager } = this.agentManager;
       if (!agentLogManager) {
         this.showStatusMessage('Persistent logging not available', 'red');
         return;
@@ -897,9 +897,10 @@ class AgentDetailView {
   openFileWithSystemDefault(filePath) {
     const { spawn } = require('child_process');
     const os = require('os');
-    
-    let command, args;
-    
+
+    let command; let
+      args;
+
     // Determine command based on platform
     switch (os.platform()) {
       case 'darwin': // macOS
@@ -1166,8 +1167,8 @@ class AgentDetailView {
       // Read log files and extract metadata
       const files = fs.readdirSync(logsDir);
       const logFiles = files
-        .filter(file => file.endsWith('.log'))
-        .map(filename => {
+        .filter((file) => file.endsWith('.log'))
+        .map((filename) => {
           const filePath = path.join(logsDir, filename);
           try {
             const stats = fs.statSync(filePath);
@@ -1186,7 +1187,7 @@ class AgentDetailView {
             return null;
           }
         })
-        .filter(log => log !== null)
+        .filter((log) => log !== null)
         .sort((a, b) => b.date - a.date); // Sort by most recent first
 
       return logFiles;

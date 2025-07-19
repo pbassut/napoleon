@@ -56,7 +56,7 @@ class BlessedUI {
       // Focus and render
       this.screen.render();
       this.initialized = true;
-      
+
       logger.info('Blessed UI initialized successfully');
     } catch (error) {
       logger.error('Failed to initialize Blessed UI', { error: error.message });

@@ -215,7 +215,7 @@ Example layout:
 ```
 
 ## Status
-**Approved**
+**In Progress**
 
 ## Change Log
 
