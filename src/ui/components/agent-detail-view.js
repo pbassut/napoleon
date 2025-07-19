@@ -548,6 +548,35 @@ class AgentDetailView {
   }
 
   /**
+   * Format log content based on message type
+   * @param {Object} log - Log entry object
+   * @returns {string} - Formatted content string
+   */
+  formatLogContent(log) {
+    if (!log || !log.content) return '';
+
+    // For assistant type messages, parse and extract text content
+    if (log.type === 'assistant' || log.metadata?.sdkType === 'assistant') {
+      try {
+        const parsedContent = JSON.parse(log.content);
+        if (parsedContent.message && parsedContent.message.content) {
+          // Extract text from content array and join with newlines
+          const textParts = parsedContent.message.content
+            .filter(item => item.type === 'text')
+            .map(item => item.text);
+          return textParts.join('\n');
+        }
+      } catch (error) {
+        // If parsing fails, fall back to original content
+        return log.content;
+      }
+    }
+
+    // For other message types, return content as-is
+    return log.content;
+  }
+
+  /**
    * Update logs display with formatted content
    */
   updateLogsDisplay() {
@@ -571,18 +600,32 @@ class AgentDetailView {
       const isSearchResult = this.searchResults.includes(index);
       const isCurrentResult = this.searchResults[this.currentSearchIndex] === index;
 
-      let content = `${lineNum} │ ${timestamp} │ ${log.content}`;
+      // Format content based on message type
+      const formattedContent = this.formatLogContent(log);
+      
+      // Split content into lines and format each line with the same timestamp
+      const contentLines = formattedContent.split('\n');
+      const formattedLines = contentLines.map((line, lineIndex) => {
+        // First line gets the full prefix, subsequent lines get indented alignment
+        const prefix = lineIndex === 0 
+          ? `${lineNum} │ ${timestamp} │ `
+          : `${' '.repeat(3)} │ ${' '.repeat(timestamp.length)} │ `;
+        
+        let fullLine = `${prefix}${line}`;
 
-      // Highlight search results
-      if (isSearchResult) {
-        if (isCurrentResult) {
-          content = `{inverse}${content}{/inverse}`;
-        } else {
-          content = `{yellow-fg}${content}{/yellow-fg}`;
+        // Apply search highlighting to the entire line if this log entry is a search result
+        if (isSearchResult) {
+          if (isCurrentResult) {
+            fullLine = `{inverse}${fullLine}{/inverse}`;
+          } else {
+            fullLine = `{yellow-fg}${fullLine}{/yellow-fg}`;
+          }
         }
-      }
 
-      return content;
+        return fullLine;
+      });
+
+      return formattedLines.join('\n');
     }).join('\n');
 
     this.logsContent.setContent(formattedLogs);
