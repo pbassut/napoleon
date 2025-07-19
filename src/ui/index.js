@@ -409,9 +409,11 @@ class TerminalUI {
    * Set up event handlers
    */
   setupEventHandlers() {
-    // Quit on 'q' or Ctrl+C
+    // Quit on 'q' or Ctrl+C (only if no active dialogs)
     this.screen.key(['q', 'C-c'], () => {
-      this.quit();
+      if (!this.hasActiveDialog()) {
+        this.quit();
+      }
     });
 
     // Help toggle on 'h'

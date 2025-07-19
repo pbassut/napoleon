@@ -1209,6 +1209,13 @@ class AgentDetailView {
   }
 
   /**
+   * Alias for isShowing() to match interface expected by main UI
+   */
+  isShown() {
+    return this.isVisible;
+  }
+
+  /**
    * Get current agent being displayed
    */
   getCurrentAgent() {
