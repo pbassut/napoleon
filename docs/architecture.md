@@ -9,9 +9,9 @@ This document supplements the existing Napoleon architecture by defining how the
 
 ## Change Log
 
-| Change | Date | Version | Description | Author |
-|--------|------|---------|-------------|---------|
-| Initial | 2025-01-17 | 1.0.0 | Created brownfield architecture for Napoleon transformation | Architect |
+| Change  | Date       | Version | Description                                                 | Author    |
+| ------- | ---------- | ------- | ----------------------------------------------------------- | --------- |
+| Initial | 2025-01-17 | 1.0.0   | Created brownfield architecture for Napoleon transformation | Architect |
 
 ## Existing Project Analysis
 
@@ -49,6 +49,7 @@ This document supplements the existing Napoleon architecture by defining how the
 ### Integration Approach
 
 **Code Integration Strategy:** Surgical replacement of session management methods in AgentManager class
+
 - Replace `spawnClaudeSession()` with SDK initialization
 - Adapt `sendInstructions()` to use SDK query methods
 - Transform `handleAgentOutput()` to handle SDK responses
@@ -71,21 +72,21 @@ This document supplements the existing Napoleon architecture by defining how the
 
 ### Existing Technology Stack
 
-| Category | Current Technology | Version | Usage in Enhancement | Notes |
-|----------|-------------------|---------|---------------------|-------|
-| Runtime | Node.js | >=16.0.0 | Unchanged | Required for SDK compatibility |
-| UI Framework | blessed | ^0.1.81 | Unchanged | Terminal UI remains intact |
-| CLI Framework | commander | ^11.1.0 | Unchanged | CLI entry point preserved |
-| Logging | winston | ^3.11.0 | Unchanged | Continue using for consistency |
-| Validation | joi | ^17.11.0 | Unchanged | Input validation patterns |
-| Version Check | semver | ^7.5.4 | Unchanged | Dependency version validation |
-| Session Management | child_process (native) | N/A | **REPLACED** | Core change - removed |
-| External Dependency | Claude CLI | Latest | **REPLACED** | No longer required |
+| Category            | Current Technology     | Version  | Usage in Enhancement | Notes                          |
+| ------------------- | ---------------------- | -------- | -------------------- | ------------------------------ |
+| Runtime             | Node.js                | >=16.0.0 | Unchanged            | Required for SDK compatibility |
+| UI Framework        | blessed                | ^0.1.81  | Unchanged            | Terminal UI remains intact     |
+| CLI Framework       | commander              | ^11.1.0  | Unchanged            | CLI entry point preserved      |
+| Logging             | winston                | ^3.11.0  | Unchanged            | Continue using for consistency |
+| Validation          | joi                    | ^17.11.0 | Unchanged            | Input validation patterns      |
+| Version Check       | semver                 | ^7.5.4   | Unchanged            | Dependency version validation  |
+| Session Management  | child_process (native) | N/A      | **REPLACED**         | Core change - removed          |
+| External Dependency | Claude CLI             | Latest   | **REPLACED**         | No longer required             |
 
 ### New Technology Additions
 
-| Technology | Version | Purpose | Rationale | Integration Method |
-|------------|---------|---------|-----------|-------------------|
+| Technology                | Version | Purpose           | Rationale                                                                 | Integration Method                         |
+| ------------------------- | ------- | ----------------- | ------------------------------------------------------------------------- | ------------------------------------------ |
 | @anthropic-ai/claude-code | ^1.0.53 | SDK communication | Official SDK provides structured API, better reliability than CLI parsing | Direct replacement of session/stdin/stdout |
 
 ## Data Models and Schema Changes
@@ -93,27 +94,32 @@ This document supplements the existing Napoleon architecture by defining how the
 ### New Data Models
 
 #### SDK Session Model
+
 **Purpose:** Replace CLI-based session tracking with SDK-based session management  
 **Integration:** Replaces CLI-specific fields in existing session structure
 
 **Key Attributes:**
+
 - `sessionId`: String - Unique SDK session identifier (reuses existing agent ID)
 - `sdkStatus`: String - SDK-specific status tracking
 - `lastMessageId`: String - Track last SDK message for recovery
 
 **Relationships:**
+
 - **With Existing:** Direct replacement of CLI-related fields
 - **With New:** None - self-contained session structure
 
 ### Schema Integration Strategy
 
 **Database Changes Required:**
+
 - **New Tables:** None - using existing session storage
 - **Modified Tables:** Session structure simplified
 - **New Indexes:** None - existing lookup patterns unchanged
 - **Migration Strategy:** Clean break - new sessions use new structure
 
 **Breaking Changes:**
+
 - Remove `pid` field entirely
 - Remove `session` reference (was never persisted anyway)
 - Simplify status tracking for SDK model
@@ -121,6 +127,7 @@ This document supplements the existing Napoleon architecture by defining how the
 ### Session Data Evolution
 
 **New Session Structure:**
+
 ```javascript
 {
   id: "agent-xxx",
@@ -133,7 +140,7 @@ This document supplements the existing Napoleon architecture by defining how the
   gitRoot: "/path",
   lastActivity: "ISO-8601",
   logs: [],
-  
+
   // SDK-specific fields:
   sdkStatus: "active",     // active, aborted, completed
   lastMessageId: "msg-xxx" // For recovery/resume
@@ -145,31 +152,37 @@ This document supplements the existing Napoleon architecture by defining how the
 ### New Components
 
 #### SDK Communication Manager
+
 **Responsibility:** Handles all Claude Code SDK interactions, replacing CLI session communication  
 **Integration Points:** Direct replacement of session spawning methods in AgentManager
 
 **Key Interfaces:**
+
 - `initializeSDKSession(agentId, workingDirectory)` - Creates new SDK session
 - `executeQuery(agentId, prompt, options)` - Sends instructions via SDK
 - `handleSDKMessage(agentId, message)` - Handles SDK responses
 - `terminateSession(agentId)` - Cleanly ends SDK session
 
 **Dependencies:**
+
 - **Existing Components:** Logger, Config, Error handlers
 - **New Components:** None - self-contained within AgentManager
 
 **Technology Stack:** Node.js, @anthropic-ai/claude-code SDK
 
 #### Message Transformer
+
 **Responsibility:** Adapts SDK message format to existing log/output format for UI compatibility  
 **Integration Points:** Sits between SDK responses and existing UI data flow
 
 **Key Interfaces:**
+
 - `transformSDKMessage(sdkMessage)` - Converts SDK format to UI format
 - `extractContent(message)` - Pulls text content from SDK messages
 - `mapMessageType(sdkType)` - Maps SDK types to UI log types
 
 **Dependencies:**
+
 - **Existing Components:** UI data structures
 - **New Components:** SDK Communication Manager
 
@@ -186,10 +199,10 @@ graph TD
     SCM -->|raw messages| MT[Message Transformer]
     MT -->|UI format| AM
     AM -->|formatted data| UI
-    
+
     AM -->|worktree ops| Git[Git Worktree Manager]
     AM -->|persistence| SP[Session Persistence]
-    
+
     style SCM fill:#e1f5e1
     style MT fill:#e1f5e1
     style SDK fill:#ffe4b5
@@ -200,7 +213,7 @@ graph TD
 ### Existing Project Structure
 
 ```plaintext
-terragon/
+napoleon/
 ├── bin/
 │   └── napoleon.js           # CLI entry point
 ├── src/
@@ -218,7 +231,7 @@ terragon/
 ### New File Organization
 
 ```plaintext
-terragon/
+napoleon/
 ├── bin/
 │   └── napoleon.js              # Renamed CLI entry point
 ├── src/
@@ -256,32 +269,38 @@ terragon/
 
 ### Enhancement Deployment Strategy
 
-**Deployment Approach:** 
+**Deployment Approach:**
+
 - Publish as entirely new npm package: "napoleon"
 - Not an update to napoleon, but a new package
 - Start at version 1.0.0 (fresh start)
 
-**Infrastructure Changes:** 
+**Infrastructure Changes:**
+
 - None - deployment pipeline remains identical
 - Same npm publish process
 - Same global installation method
 
 **Pipeline Integration:**
+
 - Update package.json with new name "napoleon"
 - Set initial version to 1.0.0
 - Publish as new npm package
 
 ### Rollback Strategy
 
-**Rollback Method:** 
+**Rollback Method:**
+
 - N/A - New package, no existing users
 - Development-only at this stage
 
 **Risk Mitigation:**
+
 - Comprehensive testing before initial release
 - Clear documentation of requirements
 
 **Monitoring:**
+
 - npm download statistics for adoption tracking
 - GitHub issues for feedback
 - Community feedback channels
@@ -290,24 +309,28 @@ terragon/
 
 ### Existing Standards Compliance
 
-**Code Style:** 
+**Code Style:**
+
 - ESLint with airbnb-base configuration
 - 2-space indentation
 - Semicolons required
 - Single quotes for strings
 
-**Linting Rules:** 
+**Linting Rules:**
+
 - Existing `.eslintrc` configuration
 - Run via `npm run lint`
 - Pre-commit linting recommended
 
 **Testing Patterns:**
+
 - Jest framework
 - Test files adjacent to source with `.test.js` suffix
 - Mock external dependencies
 - Focus on unit tests with some integration tests
 
 **Documentation Style:**
+
 - JSDoc comments for public methods
 - Inline comments for complex logic
 - README for user-facing documentation
@@ -319,7 +342,7 @@ terragon/
 - **Package Name:** Update package.json name field to "napoleon"
 - **CLI Command:** Change from `napoleon` to `napoleon`
 - **Directory Names:** `.napoleon/` → `.napoleon/` for config and session storage
-- **Environment Variables:** Any ADD_MANAGER_* vars → NAPOLEON_*
+- **Environment Variables:** Any ADD*MANAGER*\_ vars → NAPOLEON\_\_
 - **Error Messages:** Update all user-facing text to reference Napoleon
 - **Documentation:** Complete find/replace in all docs and comments
 
@@ -370,29 +393,34 @@ terragon/
 
 ### Enhancement Security Requirements
 
-**New Security Measures:** 
+**New Security Measures:**
+
 - API key management for Claude Code SDK
 - Environment variable security for `ANTHROPIC_API_KEY`
 - Secure key storage recommendations
 
 **Integration Points:**
+
 - API key validation on startup
 - Secure error messages (don't expose key)
 - Environment variable best practices
 
-**Compliance Requirements:** 
+**Compliance Requirements:**
+
 - Never log or display API keys
 - Secure storage recommendations in documentation
 - Clear security warnings for key handling
 
 ### Security Testing
 
-**Existing Security Tests:** 
+**Existing Security Tests:**
+
 - Input validation tests (dangerous patterns)
 - File system access restrictions
 - Command injection prevention
 
 **New Security Test Requirements:**
+
 - API key masking in logs
 - Environment variable handling
 - Error messages don't leak sensitive info
@@ -403,6 +431,7 @@ terragon/
 ### Executive Summary
 
 **Overall Architecture Readiness: HIGH**
+
 - The architecture is well-designed for a brownfield enhancement
 - Clean SDK migration strategy with minimal disruption
 - Strong focus on maintaining existing functionality
@@ -411,6 +440,7 @@ terragon/
 ### Risk Assessment
 
 **Top Risks:**
+
 1. Node.js Version Upgrade (16 → 18) - Medium
 2. API Key Management - Medium
 3. Breaking Changes - Low (no external users)
@@ -418,6 +448,7 @@ terragon/
 ### AI Implementation Readiness
 
 **Excellent suitability for AI implementation:**
+
 - Clear file structure and naming conventions
 - Predictable patterns throughout
 - Minimal complexity in changes
@@ -431,7 +462,7 @@ terragon/
 
 "I need to create implementation stories for the Napoleon project enhancement. This involves:
 
-1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for the complete technical approach
+1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for the complete technical approach
 2. **Key Integration Requirements** (validated):
    - Replace child session spawning with Claude Code SDK in `agent-manager.js`
    - Maintain exact same UI interface (no Terminal UI changes)
@@ -465,7 +496,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
 
 "Starting implementation of Napoleon (formerly napoleon) enhancement:
 
-1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
+1. **Architecture Reference**: See `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for complete technical design
 2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:
    - CommonJS modules (no ES modules)
    - 2-space indentation, semicolons required

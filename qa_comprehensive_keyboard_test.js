@@ -3,7 +3,7 @@
 /**
  * Comprehensive QA Testing Suite for Napoleon Terminal UI
  * Focus: Keyboard Key Functionality, Agent List Refresh, Agent Detail View
- * 
+ *
  * This script systematically tests:
  * 1. All keyboard shortcuts and navigation
  * 2. Agent list refresh mechanisms and timing
@@ -22,7 +22,7 @@ class ComprehensiveQATest {
       agentRefresh: [],
       detailView: [],
       issues: [],
-      recommendations: []
+      recommendations: [],
     };
     this.testingStartTime = Date.now();
     this.ui = null;
@@ -33,25 +33,26 @@ class ComprehensiveQATest {
    * Run all QA tests
    */
   async runAllTests() {
-    console.log('🧪 Starting Comprehensive QA Testing for Napoleon Terminal UI');
-    console.log('=' .repeat(70));
-    
+    console.log(
+      '🧪 Starting Comprehensive QA Testing for Napoleon Terminal UI'
+    );
+    console.log('='.repeat(70));
+
     try {
       // Initialize the system
       await this.initializeSystem();
-      
+
       // Test keyboard functionality
       await this.testKeyboardFunctionality();
-      
+
       // Test agent list refresh
       await this.testAgentListRefresh();
-      
+
       // Test detail view functionality
       await this.testDetailViewFunctionality();
-      
+
       // Generate comprehensive report
       this.generateReport();
-      
     } catch (error) {
       console.error('❌ QA Testing failed:', error.message);
       this.results.issues.push({
@@ -59,7 +60,7 @@ class ComprehensiveQATest {
         severity: 'Critical',
         issue: `Test suite initialization failed: ${error.message}`,
         file: 'qa_comprehensive_keyboard_test.js',
-        recommendation: 'Fix initialization dependencies before proceeding'
+        recommendation: 'Fix initialization dependencies before proceeding',
       });
     } finally {
       // Cleanup
@@ -72,34 +73,33 @@ class ComprehensiveQATest {
    */
   async initializeSystem() {
     console.log('🚀 Initializing system for testing...');
-    
+
     try {
       // Create a minimal blessed screen for testing
       this.screen = blessed.screen({
         smartCSR: true,
         title: 'QA Test Screen',
-        debug: true
+        debug: true,
       });
 
       // Initialize agent manager
       this.agentManager = new AgentManager();
       await this.agentManager.initialize();
-      
+
       // Initialize UI (will be done in controlled way)
       this.ui = new TerminalUI();
-      
+
       this.results.keyboard.push({
         test: 'System Initialization',
         status: 'PASS',
-        details: 'System components initialized successfully'
+        details: 'System components initialized successfully',
       });
-      
     } catch (error) {
       this.results.keyboard.push({
         test: 'System Initialization',
         status: 'FAIL',
         details: `Failed to initialize: ${error.message}`,
-        error: error
+        error: error,
       });
       throw error;
     }
@@ -114,19 +114,19 @@ class ComprehensiveQATest {
 
     // Test 1: Basic navigation keys
     await this.testBasicNavigationKeys();
-    
+
     // Test 2: Agent management keys
     await this.testAgentManagementKeys();
-    
+
     // Test 3: View control keys
     await this.testViewControlKeys();
-    
+
     // Test 4: Special keys and combinations
     await this.testSpecialKeys();
-    
+
     // Test 5: Edge cases and error handling
     await this.testKeyboardEdgeCases();
-    
+
     // Test 6: Focus management during key events
     await this.testKeyboardFocusManagement();
   }
@@ -143,22 +143,22 @@ class ComprehensiveQATest {
       { key: 'pageup', description: 'Page up navigation' },
       { key: 'pagedown', description: 'Page down navigation' },
       { key: 'home', description: 'Home key navigation' },
-      { key: 'end', description: 'End key navigation' }
+      { key: 'end', description: 'End key navigation' },
     ];
 
     for (const testCase of testCases) {
       try {
         // Mock the navigation behavior
         const result = this.simulateKeyPress(testCase.key);
-        
+
         this.results.keyboard.push({
           test: `Navigation Key: ${testCase.key}`,
           status: result.success ? 'PASS' : 'FAIL',
           details: `${testCase.description} - ${result.message}`,
           keyCode: testCase.key,
-          category: 'Navigation'
+          category: 'Navigation',
         });
-        
+
         // Check for wrap-around behavior
         if (['up', 'down', 'k', 'j'].includes(testCase.key)) {
           const wrapResult = this.testNavigationWrapAround(testCase.key);
@@ -166,17 +166,16 @@ class ComprehensiveQATest {
             test: `Navigation Wrap-around: ${testCase.key}`,
             status: wrapResult.success ? 'PASS' : 'FAIL',
             details: wrapResult.message,
-            category: 'Navigation'
+            category: 'Navigation',
           });
         }
-        
       } catch (error) {
         this.results.keyboard.push({
           test: `Navigation Key: ${testCase.key}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'Navigation'
+          category: 'Navigation',
         });
       }
     }
@@ -187,53 +186,75 @@ class ComprehensiveQATest {
    */
   async testAgentManagementKeys() {
     const testCases = [
-      { key: 'n', description: 'Spawn new agent', expectedAction: 'showSpawnDialog' },
-      { key: 'd', description: 'Terminate agent', expectedAction: 'terminateSelectedAgent' },
-      { key: 'enter', description: 'View agent details', expectedAction: 'showAgentDetail' },
-      { key: 'i', description: 'View agent info (alternative)', expectedAction: 'showAgentDetail' }
+      {
+        key: 'n',
+        description: 'Spawn new agent',
+        expectedAction: 'showSpawnDialog',
+      },
+      {
+        key: 'd',
+        description: 'Terminate agent',
+        expectedAction: 'terminateSelectedAgent',
+      },
+      {
+        key: 'enter',
+        description: 'View agent details',
+        expectedAction: 'showAgentDetail',
+      },
+      {
+        key: 'i',
+        description: 'View agent info (alternative)',
+        expectedAction: 'showAgentDetail',
+      },
     ];
 
     for (const testCase of testCases) {
       try {
         // Test with no agents
-        const noAgentsResult = this.simulateKeyPressWithState(testCase.key, { agentCount: 0 });
+        const noAgentsResult = this.simulateKeyPressWithState(testCase.key, {
+          agentCount: 0,
+        });
         this.results.keyboard.push({
           test: `${testCase.description} (No Agents)`,
           status: noAgentsResult.success ? 'PASS' : 'FAIL',
           details: noAgentsResult.message,
           keyCode: testCase.key,
-          category: 'Agent Management'
+          category: 'Agent Management',
         });
 
         // Test with agents present
-        const withAgentsResult = this.simulateKeyPressWithState(testCase.key, { agentCount: 3 });
+        const withAgentsResult = this.simulateKeyPressWithState(testCase.key, {
+          agentCount: 3,
+        });
         this.results.keyboard.push({
           test: `${testCase.description} (With Agents)`,
           status: withAgentsResult.success ? 'PASS' : 'FAIL',
           details: withAgentsResult.message,
           keyCode: testCase.key,
-          category: 'Agent Management'
+          category: 'Agent Management',
         });
 
         // Test with maximum agents (for spawn)
         if (testCase.key === 'n') {
-          const maxAgentsResult = this.simulateKeyPressWithState(testCase.key, { agentCount: 3, atMaxCapacity: true });
+          const maxAgentsResult = this.simulateKeyPressWithState(testCase.key, {
+            agentCount: 3,
+            atMaxCapacity: true,
+          });
           this.results.keyboard.push({
             test: `${testCase.description} (At Max Capacity)`,
             status: maxAgentsResult.success ? 'PASS' : 'FAIL',
             details: maxAgentsResult.message,
             keyCode: testCase.key,
-            category: 'Agent Management'
+            category: 'Agent Management',
           });
         }
-
       } catch (error) {
         this.results.keyboard.push({
           test: `${testCase.description}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'Agent Management'
+          category: 'Agent Management',
         });
       }
     }
@@ -247,40 +268,45 @@ class ComprehensiveQATest {
       { key: 'h', description: 'Toggle help overlay' },
       { key: 'q', description: 'Quit application' },
       { key: 'escape', description: 'Return to main view' },
-      { key: 'C-c', description: 'Force quit (Ctrl+C)' }
+      { key: 'C-c', description: 'Force quit (Ctrl+C)' },
     ];
 
     for (const testCase of testCases) {
       try {
         // Test in main view
-        const mainViewResult = this.simulateKeyPressInContext(testCase.key, 'main');
+        const mainViewResult = this.simulateKeyPressInContext(
+          testCase.key,
+          'main'
+        );
         this.results.keyboard.push({
           test: `${testCase.description} (Main View)`,
           status: mainViewResult.success ? 'PASS' : 'FAIL',
           details: mainViewResult.message,
           keyCode: testCase.key,
-          category: 'View Control'
+          category: 'View Control',
         });
 
         // Test in help view (for escape key)
         if (testCase.key === 'escape') {
-          const helpViewResult = this.simulateKeyPressInContext(testCase.key, 'help');
+          const helpViewResult = this.simulateKeyPressInContext(
+            testCase.key,
+            'help'
+          );
           this.results.keyboard.push({
             test: `${testCase.description} (Help View)`,
             status: helpViewResult.success ? 'PASS' : 'FAIL',
             details: helpViewResult.message,
             keyCode: testCase.key,
-            category: 'View Control'
+            category: 'View Control',
           });
         }
-
       } catch (error) {
         this.results.keyboard.push({
           test: `${testCase.description}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'View Control'
+          category: 'View Control',
         });
       }
     }
@@ -297,7 +323,7 @@ class ComprehensiveQATest {
       { key: 'backspace', description: 'Backspace handling' },
       { key: 'delete', description: 'Delete key handling' },
       { key: 'f1', description: 'F1 function key' },
-      { key: 'f5', description: 'F5 refresh key' }
+      { key: 'f5', description: 'F5 refresh key' },
     ];
 
     for (const testCase of testCases) {
@@ -308,16 +334,15 @@ class ComprehensiveQATest {
           status: result.success ? 'PASS' : 'FAIL',
           details: `${testCase.description} - ${result.message}`,
           keyCode: testCase.key,
-          category: 'Special Keys'
+          category: 'Special Keys',
         });
-
       } catch (error) {
         this.results.keyboard.push({
           test: `Special Key: ${testCase.key}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'Special Keys'
+          category: 'Special Keys',
         });
       }
     }
@@ -329,10 +354,22 @@ class ComprehensiveQATest {
   async testKeyboardEdgeCases() {
     const edgeCases = [
       { scenario: 'Rapid key presses', test: () => this.testRapidKeyPresses() },
-      { scenario: 'Invalid key combinations', test: () => this.testInvalidKeyCombinations() },
-      { scenario: 'Key presses during loading', test: () => this.testKeysDuringLoading() },
-      { scenario: 'Keys with no handlers', test: () => this.testUnhandledKeys() },
-      { scenario: 'Focus lost during keypress', test: () => this.testFocusLostDuringKeypress() }
+      {
+        scenario: 'Invalid key combinations',
+        test: () => this.testInvalidKeyCombinations(),
+      },
+      {
+        scenario: 'Key presses during loading',
+        test: () => this.testKeysDuringLoading(),
+      },
+      {
+        scenario: 'Keys with no handlers',
+        test: () => this.testUnhandledKeys(),
+      },
+      {
+        scenario: 'Focus lost during keypress',
+        test: () => this.testFocusLostDuringKeypress(),
+      },
     ];
 
     for (const edgeCase of edgeCases) {
@@ -342,16 +379,15 @@ class ComprehensiveQATest {
           test: `Edge Case: ${edgeCase.scenario}`,
           status: result.success ? 'PASS' : 'FAIL',
           details: result.message,
-          category: 'Edge Cases'
+          category: 'Edge Cases',
         });
-
       } catch (error) {
         this.results.keyboard.push({
           test: `Edge Case: ${edgeCase.scenario}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'Edge Cases'
+          category: 'Edge Cases',
         });
       }
     }
@@ -362,10 +398,22 @@ class ComprehensiveQATest {
    */
   async testKeyboardFocusManagement() {
     const focusTests = [
-      { scenario: 'Focus preservation during navigation', test: () => this.testFocusPreservation() },
-      { scenario: 'Focus restoration after dialog', test: () => this.testFocusRestoration() },
-      { scenario: 'Focus handling during agent spawn', test: () => this.testFocusDuringSpawn() },
-      { scenario: 'Cross-platform focus behavior', test: () => this.testCrossPlatformFocus() }
+      {
+        scenario: 'Focus preservation during navigation',
+        test: () => this.testFocusPreservation(),
+      },
+      {
+        scenario: 'Focus restoration after dialog',
+        test: () => this.testFocusRestoration(),
+      },
+      {
+        scenario: 'Focus handling during agent spawn',
+        test: () => this.testFocusDuringSpawn(),
+      },
+      {
+        scenario: 'Cross-platform focus behavior',
+        test: () => this.testCrossPlatformFocus(),
+      },
     ];
 
     for (const focusTest of focusTests) {
@@ -375,16 +423,15 @@ class ComprehensiveQATest {
           test: `Focus Management: ${focusTest.scenario}`,
           status: result.success ? 'PASS' : 'FAIL',
           details: result.message,
-          category: 'Focus Management'
+          category: 'Focus Management',
         });
-
       } catch (error) {
         this.results.keyboard.push({
           test: `Focus Management: ${focusTest.scenario}`,
           status: 'ERROR',
           details: `Exception during test: ${error.message}`,
           error: error,
-          category: 'Focus Management'
+          category: 'Focus Management',
         });
       }
     }
@@ -398,23 +445,23 @@ class ComprehensiveQATest {
       // This would normally interact with the actual UI
       // For now, we'll simulate the expected behavior based on the code analysis
       const keyHandlers = this.getExpectedKeyHandlers();
-      
+
       if (keyHandlers[key]) {
         return {
           success: true,
-          message: `Key '${key}' handled correctly by ${keyHandlers[key]}`
+          message: `Key '${key}' handled correctly by ${keyHandlers[key]}`,
         };
       } else {
         return {
           success: false,
-          message: `Key '${key}' has no handler defined`
+          message: `Key '${key}' has no handler defined`,
         };
       }
     } catch (error) {
       return {
         success: false,
         message: `Error handling key '${key}': ${error.message}`,
-        error: error
+        error: error,
       };
     }
   }
@@ -425,26 +472,26 @@ class ComprehensiveQATest {
   getExpectedKeyHandlers() {
     return {
       // Basic navigation
-      'up': 'navigateAgents(up)',
-      'down': 'navigateAgents(down)', 
-      'k': 'navigateAgents(up)',
-      'j': 'navigateAgents(down)',
-      
+      up: 'navigateAgents(up)',
+      down: 'navigateAgents(down)',
+      k: 'navigateAgents(up)',
+      j: 'navigateAgents(down)',
+
       // Agent management
-      'n': 'showSpawnDialog',
-      'd': 'terminateSelectedAgent',
-      'enter': 'showAgentDetail',
-      'i': 'showAgentDetail',
-      
+      n: 'showSpawnDialog',
+      d: 'terminateSelectedAgent',
+      enter: 'showAgentDetail',
+      i: 'showAgentDetail',
+
       // View control
-      'h': 'toggleHelp',
-      'q': 'quit',
+      h: 'toggleHelp',
+      q: 'quit',
       'C-c': 'quit',
-      'escape': 'returnToMainView',
-      
+      escape: 'returnToMainView',
+
       // Mouse events
-      'wheelup': 'scroll(-3)',
-      'wheeldown': 'scroll(3)'
+      wheelup: 'scroll(-3)',
+      wheeldown: 'scroll(3)',
     };
   }
 
@@ -453,60 +500,60 @@ class ComprehensiveQATest {
    */
   simulateKeyPressWithState(key, state) {
     const { agentCount = 0, atMaxCapacity = false } = state;
-    
+
     try {
       switch (key) {
         case 'n':
           if (atMaxCapacity) {
             return {
               success: true,
-              message: 'Correctly shows max agents error message'
+              message: 'Correctly shows max agents error message',
             };
           } else {
             return {
               success: true,
-              message: 'Successfully opens spawn dialog'
+              message: 'Successfully opens spawn dialog',
             };
           }
-          
+
         case 'd':
           if (agentCount === 0) {
             return {
               success: true,
-              message: 'Correctly handles termination with no agents'
+              message: 'Correctly handles termination with no agents',
             };
           } else {
             return {
               success: true,
-              message: 'Successfully opens termination dialog'
+              message: 'Successfully opens termination dialog',
             };
           }
-          
+
         case 'enter':
         case 'i':
           if (agentCount === 0) {
             return {
               success: true,
-              message: 'Correctly handles detail view with no agents'
+              message: 'Correctly handles detail view with no agents',
             };
           } else {
             return {
               success: true,
-              message: 'Successfully opens agent detail view'
+              message: 'Successfully opens agent detail view',
             };
           }
-          
+
         default:
           return {
             success: false,
-            message: `Unknown key for state test: ${key}`
+            message: `Unknown key for state test: ${key}`,
           };
       }
     } catch (error) {
       return {
         success: false,
         message: `Error in state test: ${error.message}`,
-        error: error
+        error: error,
       };
     }
   }
@@ -520,24 +567,39 @@ class ComprehensiveQATest {
         case 'main':
           switch (key) {
             case 'h':
-              return { success: true, message: 'Help overlay toggled correctly' };
+              return {
+                success: true,
+                message: 'Help overlay toggled correctly',
+              };
             case 'q':
             case 'C-c':
               return { success: true, message: 'Application quit correctly' };
             case 'escape':
-              return { success: true, message: 'No effect in main view (correct)' };
+              return {
+                success: true,
+                message: 'No effect in main view (correct)',
+              };
             default:
-              return { success: false, message: `Unexpected key in main context: ${key}` };
+              return {
+                success: false,
+                message: `Unexpected key in main context: ${key}`,
+              };
           }
-          
+
         case 'help':
           switch (key) {
             case 'escape':
-              return { success: true, message: 'Help overlay closed correctly' };
+              return {
+                success: true,
+                message: 'Help overlay closed correctly',
+              };
             default:
-              return { success: true, message: 'Help overlay closed on any key (correct)' };
+              return {
+                success: true,
+                message: 'Help overlay closed on any key (correct)',
+              };
           }
-          
+
         default:
           return { success: false, message: `Unknown context: ${context}` };
       }
@@ -545,22 +607,31 @@ class ComprehensiveQATest {
       return {
         success: false,
         message: `Error in context test: ${error.message}`,
-        error: error
+        error: error,
       };
     }
   }
 
   // Mock implementations for edge case tests
   async testRapidKeyPresses() {
-    return { success: true, message: 'Rapid key presses handled without crashes' };
+    return {
+      success: true,
+      message: 'Rapid key presses handled without crashes',
+    };
   }
 
   async testInvalidKeyCombinations() {
-    return { success: true, message: 'Invalid key combinations ignored gracefully' };
+    return {
+      success: true,
+      message: 'Invalid key combinations ignored gracefully',
+    };
   }
 
   async testKeysDuringLoading() {
-    return { success: true, message: 'Keys during loading states handled appropriately' };
+    return {
+      success: true,
+      message: 'Keys during loading states handled appropriately',
+    };
   }
 
   async testUnhandledKeys() {
@@ -580,18 +651,24 @@ class ComprehensiveQATest {
   }
 
   async testFocusDuringSpawn() {
-    return { success: true, message: 'Focus maintained during agent spawn operations' };
+    return {
+      success: true,
+      message: 'Focus maintained during agent spawn operations',
+    };
   }
 
   async testCrossPlatformFocus() {
-    return { success: true, message: 'Cross-platform focus handling works correctly' };
+    return {
+      success: true,
+      message: 'Cross-platform focus handling works correctly',
+    };
   }
 
   testNavigationWrapAround(key) {
     // Test wrap-around behavior for navigation keys
     return {
       success: true,
-      message: `Navigation wrap-around works for ${key}`
+      message: `Navigation wrap-around works for ${key}`,
     };
   }
 
@@ -604,13 +681,13 @@ class ComprehensiveQATest {
 
     // Test refresh timing
     await this.testRefreshTiming();
-    
+
     // Test real-time updates
     await this.testRealTimeUpdates();
-    
+
     // Test cache behavior
     await this.testCacheBehavior();
-    
+
     // Test refresh accuracy
     await this.testRefreshAccuracy();
   }
@@ -619,14 +696,14 @@ class ComprehensiveQATest {
     // Based on code analysis: status updates every 1.5 seconds, animation every 200ms
     const expectedIntervals = {
       statusUpdate: 1500, // ms
-      animation: 200 // ms
+      animation: 200, // ms
     };
 
     this.results.agentRefresh.push({
       test: 'Refresh Timing Configuration',
       status: 'PASS',
       details: `Status updates: ${expectedIntervals.statusUpdate}ms, Animation: ${expectedIntervals.animation}ms`,
-      timing: expectedIntervals
+      timing: expectedIntervals,
     });
   }
 
@@ -634,7 +711,7 @@ class ComprehensiveQATest {
     this.results.agentRefresh.push({
       test: 'Real-time Updates',
       status: 'PASS',
-      details: 'Status polling mechanism implemented correctly'
+      details: 'Status polling mechanism implemented correctly',
     });
   }
 
@@ -642,7 +719,7 @@ class ComprehensiveQATest {
     this.results.agentRefresh.push({
       test: 'Cache Optimization',
       status: 'PASS',
-      details: 'Agent cache prevents unnecessary updates when data unchanged'
+      details: 'Agent cache prevents unnecessary updates when data unchanged',
     });
   }
 
@@ -650,7 +727,7 @@ class ComprehensiveQATest {
     this.results.agentRefresh.push({
       test: 'Refresh Data Accuracy',
       status: 'PASS',
-      details: 'Agent status and data correctly synchronized'
+      details: 'Agent status and data correctly synchronized',
     });
   }
 
@@ -671,14 +748,14 @@ class ComprehensiveQATest {
       'j/k scrolling',
       'Page up/down navigation',
       'G/gg jump to bottom/top',
-      'Auto-scroll toggle'
+      'Auto-scroll toggle',
     ];
 
-    navigationTests.forEach(test => {
+    navigationTests.forEach((test) => {
       this.results.detailView.push({
         test: `Detail View Navigation: ${test}`,
         status: 'PASS',
-        details: `${test} implemented correctly`
+        details: `${test} implemented correctly`,
       });
     });
   }
@@ -688,14 +765,14 @@ class ComprehensiveQATest {
       'Search mode entry (/)',
       'Regular expression search',
       'Search result navigation (n/N)',
-      'Search result highlighting'
+      'Search result highlighting',
     ];
 
-    searchTests.forEach(test => {
+    searchTests.forEach((test) => {
       this.results.detailView.push({
         test: `Detail View Search: ${test}`,
         status: 'PASS',
-        details: `${test} working as expected`
+        details: `${test} working as expected`,
       });
     });
   }
@@ -705,14 +782,14 @@ class ComprehensiveQATest {
       'Agent information display',
       'Real-time log updates',
       'Resource usage display',
-      'Timestamp formatting'
+      'Timestamp formatting',
     ];
 
-    dataTests.forEach(test => {
+    dataTests.forEach((test) => {
       this.results.detailView.push({
         test: `Detail View Data: ${test}`,
         status: 'PASS',
-        details: `${test} displaying correctly`
+        details: `${test} displaying correctly`,
       });
     });
   }
@@ -724,10 +801,19 @@ class ComprehensiveQATest {
     console.log('\n📊 Generating Comprehensive QA Report...');
     console.log('='.repeat(70));
 
-    const totalTests = this.results.keyboard.length + this.results.agentRefresh.length + this.results.detailView.length;
-    const passedTests = this.getAllTests().filter(test => test.status === 'PASS').length;
-    const failedTests = this.getAllTests().filter(test => test.status === 'FAIL').length;
-    const errorTests = this.getAllTests().filter(test => test.status === 'ERROR').length;
+    const totalTests =
+      this.results.keyboard.length +
+      this.results.agentRefresh.length +
+      this.results.detailView.length;
+    const passedTests = this.getAllTests().filter(
+      (test) => test.status === 'PASS'
+    ).length;
+    const failedTests = this.getAllTests().filter(
+      (test) => test.status === 'FAIL'
+    ).length;
+    const errorTests = this.getAllTests().filter(
+      (test) => test.status === 'ERROR'
+    ).length;
 
     const report = {
       summary: {
@@ -736,34 +822,38 @@ class ComprehensiveQATest {
         failed: failedTests,
         errors: errorTests,
         successRate: ((passedTests / totalTests) * 100).toFixed(1) + '%',
-        testDuration: Date.now() - this.testingStartTime
+        testDuration: Date.now() - this.testingStartTime,
       },
       keyboard: this.analyzeKeyboardResults(),
       agentRefresh: this.analyzeAgentRefreshResults(),
       detailView: this.analyzeDetailViewResults(),
       issues: this.identifyIssues(),
-      recommendations: this.generateRecommendations()
+      recommendations: this.generateRecommendations(),
     };
 
     // Print summary
     this.printReportSummary(report);
-    
+
     // Print detailed results
     this.printDetailedResults(report);
-    
+
     // Save report to file
     this.saveReport(report);
   }
 
   getAllTests() {
-    return [...this.results.keyboard, ...this.results.agentRefresh, ...this.results.detailView];
+    return [
+      ...this.results.keyboard,
+      ...this.results.agentRefresh,
+      ...this.results.detailView,
+    ];
   }
 
   analyzeKeyboardResults() {
     const keyboardTests = this.results.keyboard;
     const categories = {};
-    
-    keyboardTests.forEach(test => {
+
+    keyboardTests.forEach((test) => {
       const category = test.category || 'General';
       if (!categories[category]) {
         categories[category] = { total: 0, passed: 0, failed: 0, errors: 0 };
@@ -777,37 +867,43 @@ class ComprehensiveQATest {
     return {
       totalTests: keyboardTests.length,
       categories,
-      criticalIssues: keyboardTests.filter(test => test.status === 'FAIL' || test.status === 'ERROR')
+      criticalIssues: keyboardTests.filter(
+        (test) => test.status === 'FAIL' || test.status === 'ERROR'
+      ),
     };
   }
 
   analyzeAgentRefreshResults() {
     return {
       totalTests: this.results.agentRefresh.length,
-      issues: this.results.agentRefresh.filter(test => test.status !== 'PASS')
+      issues: this.results.agentRefresh.filter(
+        (test) => test.status !== 'PASS'
+      ),
     };
   }
 
   analyzeDetailViewResults() {
     return {
       totalTests: this.results.detailView.length,
-      issues: this.results.detailView.filter(test => test.status !== 'PASS')
+      issues: this.results.detailView.filter((test) => test.status !== 'PASS'),
     };
   }
 
   identifyIssues() {
     const issues = [];
-    
+
     // Analyze keyboard issues
-    const keyboardIssues = this.results.keyboard.filter(test => test.status !== 'PASS');
-    keyboardIssues.forEach(issue => {
+    const keyboardIssues = this.results.keyboard.filter(
+      (test) => test.status !== 'PASS'
+    );
+    keyboardIssues.forEach((issue) => {
       issues.push({
         category: 'Keyboard',
         severity: issue.status === 'ERROR' ? 'High' : 'Medium',
         test: issue.test,
         details: issue.details,
-        file: '/Users/patrickbassut/Programming/terragon/src/ui/index.js',
-        recommendation: this.getKeyboardRecommendation(issue)
+        file: '/Users/patrickbassut/Programming/napoleon/src/ui/index.js',
+        recommendation: this.getKeyboardRecommendation(issue),
       });
     });
 
@@ -816,20 +912,24 @@ class ComprehensiveQATest {
       category: 'Performance',
       severity: 'Medium',
       test: 'Animation Performance',
-      details: 'Animation interval runs every 200ms which may be excessive for terminal rendering',
-      file: '/Users/patrickbassut/Programming/terragon/src/ui/index.js',
+      details:
+        'Animation interval runs every 200ms which may be excessive for terminal rendering',
+      file: '/Users/patrickbassut/Programming/napoleon/src/ui/index.js',
       line: 624,
-      recommendation: 'Consider increasing animation interval to 500ms or making it configurable'
+      recommendation:
+        'Consider increasing animation interval to 500ms or making it configurable',
     });
 
     issues.push({
       category: 'User Experience',
       severity: 'Low',
       test: 'Help Text Consistency',
-      details: 'Footer help text is very long and may not fit on smaller terminals',
-      file: '/Users/patrickbassut/Programming/terragon/src/ui/index.js',
+      details:
+        'Footer help text is very long and may not fit on smaller terminals',
+      file: '/Users/patrickbassut/Programming/napoleon/src/ui/index.js',
       line: 252,
-      recommendation: 'Implement responsive help text that adapts to terminal width'
+      recommendation:
+        'Implement responsive help text that adapts to terminal width',
     });
 
     issues.push({
@@ -837,9 +937,9 @@ class ComprehensiveQATest {
       severity: 'Medium',
       test: 'Agent Detail Error Handling',
       details: 'Error handling in agent detail view could be more robust',
-      file: '/Users/patrickbassut/Programming/terragon/src/ui/components/agent-detail-view.js',
+      file: '/Users/patrickbassut/Programming/napoleon/src/ui/components/agent-detail-view.js',
       line: 340,
-      recommendation: 'Add more comprehensive error handling and user feedback'
+      recommendation: 'Add more comprehensive error handling and user feedback',
     });
 
     return issues;
@@ -862,33 +962,37 @@ class ComprehensiveQATest {
       {
         category: 'Performance',
         priority: 'High',
-        recommendation: 'Optimize animation intervals and implement frame rate limiting',
-        impact: 'Reduced CPU usage and smoother terminal rendering'
+        recommendation:
+          'Optimize animation intervals and implement frame rate limiting',
+        impact: 'Reduced CPU usage and smoother terminal rendering',
       },
       {
         category: 'User Experience',
         priority: 'Medium',
-        recommendation: 'Implement responsive help system that adapts to terminal size',
-        impact: 'Better usability on different terminal sizes'
+        recommendation:
+          'Implement responsive help system that adapts to terminal size',
+        impact: 'Better usability on different terminal sizes',
       },
       {
         category: 'Accessibility',
         priority: 'Medium',
-        recommendation: 'Add keyboard shortcut customization and screen reader support',
-        impact: 'Improved accessibility for users with disabilities'
+        recommendation:
+          'Add keyboard shortcut customization and screen reader support',
+        impact: 'Improved accessibility for users with disabilities',
       },
       {
         category: 'Error Handling',
         priority: 'High',
-        recommendation: 'Add comprehensive error handling and recovery mechanisms',
-        impact: 'More robust application with better error recovery'
+        recommendation:
+          'Add comprehensive error handling and recovery mechanisms',
+        impact: 'More robust application with better error recovery',
       },
       {
         category: 'Testing',
         priority: 'High',
         recommendation: 'Add automated UI testing with blessed test helpers',
-        impact: 'Better test coverage and regression prevention'
-      }
+        impact: 'Better test coverage and regression prevention',
+      },
     ];
   }
 
@@ -896,7 +1000,9 @@ class ComprehensiveQATest {
     console.log('\n📈 TEST SUMMARY');
     console.log('─'.repeat(50));
     console.log(`Total Tests: ${report.summary.totalTests}`);
-    console.log(`Passed: ${report.summary.passed} (${report.summary.successRate})`);
+    console.log(
+      `Passed: ${report.summary.passed} (${report.summary.successRate})`
+    );
     console.log(`Failed: ${report.summary.failed}`);
     console.log(`Errors: ${report.summary.errors}`);
     console.log(`Duration: ${report.summary.testDuration}ms`);
@@ -905,7 +1011,7 @@ class ComprehensiveQATest {
   printDetailedResults(report) {
     console.log('\n🔍 DETAILED RESULTS');
     console.log('─'.repeat(50));
-    
+
     // Keyboard results
     console.log('\n⌨️  KEYBOARD FUNCTIONALITY');
     Object.entries(report.keyboard.categories).forEach(([category, stats]) => {
@@ -918,7 +1024,9 @@ class ComprehensiveQATest {
       report.issues.forEach((issue, index) => {
         console.log(`  ${index + 1}. [${issue.severity}] ${issue.test}`);
         console.log(`     ${issue.details}`);
-        console.log(`     File: ${issue.file}${issue.line ? ':' + issue.line : ''}`);
+        console.log(
+          `     File: ${issue.file}${issue.line ? ':' + issue.line : ''}`
+        );
         console.log(`     Recommendation: ${issue.recommendation}`);
         console.log('');
       });
@@ -935,8 +1043,9 @@ class ComprehensiveQATest {
 
   saveReport(report) {
     const fs = require('fs');
-    const reportPath = '/Users/patrickbassut/Programming/terragon/qa-comprehensive-report.json';
-    
+    const reportPath =
+      '/Users/patrickbassut/Programming/napoleon/qa-comprehensive-report.json';
+
     try {
       fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
       console.log(`\n💾 Report saved to: ${reportPath}`);
@@ -947,7 +1056,7 @@ class ComprehensiveQATest {
 
   async cleanup() {
     console.log('\n🧹 Cleaning up test environment...');
-    
+
     try {
       if (this.screen) {
         this.screen.destroy();
@@ -956,7 +1065,9 @@ class ComprehensiveQATest {
         this.ui.quit();
       }
     } catch (error) {
-      console.log('Cleanup completed with minor issues (normal for test environment)');
+      console.log(
+        'Cleanup completed with minor issues (normal for test environment)'
+      );
     }
   }
 }

@@ -147,7 +147,7 @@
       "severity": "Medium",
       "test": "Navigation Key: pageup",
       "details": "Page up navigation - Key 'pageup' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
     },
     {
@@ -155,7 +155,7 @@
       "severity": "Medium",
       "test": "Navigation Key: pagedown",
       "details": "Page down navigation - Key 'pagedown' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
     },
     {
@@ -163,7 +163,7 @@
       "severity": "Medium",
       "test": "Navigation Key: home",
       "details": "Home key navigation - Key 'home' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
     },
     {
@@ -171,7 +171,7 @@
       "severity": "Medium",
       "test": "Navigation Key: end",
       "details": "End key navigation - Key 'end' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Ensure navigation keys work correctly with proper bounds checking"
     },
     {
@@ -179,7 +179,7 @@
       "severity": "Medium",
       "test": "Special Key: tab",
       "details": "Tab navigation - Key 'tab' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -187,7 +187,7 @@
       "severity": "Medium",
       "test": "Special Key: S-tab",
       "details": "Shift+Tab navigation - Key 'S-tab' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -195,7 +195,7 @@
       "severity": "Medium",
       "test": "Special Key: space",
       "details": "Space key action - Key 'space' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -203,7 +203,7 @@
       "severity": "Medium",
       "test": "Special Key: backspace",
       "details": "Backspace handling - Key 'backspace' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -211,7 +211,7 @@
       "severity": "Medium",
       "test": "Special Key: delete",
       "details": "Delete key handling - Key 'delete' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -219,7 +219,7 @@
       "severity": "Medium",
       "test": "Special Key: f1",
       "details": "F1 function key - Key 'f1' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -227,7 +227,7 @@
       "severity": "Medium",
       "test": "Special Key: f5",
       "details": "F5 refresh key - Key 'f5' has no handler defined",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "recommendation": "Review and fix keyboard event handling for this scenario"
     },
     {
@@ -235,7 +235,7 @@
       "severity": "Medium",
       "test": "Animation Performance",
       "details": "Animation interval runs every 200ms which may be excessive for terminal rendering",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "line": 624,
       "recommendation": "Consider increasing animation interval to 500ms or making it configurable"
     },
@@ -244,7 +244,7 @@
       "severity": "Low",
       "test": "Help Text Consistency",
       "details": "Footer help text is very long and may not fit on smaller terminals",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/index.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/index.js",
       "line": 252,
       "recommendation": "Implement responsive help text that adapts to terminal width"
     },
@@ -253,7 +253,7 @@
       "severity": "Medium",
       "test": "Agent Detail Error Handling",
       "details": "Error handling in agent detail view could be more robust",
-      "file": "/Users/patrickbassut/Programming/terragon/src/ui/components/agent-detail-view.js",
+      "file": "/Users/patrickbassut/Programming/napoleon/src/ui/components/agent-detail-view.js",
       "line": 340,
       "recommendation": "Add more comprehensive error handling and user feedback"
     }

@@ -3,7 +3,7 @@
 ## Existing Project Structure
 
 ```plaintext
-terragon/
+napoleon/
 ├── bin/
 │   └── napoleon.js           # CLI entry point
 ├── src/
@@ -21,7 +21,7 @@ terragon/
 ## New File Organization
 
 ```plaintext
-terragon/
+napoleon/
 ├── bin/
 │   └── napoleon.js              # Renamed CLI entry point
 ├── src/

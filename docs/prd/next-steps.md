@@ -6,7 +6,7 @@
 
 "I need to create implementation stories for the Napoleon project enhancement. This involves:
 
-1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for the complete technical approach
+1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for the complete technical approach
 2. **Key Integration Requirements** (validated):
    - Replace child process spawning with Claude Code SDK in `agent-manager.js`
    - Maintain exact same UI interface (no Terminal UI changes)
@@ -26,7 +26,7 @@
 
 5. **Implementation Sequence**:
    - Story 1: Napoleon rebrand (global rename)
-   - Story 2: Node.js 18 upgrade and SDK dependency addition   - Story 3: SDK communication manager implementation
+   - Story 2: Node.js 18 upgrade and SDK dependency addition - Story 3: SDK communication manager implementation
    - Story 4: Replace process spawning with SDK initialization
    - Story 5: Message transformation and UI integration
    - Story 6: Testing and validation
@@ -39,7 +39,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
 
 "Starting implementation of Napoleon (formerly napoleon) enhancement:
 
-1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
+1. **Architecture Reference**: See `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for complete technical design
 2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:
    - CommonJS modules (no ES modules)
    - 2-space indentation, semicolons required
@@ -53,7 +53,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
    - Session JSON structure updated (no PID field)
 
 4. **Integration Requirements**:
-   - Only modify methods in `agent-manager.js`   - Create new `src/core/sdk/` directory for SDK code
+   - Only modify methods in `agent-manager.js` - Create new `src/core/sdk/` directory for SDK code
    - Maintain all existing method signatures
    - Transform SDK responses to match current UI format
 

@@ -1,3 +1,4 @@
+- consult the Ink github repo for reference if needed: https://github.com/vadimdemedes/ink
 - Never add forceExit: true to jest
 - Always commit the work after finishing a story! Never leave the working tree with files changed.
 - Make ATOMIC commits with small and descriptive messages

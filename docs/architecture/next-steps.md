@@ -6,7 +6,7 @@
 
 "I need to create implementation stories for the Napoleon project enhancement. This involves:
 
-1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for the complete technical approach
+1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for the complete technical approach
 2. **Key Integration Requirements** (validated):
    - Replace child process spawning with Claude Code SDK in `agent-manager.js`
    - Maintain exact same UI interface (no Terminal UI changes)
@@ -40,7 +40,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
 
 "Starting implementation of Napoleon (formerly napoleon) enhancement:
 
-1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
+1. **Architecture Reference**: See `/Users/patrickbassut/Programming/napoleon/docs/architecture.md` for complete technical design
 2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:
    - CommonJS modules (no ES modules)
    - 2-space indentation, semicolons required

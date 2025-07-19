@@ -75,6 +75,34 @@ These stories complete the process-to-SDK architecture migration for Napoleon (f
 | US034 | Update Documentation and Configuration for SDK | Removes process references from documentation and config | HIGH | ✅ **Done** |
 | US035 | Remove CPU/Memory Monitoring and Process Tracking | Eliminates process-based resource monitoring | HIGH | ✅ **Done** |
 
+### Phase 6: Persistent Agent Logging Epic (US036-US042)
+
+These stories implement comprehensive logging infrastructure for agent sessions.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US036 | Agent Log Manager Core | Core logging infrastructure for capturing agent outputs | HIGH | ✅ **Approved** |
+| US037 | Agent Manager Integration | Integrate logging with AgentManager lifecycle | HIGH | ✅ **Approved** |
+| US038 | SDK Communication Logging | Log all SDK communication events | HIGH | ✅ **Approved** |
+| US039 | CLI Log Viewing Commands | Command-line interface for viewing logs | MEDIUM | ✅ **Approved** |
+| US040 | Agent Detail View Log Integration | Integrate logs into UI detail view | MEDIUM | ✅ **Approved** |
+| US041 | Log Retention Management | Manage log storage and cleanup | LOW | ✅ **Approved** |
+| US042 | Log Search and Analytics | Advanced search and analytics capabilities | LOW | ✅ **Approved** |
+
+### Phase 7: Blessed to Ink Migration Epic (US043-US049)
+
+These stories migrate the terminal UI from Blessed to Ink for a modern React-based architecture.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US043 | Ink Environment Setup | Set up Ink React framework with TypeScript support | HIGH | ✅ **Approved** |
+| US044 | Core Layout Components | Implement Header, Footer, and MainContent in Ink | HIGH | ✅ **Approved** |
+| US045 | Agent List Implementation | Create scrollable agent list with keyboard navigation | HIGH | ✅ **Approved** |
+| US046 | Agent Manager Integration | Connect Ink UI to existing AgentManager | HIGH | ✅ **Approved** |
+| US047 | Spawn Dialog Implementation | Modal dialog for spawning new agents | HIGH | ✅ **Approved** |
+| US048 | Termination Dialog Implementation | Confirmation dialog for agent termination | HIGH | ✅ **Approved** |
+| US049 | Detail View Implementation | Real-time log viewer with search functionality | HIGH | ✅ **Approved** |
+
 ## Development Notes
 
 1. **Phase 1 Must Complete First**: The Napoleon SDK integration stories (US001-US010) must be completed before Phase 2, as they establish the new foundation.
@@ -96,13 +124,14 @@ These stories complete the process-to-SDK architecture migration for Napoleon (f
 
 ## Approval Status Summary
 
-- **✅ 32 stories approved**: US001-US028 approved by Scrum Master Bob on 2025-07-18, US032-US035 (completed epic stories)
-- **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues
+- **✅ 46 stories approved**: US001-US028, US032-US049 approved by Scrum Master Bob
+- **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues  
 - **7 stories already completed**: US007, US008, US013, US032-US035
 - **4 epic stories integrated**: US032-US035 represent completed Napoleon SDK Migration Epic (formerly 1.1-1.4)
-- **25 stories ready for implementation**: US001-US006, US009-US012, US014-US028
+- **39 stories ready for implementation**: US001-US006, US009-US012, US014-US028, US036-US049
 - **2 critical bug fixes needed**: US029-US030 address modal close and input duplication bugs
-- **Phase 4 bug priority**: Critical bugs should be addressed before continuing with new features
+- **New Epic 6 (Logging)**: US036-US042 provide comprehensive agent logging infrastructure
+- **New Epic 7 (Blessed to Ink)**: US043-US049 migrate UI to modern React architecture
 - **Ready for development handoff**: All approved stories include detailed acceptance criteria and integration verification requirements
 
 ## File Locations

@@ -21,27 +21,37 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint src/ bin/ --ext .js",
-    "lint:fix": "eslint src/ bin/ --ext .js --fix",
+    "lint": "eslint src/ bin/ --ext .js,.ts,.tsx",
+    "lint:fix": "eslint src/ bin/ --ext .js,.ts,.tsx --fix",
     "format": "prettier --write src/ bin/ __tests__/",
-    "start": "node bin/napoleon.js start"
+    "start": "node bin/napoleon.js start",
+    "dev": "node bin/napoleon.js start",
+    "dev:ink": "NAPOLEON_UI=ink node bin/napoleon.js start",
+    "build": "tsc",
+    "build:watch": "tsc --watch"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.53",
     "blessed": "^0.1.81",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
+    "ink": "^4.4.1",
+    "ink-select-input": "^5.0.0",
+    "ink-text-input": "^5.0.1",
     "inquirer": "^12.7.0",
     "joi": "^17.11.0",
+    "react": "^18.2.0",
     "semver": "^7.5.4",
     "winston": "^3.11.0"
   },
   "devDependencies": {
+    "@types/react": "^18.2.79",
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-plugin-import": "^2.29.0",
     "jest": "^29.7.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "typescript": "^5.3.3"
   },
   "keywords": [
     "claude",
