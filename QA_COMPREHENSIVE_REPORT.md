@@ -208,40 +208,9 @@ renderThrottled() {
 
 ### 3.2 Issues in Detail View
 
-#### Mock Resource Monitoring
-**Severity: Medium**  
-**File:** `/src/ui/components/agent-detail-view.js` (lines 698-709)
-
-**Issue:** CPU and memory usage are mocked with random values.
-
-**Current Code:**
-```javascript
-getCpuUsage(agent) {
-  // TODO: Implement actual CPU monitoring
-  return Math.floor(Math.random() * 50) + 10; // Mock 10-60%
-}
-
-getMemoryUsage(agent) {
-  // TODO: Implement actual memory monitoring  
-  return Math.floor(Math.random() * 100) + 20; // Mock 20-120MB
-}
-```
-
-**Impact:** Users see misleading resource information.
-
-**Recommendation:** Implement actual monitoring using `process.cpuUsage()` and `process.memoryUsage()`:
-```javascript
-getCpuUsage(agent) {
-  if (!agent.pid) return 0;
-  try {
-    // Use pidusage or similar library for actual CPU monitoring
-    const stats = require('pidusage');
-    return stats.sync(agent.pid).cpu || 0;
-  } catch (error) {
-    return 0;
-  }
-}
-```
+#### ~~Mock Resource Monitoring~~ *(Removed in SDK Architecture)*
+**Status: RESOLVED** - Resource monitoring removed in favor of SDK session metrics  
+**Rationale:** CPU/Memory monitoring is no longer applicable in SDK-based architecture
 
 #### Error Handling in Agent Details
 **Severity: Medium**  
@@ -774,7 +743,7 @@ This QA testing provides a solid foundation for improving the application's usab
 
 ## Conclusion
 
-The ADD Manager's multiple agent spawning and runtime counter features are **FULLY FUNCTIONAL** and ready for production use. The system demonstrates:
+The Napoleon's multiple agent spawning and runtime counter features are **FULLY FUNCTIONAL** and ready for production use. The system demonstrates:
 
 - **Reliability:** Consistent performance under various conditions
 - **Accuracy:** Precise runtime tracking and display

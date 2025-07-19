@@ -300,7 +300,7 @@ async function testUIDisplayFormatting() {
             const statusDisplay = agentManager.getAgentStatusDisplay(agent.id);
             
             // Verify all required fields are present
-            const requiredFields = ['id', 'status', 'runtime', 'spawnTime', 'lastActivity', 'pid'];
+            const requiredFields = ['id', 'status', 'runtime', 'spawnTime', 'lastActivity', 'sessionId'];
             let allFieldsPresent = true;
             
             for (const field of requiredFields) {
@@ -640,7 +640,7 @@ function generateTestReport() {
     }
     
     if (testResults.summary.agentTermination.failed > 0) {
-        console.log(`   • Check agent cleanup and termination processes`);
+        console.log(`   • Check agent cleanup and termination sessions`);
     }
     
     if (testResults.summary.performanceTesting.failed > 0) {
