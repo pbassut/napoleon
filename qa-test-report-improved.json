@@ -1,388 +1,136 @@
 {
-  "passed": 45,
-  "failed": 4,
+  "passed": 6,
+  "failed": 7,
   "tests": [
     {
-      "name": "Agent 1 spawned successfully",
-      "passed": true,
-      "details": "ID: agent-1752775878952-tba2zfnxt, Status: running",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:19.741Z"
-    },
-    {
-      "name": "Agent 2 spawned successfully",
-      "passed": true,
-      "details": "ID: agent-1752775880878-w3w4hy5wv, Status: running",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:21.718Z"
-    },
-    {
-      "name": "Agent 3 spawned successfully",
-      "passed": true,
-      "details": "ID: agent-1752775882910-ag5aiuhy0, Status: running",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:23.895Z"
-    },
-    {
-      "name": "All 3 agents active after spawning",
-      "passed": true,
-      "details": "Expected: 3, Actual: 3",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:24.901Z"
-    },
-    {
-      "name": "Agent limit enforcement (4th agent)",
-      "passed": true,
-      "details": "Correctly rejected 4th agent",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:24.906Z"
-    },
-    {
-      "name": "Agent 1 display data complete",
-      "passed": true,
-      "details": "ID: agent-1752775878952-tba2zfnxt, Status: running, Runtime: 00:00",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:24.906Z"
-    },
-    {
-      "name": "Agent 2 display data complete",
-      "passed": true,
-      "details": "ID: agent-1752775880878-w3w4hy5wv, Status: running, Runtime: 00:00",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:24.906Z"
-    },
-    {
-      "name": "Agent 3 display data complete",
-      "passed": true,
-      "details": "ID: agent-1752775882910-ag5aiuhy0, Status: running, Runtime: 00:00",
-      "category": "multipleAgentSpawning",
-      "timestamp": "2025-07-17T18:11:24.906Z"
-    },
-    {
-      "name": "Runtime counter accuracy (5s test)",
-      "passed": true,
-      "details": "Expected: ~5s, Actual: 5s, Diff: 0s",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime HH:MM format validation",
-      "passed": true,
-      "details": "Format: 00:00",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 0 seconds",
-      "passed": true,
-      "details": "Expected: 00:00, Actual: 00:00",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 30 seconds (rounds down)",
-      "passed": true,
-      "details": "Expected: 00:00, Actual: 00:00",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 1 minute",
-      "passed": true,
-      "details": "Expected: 00:01, Actual: 00:01",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 1 minute 30 seconds",
-      "passed": true,
-      "details": "Expected: 00:01, Actual: 00:01",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 2 minutes",
-      "passed": true,
-      "details": "Expected: 00:02, Actual: 00:02",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.711Z"
-    },
-    {
-      "name": "Runtime format: 1 hour",
-      "passed": true,
-      "details": "Expected: 01:00, Actual: 01:00",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.712Z"
-    },
-    {
-      "name": "Runtime format: 1 hour 1 minute",
-      "passed": true,
-      "details": "Expected: 01:01, Actual: 01:01",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.712Z"
-    },
-    {
-      "name": "Runtime format: 2 hours",
-      "passed": true,
-      "details": "Expected: 02:00, Actual: 02:00",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:32.712Z"
-    },
-    {
-      "name": "Runtime progression over time",
-      "passed": true,
-      "details": "Runtime increased from 5s to 8s",
-      "category": "runtimeCounter",
-      "timestamp": "2025-07-17T18:11:35.713Z"
-    },
-    {
-      "name": "Agent ID uniqueness (sequential)",
-      "passed": true,
-      "details": "Generated 3 agents with 3 unique IDs",
-      "category": "agentIdUniqueness",
-      "timestamp": "2025-07-17T18:11:40.953Z"
-    },
-    {
-      "name": "Agent ID format validation",
-      "passed": true,
-      "details": "All IDs match pattern: agent-timestamp-random",
-      "category": "agentIdUniqueness",
-      "timestamp": "2025-07-17T18:11:40.954Z"
-    },
-    {
-      "name": "Agent ID timestamp ordering",
-      "passed": true,
-      "details": "Timestamps are in ascending order",
-      "category": "agentIdUniqueness",
-      "timestamp": "2025-07-17T18:11:40.954Z"
-    },
-    {
-      "name": "Agent 1 status display completeness",
-      "passed": true,
-      "details": "All required fields present: id, status, runtime, spawnTime, lastActivity, pid",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.494Z"
-    },
-    {
-      "name": "Agent 2 status display completeness",
-      "passed": true,
-      "details": "All required fields present: id, status, runtime, spawnTime, lastActivity, pid",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
-    },
-    {
-      "name": "Agent 3 status display completeness",
-      "passed": true,
-      "details": "All required fields present: id, status, runtime, spawnTime, lastActivity, pid",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
-    },
-    {
-      "name": "Runtime format consistency",
-      "passed": true,
-      "details": "All formats valid: 00:00, 00:00, 00:00",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
-    },
-    {
-      "name": "Agent list structure",
-      "passed": true,
-      "details": "Active agents list is valid array with 3 entries",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
-    },
-    {
-      "name": "Agent 1 ID padding",
+      "name": "Multiple agent spawning test suite",
       "passed": false,
-      "details": "ID padded to 18 characters: 29",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
+      "details": "Repository has uncommitted changes",
+      "category": "multipleAgentSpawning",
+      "timestamp": "2025-07-19T05:01:01.790Z"
     },
     {
-      "name": "Agent 2 ID padding",
+      "name": "Runtime counter accuracy test suite",
       "passed": false,
-      "details": "ID padded to 18 characters: 29",
-      "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
+      "details": "Repository has uncommitted changes",
+      "category": "runtimeCounter",
+      "timestamp": "2025-07-19T05:01:02.049Z"
     },
     {
-      "name": "Agent 3 ID padding",
+      "name": "Agent ID uniqueness test suite",
       "passed": false,
-      "details": "ID padded to 18 characters: 29",
+      "details": "Repository has uncommitted changes",
+      "category": "agentIdUniqueness",
+      "timestamp": "2025-07-19T05:01:04.344Z"
+    },
+    {
+      "name": "UI display formatting test suite",
+      "passed": false,
+      "details": "Repository has uncommitted changes",
       "category": "uiDisplay",
-      "timestamp": "2025-07-17T18:11:48.495Z"
+      "timestamp": "2025-07-19T05:01:06.701Z"
     },
     {
-      "name": "All agents active before termination",
-      "passed": true,
-      "details": "Active agents: 3",
+      "name": "Agent termination test suite",
+      "passed": false,
+      "details": "Repository has uncommitted changes",
       "category": "agentTermination",
-      "timestamp": "2025-07-17T18:11:54.626Z"
+      "timestamp": "2025-07-19T05:01:08.981Z"
     },
     {
-      "name": "Single agent termination",
-      "passed": true,
-      "details": "Active agents after termination: 2",
-      "category": "agentTermination",
-      "timestamp": "2025-07-17T18:11:56.627Z"
-    },
-    {
-      "name": "Terminated agent removed from list",
-      "passed": true,
-      "details": "Terminated agent still in active list: false",
-      "category": "agentTermination",
-      "timestamp": "2025-07-17T18:11:56.627Z"
-    },
-    {
-      "name": "All agents terminated",
-      "passed": true,
-      "details": "Active agents after all terminations: 0",
-      "category": "agentTermination",
-      "timestamp": "2025-07-17T18:12:00.632Z"
-    },
-    {
-      "name": "Non-existent agent termination handling",
-      "passed": true,
-      "details": "Correctly threw error for non-existent agent",
-      "category": "agentTermination",
-      "timestamp": "2025-07-17T18:12:00.632Z"
-    },
-    {
-      "name": "Agent spawning performance",
-      "passed": true,
-      "details": "Spawned 3 agents in 2784ms",
+      "name": "Performance testing suite",
+      "passed": false,
+      "details": "Repository has uncommitted changes",
       "category": "performanceTesting",
-      "timestamp": "2025-07-17T18:12:05.418Z"
-    },
-    {
-      "name": "Status retrieval performance",
-      "passed": true,
-      "details": "50 status calls in 0ms",
-      "category": "performanceTesting",
-      "timestamp": "2025-07-17T18:12:05.418Z"
-    },
-    {
-      "name": "Runtime calculation performance",
-      "passed": true,
-      "details": "300 runtime calculations in 1ms",
-      "category": "performanceTesting",
-      "timestamp": "2025-07-17T18:12:05.419Z"
-    },
-    {
-      "name": "Memory usage check",
-      "passed": true,
-      "details": "Memory usage: 9.52MB",
-      "category": "performanceTesting",
-      "timestamp": "2025-07-17T18:12:05.419Z"
+      "timestamp": "2025-07-19T05:01:11.237Z"
     },
     {
       "name": "Invalid instructions: empty string",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.421Z"
+      "timestamp": "2025-07-19T05:01:13.324Z"
     },
     {
       "name": "Invalid instructions: too short",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.421Z"
+      "timestamp": "2025-07-19T05:01:13.496Z"
     },
     {
       "name": "Invalid instructions: too long",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.421Z"
+      "timestamp": "2025-07-19T05:01:13.496Z"
     },
     {
       "name": "Invalid instructions: dangerous characters",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.422Z"
+      "timestamp": "2025-07-19T05:01:13.496Z"
     },
     {
       "name": "Invalid instructions: null value",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.422Z"
+      "timestamp": "2025-07-19T05:01:13.496Z"
     },
     {
       "name": "Invalid instructions: undefined value",
       "passed": true,
       "details": "Correctly rejected invalid instructions",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:07.422Z"
+      "timestamp": "2025-07-19T05:01:13.496Z"
     },
     {
-      "name": "Rapid spawn/terminate handling",
-      "passed": true,
-      "details": "Remaining agents: 0",
-      "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:14.079Z"
-    },
-    {
-      "name": "Runtime format edge case: negative seconds",
+      "name": "Edge cases test suite",
       "passed": false,
-      "details": "Format: -1:-1",
+      "details": "Repository has uncommitted changes",
       "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:14.079Z"
-    },
-    {
-      "name": "Runtime format edge case: zero seconds",
-      "passed": true,
-      "details": "Format: 00:00",
-      "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:14.079Z"
-    },
-    {
-      "name": "Runtime format edge case: one day (24 hours)",
-      "passed": true,
-      "details": "Format: 24:00",
-      "category": "edgeCases",
-      "timestamp": "2025-07-17T18:12:14.079Z"
+      "timestamp": "2025-07-19T05:01:13.706Z"
     }
   ],
-  "startTime": "2025-07-17T18:11:18.874Z",
-  "endTime": "2025-07-17T18:12:16.080Z",
+  "startTime": "2025-07-19T05:01:01.465Z",
+  "endTime": "2025-07-19T05:01:15.784Z",
   "summary": {
     "multipleAgentSpawning": {
-      "passed": 8,
-      "failed": 0,
-      "total": 8
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "runtimeCounter": {
-      "passed": 11,
-      "failed": 0,
-      "total": 11
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "agentIdUniqueness": {
-      "passed": 3,
-      "failed": 0,
-      "total": 3
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "uiDisplay": {
-      "passed": 5,
-      "failed": 3,
-      "total": 8
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "agentTermination": {
-      "passed": 5,
-      "failed": 0,
-      "total": 5
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "performanceTesting": {
-      "passed": 4,
-      "failed": 0,
-      "total": 4
+      "passed": 0,
+      "failed": 1,
+      "total": 1
     },
     "edgeCases": {
-      "passed": 9,
+      "passed": 6,
       "failed": 1,
-      "total": 10
+      "total": 7
     }
   }
 }

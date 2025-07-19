@@ -1,4 +1,4 @@
-# ADD Manager Product Requirements Document (PRD)
+# Napoleon Product Requirements Document (PRD)
 
 ## Goals and Background Context
 
@@ -8,12 +8,12 @@
 - Provide a clean, intuitive terminal UI for spawning, monitoring, and managing AI agents
 - Streamline agent-driven development workflows with git worktree integration
 - Deliver a robust NPM CLI package that can be used via npx or global installation
-- Ensure proper process lifecycle management for agent sessions
+- Ensure proper session lifecycle management for agent sessions
 - Maintain clean git history while leveraging multiple AI sessions simultaneously
 
 ### Background Context
 
-ADD Manager (Agent Driven Development) addresses the growing need for developers to coordinate multiple AI agents working on different aspects of a project simultaneously. Currently, developers struggle with managing multiple Claude CLI sessions while maintaining proper git isolation and avoiding conflicts between different AI workstreams.
+Napoleon (Agent Driven Development) addresses the growing need for developers to coordinate multiple AI agents working on different aspects of a project simultaneously. Currently, developers struggle with managing multiple Claude CLI sessions while maintaining proper git isolation and avoiding conflicts between different AI workstreams.
 
 The solution provides a terminal UI application that enables spawning AI agents in isolated git worktrees, monitoring their progress through a clean dashboard interface, and managing their lifecycle efficiently. This approach ensures that each agent works in its own branch context while providing developers with centralized control and visibility over all active sessions.
 
@@ -24,7 +24,7 @@ The solution provides a terminal UI application that enables spawning AI agents 
 | 2025-07-17 | 1.0 | Initial PRD creation | Claude Code |
 | 2025-01-17 | 1.1 | Updated to note Napoleon enhancement project | John (PM) |
 
-> **Note**: A brownfield enhancement project "Napoleon" has been initiated to replace the CLI child process spawning with Claude Code SDK integration. See [Napoleon Brownfield PRD](./napoleon-brownfield-prd.md) for details. The original ADD Manager will continue to be available while Napoleon is developed as a separate package.
+> **Note**: A brownfield enhancement project "Napoleon" has been initiated to replace the CLI integration with Claude Code SDK integration. See [Napoleon Brownfield PRD](./napoleon-brownfield-prd.md) for details. The original Napoleon will continue to be available while Napoleon is developed as a separate package.
 
 ## Requirements
 
@@ -36,8 +36,8 @@ The solution provides a terminal UI application that enables spawning AI agents 
 4. **FR4**: The system shall display single-line status per agent (running/idle/error) with expandable details
 5. **FR5**: The system shall allow users to terminate, pause, and resume agent sessions
 6. **FR6**: The system shall maintain a maximum of 3 concurrent agent sessions (MVP constraint)
-7. **FR7**: The system shall store basic session data in JSON format in ~/.add-manager/
-8. **FR8**: The system shall provide process monitoring capabilities for all active agents
+7. **FR7**: The system shall store basic session data in JSON format in ~/.napoleon/
+8. **FR8**: The system shall provide session monitoring capabilities for all active agents
 9. **FR9**: The system shall support both npx and global npm installation methods
 10. **FR10**: The system shall provide interactive controls via keyboard shortcuts for common actions
 11. **FR11**: The system shall offer tools to review and merge agent changes from different worktrees
@@ -53,14 +53,14 @@ The solution provides a terminal UI application that enables spawning AI agents 
 6. **NFR6**: The system shall support Node.js version 16.0.0 or higher
 7. **NFR7**: The system shall be compatible with macOS, Linux, and Windows 10+
 8. **NFR8**: The system shall require git version 2.20.0 or higher
-9. **NFR9**: The system shall gracefully handle process failures with <5% failure rate
+9. **NFR9**: The system shall gracefully handle session failures with <5% failure rate
 10. **NFR10**: The system shall provide clean resource cleanup on application exit
 
 ## User Interface Design Goals
 
 ### Overall UX Vision
 
-The ADD Manager terminal UI embraces a clean, developer-focused interface that prioritizes efficiency and clarity. The design follows terminal application conventions while providing modern interaction patterns familiar to developers using tools like htop, vim, or tmux. The interface emphasizes immediate visibility of agent status and quick access to essential controls.
+The Napoleon terminal UI embraces a clean, developer-focused interface that prioritizes efficiency and clarity. The design follows terminal application conventions while providing modern interaction patterns familiar to developers using tools like htop, vim, or tmux. The interface emphasizes immediate visibility of agent status and quick access to essential controls.
 
 ### Key Interaction Paradigms
 
@@ -94,17 +94,17 @@ Cross-platform terminal application supporting macOS, Linux, and Windows. Design
 
 ### Repository Structure: Monorepo
 
-Single repository containing all ADD Manager components including CLI framework, TUI interface, agent management, and git integration modules.
+Single repository containing all Napoleon components including CLI framework, TUI interface, agent management, and git integration modules.
 
 ### Service Architecture
 
 Monolithic Node.js application with modular architecture:
 - CLI entry point using commander.js
 - Terminal UI layer using blessed framework
-- Agent management module for process spawning and monitoring
+- Agent management module for session spawning and monitoring
 - Git worktree handler for branch isolation
 - Session storage using JSON file system
-- Process monitor for resource management
+- Session monitor for resource management
 
 ### Testing Requirements
 
@@ -112,7 +112,7 @@ Unit testing for core functionality with focus on:
 - Agent lifecycle management
 - Git worktree operations
 - Session storage and retrieval
-- Process monitoring and cleanup
+- Session monitoring and cleanup
 - Error handling and recovery
 
 Integration testing for:
@@ -122,13 +122,13 @@ Integration testing for:
 
 ### Additional Technical Assumptions and Requests
 
-- Uses native Node.js child_process for spawning Claude CLI sessions
+- Uses Claude CLI integration for spawning Claude sessions
 - Leverages native git commands for worktree management
 - Implements blessed-based TUI for cross-platform terminal compatibility
-- Stores session data in user home directory (~/.add-manager/)
+- Stores session data in user home directory (~/.napoleon/)
 - Requires git repository context for proper operation
 - Uses commander.js for CLI argument parsing and command structure
-- Implements graceful shutdown handling for process cleanup
+- Implements graceful shutdown handling for session cleanup
 - Supports both foreground and background agent operation modes
 
 ## Epic List
@@ -139,8 +139,8 @@ Establish project setup, CLI framework, basic terminal UI, and core agent spawni
 ### Epic 2: Git Integration & Worktree Management
 Implement git worktree creation, branch isolation, and basic merge coordination tools to ensure proper git workflow integration.
 
-### Epic 3: Advanced Terminal UI & Process Management
-Enhance the terminal interface with comprehensive monitoring, detailed views, and robust process lifecycle management including error recovery.
+### Epic 3: Advanced Terminal UI & Session Management
+Enhance the terminal interface with comprehensive monitoring, detailed views, and robust session lifecycle management including error recovery.
 
 ## Epic 1: Foundation & Core Infrastructure
 
@@ -149,15 +149,15 @@ Enhance the terminal interface with comprehensive monitoring, detailed views, an
 ### Story 1.1: Project Setup and CLI Framework
 
 As a developer,
-I want to install and initialize the ADD Manager application,
+I want to install and initialize the Napoleon application,
 so that I can start using it to manage Claude CLI agents.
 
 #### Acceptance Criteria
 
-1. **AC1**: Package can be installed globally via `npm install -g add-manager`
-2. **AC2**: Package can be run directly via `npx add-manager`
+1. **AC1**: Package can be installed globally via `npm install -g napoleon`
+2. **AC2**: Package can be run directly via `npx napoleon`
 3. **AC3**: CLI framework initializes with commander.js and displays help information
-4. **AC4**: Application creates ~/.add-manager/ directory for session storage
+4. **AC4**: Application creates ~/.napoleon/ directory for session storage
 5. **AC5**: Application validates Node.js version (>=16.0.0) and git availability
 6. **AC6**: Application displays appropriate error messages for missing dependencies
 7. **AC7**: Basic CLI commands (start, status, help) are recognized and routed correctly
@@ -165,7 +165,7 @@ so that I can start using it to manage Claude CLI agents.
 ### Story 1.2: Basic Terminal UI Foundation
 
 As a developer,
-I want to see a clean terminal interface when I launch ADD Manager,
+I want to see a clean terminal interface when I launch Napoleon,
 so that I can interact with the application effectively.
 
 #### Acceptance Criteria
@@ -189,8 +189,8 @@ so that I can delegate tasks to AI agents with proper isolation.
 1. **AC1**: Pressing 'n' or 'new' opens interactive agent spawn dialog
 2. **AC2**: User can enter agent instructions/prompts through text input
 3. **AC3**: System validates git repository context before spawning
-4. **AC4**: Agent process spawns using child_process with Claude CLI
-5. **AC5**: Basic session data is stored in ~/.add-manager/sessions.json
+4. **AC4**: Agent session spawns using CLI integration with Claude CLI
+5. **AC5**: Basic session data is stored in ~/.napoleon/sessions.json
 6. **AC6**: Agent appears in main dashboard with "running" status
 7. **AC7**: System enforces maximum 3 concurrent agents limit
 8. **AC8**: User receives clear error messages for spawn failures
@@ -221,7 +221,7 @@ so that I can free up resources and manage my workflow.
 
 1. **AC1**: User can select an agent and press 'd' or 'delete' to terminate
 2. **AC2**: System displays confirmation dialog before termination
-3. **AC3**: Agent process is terminated gracefully with proper cleanup
+3. **AC3**: Agent session is terminated gracefully with proper cleanup
 4. **AC4**: Session data is removed from storage after termination
 5. **AC5**: Agent disappears from dashboard after successful termination
 6. **AC6**: System handles force termination if graceful shutdown fails
@@ -241,8 +241,8 @@ so that agents can work on different features without conflicts.
 
 1. **AC1**: System creates unique worktree for each agent using git worktree add
 2. **AC2**: Worktree names follow pattern: agent-{id}-{timestamp}
-3. **AC3**: Each worktree is created in .add-manager-worktrees/ directory
-4. **AC4**: Agent process is spawned with working directory set to its worktree
+3. **AC3**: Each worktree is created in .napoleon-worktrees/ directory
+4. **AC4**: Agent session is spawned with working directory set to its worktree
 5. **AC5**: System validates git repository state before worktree creation
 6. **AC6**: Worktree creation failures are handled gracefully with rollback
 7. **AC7**: Agent spawn dialog displays target worktree path for confirmation
@@ -274,7 +274,7 @@ so that the repository remains clean and organized.
 1. **AC1**: Agent termination triggers automatic worktree cleanup
 2. **AC2**: System uses git worktree remove to clean up worktree properly
 3. **AC3**: Associated branch is preserved for potential merge/review
-4. **AC4**: Cleanup process handles locked or dirty worktrees gracefully
+4. **AC4**: Cleanup session handles locked or dirty worktrees gracefully
 5. **AC5**: User is notified of cleanup success/failure status
 6. **AC6**: Manual cleanup command is available for stuck worktrees
 7. **AC7**: System maintains cleanup log for troubleshooting
@@ -297,7 +297,7 @@ so that I can integrate their work into the main codebase.
 
 ## Epic 3: Advanced Terminal UI & Process Management
 
-**Epic Goal**: Enhance the terminal interface with comprehensive monitoring capabilities, detailed views, and robust process lifecycle management. This epic delivers a polished user experience with advanced features for managing agent sessions effectively.
+**Epic Goal**: Enhance the terminal interface with comprehensive monitoring capabilities, detailed views, and robust session lifecycle management. This epic delivers a polished user experience with advanced features for managing agent sessions effectively.
 
 ### Story 3.1: Enhanced Agent Detail View
 
@@ -315,21 +315,21 @@ so that I can monitor their progress and troubleshoot issues.
 6. **AC6**: Detail view includes agent configuration and spawn parameters
 7. **AC7**: Search functionality allows finding specific log entries
 
-### Story 3.2: Advanced Process Monitoring
+### Story 3.2: Advanced Session Monitoring
 
 As a developer,
-I want comprehensive monitoring of agent processes,
+I want comprehensive monitoring of agent sessions,
 so that I can ensure optimal performance and resource usage.
 
 #### Acceptance Criteria
 
-1. **AC1**: System monitors CPU and memory usage for each agent process
+1. **AC1**: System monitors CPU and memory usage for each agent session
 2. **AC2**: Dashboard displays resource usage indicators for each agent
 3. **AC3**: System tracks agent runtime statistics and performance metrics
 4. **AC4**: Resource usage alerts trigger when thresholds are exceeded
 5. **AC5**: Historical performance data is maintained for analysis
-6. **AC6**: Process health checks detect and report unresponsive agents
-7. **AC7**: System provides process restart capability for failed agents
+6. **AC6**: Session health checks detect and report unresponsive agents
+7. **AC7**: System provides session restart capability for failed agents
 
 ### Story 3.3: Session Persistence and Recovery
 
@@ -339,12 +339,12 @@ so that I can maintain continuity in my agent workflows.
 
 #### Acceptance Criteria
 
-1. **AC1**: Session state is automatically saved to ~/.add-manager/sessions.json
-2. **AC2**: Application attempts to reconnect to existing agent processes on startup
-3. **AC3**: Orphaned agent processes are detected and handled appropriately
+1. **AC1**: Session state is automatically saved to ~/.napoleon/sessions.json
+2. **AC2**: Application attempts to reconnect to existing agent sessions on startup
+3. **AC3**: Orphaned agent sessions are detected and handled appropriately
 4. **AC4**: User is notified of session recovery success/failure status
 5. **AC5**: Session data includes worktree paths and branch information
-6. **AC6**: Recovery process validates git worktree state before reconnection
+6. **AC6**: Recovery session validates git worktree state before reconnection
 7. **AC7**: Failed recovery attempts are logged with detailed error information
 
 ### Story 3.4: Error Handling and Recovery
@@ -355,7 +355,7 @@ so that I can maintain stable workflows and troubleshoot problems.
 
 #### Acceptance Criteria
 
-1. **AC1**: System detects agent process failures and updates status accordingly
+1. **AC1**: System detects agent session failures and updates status accordingly
 2. **AC2**: Failed agents display error status with diagnostic information
 3. **AC3**: User can view error logs and troubleshooting suggestions
 4. **AC4**: System provides restart option for failed agents
@@ -425,8 +425,8 @@ so that I can manage agents quickly without mouse interaction.
 
 ### UX Expert Prompt
 
-"Please review the ADD Manager PRD and create a comprehensive UX architecture document focusing on the terminal UI design patterns, interaction flows, and user experience optimization for the blessed-based terminal interface. Consider the developer-focused user base and terminal application conventions."
+"Please review the Napoleon PRD and create a comprehensive UX architecture document focusing on the terminal UI design patterns, interaction flows, and user experience optimization for the blessed-based terminal interface. Consider the developer-focused user base and terminal application conventions."
 
 ### Architect Prompt
 
-"Please use the ADD Manager PRD to create a detailed technical architecture document. Focus on the Node.js application structure, process management architecture, git integration patterns, and terminal UI implementation using blessed. Ensure the architecture supports the 3-agent limit and provides clean separation between CLI, TUI, and core functionality modules."
+"Please use the Napoleon PRD to create a detailed technical architecture document. Focus on the Node.js application structure, session management architecture, git integration patterns, and terminal UI implementation using blessed. Ensure the architecture supports the 3-agent limit and provides clean separation between CLI, TUI, and core functionality modules."

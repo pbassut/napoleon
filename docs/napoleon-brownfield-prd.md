@@ -9,11 +9,11 @@
 - Architecture document available at: `/docs/architecture.md`
 
 #### Current Project State
-Based on my analysis, ADD Manager is a CLI tool for managing multiple Claude CLI sessions with isolated git worktrees. It provides:
+Based on my analysis, Napoleon is a CLI tool for managing multiple Claude CLI sessions with isolated git worktrees. It provides:
 - Terminal UI dashboard for spawning and monitoring AI agents
 - Git worktree isolation for each agent
 - Process lifecycle management
-- NPM package deployment (`add-manager`)
+- NPM package deployment (`napoleon`)
 
 ### Available Documentation Analysis
 ✓ Tech Stack Documentation (from package.json and source analysis)
@@ -31,7 +31,7 @@ Based on my analysis, ADD Manager is a CLI tool for managing multiple Claude CLI
 ✓ Major Feature Modification (core communication layer)
 
 #### Enhancement Description
-Replace the current child process spawning mechanism that executes Claude CLI with direct SDK integration using @anthropic-ai/claude-code, while maintaining all existing functionality and user experience.
+Replace the current Claude CLI integration with direct SDK integration using @anthropic-ai/claude-code, while maintaining all existing functionality and user experience.
 
 #### Impact Assessment
 ✓ Moderate Impact (some existing code changes)
@@ -49,7 +49,7 @@ Replace the current child process spawning mechanism that executes Claude CLI wi
 - Position for future enhancements (streaming, better recovery)
 
 #### Background Context
-The current ADD Manager relies on spawning Claude CLI as child processes, which introduces complexity in process management, stdin/stdout handling, and session recovery. The Claude Code SDK provides a cleaner, more reliable API that eliminates these pain points while maintaining all current functionality. This enhancement represents a core architectural improvement that will make the system more maintainable and extensible.
+The current Napoleon relies on the Claude CLI, which introduces complexity in session management, communication handling, and session recovery. The Claude Code SDK provides a cleaner, more reliable API that eliminates these pain points while maintaining all current functionality. This enhancement represents a core architectural improvement that will make the system more maintainable and extensible.
 
 ### Change Log
 | Change | Date | Version | Description | Author |
@@ -60,7 +60,7 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 
 ### Functional Requirements
 
-- **FR1**: The system shall replace Claude CLI child process spawning with @anthropic-ai/claude-code SDK initialization while maintaining all existing agent management capabilities
+- **FR1**: The system shall replace Claude CLI integration with @anthropic-ai/claude-code SDK initialization while maintaining all existing agent management capabilities
 - **FR2**: The system shall maintain the exact same terminal UI behavior, including all keyboard shortcuts, navigation, and status displays
 - **FR3**: The system shall preserve git worktree creation and isolation for each agent session
 - **FR4**: The system shall transform SDK responses to match the existing log format expected by the terminal UI
@@ -69,12 +69,12 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 - **FR7**: The system shall provide equivalent error handling and recovery mechanisms for SDK failures
 - **FR8**: The system shall maintain the 3-agent concurrency limit with SDK sessions
 - **FR9**: The system shall support API key configuration through environment variables
-- **FR10**: The system shall complete global rebrand from "add-manager" to "napoleon" across all user-facing elements
+- **FR10**: The system shall complete global rebrand from "napoleon" to "napoleon" across all user-facing elements
 
 ### Non-Functional Requirements
 
 - **NFR1**: The SDK integration shall maintain or improve upon the current 2-second startup time
-- **NFR2**: The system shall reduce memory usage compared to child process spawning (target: <80MB base)
+- **NFR2**: The system shall reduce memory usage compared to CLI integration (target: <80MB base)
 - **NFR3**: The SDK shall provide response times equal to or better than CLI parsing (<100ms overhead)
 - **NFR4**: The system shall support Node.js 18.0.0 or higher (upgrade from 16.0.0)
 - **NFR5**: The system shall handle API rate limits gracefully with exponential backoff
@@ -95,7 +95,7 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 
 **Languages**: JavaScript (Node.js 16+, upgrading to 18+)
 **Frameworks**: blessed (terminal UI), commander.js (CLI), winston (logging), joi (validation)
-**Database**: None - JSON file-based session storage in ~/.add-manager/
+**Database**: None - JSON file-based session storage in ~/.napoleon/
 **Infrastructure**: NPM package distribution, local file system for persistence
 **External Dependencies**: Git (2.20.0+), Claude CLI (being replaced)
 
@@ -103,11 +103,11 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 
 **Database Integration Strategy**: Session JSON files remain in same location (renamed to ~/.napoleon/), structure updated to remove process-specific fields (pid) and add SDK fields (sdkStatus, lastMessageId)
 
-**API Integration Strategy**: All public AgentManager methods maintain identical interfaces. Internal implementation switches from spawn/stdin/stdout to SDK initialization and query methods. Message transformation layer converts SDK responses to expected format.
+**API Integration Strategy**: All public AgentManager methods maintain identical interfaces. Internal implementation switches from CLI communication to SDK initialization and query methods. Message transformation layer converts SDK responses to expected format.
 
 **Frontend Integration Strategy**: Zero changes to blessed terminal UI. Message transformer ensures SDK responses match exact format expected by UI components (agent-detail-view.js, etc.)
 
-**Testing Integration Strategy**: Existing Jest tests updated to mock SDK instead of child_process. New tests added for SDK-specific functionality. Integration tests verify end-to-end flow with SDK.
+**Testing Integration Strategy**: Existing Jest tests updated to mock SDK instead of CLI communication. New tests added for SDK-specific functionality. Integration tests verify end-to-end flow with SDK.
 
 ### Code Organization and Standards
 
@@ -123,7 +123,7 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 
 **Build Process Integration**: No changes to build process. SDK added as standard npm dependency. Node.js version bump handled in package.json engines field.
 
-**Deployment Strategy**: Publish as new NPM package "napoleon" starting at v1.0.0. Not an update to add-manager. Users choose which package to use.
+**Deployment Strategy**: Publish as new NPM package "napoleon" starting at v1.0.0. Not an update to napoleon. Users choose which package to use.
 
 **Monitoring and Logging**: Winston logger continues for all operations. SDK errors wrapped in existing error classes. Additional logging for SDK session lifecycle.
 
@@ -149,21 +149,21 @@ The current ADD Manager relies on spawning Claude CLI as child processes, which 
 
 ## Epic 1: Napoleon SDK Integration Enhancement
 
-**Epic Goal**: Successfully migrate ADD Manager from CLI-based process spawning to SDK-based communication while rebranding to Napoleon, maintaining 100% feature compatibility and improving reliability.
+**Epic Goal**: Successfully migrate Napoleon from CLI-based communication to SDK-based communication while rebranding to Napoleon, maintaining 100% feature compatibility and improving reliability.
 
 **Integration Requirements**: All existing functionality must remain intact throughout the migration. Each story must leave the system in a working state. Changes must be reversible if issues arise.
 
 ### Story 1.1: Global Napoleon Rebrand
 
 As a developer,
-I want to rebrand ADD Manager to Napoleon across the entire codebase,
+I want to rebrand Napoleon to Napoleon across the entire codebase,
 so that the new package has a distinct identity and avoids confusion with the CLI-based version.
 
 #### Acceptance Criteria
-1. Package.json name field updated from "add-manager" to "napoleon"
-2. CLI command changed from `add-manager` to `napoleon` in bin/
-3. All references to "add-manager" in code, comments, and documentation updated to "napoleon"
-4. Configuration directory renamed from ~/.add-manager/ to ~/.napoleon/
+1. Package.json name field updated from "napoleon" to "napoleon"
+2. CLI command changed from `napoleon` to `napoleon` in bin/
+3. All references to "napoleon" in code, comments, and documentation updated to "napoleon"
+4. Configuration directory renamed from ~/.napoleon/ to ~/.napoleon/
 5. Any ADD_MANAGER_* environment variables renamed to NAPOLEON_*
 6. All user-facing messages updated with new branding
 7. README and documentation reflect new name consistently
@@ -236,11 +236,11 @@ so that the terminal UI continues to work without any modifications.
 ### Story 1.5: AgentManager SDK Integration
 
 As a developer,
-I want to replace process spawning with SDK calls in AgentManager,
+I want to replace CLI communication with SDK calls in AgentManager,
 so that agents use the SDK while maintaining the same external interface.
 
 #### Acceptance Criteria
-1. Replace spawnClaudeProcess() internals to use SDK initialization
+1. Replace Claude CLI integration to use SDK initialization
 2. Update sendInstructions() to use SDK executeQuery()
 3. Modify handleAgentOutput() to process SDK responses via transformer
 4. Update terminateAgent() to properly close SDK sessions
@@ -257,7 +257,7 @@ so that agents use the SDK while maintaining the same external interface.
 
 As a developer,
 I want to comprehensively test the SDK integration,
-so that we can confidently release Napoleon as a reliable replacement for ADD Manager.
+so that we can confidently release Napoleon as a reliable replacement for Napoleon.
 
 #### Acceptance Criteria
 1. Integration tests cover full agent lifecycle with SDK

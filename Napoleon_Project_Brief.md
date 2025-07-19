@@ -1,8 +1,8 @@
-# ADD Manager (Agent Driven Development) - Project Brief
+# Napoleon (Agent Driven Development) - Project Brief
 
 ## Executive Summary
 
-ADD Manager is a terminal UI application designed to revolutionize development workflows by enabling developers to manage multiple Claude CLI sessions with git worktree isolation. This NPM CLI package provides a clean, intuitive interface for spawning, monitoring, and managing AI agents that work on isolated branches of your codebase.
+Napoleon is a terminal UI application designed to revolutionize development workflows by enabling developers to manage multiple Claude Code SDK sessions with git worktree isolation. This NPM CLI package provides a clean, intuitive interface for spawning, monitoring, and managing AI agents that work on isolated branches of your codebase.
 
 **Vision**: Streamline agent-driven development by providing seamless multi-session management with git isolation.
 
@@ -11,12 +11,12 @@ ADD Manager is a terminal UI application designed to revolutionize development w
 ## Project Overview
 
 ### Core Details
-- **Name**: ADD Manager (Agent Driven Development)
+- **Name**: Napoleon (Agent Driven Development)
 - **Type**: NPM CLI package with terminal UI
-- **Primary Function**: Manage multiple Claude CLI sessions with git worktree isolation
+- **Primary Function**: Manage multiple Claude Code SDK sessions with git worktree isolation
 - **Installation Methods**: 
-  - `npx add-manager` (quick usage)
-  - `npm install -g add-manager` (global installation)
+  - `npx napoleon` (quick usage)
+  - `npm install -g napoleon` (global installation)
 - **Target Launch**: MVP within 2-3 weeks
 
 ### Value Proposition
@@ -55,13 +55,13 @@ ADD Manager is a terminal UI application designed to revolutionize development w
 - **Runtime**: Node.js (>= 16.0.0)
 - **CLI Framework**: commander.js
 - **Terminal UI**: blessed (for rich TUI experience)
-- **Storage**: Basic file system (JSON files in ~/.add-manager/)
+- **Storage**: Basic file system (JSON files in ~/.napoleon/)
 - **Git Integration**: Native git commands via child_process
 - **Process Management**: Built-in Node.js process handling
 
 ### Architecture Overview
 ```
-ADD Manager
+Napoleon
 ├── CLI Entry Point (commander.js)
 ├── TUI Interface (blessed)
 ├── Agent Manager (spawn/monitor/kill)
@@ -214,7 +214,7 @@ ADD Manager
 
 ## Conclusion
 
-ADD Manager represents a significant opportunity to streamline agent-driven development workflows. By focusing on the core value proposition of multi-session management with git isolation, we can deliver a powerful tool that enhances developer productivity while maintaining code quality and project organization.
+Napoleon represents a significant opportunity to streamline agent-driven development workflows. By focusing on the core value proposition of multi-session management with git isolation, we can deliver a powerful tool that enhances developer productivity while maintaining code quality and project organization.
 
 The MVP scope is deliberately constrained to ensure rapid delivery of core functionality, with a clear path for future enhancements based on user feedback and adoption patterns.
 

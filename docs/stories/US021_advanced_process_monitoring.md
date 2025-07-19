@@ -1,15 +1,15 @@
-# US011: Advanced Process Monitoring
+# US011: Advanced Session Monitoring
 
 ## Epic
-**Epic 3: Advanced Terminal UI & Process Management**
+**Epic 3: Advanced Terminal UI & Session Management**
 
 ## Story
 As a developer,
-I want comprehensive monitoring of agent processes,
+I want comprehensive monitoring of agent sessions,
 so that I can ensure optimal performance and resource usage.
 
 ## Description
-This story implements advanced process monitoring capabilities that provide detailed insights into agent performance, resource usage, and health metrics. It extends the basic status display with comprehensive monitoring tools for managing agent performance and system resources.
+This story implements advanced session monitoring capabilities that provide detailed insights into agent performance, resource usage, and health metrics. It extends the basic status display with comprehensive monitoring tools for managing agent performance and system resources.
 
 ## Priority
 **High** - Essential for system performance and resource management
@@ -17,8 +17,8 @@ This story implements advanced process monitoring capabilities that provide deta
 ## Acceptance Criteria
 
 ### AC1: Resource Usage Monitoring
-- System monitors CPU and memory usage for each agent process
-- Resource monitoring includes child processes spawned by agents
+- System monitors CPU and memory usage for each agent session
+- Resource monitoring includes child sessions spawned by agents
 - Accurate resource usage calculations and reporting
 
 ### AC2: Dashboard Resource Display
@@ -41,13 +41,13 @@ This story implements advanced process monitoring capabilities that provide deta
 - Data retention policies and storage management
 - Performance trend analysis and reporting
 
-### AC6: Process Health Checks
-- Process health checks detect and report unresponsive agents
+### AC6: Session Health Checks
+- Session health checks detect and report unresponsive agents
 - Heartbeat monitoring for agent responsiveness
-- Automatic detection of hung or crashed processes
+- Automatic detection of hung or crashed sessions
 
-### AC7: Process Restart Capability
-- System provides process restart capability for failed agents
+### AC7: Session Restart Capability
+- System provides session restart capability for failed agents
 - Automatic restart options for critical failures
 - Graceful restart with state preservation where possible
 
@@ -55,11 +55,11 @@ This story implements advanced process monitoring capabilities that provide deta
 
 ### Resource Monitoring
 ```javascript
-// Process monitoring implementation
-class ProcessMonitor {
-  constructor(agentId, pid) {
+// Session monitoring implementation
+class SessionMonitor {
+  constructor(agentId, sessionId) {
     this.agentId = agentId;
-    this.pid = pid;
+    this.sessionId = sessionId;
     this.metrics = {
       cpu: 0,
       memory: 0,
@@ -69,7 +69,7 @@ class ProcessMonitor {
   }
   
   async updateMetrics() {
-    const usage = await pidusage(this.pid);
+    const usage = await sessionUsage(this.sessionId);
     this.metrics.cpu = usage.cpu;
     this.metrics.memory = usage.memory;
     this.metrics.uptime = Date.now() - this.metrics.startTime;
@@ -117,7 +117,7 @@ Advanced Monitoring View:
 ### Alert System
 - CPU usage > 90% for 30 seconds
 - Memory usage > 80% for 60 seconds
-- Process unresponsive for 2 minutes
+- Session unresponsive for 2 minutes
 - Multiple restarts in short period
 
 ## Definition of Done
@@ -126,8 +126,8 @@ Advanced Monitoring View:
 - [ ] Performance metrics are tracked correctly
 - [ ] Resource usage alerts work properly
 - [ ] Historical data is maintained efficiently
-- [ ] Process health checks are reliable
-- [ ] Process restart capability is functional
+- [ ] Session health checks are reliable
+- [ ] Session restart capability is functional
 - [ ] Alert system is responsive and configurable
 - [ ] Unit tests validate monitoring logic
 - [ ] Integration tests cover monitoring workflow
@@ -135,7 +135,7 @@ Advanced Monitoring View:
 ## Notes
 - This story requires system-level monitoring capabilities
 - Focus on accurate resource reporting and efficient monitoring
-- Consider cross-platform process monitoring differences
+- Consider cross-platform session monitoring differences
 - Test with various load scenarios and edge cases
 - Ensure monitoring doesn't significantly impact performance
 
@@ -157,8 +157,8 @@ Advanced Monitoring View:
 **Date:** 2025-07-18
 
 **Approval Notes:**
-- Advanced process monitoring with CPU and memory tracking
+- Advanced session monitoring with CPU and memory tracking
 - Resource usage alerts and performance metrics
-- Process health checks and restart capability
+- Session health checks and restart capability
 - Historical performance data collection
 - Critical for system performance optimization

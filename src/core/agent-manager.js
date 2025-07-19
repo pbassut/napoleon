@@ -1,12 +1,12 @@
-const { spawn } = require('child_process');
 const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
-const { query } = require('@anthropic-ai/claude-code');
-const { loadConfig, saveConfig, SESSIONS_FILE } = require('./config');
+const { loadConfig, SESSIONS_FILE } = require('./config');
 const { EnvironmentValidationError, FileSystemError } = require('../utils/errors');
 const logger = require('../utils/logger');
 const WorktreeLifecycleManager = require('./worktree-lifecycle-manager');
+const SDKCommunicationManager = require('./sdk/communication-manager');
+const { SDKStatus } = require('./sdk/sdk-types');
 
 // Agent status types as per US004 requirements
 const AgentStatus = {
@@ -20,7 +20,7 @@ const AgentStatus = {
 // Input validation patterns for security
 const DANGEROUS_PATTERNS = [
   /[;&|`$]/, // Shell metacharacters (dangerous ones)
-  /\.\.[\/\\]/, // Directory traversal
+  /\.\.[/\\]/, // Directory traversal
   /^-/, // Options starting with dash
   /[<>]/, // Redirection operators
   /\0/, // Null bytes
@@ -43,6 +43,7 @@ class AgentManager {
     this.maxAgents = 3;
     this.worktreeLifecycle = null;
     this.orphanScanInterval = null;
+    this.sdkManager = new SDKCommunicationManager();
   }
 
   /**
@@ -56,7 +57,7 @@ class AgentManager {
       // Initialize worktree lifecycle management
       this.worktreeLifecycle = new WorktreeLifecycleManager({
         maxConcurrentCleanups: this.config.maxConcurrentCleanups || 2,
-        retryAttempts: this.config.cleanupRetryAttempts || 3
+        retryAttempts: this.config.cleanupRetryAttempts || 3,
       });
 
       // Initialize worktree lifecycle (discovery and cleanup of orphans)
@@ -71,7 +72,7 @@ class AgentManager {
       logger.info('Agent manager initialized successfully', {
         maxAgents: this.maxAgents,
         activeSessions: this.agents.size,
-        worktreeMetrics: this.worktreeLifecycle.getMetrics()
+        worktreeMetrics: this.worktreeLifecycle.getMetrics(),
       });
     } catch (error) {
       logger.error('Failed to initialize agent manager', { error: error.message });
@@ -87,29 +88,29 @@ class AgentManager {
       if (fs.existsSync(SESSIONS_FILE)) {
         const sessionsData = JSON.parse(fs.readFileSync(SESSIONS_FILE, 'utf8'));
 
-        // Validate existing sessions (check if processes are still running)
+        // Validate existing sessions (check SDK session status)
         const validSessions = [];
 
-        for (const session of sessionsData.sessions || []) {
-          if (this.isProcessRunning(session.pid)) {
-            // Initialize logging arrays if they don't exist
-            if (!session.logs) {
-              session.logs = [];
-            }
-            if (!session.output) {
-              session.output = [];
-            }
+        const sessions = sessionsData.sessions || [];
+        for (let i = 0; i < sessions.length; i += 1) {
+          // Migrate legacy sessions to SDK format
+          const migratedSession = AgentManager.migrateLegacySession(sessions[i]);
 
-            // Mark this session as restored from previous run
-            session.wasRestored = true;
+          // Check SDK session status
+          const sdkStatus = this.getSDKSessionStatus(migratedSession.sessionId);
 
-            // Try to reattach to the existing process for log capture
-            await this.reattachToProcess(session);
+          if (sdkStatus === SDKStatus.ACTIVE) {
+            // Initialize session for restoration
+            AgentManager.initializeRestoredSession(migratedSession);
 
-            this.agents.set(session.id, session);
-            validSessions.push(session);
+            this.agents.set(migratedSession.id, migratedSession);
+            validSessions.push(migratedSession);
           } else {
-            logger.warn('Found stale session, removing', { sessionId: session.id });
+            logger.warn('Found stale session, removing', {
+              sessionId: migratedSession.id,
+              sdkStatus,
+              sessionType: migratedSession.pid ? 'legacy' : 'sdk',
+            });
           }
         }
 
@@ -282,14 +283,94 @@ class AgentManager {
   }
 
   /**
-   * Check if process is running
+   * Migrate legacy session to SDK format
+   * @private
    */
-  isProcessRunning(pid) {
+  static migrateLegacySession(session) {
+    // Return session as-is if already migrated
+    if (session.sdkStatus) {
+      return session;
+    }
+
+    // Migrate legacy session structure
+    return {
+      ...session,
+      sdkStatus: SDKStatus.INACTIVE,
+      sessionId: session.sessionId || session.id,
+      lastMessageId: session.lastMessageId || null,
+    };
+  }
+
+  /**
+   * Initialize restored session with required properties
+   * @private
+   */
+  static initializeRestoredSession(session) {
+    // Initialize logging arrays if they don't exist
+    if (!session.logs) {
+      session.logs = [];
+    }
+    if (!session.output) {
+      session.output = [];
+    }
+
+    // Mark this session as restored from previous run
+    session.wasRestored = true;
+    session.sdkStatus = SDKStatus.ACTIVE;
+  }
+
+  /**
+   * Get SDK session status for validation
+   */
+  getSDKSessionStatus(sessionId) {
     try {
-      process.kill(pid, 0);
-      return true;
+      const session = this.sdkManager.getSession(sessionId);
+      if (!session) {
+        return SDKStatus.INACTIVE;
+      }
+      return session.isActive ? SDKStatus.ACTIVE : SDKStatus.INACTIVE;
     } catch (error) {
-      return false;
+      logger.warn('Failed to get SDK session status', { sessionId, error: error.message });
+      return SDKStatus.ERROR;
+    }
+  }
+
+  /**
+   * Initialize SDK session for an agent
+   */
+  async initializeSDKSession(agentId, workingDirectory) {
+    try {
+      // Validate API key before initializing session
+      this.validateAPIKey();
+
+      logger.info('Initializing SDK session', { agentId, workingDirectory });
+
+      const sdkSession = await this.sdkManager.initializeSDKSession(agentId, workingDirectory);
+
+      logger.info('SDK session initialized successfully', {
+        agentId,
+        sessionId: sdkSession.agentId,
+        isActive: sdkSession.isActive,
+      });
+
+      return sdkSession;
+    } catch (error) {
+      logger.error('Failed to initialize SDK session', {
+        agentId,
+        workingDirectory,
+        error: error.message,
+      });
+
+      // Re-throw validation errors as-is to preserve error codes and messages
+      if (error instanceof EnvironmentValidationError) {
+        throw error;
+      }
+
+      throw new EnvironmentValidationError(
+        `Failed to initialize SDK session: ${error.message}`,
+        'SDK_INITIALIZATION_FAILED',
+        'Check SDK configuration and dependencies',
+      );
     }
   }
 
@@ -664,22 +745,25 @@ class AgentManager {
         instructions: sanitizedInstructions,
         spawnTime: new Date().toISOString(),
         status: AgentStatus.SPAWNING,
-        pid: null,
         workingDirectory,
         worktreePath: worktreeInfo.worktreePath,
         worktreeName: worktreeInfo.worktreeName,
         gitRoot: gitValidation.rootPath,
         lastActivity: new Date().toISOString(),
         logs: [], // Initialize logs array for detail view
+        // SDK-specific fields
+        sessionId: agentId,
+        sdkStatus: SDKStatus.CONNECTING,
+        lastMessageId: null,
       };
 
-      // Spawn Claude CLI process
-      const claudeProcess = await this.spawnClaudeProcess(session);
+      // Initialize SDK session
+      const sdkSession = await this.initializeSDKSession(agentId, workingDirectory);
 
-      // Update session with process info
-      session.pid = claudeProcess.pid;
+      // Update session with SDK info
+      session.sdkStatus = SDKStatus.ACTIVE;
       session.status = AgentStatus.RUNNING;
-      session.process = claudeProcess;
+      session.lastMessageId = sdkSession.lastMessageId;
 
       // Store session
       this.agents.set(agentId, session);
@@ -696,7 +780,7 @@ class AgentManager {
 
       logger.info('Agent spawned successfully', {
         agentId,
-        pid: claudeProcess.pid,
+        sessionId: session.sessionId,
         status: session.status,
       });
 
@@ -708,54 +792,16 @@ class AgentManager {
   }
 
   /**
-   * Initialize Claude SDK session
+   * Validate API key for SDK operations
+   * @private
    */
-  async spawnClaudeProcess(session) {
-    try {
-      // Check if Claude API key is available
-      if (!process.env.ANTHROPIC_API_KEY) {
-        throw new EnvironmentValidationError(
-          'ANTHROPIC_API_KEY environment variable is not set',
-          'CLAUDE_API_KEY_NOT_FOUND',
-          'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here',
-        );
-      }
-
-      // Initialize SDK session object
-      const claudeSession = {
-        sessionId: session.id,
-        workingDirectory: session.workingDirectory,
-        abortController: new AbortController(),
-        isActive: true,
-      };
-
-      // Store SDK session reference
-      session.claudeSession = claudeSession;
-
-      logger.info('Claude SDK session initialized', {
-        agentId: session.id,
-        workingDirectory: session.workingDirectory,
-      });
-
-      // Return a mock process object to maintain compatibility with existing code
-      return {
-        pid: Date.now(), // Use timestamp as mock PID for SDK sessions
-        kill: (signal) => {
-          logger.info('Terminating Claude SDK session', { agentId: session.id, signal });
-          claudeSession.abortController.abort();
-          claudeSession.isActive = false;
-          this.updateAgentStatus(session.id, AgentStatus.TERMINATING);
-        },
-        stdin: {
-          write: (data) => {
-            // This will be handled by the new sendInstructions method
-            logger.debug('SDK stdin write called', { agentId: session.id });
-          },
-        },
-      };
-    } catch (error) {
-      logger.error('Failed to initialize Claude SDK session', { error: error.message });
-      throw error;
+  validateAPIKey() {
+    if (!process.env.ANTHROPIC_API_KEY) {
+      throw new EnvironmentValidationError(
+        'ANTHROPIC_API_KEY environment variable is not set',
+        'CLAUDE_API_KEY_NOT_FOUND',
+        'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here',
+      );
     }
   }
 
@@ -764,8 +810,14 @@ class AgentManager {
    */
   async sendInstructions(agentId, instructions) {
     const session = this.agents.get(agentId);
-    if (!session || !session.claudeSession) {
-      throw new Error('Agent session not found or Claude SDK session not available');
+    if (!session) {
+      throw new Error('Agent session not found');
+    }
+
+    // Check SDK session status
+    const sdkStatus = this.getSDKSessionStatus(session.sessionId || session.id);
+    if (sdkStatus !== SDKStatus.ACTIVE) {
+      throw new Error('SDK session not available or inactive');
     }
 
     try {
@@ -777,19 +829,14 @@ class AgentManager {
       // Update session status to indicate processing
       this.updateAgentStatus(agentId, AgentStatus.RUNNING);
 
-      // Execute query using Claude Code SDK
-      const messages = [];
+      // Execute query using SDK manager
+      const messages = await this.sdkManager.executeQuery(session.sessionId || session.id, instructions, {
+        maxTurns: 10,
+        workingDirectory: session.workingDirectory,
+      });
 
-      for await (const message of query({
-        prompt: instructions,
-        abortController: session.claudeSession.abortController,
-        options: {
-          maxTurns: 10,
-          workingDirectory: session.workingDirectory,
-        },
-      })) {
-        messages.push(message);
-
+      // Process each message from SDK
+      for (const message of messages) {
         // Handle real-time output from SDK
         this.handleSDKMessage(agentId, message);
       }
@@ -949,11 +996,11 @@ class AgentManager {
     };
 
     this.agents.set(pendingAgent.id, pendingAgent);
-    logger.debug('Added pending agent for immediate UI feedback', { 
+    logger.debug('Added pending agent for immediate UI feedback', {
       agentId: pendingAgent.id,
-      instructions: pendingAgent.instructions.substring(0, 50) 
+      instructions: pendingAgent.instructions.substring(0, 50),
     });
-    
+
     return pendingAgent;
   }
 
@@ -966,7 +1013,7 @@ class AgentManager {
     if (agent) {
       agent.status = status;
       agent.lastActivity = new Date().toISOString();
-      
+
       if (errorMessage) {
         agent.error = errorMessage;
         agent.progress = `Error: ${errorMessage}`;
@@ -977,11 +1024,11 @@ class AgentManager {
       } else if (status === AgentStatus.SPAWNING) {
         agent.progress = agent.progress || 'Creating...';
       }
-      
-      logger.debug('Updated pending agent status', { 
-        agentId, 
-        status, 
-        error: errorMessage 
+
+      logger.debug('Updated pending agent status', {
+        agentId,
+        status,
+        error: errorMessage,
       });
 
       // If agent has error or terminating status, handle removal
@@ -1008,52 +1055,73 @@ class AgentManager {
     }
 
     try {
-      if (session.process && session.pid) {
-        // Send SIGTERM first
-        session.process.kill('SIGTERM');
-
-        // Wait a bit, then force kill if needed
-        setTimeout(() => {
-          if (this.isProcessRunning(session.pid)) {
-            session.process.kill('SIGKILL');
-          }
-        }, 5000);
+      // Terminate SDK session gracefully
+      if (session.sessionId || session.id) {
+        const terminationSuccess = await this.sdkManager.terminateSession(session.sessionId || session.id);
+        if (terminationSuccess) {
+          session.sdkStatus = SDKStatus.INACTIVE;
+          logger.info('SDK session terminated successfully', { agentId });
+        } else {
+          logger.warn('SDK session termination failed', { agentId });
+          session.sdkStatus = SDKStatus.ERROR;
+        }
       }
 
-      // Use worktree lifecycle manager for cleanup
-      if (this.worktreeLifecycle && session.worktreePath) {
+      // Clean up worktree immediately (for test compatibility and immediate cleanup)
+      if (session.worktreePath) {
         try {
-          const cleanupId = await this.worktreeLifecycle.unregisterAgent(agentId, {
-            force: options.force || false,
-            preserveBranch: options.preserveBranch || false
-          });
-          
-          logger.info('Agent worktree queued for cleanup via lifecycle manager', {
-            agentId,
-            worktreePath: session.worktreePath,
-            cleanupId
+          // Direct git worktree removal for immediate cleanup
+          await new Promise((resolve, reject) => {
+            exec(`git worktree remove "${session.worktreePath}" --force`, {
+              cwd: process.cwd(),
+              timeout: 30000, // 30 second timeout
+            }, (error, stdout, stderr) => {
+              if (error) {
+                logger.warn('Direct git worktree removal failed, trying lifecycle manager', {
+                  agentId,
+                  worktreePath: session.worktreePath,
+                  error: error.message,
+                  stderr,
+                });
+
+                // Fallback to lifecycle manager
+                if (this.worktreeLifecycle) {
+                  this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
+                    force: true,
+                    preserveBranch: options.preserveBranch || false,
+                  }).then(() => {
+                    logger.info('Agent worktree queued for cleanup via lifecycle manager', {
+                      agentId,
+                      worktreePath: session.worktreePath,
+                    });
+                    resolve();
+                  }).catch((lifecycleError) => {
+                    logger.error('Failed to cleanup worktree via lifecycle manager', {
+                      agentId,
+                      worktreePath: session.worktreePath,
+                      error: lifecycleError.message,
+                    });
+                    reject(lifecycleError);
+                  });
+                } else {
+                  reject(error);
+                }
+              } else {
+                logger.info('Agent worktree removed directly', {
+                  agentId,
+                  worktreePath: session.worktreePath,
+                  stdout: stdout.trim(),
+                });
+                resolve();
+              }
+            });
           });
         } catch (error) {
-          logger.warn('Failed to queue agent worktree for cleanup, falling back to direct cleanup', {
+          logger.error('Failed to cleanup worktree', {
             agentId,
             worktreePath: session.worktreePath,
             error: error.message,
           });
-          
-          // Fallback to direct cleanup
-          try {
-            await this.removeWorktree(session.worktreePath);
-            logger.info('Agent worktree cleaned up directly', {
-              agentId,
-              worktreePath: session.worktreePath,
-            });
-          } catch (fallbackError) {
-            logger.error('Failed direct worktree cleanup', {
-              agentId,
-              worktreePath: session.worktreePath,
-              error: fallbackError.message,
-            });
-          }
         }
       }
 
@@ -1176,21 +1244,21 @@ class AgentManager {
   startBackgroundOrphanScanning() {
     // Scan every 5 minutes for orphaned worktrees
     const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
-    
+
     this.orphanScanInterval = setInterval(async () => {
       try {
         if (this.worktreeLifecycle) {
           const result = await this.worktreeLifecycle.scanForOrphans();
-          
+
           if (result.newOrphans > 0) {
             logger.info('Background orphan scan found new orphaned worktrees', {
               scanned: result.scanned,
-              newOrphans: result.newOrphans
+              newOrphans: result.newOrphans,
             });
           } else {
             logger.debug('Background orphan scan completed', {
               scanned: result.scanned,
-              newOrphans: result.newOrphans
+              newOrphans: result.newOrphans,
             });
           }
         }
@@ -1199,8 +1267,8 @@ class AgentManager {
       }
     }, scanIntervalMs);
 
-    logger.info('Background orphan scanning started', { 
-      intervalMinutes: Math.round(scanIntervalMs / (60 * 1000))
+    logger.info('Background orphan scanning started', {
+      intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
     });
   }
 
@@ -1236,7 +1304,7 @@ class AgentManager {
 
     return {
       enabled: true,
-      ...this.worktreeLifecycle.getStatus()
+      ...this.worktreeLifecycle.getStatus(),
     };
   }
 
@@ -1258,12 +1326,12 @@ class AgentManager {
       // Terminate all active agents
       const activeAgents = Array.from(this.agents.keys());
       if (activeAgents.length > 0) {
-        logger.info('Terminating active agents during shutdown', { 
-          count: activeAgents.length 
+        logger.info('Terminating active agents during shutdown', {
+          count: activeAgents.length,
         });
 
         await Promise.allSettled(
-          activeAgents.map(agentId => this.terminateAgent(agentId, { force: true }))
+          activeAgents.map((agentId) => this.terminateAgent(agentId, { force: true })),
         );
       }
 

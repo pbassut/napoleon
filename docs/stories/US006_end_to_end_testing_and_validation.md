@@ -4,7 +4,7 @@
 
 As a developer,
 I want to comprehensively test the SDK integration,
-so that we can confidently release Napoleon as a reliable replacement for ADD Manager.
+so that we can confidently release Napoleon as a reliable replacement for Napoleon.
 
 ## Acceptance Criteria
 

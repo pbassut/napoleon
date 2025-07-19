@@ -60,7 +60,7 @@ Agent Detail View:
 │ Agent: agent-001 [feature/agent-001] │ CPU: 15% │ RAM: 45MB │
 ├─────────────────────────────────────────────────────────────┤
 │ Started: 2025-07-17 10:00:00 │ Runtime: 05:23:45          │
-│ Worktree: .add-manager-worktrees/agent-001-1642434567890   │
+│ Worktree: .napoleon-worktrees/agent-001-1642434567890   │
 │ PID: 12345 │ Status: running │ Instructions: "Implement..." │
 ├─────────────────────────────────────────────────────────────┤
 │ Logs:                                                       │

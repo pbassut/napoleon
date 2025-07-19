@@ -7,7 +7,7 @@ const logger = require('../src/utils/logger');
 
 // Configuration paths factory functions
 function getAddManagerDir() {
-  return path.join(os.homedir(), '.add-manager');
+  return path.join(os.homedir(), '.napoleon');
 }
 
 function getNapoleonDir() {
@@ -15,7 +15,7 @@ function getNapoleonDir() {
 }
 
 function getBackupDir() {
-  return path.join(getNapoleonDir(), 'backup-from-add-manager');
+  return path.join(getNapoleonDir(), 'backup-from-napoleon');
 }
 
 // Session file paths factory functions
@@ -55,7 +55,7 @@ function parseArguments() {
  */
 function showHelp() {
   console.log(`
-Migration Helper: ADD Manager to Napoleon
+Migration Helper: Napoleon to Napoleon
 
 Usage: migrate-to-napoleon [options]
 
@@ -92,7 +92,7 @@ function copyDirectoryRecursive(src, dest) {
 }
 
 /**
- * Check if ADD Manager data exists
+ * Check if Napoleon data exists
  */
 function checkAddManagerData() {
   const checks = {
@@ -118,10 +118,10 @@ function checkNapoleonData() {
 }
 
 /**
- * Create backup of original ADD Manager data
+ * Create backup of original Napoleon data
  */
 function createBackup() {
-  logger.info('Creating backup of ADD Manager data...');
+  logger.info('Creating backup of Napoleon data...');
 
   const napoleonDir = getNapoleonDir();
   const backupDir = getBackupDir();
@@ -134,9 +134,9 @@ function createBackup() {
     fs.mkdirSync(backupDir, { recursive: true });
   }
 
-  // Copy entire ADD Manager directory to backup
+  // Copy entire Napoleon directory to backup
   const backupTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const timestampedBackup = path.join(backupDir, `add-manager-${backupTimestamp}`);
+  const timestampedBackup = path.join(backupDir, `napoleon-${backupTimestamp}`);
 
   fs.mkdirSync(timestampedBackup, { recursive: true });
 
@@ -171,7 +171,7 @@ function createBackup() {
 }
 
 /**
- * Transform session data from ADD Manager to Napoleon format
+ * Transform session data from Napoleon to Napoleon format
  */
 function transformSessionData(addManagerSessions) {
   if (!addManagerSessions || !addManagerSessions.sessions) {
@@ -201,7 +201,7 @@ function transformSessionData(addManagerSessions) {
       sdkSessionId: null,
 
       // Migration metadata
-      migratedFrom: 'add-manager',
+      migratedFrom: 'napoleon',
       migrationDate: new Date().toISOString(),
 
       // Remove process-specific fields
@@ -224,13 +224,13 @@ function transformSessionData(addManagerSessions) {
   return {
     sessions: transformedSessions,
     lastUpdated: new Date().toISOString(),
-    migratedFrom: 'add-manager',
+    migratedFrom: 'napoleon',
     migrationDate: new Date().toISOString(),
   };
 }
 
 /**
- * Transform config data from ADD Manager to Napoleon format
+ * Transform config data from Napoleon to Napoleon format
  */
 function transformConfigData(addManagerConfig) {
   if (!addManagerConfig) {
@@ -255,7 +255,7 @@ function transformConfigData(addManagerConfig) {
       ...addManagerConfig.features,
       sdkIntegration: true, // Add SDK integration feature
     },
-    migratedFrom: 'add-manager',
+    migratedFrom: 'napoleon',
     migrationDate: new Date().toISOString(),
   };
 
@@ -266,12 +266,12 @@ function transformConfigData(addManagerConfig) {
  * Perform the migration
  */
 async function performMigration(options) {
-  logger.info('Starting migration from ADD Manager to Napoleon...');
+  logger.info('Starting migration from Napoleon to Napoleon...');
 
-  // Check ADD Manager data
+  // Check Napoleon data
   const addManagerData = checkAddManagerData();
   if (!addManagerData.directory) {
-    logger.error('ADD Manager directory not found. Nothing to migrate.');
+    logger.error('Napoleon directory not found. Nothing to migrate.');
     return false;
   }
 
@@ -292,7 +292,7 @@ async function performMigration(options) {
     if (!options.dryRun) {
       backupPath = createBackup();
     } else {
-      logger.info('[DRY RUN] Would create backup of ADD Manager data');
+      logger.info('[DRY RUN] Would create backup of Napoleon data');
     }
 
     // Create Napoleon directory
@@ -368,7 +368,7 @@ async function performMigration(options) {
       logger.info('3. Run Napoleon: napoleon');
       logger.info('4. Verify your sessions appear correctly');
       logger.info('');
-      logger.info(`Your ADD Manager data has been backed up to: ${backupPath}`);
+      logger.info(`Your Napoleon data has been backed up to: ${backupPath}`);
     }
 
     return true;
@@ -443,7 +443,7 @@ async function main() {
     logger.level = 'debug';
   }
 
-  logger.info('ADD Manager to Napoleon Migration Tool');
+  logger.info('Napoleon to Napoleon Migration Tool');
   logger.info('=====================================');
 
   if (options.dryRun) {

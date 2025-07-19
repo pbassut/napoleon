@@ -16,7 +16,7 @@ jest.mock('os');
 
 describe('Migration Helper Tests', () => {
   const mockHomeDir = '/mock/home';
-  const mockAddManagerDir = path.join(mockHomeDir, '.add-manager');
+  const mockAddManagerDir = path.join(mockHomeDir, '.napoleon');
   const mockNapoleonDir = path.join(mockHomeDir, '.napoleon');
 
   beforeEach(() => {
@@ -46,7 +46,7 @@ describe('Migration Helper Tests', () => {
   });
 
   describe('checkAddManagerData', () => {
-    test('should return false for all checks when ADD Manager directory does not exist', () => {
+    test('should return false for all checks when Napoleon directory does not exist', () => {
       fs.existsSync.mockReturnValue(false);
       
       const result = checkAddManagerData();
@@ -58,9 +58,9 @@ describe('Migration Helper Tests', () => {
       });
     });
 
-    test('should return true for existing ADD Manager files', () => {
+    test('should return true for existing Napoleon files', () => {
       fs.existsSync.mockImplementation((filePath) => {
-        return filePath.includes('.add-manager');
+        return filePath.includes('.napoleon');
       });
       
       const result = checkAddManagerData();
@@ -120,7 +120,7 @@ describe('Migration Helper Tests', () => {
       });
     });
 
-    test('should transform ADD Manager session to Napoleon format', () => {
+    test('should transform Napoleon session to Napoleon format', () => {
       const addManagerSessions = {
         sessions: [
           {
@@ -152,7 +152,7 @@ describe('Migration Helper Tests', () => {
       expect(transformedSession.sdkStatus).toBe('inactive');
       expect(transformedSession.lastMessageId).toBeNull();
       expect(transformedSession.sdkSessionId).toBeNull();
-      expect(transformedSession.migratedFrom).toBe('add-manager');
+      expect(transformedSession.migratedFrom).toBe('napoleon');
       expect(transformedSession.migrationDate).toEqual(expect.any(String));
       
       // Check process-specific fields are removed
@@ -206,7 +206,7 @@ describe('Migration Helper Tests', () => {
       });
     });
 
-    test('should transform ADD Manager config to Napoleon format', () => {
+    test('should transform Napoleon config to Napoleon format', () => {
       const addManagerConfig = {
         version: '1.0.0',
         maxAgents: 5,
@@ -229,13 +229,13 @@ describe('Migration Helper Tests', () => {
       expect(result.features.notifications).toBe(true);
       expect(result.features.customFeature).toBe('test');
       expect(result.features.sdkIntegration).toBe(true);
-      expect(result.migratedFrom).toBe('add-manager');
+      expect(result.migratedFrom).toBe('napoleon');
       expect(result.migrationDate).toEqual(expect.any(String));
     });
   });
 
   describe('performMigration', () => {
-    test('should return false when no ADD Manager data exists', async () => {
+    test('should return false when no Napoleon data exists', async () => {
       fs.existsSync.mockReturnValue(false);
       
       const result = await performMigration({ dryRun: true });
@@ -245,7 +245,7 @@ describe('Migration Helper Tests', () => {
 
     test('should return false when Napoleon data exists and force is not set', async () => {
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath.includes('.add-manager')) return true;
+        if (filePath.includes('.napoleon')) return true;
         if (filePath.includes('.napoleon/sessions.json')) return true;
         return false;
       });
@@ -256,9 +256,9 @@ describe('Migration Helper Tests', () => {
     });
 
     test('should perform dry run migration successfully', async () => {
-      // Mock ADD Manager data exists
+      // Mock Napoleon data exists
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath.includes('.add-manager')) return true;
+        if (filePath.includes('.napoleon')) return true;
         return false;
       });
       
@@ -286,16 +286,16 @@ describe('Migration Helper Tests', () => {
         return '{}';
       });
       
-      const result = await performMigration({ dryRun: true });
+      const result = await performMigration({ dryRun: true, force: true });
       
       expect(result).toBe(true);
       expect(fs.writeFileSync).not.toHaveBeenCalled();
     });
 
     test('should perform actual migration successfully', async () => {
-      // Mock ADD Manager data exists
+      // Mock Napoleon data exists
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath.includes('.add-manager')) return true;
+        if (filePath.includes('.napoleon')) return true;
         return false;
       });
       
@@ -323,7 +323,7 @@ describe('Migration Helper Tests', () => {
         return '{}';
       });
       
-      const result = await performMigration({ dryRun: false });
+      const result = await performMigration({ dryRun: false, force: true });
       
       expect(result).toBe(true);
       expect(fs.writeFileSync).toHaveBeenCalled();
@@ -331,9 +331,9 @@ describe('Migration Helper Tests', () => {
     });
 
     test('should handle migration errors gracefully', async () => {
-      // Mock ADD Manager data exists
+      // Mock Napoleon data exists
       fs.existsSync.mockImplementation((filePath) => {
-        if (filePath.includes('.add-manager')) return true;
+        if (filePath.includes('.napoleon')) return true;
         return false;
       });
       

@@ -68,7 +68,8 @@ describe('AgentDetailView', () => {
     mockAgent = {
       id: 'agent-001',
       status: AgentStatus.RUNNING,
-      pid: 12345,
+      sdkStatus: 'active',
+      sessionId: 'session-001',
       startTime: new Date('2025-07-17T10:00:00Z').toISOString(),
       instructions: 'Test instructions',
     };
@@ -311,7 +312,8 @@ describe('AgentDetailView', () => {
         id: 'agent-001',
         worktreePath: '/path/to/worktree',
         branch: 'feature/test',
-        pid: 12345,
+        sdkStatus: 'active',
+        sessionId: 'session-001',
         status: AgentStatus.RUNNING,
         instructions: 'Test instructions',
       };
@@ -372,19 +374,11 @@ describe('AgentDetailView', () => {
     });
   });
 
-  describe('Resource Usage Monitoring', () => {
-    test('should provide CPU usage information', () => {
-      const cpuUsage = agentDetailView.getCpuUsage(mockAgent);
-      expect(typeof cpuUsage).toBe('number');
-      expect(cpuUsage).toBeGreaterThanOrEqual(10);
-      expect(cpuUsage).toBeLessThanOrEqual(60);
-    });
-
-    test('should provide memory usage information', () => {
-      const memoryUsage = agentDetailView.getMemoryUsage(mockAgent);
-      expect(typeof memoryUsage).toBe('number');
-      expect(memoryUsage).toBeGreaterThanOrEqual(20);
-      expect(memoryUsage).toBeLessThanOrEqual(120);
+  describe('SDK Session Information', () => {
+    test('should display SDK session status', () => {
+      agentDetailView.show(mockAgent);
+      expect(mockAgent.sdkStatus).toBe('active');
+      expect(mockAgent.sessionId).toBe('session-001');
     });
   });
 

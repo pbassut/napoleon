@@ -5,7 +5,7 @@
 ```plaintext
 terragon/
 ├── bin/
-│   └── add-manager.js           # CLI entry point
+│   └── napoleon.js           # CLI entry point
 ├── src/
 │   ├── cli/                     # Command-line interface
 │   ├── core/                    # Business logic

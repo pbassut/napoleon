@@ -1,6 +1,6 @@
-# Migration Guide: ADD Manager to Napoleon
+# Migration Guide: Napoleon to Napoleon
 
-This guide helps you migrate from ADD Manager to Napoleon, which replaces CLI-based process spawning with the Claude Code SDK for improved reliability and performance.
+This guide helps you migrate from Napoleon to Napoleon, which replaces CLI-based process spawning with the Claude Code SDK for improved reliability and performance.
 
 ## Quick Migration Checklist
 
@@ -9,19 +9,19 @@ This guide helps you migrate from ADD Manager to Napoleon, which replaces CLI-ba
 > **Prerequisites**: ✓ Node.js 18.0.0+, ✓ Anthropic API key
 > 
 > **Steps**:
-> - [ ] Back up existing ADD Manager data (`cp -r ~/.add-manager ~/.add-manager-backup`)
+> - [ ] Back up existing Napoleon data (`cp -r ~/.napoleon ~/.napoleon-backup`)
 > - [ ] Install Napoleon (`npm install -g napoleon`)
 > - [ ] Set up API key (`export ANTHROPIC_API_KEY="your-key"`)
 > - [ ] Run migration (`napoleon migrate` or automatic on first run)
 > - [ ] Verify agents appear in Napoleon dashboard
 > - [ ] Test spawning a new agent
-> - [ ] Uninstall ADD Manager when comfortable (`npm uninstall -g add-manager`)
+> - [ ] Uninstall Napoleon when comfortable (`npm uninstall -g napoleon`)
 > 
 > **Need Help?** See [Getting Help](#getting-help) section below.
 
 ## Overview
 
-Napoleon is the next evolution of ADD Manager, offering:
+Napoleon is the next evolution of Napoleon, offering:
 - Direct SDK integration (no Claude CLI dependency)
 - Better error handling and recovery
 - Improved performance and reliability
@@ -32,15 +32,15 @@ Napoleon is the next evolution of ADD Manager, offering:
 Before migrating:
 - Ensure you have Node.js 18.0.0 or higher installed
 - Obtain an Anthropic API key from https://console.anthropic.com
-- Back up your existing ADD Manager session data (recommended)
+- Back up your existing Napoleon session data (recommended)
 
 ## Migration Steps
 
 ### Step 1: Back Up Existing Data
 
 ```bash
-# Create backup of your ADD Manager data
-cp -r ~/.add-manager ~/.add-manager-backup
+# Create backup of your Napoleon data
+cp -r ~/.napoleon ~/.napoleon-backup
 ```
 
 ### Step 2: Install Napoleon
@@ -77,7 +77,7 @@ echo ".env" >> .gitignore
 ### Step 4: Migrate Session Data
 
 Napoleon includes automatic session migration. On first run, it will:
-1. Detect existing ADD Manager sessions
+1. Detect existing Napoleon sessions
 2. Convert session format (remove process IDs, add SDK fields)
 3. Copy data to `~/.napoleon/`
 
@@ -99,19 +99,19 @@ Migration script options:
 - `--verbose, -v`: Show detailed output
 - `--help, -h`: Show help message
 
-### Step 5: Uninstall ADD Manager (Optional)
+### Step 5: Uninstall Napoleon (Optional)
 
 Once you've verified Napoleon is working correctly:
 ```bash
-npm uninstall -g add-manager
+npm uninstall -g napoleon
 ```
 
 ## Command and Feature Comparison
 
-| ADD Manager | Napoleon | Notes |
+| Napoleon | Napoleon | Notes |
 |-------------|----------|-------|
-| `add-manager` | `napoleon` | Main command |
-| `~/.add-manager/` | `~/.napoleon/` | Config directory |
+| `napoleon` | `napoleon` | Main command |
+| `~/.napoleon/` | `~/.napoleon/` | Config directory |
 | Claude CLI required | API key required | Authentication method |
 | Process-based agents | SDK-based agents | Communication method |
 | All keyboard shortcuts | Same shortcuts | No changes |
@@ -144,7 +144,7 @@ The migration process handles:
 ### Session Format Changes
 
 ```json
-// Old format (ADD Manager)
+// Old format (Napoleon)
 {
   "id": "agent-123",
   "pid": 12345,
@@ -178,7 +178,7 @@ export ANTHROPIC_API_KEY="your-api-key"
 **Session Migration Failed**
 ```bash
 # Manual migration
-cp ~/.add-manager/sessions.json ~/.napoleon/sessions.json
+cp ~/.napoleon/sessions.json ~/.napoleon/sessions.json
 
 # Reset and try again
 rm -rf ~/.napoleon
@@ -193,10 +193,10 @@ chmod -R 755 ~/.napoleon
 
 ## Rollback Process
 
-If you need to revert to ADD Manager:
-1. Your original data is preserved in `~/.add-manager-backup`
-2. Reinstall ADD Manager: `npm install -g add-manager`
-3. Restore backup: `cp -r ~/.add-manager-backup ~/.add-manager`
+If you need to revert to Napoleon:
+1. Your original data is preserved in `~/.napoleon-backup`
+2. Reinstall Napoleon: `npm install -g napoleon`
+3. Restore backup: `cp -r ~/.napoleon-backup ~/.napoleon`
 
 ## Getting Help
 
@@ -210,6 +210,6 @@ After migration:
 1. Verify all agents appear in Napoleon dashboard
 2. Test spawning a new agent
 3. Confirm git worktree integration works
-4. Remove ADD Manager once comfortable
+4. Remove Napoleon once comfortable
 
 Welcome to Napoleon! 🚀

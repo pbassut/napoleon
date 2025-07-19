@@ -5,7 +5,7 @@
 - **Primary Purpose:** Agent Driven Development Manager - A CLI tool for managing multiple Claude CLI sessions with isolated git worktrees
 - **Current Tech Stack:** Node.js (16+), blessed (terminal UI), commander.js (CLI), winston (logging), git worktrees
 - **Architecture Style:** Modular monolithic with clear separation between CLI, UI, Core logic, and utilities
-- **Deployment Method:** NPM package with global CLI command (`add-manager`)
+- **Deployment Method:** NPM package with global CLI command (`napoleon`)
 
 ## Available Documentation
 

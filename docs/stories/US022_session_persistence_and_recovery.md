@@ -1,7 +1,7 @@
 # US012: Session Persistence and Recovery
 
 ## Epic
-**Epic 3: Advanced Terminal UI & Process Management**
+**Epic 3: Advanced Terminal UI & Session Management**
 
 ## Story
 As a developer,
@@ -9,7 +9,7 @@ I want basic session persistence across application restarts,
 so that I can maintain continuity in my agent workflows.
 
 ## Description
-This story implements session persistence and recovery capabilities that allow agent sessions to survive application restarts. It provides basic continuity features to reconnect to existing agent processes and restore session state after application interruption.
+This story implements session persistence and recovery capabilities that allow agent sessions to survive application restarts. It provides basic continuity features to reconnect to existing agent sessions and restore session state after application interruption.
 
 ## Priority
 **High** - Important for workflow continuity and user experience
@@ -17,19 +17,19 @@ This story implements session persistence and recovery capabilities that allow a
 ## Acceptance Criteria
 
 ### AC1: Automatic Session Saving
-- Session state is automatically saved to ~/.add-manager/sessions.json
+- Session state is automatically saved to ~/.napoleon/sessions.json
 - Session data includes all necessary information for recovery
 - Atomic writes to prevent data corruption
 
-### AC2: Process Reconnection
-- Application attempts to reconnect to existing agent processes on startup
-- Process validation to ensure agents are still running
-- Proper process handle restoration
+### AC2: Session Reconnection
+- Application attempts to reconnect to existing agent sessions on startup
+- Session validation to ensure agents are still running
+- Proper session handle restoration
 
-### AC3: Orphaned Process Detection
-- Orphaned agent processes are detected and handled appropriately
-- Cleanup of stale process references
-- Option to adopt or terminate orphaned processes
+### AC3: Orphaned Session Detection
+- Orphaned agent sessions are detected and handled appropriately
+- Cleanup of stale session references
+- Option to adopt or terminate orphaned sessions
 
 ### AC4: Recovery Status Notification
 - User is notified of session recovery success/failure status
@@ -42,7 +42,7 @@ This story implements session persistence and recovery capabilities that allow a
 - Sufficient data for full session restoration
 
 ### AC6: Git Worktree Validation
-- Recovery process validates git worktree state before reconnection
+- Recovery session validates git worktree state before reconnection
 - Handles missing or corrupted worktrees gracefully
 - Worktree consistency checks
 
@@ -61,7 +61,7 @@ const SessionData = {
   pid: 12345,
   spawnTime: '2025-07-17T10:00:00Z',
   instructions: 'Help me implement a new feature',
-  worktreePath: '.add-manager-worktrees/agent-001-1642434567890',
+  worktreePath: '.napoleon-worktrees/agent-001-1642434567890',
   branchName: 'feature/agent-001',
   status: 'running',
   lastActivity: '2025-07-17T10:23:45Z',
@@ -73,7 +73,7 @@ const SessionData = {
 };
 ```
 
-### Recovery Process
+### Recovery Session
 ```javascript
 // Session recovery implementation
 class SessionRecovery {
@@ -94,10 +94,10 @@ class SessionRecovery {
   }
   
   async recoverSession(sessionData) {
-    // Validate process is still running
-    const isRunning = await this.validateProcess(sessionData.pid);
+    // Validate session is still running
+    const isRunning = await this.validateSession(sessionData.sessionId);
     if (!isRunning) {
-      throw new Error('Process no longer running');
+      throw new Error('Session no longer running');
     }
     
     // Validate worktree exists
@@ -119,14 +119,14 @@ Session Recovery Status:
 │ Recovering Sessions...                                      │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│ ✓ agent-001   [recovered]     Process: 12345               │
-│ ✗ agent-002   [failed]        Process not found            │
-│ ✓ agent-003   [recovered]     Process: 12456               │
+│ ✓ agent-001   [recovered]     Session: 12345               │
+│ ✗ agent-002   [failed]        Session not found            │
+│ ✓ agent-003   [recovered]     Session: 12456               │
 │                                                             │
 │ Recovery Summary:                                           │
 │ - 2 sessions recovered successfully                         │
 │ - 1 session failed to recover                              │
-│ - 0 orphaned processes adopted                              │
+│ - 0 orphaned sessions adopted                              │
 │                                                             │
 │ Press any key to continue...                               │
 └─────────────────────────────────────────────────────────────┘
@@ -134,13 +134,13 @@ Session Recovery Status:
 
 ## Definition of Done
 - [ ] Session data is saved automatically
-- [ ] Process reconnection works correctly
-- [ ] Orphaned processes are detected and handled
+- [ ] Session reconnection works correctly
+- [ ] Orphaned sessions are detected and handled
 - [ ] Recovery status is communicated clearly
 - [ ] Session data is complete and accurate
 - [ ] Git worktree validation is functional
 - [ ] Recovery error logging is comprehensive
-- [ ] Recovery process is robust and reliable
+- [ ] Recovery session is robust and reliable
 - [ ] Unit tests validate recovery logic
 - [ ] Integration tests cover recovery scenarios
 
@@ -154,7 +154,7 @@ Session Recovery Status:
 ## Related Stories
 - US003: Agent Spawning Core Functionality (prerequisite)
 - US006: Git Worktree Creation (integrates with this)
-- US011: Advanced Process Monitoring (complements this)
+- US011: Advanced Session Monitoring (complements this)
 - US013: Error Handling and Recovery (extends this)
 - US001: Project Setup and CLI Framework (uses session storage)
 
@@ -170,7 +170,7 @@ Session Recovery Status:
 
 **Approval Notes:**
 - Session persistence across application restarts
-- Process reconnection and orphaned process detection
+- Session reconnection and orphaned session detection
 - Git worktree validation and recovery
 - Complete session data preservation
 - Essential for maintaining workflow continuity

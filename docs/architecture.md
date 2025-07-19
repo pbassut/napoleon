@@ -2,10 +2,10 @@
 
 ## Introduction
 
-This document outlines the architectural approach for enhancing ADD Manager with the Napoleon rebrand and Claude Code SDK integration. Its primary goal is to serve as the guiding architectural blueprint for the migration from CLI-based process management to SDK-based agent orchestration while ensuring seamless integration with the existing terminal UI system.
+This document outlines the architectural approach for enhancing Napoleon with the Napoleon rebrand and Claude Code SDK integration. Its primary goal is to serve as the guiding architectural blueprint for the migration from CLI-based session management to SDK-based agent orchestration while ensuring seamless integration with the existing terminal UI system.
 
 **Relationship to Existing Architecture:**
-This document supplements the existing ADD Manager architecture by defining how the SDK integration will replace the current CLI process spawning mechanism. Where the existing system uses child process management, this document provides guidance on maintaining all current functionality while implementing a cleaner, more reliable SDK-based approach.
+This document supplements the existing Napoleon architecture by defining how the SDK integration will replace the current CLI session spawning mechanism. Where the existing system uses child session management, this document provides guidance on maintaining all current functionality while implementing a cleaner, more reliable SDK-based approach.
 
 ## Change Log
 
@@ -20,7 +20,7 @@ This document supplements the existing ADD Manager architecture by defining how 
 - **Primary Purpose:** Agent Driven Development Manager - A CLI tool for managing multiple Claude CLI sessions with isolated git worktrees
 - **Current Tech Stack:** Node.js (16+), blessed (terminal UI), commander.js (CLI), winston (logging), git worktrees
 - **Architecture Style:** Modular monolithic with clear separation between CLI, UI, Core logic, and utilities
-- **Deployment Method:** NPM package with global CLI command (`add-manager`)
+- **Deployment Method:** NPM package with global CLI command (`napoleon`)
 
 ### Available Documentation
 
@@ -35,23 +35,23 @@ This document supplements the existing ADD Manager architecture by defining how 
 - Git 2.20.0+ required for worktree operations
 - Claude CLI must be installed and accessible in PATH
 - Maximum 3 concurrent agents (configurable)
-- Process management complexity with stdin/stdout handling
-- Limited ability to reattach to existing processes after restart
+- Session management complexity with stdin/stdout handling
+- Limited ability to reattach to existing sessions after restart
 
 ## Enhancement Scope and Integration Strategy
 
 ### Enhancement Overview
 
 **Enhancement Type:** Core Communication Layer Replacement  
-**Scope:** Replace CLI child process spawning with Claude Code SDK while maintaining all existing functionality  
+**Scope:** Replace CLI child session spawning with Claude Code SDK while maintaining all existing functionality  
 **Integration Impact:** Medium - Core change but with minimal surface area impact
 
 ### Integration Approach
 
-**Code Integration Strategy:** Surgical replacement of process management methods in AgentManager class
-- Replace `spawnClaudeProcess()` with SDK initialization
+**Code Integration Strategy:** Surgical replacement of session management methods in AgentManager class
+- Replace `spawnClaudeSession()` with SDK initialization
 - Adapt `sendInstructions()` to use SDK query methods
-- Transform `handleAgentOutput()` to process SDK responses
+- Transform `handleAgentOutput()` to handle SDK responses
 - Maintain all existing method signatures for UI compatibility
 
 **Database Integration:** No changes - Session JSON structure remains compatible
@@ -65,7 +65,7 @@ This document supplements the existing ADD Manager architecture by defining how 
 - **Existing API Compatibility:** 100% - All AgentManager public methods retain same signatures
 - **Database Schema Compatibility:** Full compatibility - Session data structure unchanged
 - **UI/UX Consistency:** Complete preservation - No user-visible changes except improved reliability
-- **Performance Impact:** Positive - Reduced overhead from process spawning, faster response times
+- **Performance Impact:** Positive - Reduced overhead from session spawning, faster response times
 
 ## Tech Stack Alignment
 
@@ -79,22 +79,22 @@ This document supplements the existing ADD Manager architecture by defining how 
 | Logging | winston | ^3.11.0 | Unchanged | Continue using for consistency |
 | Validation | joi | ^17.11.0 | Unchanged | Input validation patterns |
 | Version Check | semver | ^7.5.4 | Unchanged | Dependency version validation |
-| Process Management | child_process (native) | N/A | **REPLACED** | Core change - removed |
+| Session Management | child_process (native) | N/A | **REPLACED** | Core change - removed |
 | External Dependency | Claude CLI | Latest | **REPLACED** | No longer required |
 
 ### New Technology Additions
 
 | Technology | Version | Purpose | Rationale | Integration Method |
 |------------|---------|---------|-----------|-------------------|
-| @anthropic-ai/claude-code | ^1.0.53 | SDK communication | Official SDK provides structured API, better reliability than CLI parsing | Direct replacement of spawn/stdin/stdout |
+| @anthropic-ai/claude-code | ^1.0.53 | SDK communication | Official SDK provides structured API, better reliability than CLI parsing | Direct replacement of session/stdin/stdout |
 
 ## Data Models and Schema Changes
 
 ### New Data Models
 
 #### SDK Session Model
-**Purpose:** Replace process-based session tracking with SDK-based session management  
-**Integration:** Replaces process-specific fields in existing session structure
+**Purpose:** Replace CLI-based session tracking with SDK-based session management  
+**Integration:** Replaces CLI-specific fields in existing session structure
 
 **Key Attributes:**
 - `sessionId`: String - Unique SDK session identifier (reuses existing agent ID)
@@ -102,7 +102,7 @@ This document supplements the existing ADD Manager architecture by defining how 
 - `lastMessageId`: String - Track last SDK message for recovery
 
 **Relationships:**
-- **With Existing:** Direct replacement of process-related fields
+- **With Existing:** Direct replacement of CLI-related fields
 - **With New:** None - self-contained session structure
 
 ### Schema Integration Strategy
@@ -115,7 +115,7 @@ This document supplements the existing ADD Manager architecture by defining how 
 
 **Breaking Changes:**
 - Remove `pid` field entirely
-- Remove `process` reference (was never persisted anyway)
+- Remove `session` reference (was never persisted anyway)
 - Simplify status tracking for SDK model
 
 ### Session Data Evolution
@@ -145,13 +145,13 @@ This document supplements the existing ADD Manager architecture by defining how 
 ### New Components
 
 #### SDK Communication Manager
-**Responsibility:** Handles all Claude Code SDK interactions, replacing CLI process communication  
-**Integration Points:** Direct replacement of process spawning methods in AgentManager
+**Responsibility:** Handles all Claude Code SDK interactions, replacing CLI session communication  
+**Integration Points:** Direct replacement of session spawning methods in AgentManager
 
 **Key Interfaces:**
 - `initializeSDKSession(agentId, workingDirectory)` - Creates new SDK session
 - `executeQuery(agentId, prompt, options)` - Sends instructions via SDK
-- `handleSDKMessage(agentId, message)` - Processes SDK responses
+- `handleSDKMessage(agentId, message)` - Handles SDK responses
 - `terminateSession(agentId)` - Cleanly ends SDK session
 
 **Dependencies:**
@@ -202,7 +202,7 @@ graph TD
 ```plaintext
 terragon/
 ├── bin/
-│   └── add-manager.js           # CLI entry point
+│   └── napoleon.js           # CLI entry point
 ├── src/
 │   ├── cli/                     # Command-line interface
 │   ├── core/                    # Business logic
@@ -258,7 +258,7 @@ terragon/
 
 **Deployment Approach:** 
 - Publish as entirely new npm package: "napoleon"
-- Not an update to add-manager, but a new package
+- Not an update to napoleon, but a new package
 - Start at version 1.0.0 (fresh start)
 
 **Infrastructure Changes:** 
@@ -315,10 +315,10 @@ terragon/
 
 ### Critical Integration Rules - Napoleon Rebrand
 
-- **Global Rename Required:** All references to "add-manager" → "napoleon" throughout codebase
+- **Global Rename Required:** All references to "napoleon" → "napoleon" throughout codebase
 - **Package Name:** Update package.json name field to "napoleon"
-- **CLI Command:** Change from `add-manager` to `napoleon`
-- **Directory Names:** `.add-manager/` → `.napoleon/` for config and session storage
+- **CLI Command:** Change from `napoleon` to `napoleon`
+- **Directory Names:** `.napoleon/` → `.napoleon/` for config and session storage
 - **Environment Variables:** Any ADD_MANAGER_* vars → NAPOLEON_*
 - **Error Messages:** Update all user-facing text to reference Napoleon
 - **Documentation:** Complete find/replace in all docs and comments
@@ -433,7 +433,7 @@ terragon/
 
 1. **Reference Architecture**: Review `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for the complete technical approach
 2. **Key Integration Requirements** (validated):
-   - Replace child process spawning with Claude Code SDK in `agent-manager.js`
+   - Replace child session spawning with Claude Code SDK in `agent-manager.js`
    - Maintain exact same UI interface (no Terminal UI changes)
    - Preserve git worktree isolation mechanism
    - Keep session persistence compatible (with updated structure)
@@ -445,7 +445,7 @@ terragon/
    - Node.js upgrade from 16 to 18 required
 
 4. **First Story to Implement**:
-   - Global rename from 'add-manager' to 'napoleon' throughout codebase
+   - Global rename from 'napoleon' to 'napoleon' throughout codebase
    - This includes package name, CLI command, directories, and all references
    - Must be completed before SDK integration begins
 
@@ -453,7 +453,7 @@ terragon/
    - Story 1: Napoleon rebrand (global rename)
    - Story 2: Node.js 18 upgrade and SDK dependency addition
    - Story 3: SDK communication manager implementation
-   - Story 4: Replace process spawning with SDK initialization
+   - Story 4: Replace session spawning with SDK initialization
    - Story 5: Message transformation and UI integration
    - Story 6: Testing and validation
 
@@ -463,7 +463,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
 
 **Prompt for Developers:**
 
-"Starting implementation of Napoleon (formerly add-manager) enhancement:
+"Starting implementation of Napoleon (formerly napoleon) enhancement:
 
 1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
 2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:
@@ -473,7 +473,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
    - Jest for testing
 
 3. **Key Technical Decisions**:
-   - Claude Code SDK replaces CLI process spawning
+   - Claude Code SDK replaces CLI session spawning
    - Git worktree isolation remains unchanged
    - Terminal UI (blessed) stays exactly the same
    - Session JSON structure updated (no PID field)
@@ -488,7 +488,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
    - First: Complete napoleon rebrand globally
    - Second: Add SDK dependency and update Node to v18
    - Third: Implement SDK communication in isolation
-   - Fourth: Wire up SDK to replace process spawning
+   - Fourth: Wire up SDK to replace session spawning
    - Finally: Comprehensive testing
 
 6. **Verification Steps**:

@@ -1,15 +1,15 @@
-# Story 1.7: Create Migration Guide from ADD Manager to Napoleon
+# Story 1.7: Create Migration Guide from Napoleon to Napoleon
 
 ## User Story
 
-As a developer currently using ADD Manager,
+As a developer currently using Napoleon,
 I want a comprehensive migration guide to switch to Napoleon,
 So that I can transition smoothly without losing my existing workflow or data.
 
 ## Story Context
 
 **Existing System Integration:**
-- Integrates with: Existing ADD Manager documentation and README
+- Integrates with: Existing Napoleon documentation and README
 - Technology: Markdown documentation, npm package management
 - Follows pattern: Existing documentation style and structure
 - Touch points: README.md, package.json, user configuration
@@ -18,12 +18,12 @@ So that I can transition smoothly without losing my existing workflow or data.
 
 **Functional Requirements:**
 1. Migration guide covers installation and uninstallation steps
-2. Guide includes session data migration process from ~/.add-manager/ to ~/.napoleon/
+2. Guide includes session data migration process from ~/.napoleon/ to ~/.napoleon/
 3. Clear comparison table showing command and feature mappings
 4. Step-by-step walkthrough with examples
 
 **Integration Requirements:**
-4. Guide references existing ADD Manager documentation appropriately
+4. Guide references existing Napoleon documentation appropriately
 5. Links to Napoleon setup documentation are included
 6. Compatibility notes for different OS platforms maintained
 7. Existing documentation style and formatting preserved
@@ -37,7 +37,7 @@ So that I can transition smoothly without losing my existing workflow or data.
 
 - **Integration Approach:** Add migration section to main README and create standalone MIGRATION.md
 - **Existing Pattern Reference:** Follow current documentation style in docs/
-- **Key Constraints:** Must work for users with active ADD Manager sessions
+- **Key Constraints:** Must work for users with active Napoleon sessions
 
 ## Status: ✅ Done
 
@@ -59,10 +59,10 @@ So that I can transition smoothly without losing my existing workflow or data.
 **Minimal Risk Assessment:**
 - **Primary Risk:** Users might lose session data during migration
 - **Mitigation:** Include backup instructions and data verification steps
-- **Rollback:** Users can continue using ADD Manager if needed
+- **Rollback:** Users can continue using Napoleon if needed
 
 **Compatibility Verification:**
-- [ ] No changes to ADD Manager functionality
+- [ ] No changes to Napoleon functionality
 - [ ] Session JSON format compatibility verified
 - [ ] Directory structure migration tested
 - [ ] Both packages can coexist on same system
@@ -75,7 +75,7 @@ So that I can transition smoothly without losing my existing workflow or data.
 ### Tasks
 - [x] Create MIGRATION.md file with comprehensive migration guide
 - [x] Add installation instructions for Napoleon
-- [x] Add uninstallation instructions for ADD Manager
+- [x] Add uninstallation instructions for Napoleon
 - [x] Document session data migration process
 - [x] Create command/feature comparison table
 - [x] Add platform-specific notes (macOS, Linux, Windows)

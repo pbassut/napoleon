@@ -10,7 +10,7 @@
 
 **Deployment Approach:** 
 - Publish as entirely new npm package: "napoleon"
-- Not an update to add-manager, but a new package
+- Not an update to napoleon, but a new package
 - Start at version 1.0.0 (fresh start)
 
 **Infrastructure Changes:** 

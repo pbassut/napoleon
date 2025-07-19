@@ -1,6 +1,6 @@
 # Anthropic API Key Setup Tutorial
 
-This tutorial will guide you through obtaining and configuring your Anthropic API key for use with Napoleon (formerly ADD Manager).
+This tutorial will guide you through obtaining and configuring your Anthropic API key for use with Napoleon (formerly Napoleon).
 
 ## Table of Contents
 
@@ -45,7 +45,7 @@ To get your Anthropic API key:
 1. **Visit the Anthropic Console**: Go to [console.anthropic.com](https://console.anthropic.com)
 2. **Sign in or Create Account**: Log in with your existing account or create a new one
 3. **Navigate to API Keys**: Once logged in, go to the "API Keys" section
-4. **Create New Key**: Click "Create Key" and give it a descriptive name (e.g., "ADD Manager Development")
+4. **Create New Key**: Click "Create Key" and give it a descriptive name (e.g., "Napoleon Development")
 5. **Copy Your Key**: Copy the generated key immediately - you won't be able to see it again!
 
 ⚠️ **Important**: Your API key starts with `sk-ant-` and is approximately 100 characters long.
@@ -249,12 +249,12 @@ Run with:
 node test-api-key.js
 ```
 
-### 3. Test with ADD Manager
+### 3. Test with Napoleon
 
-Once your API key is configured, test with ADD Manager:
+Once your API key is configured, test with Napoleon:
 
 ```bash
-add-manager status
+napoleon status
 ```
 
 ## Troubleshooting
@@ -332,4 +332,4 @@ A successful response indicates your API key is working correctly.
 
 ---
 
-**Next Steps**: Once your API key is configured, you can proceed with using ADD Manager or migrate to the new Napoleon project. See the [Migration Guide](./MIGRATION.md) for more information.
+**Next Steps**: Once your API key is configured, you can proceed with using Napoleon or migrate to the new Napoleon project. See the [Migration Guide](./MIGRATION.md) for more information.

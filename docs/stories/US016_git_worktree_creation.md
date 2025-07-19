@@ -27,7 +27,7 @@ This story implements automatic git worktree creation for each agent session, pr
 - Valid git reference names
 
 ### AC3: Worktree Directory Structure
-- Each worktree is created in .add-manager-worktrees/ directory
+- Each worktree is created in .napoleon-worktrees/ directory
 - Directory is created in project root if it doesn't exist
 - Proper directory permissions and structure
 
@@ -61,7 +61,7 @@ const { exec } = require('child_process');
 function createWorktree(agentId) {
   const timestamp = Date.now();
   const worktreeName = `agent-${agentId}-${timestamp}`;
-  const worktreePath = `.add-manager-worktrees/${worktreeName}`;
+  const worktreePath = `.napoleon-worktrees/${worktreeName}`;
   
   return new Promise((resolve, reject) => {
     exec(`git worktree add ${worktreePath}`, (error, stdout, stderr) => {
@@ -79,7 +79,7 @@ function createWorktree(agentId) {
 ```
 project-root/
 ├── .git/
-├── .add-manager-worktrees/
+├── .napoleon-worktrees/
 │   ├── agent-001-1642434567890/
 │   ├── agent-002-1642434678901/
 │   └── agent-003-1642434789012/

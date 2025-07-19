@@ -2,7 +2,7 @@
 
 ## User Story
 
-As a developer migrating from ADD Manager to Napoleon,
+As a developer migrating from Napoleon to Napoleon,
 I want an automated migration script that handles data transfer,
 So that I can migrate my sessions and configuration without manual steps.
 
@@ -12,13 +12,13 @@ So that I can migrate my sessions and configuration without manual steps.
 - Integrates with: Session storage system, configuration management
 - Technology: Node.js script, file system operations, JSON manipulation
 - Follows pattern: Existing utility script patterns in utils/
-- Touch points: ~/.add-manager/, ~/.napoleon/, session.json files
+- Touch points: ~/.napoleon/, ~/.napoleon/, session.json files
 
 ## Acceptance Criteria
 
 **Functional Requirements:**
-1. Script detects existing ADD Manager installation and data
-2. Safely copies session data from ~/.add-manager/ to ~/.napoleon/
+1. Script detects existing Napoleon installation and data
+2. Safely copies session data from ~/.napoleon/ to ~/.napoleon/
 3. Transforms session format if needed (remove pid, add SDK fields)
 4. Provides dry-run mode to preview changes5. Creates backup of original data before migration
 6. Validates migrated data structure
@@ -39,7 +39,7 @@ So that I can migrate my sessions and configuration without manual steps.
 
 - **Integration Approach:** Create bin/migrate-to-napoleon.js as standalone script
 - **Existing Pattern Reference:** Follow patterns from utils/logger.js and config.js
-- **Key Constraints:** Must not modify original ADD Manager data
+- **Key Constraints:** Must not modify original Napoleon data
 
 ## Definition of Done
 
@@ -62,7 +62,7 @@ So that I can migrate my sessions and configuration without manual steps.
 - [ ] Works with different session.json formats
 - [ ] Handles missing or corrupted data files
 - [ ] Cross-platform file operations tested
-- [ ] No dependencies on ADD Manager code
+- [ ] No dependencies on Napoleon code
 
 ## Status: ✅ Done
 

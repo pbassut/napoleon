@@ -203,13 +203,14 @@ class AgentTerminationDialog {
     const runtime = this.formatRuntime(agent.createdAt);
 
     // Update agent information display
+    const sessionId = agent.sessionId || agent.id;
     const agentText = [
       '',
       `Are you sure you want to terminate ${agent.name || agent.id}?`,
       '',
       `Status: ${agent.status}`,
       `Runtime: ${runtime}`,
-      `PID: ${agent.pid || 'N/A'}`,
+      `Session ID: ${sessionId}`,
       '',
     ].join('\n');
 

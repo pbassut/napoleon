@@ -2,7 +2,7 @@
 
 ## Overview
 
-This index provides a complete list of all user stories for the Napoleon project (formerly ADD Manager). The stories are organized in development sequence, with the Napoleon SDK integration stories coming first, followed by the original ADD Manager functionality stories.
+This index provides a complete list of all user stories for the Napoleon project (formerly Napoleon). The stories are organized in development sequence, with the Napoleon SDK integration stories coming first, followed by the original Napoleon functionality stories.
 
 ## Story Sequence
 
@@ -12,20 +12,20 @@ These stories focus on rebranding to Napoleon and replacing CLI child process sp
 
 | Story ID | Title | Description | Priority | Status |
 |----------|-------|-------------|----------|---------|
-| US001 | Global Napoleon Rebrand | Rebrand ADD Manager to Napoleon across entire codebase | HIGH | ✅ **Approved** |
+| US001 | Global Napoleon Rebrand | Rebrand Napoleon to Napoleon across entire codebase | HIGH | ✅ **Approved** |
 | US002 | Node.js 18 Upgrade and SDK Setup | Upgrade to Node.js 18 and add Claude Code SDK dependency | HIGH | ✅ **Approved** |
 | US003 | SDK Communication Manager Implementation | Implement SDK communication manager module | HIGH | ✅ **Approved** |
 | US004 | Message Transformer Implementation | Implement message transformation between SDK and UI formats | HIGH | ✅ **Approved** |
 | US005 | AgentManager SDK Integration | Replace process spawning with SDK calls in AgentManager | HIGH | ✅ **Approved** |
 | US006 | End-to-End Testing and Validation | Comprehensive testing of SDK integration | HIGH | ✅ **Approved** |
-| US007 | Create Migration Guide | Comprehensive guide for users switching from ADD Manager to Napoleon | MEDIUM | ✅ **Done** |
+| US007 | Create Migration Guide | Comprehensive guide for users switching from Napoleon to Napoleon | MEDIUM | ✅ **Done** |
 | US008 | Create API Key Setup Tutorial | Step-by-step tutorial for obtaining and configuring API keys | MEDIUM | ✅ **Done** |
 | US009 | Create CLI to SDK Migration Helper | Automated script to migrate session data and configuration | MEDIUM | ✅ **Approved** |
 | US010 | Update User Documentation | Update all user-facing documentation with Napoleon branding | MEDIUM | ✅ **Approved** |
 
-### Phase 2: Core ADD Manager Functionality (US011-US024)
+### Phase 2: Core Napoleon Functionality (US011-US024)
 
-These stories implement the original ADD Manager functionality within the Napoleon framework.
+These stories implement the original Napoleon functionality within the Napoleon framework.
 
 | Story ID | Title | Description | Priority | Status |
 |----------|-------|-------------|----------|---------|
@@ -103,4 +103,4 @@ Format: `US###_story_title.md`
 
 - [Napoleon Brownfield PRD](/docs/napoleon-brownfield-prd.md)
 - [Architecture Document](/docs/architecture.md)
-- [Original ADD Manager PRD](/docs/prd.md)
+- [Original Napoleon PRD](/docs/prd.md)

@@ -21,4 +21,4 @@ This document has been parsed into individual sections for easier navigation and
 
 ## Document Purpose
 
-This architecture document outlines the approach for enhancing ADD Manager with the Napoleon rebrand and Claude Code SDK integration. The primary goal is to migrate from CLI-based process management to SDK-based agent orchestration while ensuring seamless integration with the existing terminal UI system.
+This architecture document outlines the approach for enhancing Napoleon with the Napoleon rebrand and Claude Code SDK integration. The primary goal is to migrate from CLI-based process management to SDK-based agent orchestration while ensuring seamless integration with the existing terminal UI system.

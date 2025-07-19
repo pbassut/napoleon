@@ -1,15 +1,15 @@
-# ADD Manager Architecture Document
+# Napoleon Architecture Document
 
 ## Introduction
 
-This document outlines the overall project architecture for ADD Manager, including backend systems, shared services, and non-UI specific concerns. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development, ensuring consistency and adherence to chosen patterns and technologies.
+This document outlines the overall project architecture for Napoleon, including backend systems, shared services, and non-UI specific concerns. Its primary goal is to serve as the guiding architectural blueprint for AI-driven development, ensuring consistency and adherence to chosen patterns and technologies.
 
 **Relationship to Frontend Architecture:**
-Since ADD Manager is a terminal UI application using the blessed framework, this document covers the complete architecture including the terminal interface design. No separate frontend architecture document is required.
+Since Napoleon is a terminal UI application using the blessed framework, this document covers the complete architecture including the terminal interface design. No separate frontend architecture document is required.
 
 ### Starter Template or Existing Project
 
-N/A - ADD Manager is a greenfield project built from scratch without using any existing starter templates or boilerplate projects. The architecture is designed specifically for the terminal UI and Claude CLI integration requirements.
+N/A - Napoleon is a greenfield project built from scratch without using any existing starter templates or boilerplate projects. The architecture is designed specifically for the terminal UI and Claude CLI integration requirements.
 
 ### Change Log
 
@@ -21,7 +21,7 @@ N/A - ADD Manager is a greenfield project built from scratch without using any e
 
 ### Technical Summary
 
-ADD Manager follows a modular monolithic architecture implemented as a Node.js CLI application with a blessed-based terminal UI. The system employs a process management architecture where the main application manages multiple child processes (Claude CLI agents) with git worktree isolation. Core architectural patterns include command-query separation for terminal UI interactions, event-driven process monitoring, and resource-constrained concurrency control with a 3-agent limit. The architecture prioritizes developer experience through clean separation of concerns between CLI framework (commander.js), terminal UI (blessed), agent lifecycle management, and git integration layers.
+Napoleon follows a modular monolithic architecture implemented as a Node.js CLI application with a blessed-based terminal UI. The system employs a process management architecture where the main application manages multiple child processes (Claude CLI agents) with git worktree isolation. Core architectural patterns include command-query separation for terminal UI interactions, event-driven process monitoring, and resource-constrained concurrency control with a 3-agent limit. The architecture prioritizes developer experience through clean separation of concerns between CLI framework (commander.js), terminal UI (blessed), agent lifecycle management, and git integration layers.
 
 ### High Level Overview
 
@@ -54,7 +54,7 @@ graph TB
     GM --> WT2[Worktree 2<br/>feature/agent-2]
     GM --> WT3[Worktree 3<br/>feature/agent-3]
     
-    SM --> FS[File System<br/>~/.add-manager/]
+    SM --> FS[File System<br/>~/.napoleon/]
     
     CP1 --> WT1
     CP2 --> WT2
@@ -278,9 +278,9 @@ graph TB
 
 ```mermaid
 C4Container
-    title ADD Manager Component Architecture
+    title Napoleon Component Architecture
     
-    Container_Boundary(app, "ADD Manager Application") {
+    Container_Boundary(app, "Napoleon Application") {
         Component(cli, "CLI Entry Point", "commander.js", "Command parsing and app initialization")
         Component(tui, "Terminal UI Manager", "blessed", "Terminal interface and user interaction")
         Component(agent, "Agent Manager", "Node.js", "Process lifecycle management")
@@ -401,7 +401,7 @@ sequenceDiagram
 
 ## Database Schema
 
-ADD Manager uses file-based JSON storage instead of a traditional database. The schema is defined through TypeScript interfaces and stored in structured JSON files.
+Napoleon uses file-based JSON storage instead of a traditional database. The schema is defined through TypeScript interfaces and stored in structured JSON files.
 
 ### Session Storage Schema
 
@@ -414,7 +414,7 @@ ADD Manager uses file-based JSON storage instead of a traditional database. The 
       "prompt": "Implement user authentication system",
       "status": "running",
       "pid": 12345,
-      "workspacePath": "/path/to/repo/.add-manager-worktrees/agent-001",
+      "workspacePath": "/path/to/repo/.napoleon-worktrees/agent-001",
       "branchName": "feature/agent-001",
       "createdAt": "2025-07-17T10:00:00Z",
       "updatedAt": "2025-07-17T10:30:00Z",
@@ -429,7 +429,7 @@ ADD Manager uses file-based JSON storage instead of a traditional database. The 
     "agent-001": {
       "id": "agent-001",
       "agentId": "agent-001",
-      "path": "/path/to/repo/.add-manager-worktrees/agent-001",
+      "path": "/path/to/repo/.napoleon-worktrees/agent-001",
       "branchName": "feature/agent-001",
       "baseBranch": "main",
       "createdAt": "2025-07-17T10:00:00Z",
@@ -439,8 +439,8 @@ ADD Manager uses file-based JSON storage instead of a traditional database. The 
   },
   "configuration": {
     "maxConcurrentAgents": 3,
-    "defaultWorktreeLocation": ".add-manager-worktrees",
-    "sessionStoragePath": "~/.add-manager/sessions.json",
+    "defaultWorktreeLocation": ".napoleon-worktrees",
+    "sessionStoragePath": "~/.napoleon/sessions.json",
     "gitIntegrationEnabled": true,
     "uiTheme": "default",
     "logLevel": "info",
@@ -450,15 +450,15 @@ ADD Manager uses file-based JSON storage instead of a traditional database. The 
 ```
 
 ### File Structure
-- `~/.add-manager/sessions.json` - Active session data
-- `~/.add-manager/config.json` - User configuration
-- `~/.add-manager/logs/` - Application logs
-- `~/.add-manager/backups/` - Session data backups
+- `~/.napoleon/sessions.json` - Active session data
+- `~/.napoleon/config.json` - User configuration
+- `~/.napoleon/logs/` - Application logs
+- `~/.napoleon/backups/` - Session data backups
 
 ## Source Tree
 
 ```
-add-manager/
+napoleon/
 ├── src/
 │   ├── cli/
 │   │   ├── index.js                 # CLI entry point
@@ -757,7 +757,7 @@ Development → Testing → NPM Registry
 
 **For Development Agent:**
 ```
-You are implementing the ADD Manager CLI tool based on the comprehensive architecture document at /docs/architecture.md and PRD at /docs/prd.md. 
+You are implementing the Napoleon CLI tool based on the comprehensive architecture document at /docs/architecture.md and PRD at /docs/prd.md. 
 
 Key architectural requirements:
 - Follow the modular monolithic structure defined in the architecture
@@ -772,7 +772,7 @@ Start with the CLI Entry Point and Terminal UI Manager components, ensuring prop
 
 **For Testing Agent:**
 ```
-Implement comprehensive test coverage for ADD Manager based on the test strategy in /docs/architecture.md. 
+Implement comprehensive test coverage for Napoleon based on the test strategy in /docs/architecture.md. 
 
 Focus on:
 - Unit tests for all core components with 90% coverage

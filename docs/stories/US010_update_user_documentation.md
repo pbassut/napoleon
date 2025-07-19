@@ -29,7 +29,7 @@ So that I have accurate information for using the tool effectively.
 7. Code examples use Napoleon commands
 
 **Quality Requirements:**
-8. No references to "add-manager" remain in user-facing text
+8. No references to "napoleon" remain in user-facing text
 9. All examples tested and working
 10. Consistent terminology throughout all documentation
 11. API key setup prominently featured
@@ -48,7 +48,7 @@ So that I have accurate information for using the tool effectively.
 - [x] Terminal UI help overlay updated
 - [x] All code examples verified
 - [x] Cross-references and links checked
-- [x] No "add-manager" references remain
+- [x] No "napoleon" references remain
 
 ## Risk and Compatibility Check
 
@@ -78,8 +78,8 @@ So that I have accurate information for using the tool effectively.
 - Updated CLI help strings in src/cli/index.js to reference Napoleon
 - Updated error messages in utils/errors.js with Napoleon branding
 - Updated terminal UI help overlay with Napoleon branding and SDK features
-- Systematically replaced all "add-manager" references with "napoleon" equivalents
-- Updated configuration directories from .add-manager to .napoleon
+- Systematically replaced all "napoleon" references with "napoleon" equivalents
+- Updated configuration directories from .napoleon to .napoleon
 - Updated worktree directory naming to .napoleon-worktrees
 - Verified all code examples work correctly with linting
 - Node.js requirement updated from 16.0.0 to 18.0.0 to match Napoleon requirements
@@ -97,6 +97,6 @@ So that I have accurate information for using the tool effectively.
 
 **Change Log**:
 - 2025-07-18: All user-facing documentation updated to Napoleon branding
-- 2025-07-18: All internal references updated from "add-manager" to "napoleon"
+- 2025-07-18: All internal references updated from "napoleon" to "napoleon"
 - 2025-07-18: Node.js requirement updated to 18.0.0
 - 2025-07-18: All tasks completed and verified with linting

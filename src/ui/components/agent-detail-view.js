@@ -347,14 +347,14 @@ class AgentDetailView {
     const branchInfo = agentDetails?.branch || 'N/A';
 
     // Get system resource usage (mock for now)
-    const cpuUsage = this.getCpuUsage(agent);
-    const memoryUsage = this.getMemoryUsage(agent);
+    const sdkStatus = agent.sdkStatus || 'N/A';
+    const sessionId = agent.sessionId || agent.id;
 
     const info = [
-      `Agent: ${agent.id} [${branchInfo}] │ CPU: ${cpuUsage}% │ RAM: ${memoryUsage}MB`,
+      `Agent: ${agent.id} [${branchInfo}] │ SDK Status: ${sdkStatus}`,
       `Started: ${this.formatTimestamp(agent.startTime)} │ Runtime: ${runtime}`,
       `Worktree: ${worktreePath}`,
-      `PID: ${agent.pid || 'N/A'} │ Status: ${agent.status} │ Instructions: "${agent.instructions || 'N/A'}"`,
+      `Session ID: ${sessionId} │ Status: ${agent.status} │ Instructions: "${agent.instructions || 'N/A'}"`,
     ].join('\n');
 
     this.agentInfoText.setContent(info);
@@ -692,21 +692,6 @@ class AgentDetailView {
     });
   }
 
-  /**
-   * Get CPU usage for agent (mock implementation)
-   */
-  getCpuUsage(agent) {
-    // TODO: Implement actual CPU monitoring
-    return Math.floor(Math.random() * 50) + 10; // Mock 10-60%
-  }
-
-  /**
-   * Get memory usage for agent (mock implementation)
-   */
-  getMemoryUsage(agent) {
-    // TODO: Implement actual memory monitoring
-    return Math.floor(Math.random() * 100) + 20; // Mock 20-120MB
-  }
 
   /**
    * Format timestamp for display

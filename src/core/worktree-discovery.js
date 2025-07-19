@@ -213,65 +213,59 @@ class WorktreeDiscovery {
    */
   async getRunningProcesses() {
     try {
-      // Use ps command to get running processes
-      const { stdout } = await execAsync('ps -eo pid,command', {
-        timeout: 5000
-      });
+      // SDK-based approach: Get active sessions from agent manager
+      const activeSessions = [];
       
-      const processes = [];
-      const lines = stdout.split('\n').slice(1); // Skip header
-      
-      for (const line of lines) {
-        const match = line.trim().match(/^(\d+)\s+(.+)$/);
-        if (match) {
-          const [, pid, command] = match;
-          processes.push({
-            pid: parseInt(pid, 10),
-            command: command.trim()
+      // This would be injected by agent manager if needed for worktree discovery
+      if (this.agentManager && this.agentManager.sdkManager) {
+        const sdkSessions = this.agentManager.sdkManager.getActiveSessions();
+        
+        for (const session of sdkSessions) {
+          activeSessions.push({
+            sessionId: session.agentId,
+            workingDirectory: session.workingDirectory,
+            isActive: session.isActive,
+            lastActivity: session.lastActivity
           });
         }
       }
       
-      logger.debug('Retrieved running processes', { count: processes.length });
-      return processes;
+      logger.debug('Retrieved active SDK sessions', { count: activeSessions.length });
+      return activeSessions;
     } catch (error) {
-      logger.warn('Failed to get running processes', { error: error.message });
+      logger.warn('Failed to get active SDK sessions', { error: error.message });
       return [];
     }
   }
 
   /**
-   * Check if a worktree has an active associated process
+   * Check if a worktree has an active associated SDK session
    */
-  isWorktreeProcessActive(worktree, runningProcesses) {
-    // Look for processes that might be associated with this agent/worktree
+  isWorktreeProcessActive(worktree, activeSessions) {
+    // Look for SDK sessions that might be associated with this agent/worktree
     const agentIdPattern = worktree.agentId;
     const worktreePathPattern = worktree.path;
-    const worktreeName = worktree.name;
     
-    for (const process of runningProcesses) {
-      // More specific checks to avoid false positives from general claude/napoleon processes
-      const isSpecificMatch = (
-        // Exact agent ID match combined with node/napoleon process
-        (process.command.includes(agentIdPattern) && 
-         (process.command.includes('node') || process.command.includes('napoleon'))) ||
+    for (const session of activeSessions) {
+      // Check for SDK session matches
+      const isSessionMatch = (
+        // Exact agent ID match
+        session.sessionId === agentIdPattern ||
         
-        // Process working directory is the worktree path
-        process.command.includes(worktreePathPattern) ||
+        // Working directory matches worktree path
+        session.workingDirectory === worktreePathPattern ||
         
-        // Process command explicitly mentions the worktree directory name
-        process.command.includes(worktreeName) ||
-        
-        // Napoleon process with agent ID context
-        (process.command.includes('napoleon') && process.command.includes(agentIdPattern))
+        // Session is active and related to this worktree
+        (session.isActive && session.workingDirectory && 
+         session.workingDirectory.includes(worktreePathPattern))
       );
       
-      if (isSpecificMatch) {
-        logger.debug('Found potentially active process for worktree', {
+      if (isSessionMatch) {
+        logger.debug('Found active SDK session for worktree', {
           worktree: worktree.name,
           agentId: worktree.agentId,
-          pid: process.pid,
-          command: process.command.substring(0, 100)
+          sessionId: session.sessionId,
+          workingDirectory: session.workingDirectory
         });
         return true;
       }

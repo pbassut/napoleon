@@ -5,11 +5,11 @@
 
 ## Story
 As a developer,
-I want to install and initialize the ADD Manager application,
+I want to install and initialize the Napoleon application,
 so that I can start using it to manage Claude CLI agents.
 
 ## Description
-This story establishes the foundational project infrastructure including npm package configuration, CLI framework setup using commander.js, and basic application initialization. It creates the entry point for the ADD Manager application and ensures proper installation methods are supported.
+This story establishes the foundational project infrastructure including npm package configuration, CLI framework setup using commander.js, and basic application initialization. It creates the entry point for the Napoleon application and ensures proper installation methods are supported.
 
 ## Priority
 **High** - Foundation story that blocks all other development
@@ -17,12 +17,12 @@ This story establishes the foundational project infrastructure including npm pac
 ## Acceptance Criteria
 
 ### AC1: Global NPM Installation
-- Package can be installed globally via `npm install -g add-manager`
+- Package can be installed globally via `npm install -g napoleon`
 - Installation creates proper bin links for global command access
 - Package.json includes correct bin configuration
 
 ### AC2: NPX Direct Usage
-- Package can be run directly via `npx add-manager`
+- Package can be run directly via `npx napoleon`
 - No global installation required for npx usage
 - Proper package resolution and execution
 
@@ -32,7 +32,7 @@ This story establishes the foundational project infrastructure including npm pac
 - Proper command structure and argument parsing
 
 ### AC4: Session Storage Directory
-- Application creates ~/.add-manager/ directory for session storage
+- Application creates ~/.napoleon/ directory for session storage
 - Directory permissions are set appropriately
 - Handles existing directory gracefully
 
@@ -62,7 +62,7 @@ This story establishes the foundational project infrastructure including npm pac
 ```
 /
 ├── bin/
-│   └── add-manager.js          # CLI entry point
+│   └── napoleon.js          # CLI entry point
 ├── src/
 │   ├── cli/
 │   │   ├── index.js           # Main CLI handler
@@ -74,9 +74,9 @@ This story establishes the foundational project infrastructure including npm pac
 ```
 
 ### Configuration
-- Session storage location: ~/.add-manager/
-- Configuration file: ~/.add-manager/config.json
-- Session data: ~/.add-manager/sessions.json
+- Session storage location: ~/.napoleon/
+- Configuration file: ~/.napoleon/config.json
+- Session data: ~/.napoleon/sessions.json
 
 ## Definition of Done
 - [x] NPM package can be installed globally
@@ -121,7 +121,7 @@ This story implements the CLI Entry Point component defined in the architecture 
    - Implement graceful degradation for missing dependencies
 
 4. **Session Storage Initialization**
-   - Create ~/.add-manager/ directory structure
+   - Create ~/.napoleon/ directory structure
    - Initialize session.json and config.json files
    - Set appropriate file permissions (600 for config files)
    - Implement atomic file operations for data integrity
@@ -131,12 +131,12 @@ This story implements the CLI Entry Point component defined in the architecture 
 #### Package.json Configuration
 ```json
 {
-  "name": "add-manager",
+  "name": "napoleon",
   "version": "1.0.0",
   "description": "Agent Driven Development Manager - CLI tool for managing multiple Claude CLI sessions",
   "main": "src/cli/index.js",
   "bin": {
-    "add-manager": "./bin/add-manager.js"
+    "napoleon": "./bin/napoleon.js"
   },
   "engines": {
     "node": ">=16.0.0"
@@ -155,7 +155,7 @@ This story implements the CLI Entry Point component defined in the architecture 
 }
 ```
 
-#### CLI Entry Point (bin/add-manager.js)
+#### CLI Entry Point (bin/napoleon.js)
 ```javascript
 #!/usr/bin/env node
 
@@ -322,7 +322,7 @@ Claude Sonnet 4 (claude-sonnet-4-20250514)
 
 ### File List
 - `package.json` - NPM package configuration with dependencies and scripts
-- `bin/add-manager.js` - CLI entry point with environment validation
+- `bin/napoleon.js` - CLI entry point with environment validation
 - `src/cli/index.js` - Main CLI application initialization
 - `src/cli/validators/environment.js` - System environment validation
 - `src/core/config.js` - Configuration and session storage management
@@ -341,7 +341,7 @@ Claude Sonnet 4 (claude-sonnet-4-20250514)
 - All tests passing: 21 tests, 4 suites
 - ESLint validation: No linting errors
 - CLI functionality verified: help, start, status commands working
-- Session directory creation: ~/.add-manager/ created with proper permissions
+- Session directory creation: ~/.napoleon/ created with proper permissions
 - Environment validation: Node.js >=16.0.0 and Git >=2.20.0 checks working
 
 ### Completion Notes
@@ -369,7 +369,7 @@ Ready for Review
 - ✅ **NPM Package**: Global installation (`npm install -g`) and npx execution working correctly
 - ✅ **CLI Framework**: Commander.js integration with proper command routing and help system
 - ✅ **Environment Validation**: Node.js >=16.0.0 and Git >=2.20.0 version checks implemented
-- ✅ **Session Storage**: ~/.add-manager/ directory creation with secure permissions (600)
+- ✅ **Session Storage**: ~/.napoleon/ directory creation with secure permissions (600)
 - ✅ **Error Handling**: Custom error classes with structured error codes and user-friendly messages
 - ✅ **Test Coverage**: 21 passing tests with 90%+ coverage across all core functionality
 - ✅ **Code Quality**: ESLint validation passed with no linting errors

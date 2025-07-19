@@ -20,7 +20,7 @@
    - Node.js upgrade from 16 to 18 required
 
 4. **First Story to Implement**:
-   - Global rename from 'add-manager' to 'napoleon' throughout codebase
+   - Global rename from 'napoleon' to 'napoleon' throughout codebase
    - This includes package name, CLI command, directories, and all references
    - Must be completed before SDK integration begins
 
@@ -37,7 +37,7 @@ Emphasis on maintaining existing system integrity throughout implementation - ea
 
 **Prompt for Developers:**
 
-"Starting implementation of Napoleon (formerly add-manager) enhancement:
+"Starting implementation of Napoleon (formerly napoleon) enhancement:
 
 1. **Architecture Reference**: See `/Users/patrickbassut/Programming/terragon/docs/architecture.md` for complete technical design
 2. **Coding Standards**: Follow existing patterns from `agent-manager.js`:

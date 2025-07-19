@@ -801,7 +801,7 @@ class TerminalUI {
       const statusIcon = this.getStatusIcon(agent.status);
       const runtime = this.agentManager.formatRuntime(this.agentManager.getAgentRuntime(agent.id));
       const statusText = agent.status.padEnd(12); // Pad for alignment
-      const pidText = agent.pid ? `PID: ${agent.pid}`.padEnd(10) : 'PID: N/A'.padEnd(10);
+      const sdkStatusText = agent.sdkStatus ? `SDK: ${agent.sdkStatus}`.padEnd(12) : 'SDK: N/A'.padEnd(12);
       const isSelected = index === this.selectedAgentIndex;
       const prefix = isSelected ? '> ' : '  ';
       
@@ -810,7 +810,7 @@ class TerminalUI {
         ? ` - ${agent.progress}` 
         : '';
       
-      return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] ${pidText} Runtime: ${runtime}${progressText}`;
+      return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] ${sdkStatusText} Runtime: ${runtime}${progressText}`;
     });
 
     this.agentsList.setItems(items);

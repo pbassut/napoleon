@@ -141,8 +141,8 @@ describe('Terminal UI Extended Functionality', () => {
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '> ● agent-1            [running     ] PID: N/A   Runtime: 05min',
-        '  ○ agent-2            [idle        ] PID: N/A   Runtime: 05min',
+        '> ● agent-1            [running     ] SDK: N/A     Runtime: 05min',
+        '  ○ agent-2            [idle        ] SDK: N/A     Runtime: 05min',
       ]);
       expect(mockScreen.render).toHaveBeenCalled();
     });
@@ -183,9 +183,9 @@ describe('Terminal UI Extended Functionality', () => {
       ui.updateAgentsList();
       
       expect(mockList.setItems).toHaveBeenCalledWith([
-        '> ● agent-1            [running     ] PID: N/A   Runtime: 05min',
-        '  ✗ agent-2            [error       ] PID: N/A   Runtime: 05min',
-        '  ○ agent-3            [idle        ] PID: N/A   Runtime: 05min',
+        '> ● agent-1            [running     ] SDK: N/A     Runtime: 05min',
+        '  ✗ agent-2            [error       ] SDK: N/A     Runtime: 05min',
+        '  ○ agent-3            [idle        ] SDK: N/A     Runtime: 05min',
       ]);
     });
   });

@@ -27,9 +27,9 @@
 
 ## Critical Integration Rules - Napoleon Rebrand
 
-- **Global Rename Required:** All references to "add-manager" → "napoleon" throughout codebase- **Package Name:** Update package.json name field to "napoleon"
-- **CLI Command:** Change from `add-manager` to `napoleon`
-- **Directory Names:** `.add-manager/` → `.napoleon/` for config and session storage
+- **Global Rename Required:** All references to "napoleon" → "napoleon" throughout codebase- **Package Name:** Update package.json name field to "napoleon"
+- **CLI Command:** Change from `napoleon` to `napoleon`
+- **Directory Names:** `.napoleon/` → `.napoleon/` for config and session storage
 - **Environment Variables:** Any ADD_MANAGER_* vars → NAPOLEON_*
 - **Error Messages:** Update all user-facing text to reference Napoleon
 - **Documentation:** Complete find/replace in all docs and comments

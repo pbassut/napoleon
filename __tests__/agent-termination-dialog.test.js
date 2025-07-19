@@ -172,7 +172,7 @@ describe('AgentTerminationDialog', () => {
       id: 'agent-123',
       name: 'Test Agent',
       status: 'running',
-      pid: 12345,
+      sessionId: 'session-123',
       createdAt: new Date('2023-01-01T10:00:00Z'),
     };
 
@@ -201,7 +201,7 @@ describe('AgentTerminationDialog', () => {
         expect.stringContaining('Runtime: 5:30'),
       );
       expect(mockAgentInfo.setContent).toHaveBeenCalledWith(
-        expect.stringContaining('PID: 12345'),
+        expect.stringContaining('Session ID: session-123'),
       );
     });
 
@@ -229,12 +229,12 @@ describe('AgentTerminationDialog', () => {
       );
     });
 
-    it('should handle agent without PID', () => {
-      const agentWithoutPID = { ...mockAgent, pid: undefined };
-      dialog.show(agentWithoutPID);
+    it('should handle agent without session ID', () => {
+      const agentWithoutSessionId = { ...mockAgent, sessionId: undefined };
+      dialog.show(agentWithoutSessionId);
 
       expect(mockAgentInfo.setContent).toHaveBeenCalledWith(
-        expect.stringContaining('PID: N/A'),
+        expect.stringContaining('Session ID: agent-123'),
       );
     });
   });

@@ -1,4 +1,4 @@
-# ADD Manager User Stories
+# Napoleon User Stories
 
 This directory contains the individual user story files created from the PRD document breakdown. Each story is self-contained with complete context, acceptance criteria, and technical specifications.
 

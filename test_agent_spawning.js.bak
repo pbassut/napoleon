@@ -22,7 +22,7 @@ class TestRunner {
   }
 
   async runTests() {
-    console.log('=== ADD Manager Agent Spawning Test ===\n');
+    console.log('=== Napoleon Agent Spawning Test ===\n');
     
     try {
       // Test 1: Initialize Agent Manager

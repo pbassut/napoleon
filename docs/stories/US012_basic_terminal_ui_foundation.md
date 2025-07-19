@@ -5,7 +5,7 @@
 
 ## Story
 As a developer,
-I want to see a clean terminal interface when I launch ADD Manager,
+I want to see a clean terminal interface when I launch Napoleon,
 so that I can interact with the application effectively.
 
 ## Description
@@ -62,7 +62,7 @@ This story implements the foundational terminal UI using the blessed framework, 
 ```
 Main Dashboard Layout:
 ┌─────────────────────────────────────────────────────────────┐
-│ ADD Manager v1.0.0                                         │
+│ Napoleon v1.0.0                                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │ Status: No active agents                                    │

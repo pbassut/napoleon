@@ -37,7 +37,7 @@ This story implements the core agent spawning functionality that allows users to
 - Process spawning with correct environment variables
 
 ### AC5: Session Storage
-- Basic session data is stored in ~/.add-manager/sessions.json
+- Basic session data is stored in ~/.napoleon/sessions.json
 - Session includes: ID, instructions, spawn time, status
 - Storage is atomic and handles concurrent access
 
@@ -117,7 +117,7 @@ All acceptance criteria have been successfully implemented:
 1. **Agent Spawn Dialog** - Interactive dialog with text input for agent instructions
 2. **Git Repository Validation** - Validates git context before spawning agents
 3. **Process Spawning** - Creates Claude CLI processes with proper isolation
-4. **Session Management** - Persistent storage of agent sessions in ~/.add-manager/sessions.json
+4. **Session Management** - Persistent storage of agent sessions in ~/.napoleon/sessions.json
 5. **Dashboard Integration** - Real-time agent status updates with visual indicators
 6. **3-Agent Limit** - Enforces maximum concurrent agents with clear error messages
 7. **Error Handling** - Comprehensive error handling with user-friendly messages
@@ -161,7 +161,7 @@ Claude Sonnet 4 (claude-sonnet-4-20250514)
 - [x] Interactive agent spawn dialog with multi-line text input
 - [x] Git repository validation before agent spawning
 - [x] Claude CLI process spawning with proper isolation
-- [x] Session persistence in ~/.add-manager/sessions.json
+- [x] Session persistence in ~/.napoleon/sessions.json
 - [x] Dashboard integration with real-time status updates
 - [x] 3-agent concurrent limit enforcement
 - [x] Comprehensive error handling with user-friendly messages
@@ -214,7 +214,7 @@ Done
 - ✅ **Agent Spawn Dialog**: Interactive blessed dialog with multi-line text input and validation
 - ✅ **Git Validation**: Repository context validation before spawning agents
 - ✅ **Process Spawning**: Claude CLI process creation with proper isolation and error handling
-- ✅ **Session Management**: Atomic persistence in ~/.add-manager/sessions.json with concurrent access handling
+- ✅ **Session Management**: Atomic persistence in ~/.napoleon/sessions.json with concurrent access handling
 - ✅ **Dashboard Integration**: Real-time status updates with visual agent indicators
 - ✅ **Concurrent Limits**: 3-agent maximum enforcement with clear error messaging
 - ✅ **Error Handling**: Comprehensive error scenarios with user-friendly messages and troubleshooting

@@ -196,36 +196,49 @@ detached`;
   });
 
   describe('getRunningProcesses', () => {
-    it('should parse ps command output correctly', async () => {
-      const mockPsOutput = `  PID COMMAND
-12345 /usr/bin/node /path/to/napoleon
-23456 claude --version
-34567 git worktree add /path/to/worktree
-45678 /bin/bash`;
-
-      exec.mockImplementation((cmd, options, callback) => {
-        if (cmd.includes('ps -eo pid,command')) {
-          callback(null, { stdout: mockPsOutput, stderr: '' });
+    it('should return active SDK sessions correctly', async () => {
+      // Mock agent manager with SDK sessions
+      const mockAgentManager = {
+        sdkManager: {
+          getActiveSessions: () => [
+            {
+              agentId: 'agent-test123',
+              workingDirectory: '/path/to/.napoleon-worktrees/agent-test123',
+              isActive: true,
+              lastActivity: new Date().toISOString()
+            },
+            {
+              agentId: 'agent-test456',
+              workingDirectory: '/path/to/.napoleon-worktrees/agent-test456',
+              isActive: true,
+              lastActivity: new Date().toISOString()
+            }
+          ]
         }
-      });
+      };
+
+      discovery.agentManager = mockAgentManager;
 
       const result = await discovery.getRunningProcesses();
 
-      expect(result).toHaveLength(4);
+      expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
-        pid: 12345,
-        command: '/usr/bin/node /path/to/napoleon'
+        sessionId: 'agent-test123',
+        workingDirectory: '/path/to/.napoleon-worktrees/agent-test123',
+        isActive: true,
+        lastActivity: expect.any(String)
       });
       expect(result[1]).toEqual({
-        pid: 23456,
-        command: 'claude --version'
+        sessionId: 'agent-test456',
+        workingDirectory: '/path/to/.napoleon-worktrees/agent-test456',
+        isActive: true,
+        lastActivity: expect.any(String)
       });
     });
 
-    it('should handle ps command failures gracefully', async () => {
-      exec.mockImplementation((cmd, options, callback) => {
-        callback(new Error('ps command failed'));
-      });
+    it('should handle SDK manager failures gracefully', async () => {
+      // Mock agent manager without SDK manager
+      discovery.agentManager = null;
 
       const result = await discovery.getRunningProcesses();
 
@@ -240,46 +253,46 @@ detached`;
       agentId: 'agent-test123'
     };
 
-    it('should identify active process by agent ID', () => {
-      const processes = [
-        { pid: 123, command: 'claude --agent agent-test123' },
-        { pid: 456, command: 'other-process' }
+    it('should identify active SDK session by agent ID', () => {
+      const activeSessions = [
+        { sessionId: 'agent-test123', workingDirectory: '/some/other/path', isActive: true },
+        { sessionId: 'agent-other', workingDirectory: '/other/path', isActive: true }
       ];
 
-      const result = discovery.isWorktreeProcessActive(mockWorktree, processes);
+      const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
 
       expect(result).toBe(true);
     });
 
-    it('should identify active process by worktree path', () => {
-      const processes = [
-        { pid: 123, command: 'git -C /path/to/.napoleon-worktrees/agent-test123-1234567890 status' },
-        { pid: 456, command: 'other-process' }
+    it('should identify active SDK session by worktree path', () => {
+      const activeSessions = [
+        { sessionId: 'agent-other', workingDirectory: '/path/to/.napoleon-worktrees/agent-test123-1234567890', isActive: true },
+        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true }
       ];
 
-      const result = discovery.isWorktreeProcessActive(mockWorktree, processes);
+      const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
 
       expect(result).toBe(true);
     });
 
-    it('should identify active process by napoleon/claude keywords', () => {
-      const processes = [
-        { pid: 123, command: 'napoleon --agent-id test123' },
-        { pid: 456, command: 'other-process' }
+    it('should identify active SDK session by working directory contains worktree path', () => {
+      const activeSessions = [
+        { sessionId: 'agent-other', workingDirectory: '/path/to/.napoleon-worktrees/agent-test123-1234567890/subdirectory', isActive: true },
+        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true }
       ];
 
-      const result = discovery.isWorktreeProcessActive(mockWorktree, processes);
+      const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
 
       expect(result).toBe(true);
     });
 
-    it('should return false when no matching processes found', () => {
-      const processes = [
-        { pid: 123, command: 'unrelated-process' },
-        { pid: 456, command: 'another-process' }
+    it('should return false when no matching SDK sessions found', () => {
+      const activeSessions = [
+        { sessionId: 'agent-unrelated', workingDirectory: '/unrelated/path', isActive: true },
+        { sessionId: 'agent-different', workingDirectory: '/another/path', isActive: true }
       ];
 
-      const result = discovery.isWorktreeProcessActive(mockWorktree, processes);
+      const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
 
       expect(result).toBe(false);
     });

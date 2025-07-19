@@ -90,7 +90,7 @@ feature/agent-003  # Agent 3's feature branch
 ```
 Agent List Display with Branches:
 ┌─────────────────────────────────────────────────────────────┐
-│ ADD Manager v1.0.0                                         │
+│ Napoleon v1.0.0                                         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
 │ ● agent-001 [feature/agent-001]  Runtime: 05:23            │
