@@ -233,25 +233,24 @@ class AgentSpawnDialog {
 
       // Hide modal immediately - don't wait for spawn completion
       this.hideWithFocusRestore();
-      
+
       // Start background agent creation process
       // Use callback/promise to handle completion/errors
       if (this.onSpawn) {
         const agentCreationPromise = this.onSpawn(instructions);
-        
+
         // Handle background completion (don't block modal dismissal)
-        agentCreationPromise.catch(error => {
+        agentCreationPromise.catch((error) => {
           logger.error('Agent spawn failed during background creation', {
             error: error.message,
-            instructions: instructions.substring(0, 50)
+            instructions: instructions.substring(0, 50),
           });
           // Error handling happens in agent list, not modal
         });
       }
-
     } catch (error) {
       logger.error('Agent spawn initiation failed', {
-        error: error.message
+        error: error.message,
       });
       this.showError(`Failed to start agent creation: ${error.message}`);
       // Keep modal open for immediate failures
@@ -373,7 +372,7 @@ class AgentSpawnDialog {
 
     try {
       // Clear any existing timers
-      this.activeTimers.forEach(timer => clearTimeout(timer));
+      this.activeTimers.forEach((timer) => clearTimeout(timer));
       this.activeTimers.clear();
 
       // Clear focus restore timeout
@@ -395,11 +394,10 @@ class AgentSpawnDialog {
       }
 
       logger.debug('Agent spawn dialog hidden successfully');
-
     } catch (error) {
       logger.error('Error hiding agent spawn dialog', {
         error: error.message,
-        stack: error.stack
+        stack: error.stack,
       });
       // Ensure isVisible is false even if hide fails
       this.isVisible = false;
