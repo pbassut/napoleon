@@ -971,6 +971,31 @@ class AgentManager {
       });
     }
 
+    // Auto-terminate agent when it reaches a result state (waiting for input)
+    if (message.type === 'result') {
+      logger.info('Agent reached result state, auto-terminating', {
+        agentId,
+        resultContent: message.content,
+      });
+
+      // Add termination log entry
+      session.logs.push({
+        timestamp: new Date(),
+        content: 'Agent completed task and is waiting for input - auto-terminating',
+        type: 'system',
+      });
+
+      // Terminate the agent asynchronously to avoid blocking message processing
+      setImmediate(() => {
+        this.terminateAgent(agentId).catch((error) => {
+          logger.error('Failed to auto-terminate agent', {
+            agentId,
+            error: error.message,
+          });
+        });
+      });
+    }
+
     // Update last activity
     session.lastActivity = new Date().toISOString();
 
