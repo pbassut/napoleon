@@ -581,13 +581,10 @@ class AgentDetailView {
    */
   updateLogsDisplay() {
     if (this.logs.length === 0) {
-      // Show loading spinner for spawning agents instead of "no logs" message
-      if (this.currentAgent && this.currentAgent.status === 'spawning') {
-        const spinnerFrames = ['◐', '◑', '◒', '◓'];
-        const frameIndex = Math.floor(Date.now() / 200) % 4;
-        const spinner = spinnerFrames[frameIndex];
-        const progress = this.currentAgent.progress || 'Initializing...';
-        this.logsContent.setContent(`${spinner} Agent is starting up - ${progress}\n\nLogs will appear here once the agent begins processing...`);
+      // Show appropriate status indicators based on agent state
+      if (this.currentAgent && this.currentAgent.status) {
+        const statusContent = this.getStatusContent(this.currentAgent);
+        this.logsContent.setContent(statusContent);
       } else {
         this.logsContent.setContent('No logs available for this agent.');
       }
@@ -629,6 +626,45 @@ class AgentDetailView {
     }).join('\n');
 
     this.logsContent.setContent(formattedLogs);
+  }
+
+  /**
+   * Get status content display for agents with no logs
+   */
+  getStatusContent(agent) {
+    const { status, progress = '' } = agent;
+
+    switch (status) {
+      case 'spawning': {
+        const spinnerFrames = ['◐', '◑', '◒', '◓'];
+        const frameIndex = Math.floor(Date.now() / 200) % 4;
+        const spinner = spinnerFrames[frameIndex];
+        return `${spinner} Agent is starting up - ${progress}\n\nLogs will appear here once the agent begins processing...`;
+      }
+
+      case 'running': {
+        const runningFrames = ['●', '◉', '○', '◯'];
+        const runningFrameIndex = Math.floor(Date.now() / 300) % 4;
+        const runningSpinner = runningFrames[runningFrameIndex];
+        return `${runningSpinner} Agent is processing - ${progress}\n\nLogs will appear here as the agent generates output...`;
+      }
+
+      case 'terminating': {
+        const terminatingFrames = ['◢', '◣', '◤', '◥'];
+        const terminatingFrameIndex = Math.floor(Date.now() / 250) % 4;
+        const terminatingSpinner = terminatingFrames[terminatingFrameIndex];
+        return `${terminatingSpinner} Agent is shutting down - ${progress}\n\nAgent termination in progress...`;
+      }
+
+      case 'error':
+        return `✗ Agent error - ${progress}\n\nThe agent encountered an error and stopped running.\nCheck the system logs for more details.`;
+
+      case 'idle':
+        return `○ Agent is ready - ${progress}\n\nAgent is waiting for instructions.\nLogs from previous sessions may appear below.`;
+
+      default:
+        return 'No logs available for this agent.';
+    }
   }
 
   /**
