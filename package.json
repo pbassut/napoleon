@@ -1,7 +1,7 @@
 {
   "name": "napoleon",
   "version": "1.0.0",
-  "description": "Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions",
+  "description": "Napoleon - Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions",
   "main": "src/cli/index.js",
   "bin": {
     "napoleon": "./bin/napoleon.js",
@@ -48,10 +48,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/napoleon"
+    "url": "https://github.com/your-org/Napoleon"
   },
   "bugs": {
-    "url": "https://github.com/your-org/napoleon/issues"
+    "url": "https://github.com/your-org/Napoleon/issues"
   },
-  "homepage": "https://github.com/your-org/napoleon#readme"
+  "homepage": "https://github.com/your-org/Napoleon#readme"
 }
