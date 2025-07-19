@@ -757,8 +757,25 @@ class AgentManager {
         lastMessageId: null,
       };
 
+      // Initialize logs array for the session
+      session.logs = session.logs || [];
+
+      // Add initial log entry for agent spawn
+      session.logs.push({
+        timestamp: new Date(),
+        content: `Agent ${agentId} spawned successfully - initializing SDK session...`,
+        type: 'info',
+      });
+
       // Initialize SDK session
       const sdkSession = await this.initializeSDKSession(agentId, workingDirectory);
+
+      // Add SDK initialization log
+      session.logs.push({
+        timestamp: new Date(),
+        content: `SDK session initialized - preparing to process instructions...`,
+        type: 'info',
+      });
 
       // Update session with SDK info
       session.sdkStatus = SDKStatus.ACTIVE;
@@ -824,6 +841,12 @@ class AgentManager {
       logger.debug('Sending instructions to agent via SDK', {
         agentId,
         instructionsLength: instructions.length,
+      });
+
+      // Add log entry for instruction processing
+      this.handleSDKMessage(agentId, {
+        content: `Processing instructions: "${instructions.substring(0, 100)}${instructions.length > 100 ? '...' : ''}"`,
+        type: 'info',
       });
 
       // Update session status to indicate processing

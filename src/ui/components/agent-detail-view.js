@@ -392,7 +392,16 @@ class AgentDetailView {
    */
   updateLogsDisplay() {
     if (this.logs.length === 0) {
-      this.logsContent.setContent('No logs available for this agent.');
+      // Show loading spinner for spawning agents instead of "no logs" message
+      if (this.currentAgent && this.currentAgent.status === 'spawning') {
+        const spinnerFrames = ['◐', '◑', '◒', '◓'];
+        const frameIndex = Math.floor(Date.now() / 200) % 4;
+        const spinner = spinnerFrames[frameIndex];
+        const progress = this.currentAgent.progress || 'Initializing...';
+        this.logsContent.setContent(`${spinner} Agent is starting up - ${progress}\n\nLogs will appear here once the agent begins processing...`);
+      } else {
+        this.logsContent.setContent('No logs available for this agent.');
+      }
       return;
     }
 
