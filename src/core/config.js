@@ -13,6 +13,7 @@ const DEFAULT_CONFIG = {
   maxAgents: 3,
   sessionTimeout: 3600000, // 1 hour in milliseconds
   logLevel: 'info',
+  napoleonDir: path.join(os.homedir(), '.napoleon'),
   features: {
     autoCleanup: true,
     notifications: true,
