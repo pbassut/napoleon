@@ -44,6 +44,63 @@ class TerminalUI {
   }
 
   /**
+   * Create safe terminal options with compatibility detection
+   */
+  createSafeTerminalOptions() {
+    const baseOptions = {
+      smartCSR: true,
+      title: 'Napoleon',
+      cursor: {
+        artificial: true,
+        shape: 'line',
+        blink: true,
+      },
+      dockBorders: true,
+      ignoreLocked: ['C-c'],
+      warnings: false,
+    };
+
+    // Detect terminal capabilities and apply safe fallbacks
+    const termType = process.env.TERM || '';
+    const colorTerm = process.env.COLORTERM || '';
+
+    logger.debug('Terminal compatibility detection', {
+      TERM: termType,
+      COLORTERM: colorTerm,
+      columns: process.stdout.columns,
+      rows: process.stdout.rows,
+    });
+
+    // Apply compatibility fixes for problematic terminals
+    if (termType.includes('xterm') || termType.includes('screen')) {
+      // Disable advanced color features that cause Setulc errors
+      baseOptions.sendFocus = false;
+      baseOptions.useBCE = false;
+      baseOptions.fastCSR = false;
+      baseOptions.resizeTimeout = 300;
+
+      logger.debug('Applied xterm/screen compatibility fixes');
+    }
+
+    // Additional safety measures for all terminals
+    if (process.platform === 'darwin') {
+      // macOS specific adjustments
+      baseOptions.autoPadding = true;
+      baseOptions.tabSize = 8;
+    }
+
+    // Disable problematic features in CI environments
+    if (process.env.CI || process.env.GITHUB_ACTIONS) {
+      baseOptions.mouse = false;
+      baseOptions.sendFocus = false;
+      baseOptions.input = process.stdin;
+      baseOptions.output = process.stdout;
+    }
+
+    return baseOptions;
+  }
+
+  /**
    * Initialize the terminal UI
    */
   async initialize() {
@@ -55,20 +112,9 @@ class TerminalUI {
       this.agentManager = new AgentManager();
       await this.agentManager.initialize();
 
-      // Create blessed screen with defensive terminal handling
-      this.screen = blessed.screen({
-        smartCSR: true,
-        title: 'Napoleon',
-        cursor: {
-          artificial: true,
-          shape: 'line',
-          blink: true,
-        },
-        dockBorders: true,
-        ignoreLocked: ['C-c'],
-        // Disable advanced color features that can cause terminal issues
-        warnings: false,
-      });
+      // Create blessed screen with enhanced terminal compatibility
+      const terminalOptions = this.createSafeTerminalOptions();
+      this.screen = blessed.screen(terminalOptions);
 
       // Initialize focus debugging and cross-platform handling
       this.focusDebugger = new FocusDebugger(this.screen);

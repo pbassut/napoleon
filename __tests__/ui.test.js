@@ -122,7 +122,7 @@ describe('Terminal UI', () => {
     it('should initialize blessed screen with correct options', async () => {
       await ui.initialize();
 
-      expect(blessed.screen).toHaveBeenCalledWith({
+      expect(blessed.screen).toHaveBeenCalledWith(expect.objectContaining({
         smartCSR: true,
         title: 'Napoleon',
         cursor: {
@@ -133,7 +133,7 @@ describe('Terminal UI', () => {
         dockBorders: true,
         ignoreLocked: ['C-c'],
         warnings: false,
-      });
+      }));
     });
 
     it('should load configuration during initialization', async () => {
