@@ -7,9 +7,10 @@ const logger = require('../../utils/logger');
  * Handles Claude Code SDK operations with session management and recovery
  */
 class SDKCommunicationManager {
-  constructor() {
+  constructor(agentLogManager = null) {
     this.sessions = new Map();
     this.logger = logger;
+    this.agentLogManager = agentLogManager;
   }
 
   /**
@@ -81,6 +82,7 @@ class SDKCommunicationManager {
    * @returns {Promise<Array>} Array of messages from SDK
    */
   async executeQuery(agentId, prompt, options = {}) {
+    const startTime = Date.now();
     try {
       const session = this.sessions.get(agentId);
       if (!session) {
@@ -115,6 +117,39 @@ class SDKCommunicationManager {
         abortController: session.abortController,
       };
 
+      // Log SDK request with truncated prompt (AC1)
+      if (this.agentLogManager) {
+        try {
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_request',
+            source: 'claude_sdk',
+            content: JSON.stringify({
+              prompt: prompt.substring(0, 200) + (prompt.length > 200 ? '...' : ''),
+              options: {
+                model: queryOptions.model,
+                maxTokens: queryOptions.maxTokens,
+                temperature: queryOptions.temperature,
+                maxTurns: queryOptions.maxTurns,
+              },
+            }, null, 2),
+            metadata: {
+              promptLength: prompt.length,
+              model: queryOptions.model || 'default',
+              maxTokens: queryOptions.maxTokens,
+              temperature: queryOptions.temperature,
+              requestTimestamp: new Date().toISOString(),
+              requestStartTime: startTime,
+            },
+          });
+        } catch (logError) {
+          // Non-blocking: continue SDK operation if logging fails
+          this.logger.warn('Failed to log SDK request', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
       this.logger.info('Executing SDK query', {
         agentId,
         promptLength: prompt.length,
@@ -122,13 +157,48 @@ class SDKCommunicationManager {
       });
 
       const messages = [];
+      let tokenUsage = { input: 0, output: 0, total: 0 };
 
       // Execute query using Claude Code SDK
-      for await (const message of query({
+      const queryResponse = query({
         prompt,
         ...queryOptions,
-      })) {
+      });
+
+      // Process streaming response
+      for await (const message of queryResponse) {
         messages.push(message);
+
+        // Update token usage if available
+        if (message.usage) {
+          tokenUsage = message.usage;
+        }
+
+        // Log each response message (AC2)
+        if (this.agentLogManager) {
+          try {
+            await this.agentLogManager.writeLogEntry(agentId, {
+              type: 'sdk_response',
+              source: 'claude_sdk',
+              content: JSON.stringify(message, null, 2),
+              metadata: {
+                messageId: message.id,
+                duration: Date.now() - startTime,
+                tokenUsage: message.usage,
+                model: message.model,
+                messageIndex: messages.length - 1,
+                totalMessages: messages.length,
+              },
+            });
+          } catch (logError) {
+            // Non-blocking: continue SDK operation if logging fails
+            this.logger.warn('Failed to log SDK response', {
+              agentId,
+              messageId: message.id,
+              error: logError.message,
+            });
+          }
+        }
 
         // Update session with message info
         session.lastMessageId = message.id || Date.now().toString();
@@ -146,17 +216,87 @@ class SDKCommunicationManager {
         session.messageHistory = session.messageHistory.slice(-100);
       }
 
+      // Log final summary (AC4)
+      if (this.agentLogManager) {
+        try {
+          const totalDuration = Date.now() - startTime;
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_summary',
+            source: 'claude_sdk',
+            content: 'SDK query completed successfully',
+            metadata: {
+              totalDuration,
+              messageCount: messages.length,
+              finalTokenUsage: tokenUsage,
+              costEstimate: this.calculateCostEstimate(tokenUsage),
+              averageResponseTime: messages.length > 0 ? totalDuration / messages.length : 0,
+              performanceWarning: totalDuration > 30000,
+            },
+          });
+
+          // Log performance warning if request took too long
+          if (totalDuration > 30000) {
+            await this.agentLogManager.writeLogEntry(agentId, {
+              type: 'sdk_warning',
+              source: 'claude_sdk',
+              content: `Slow SDK request detected: ${totalDuration}ms (threshold: 30000ms)`,
+              metadata: {
+                duration: totalDuration,
+                threshold: 30000,
+                promptLength: prompt.length,
+                messageCount: messages.length,
+              },
+            });
+          }
+        } catch (logError) {
+          // Non-blocking: continue SDK operation if logging fails
+          this.logger.warn('Failed to log SDK summary', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
       this.logger.info('SDK query completed', {
         agentId,
         messageCount: messages.length,
         lastMessageId: session.lastMessageId,
+        duration: Date.now() - startTime,
       });
 
       return messages;
     } catch (error) {
+      // Log SDK errors with complete context (AC3)
+      if (this.agentLogManager) {
+        try {
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_error',
+            source: 'claude_sdk',
+            content: `SDK Error: ${error.message}`,
+            metadata: {
+              error: error.name,
+              message: error.message,
+              stack: error.stack,
+              duration: Date.now() - startTime,
+              promptLength: prompt.length,
+              requestOptions: options,
+              requestTimestamp: new Date().toISOString(),
+              errorType: this.classifySDKError(error),
+            },
+          });
+        } catch (logError) {
+          // Non-blocking: continue error handling if logging fails
+          this.logger.warn('Failed to log SDK error', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
       this.logger.error('Failed to execute SDK query', {
         agentId,
         error: error.message,
+        duration: Date.now() - startTime,
       });
 
       // Update session status on error
@@ -325,6 +465,102 @@ class SDKCommunicationManager {
       });
       return false;
     }
+  }
+
+  /**
+   * Calculate cost estimate based on token usage
+   * @param {Object} tokenUsage - Token usage object with input/output counts
+   * @returns {Object} Cost estimation details
+   * @private
+   */
+  static calculateCostEstimate(tokenUsage) {
+    if (!tokenUsage || typeof tokenUsage !== 'object') {
+      return { estimated: false, error: 'Invalid token usage data' };
+    }
+
+    // Claude 3.5 Sonnet pricing (as of 2024)
+    const inputCostPer1K = 0.003; // $3 per 1M tokens
+    const outputCostPer1K = 0.015; // $15 per 1M tokens
+
+    const inputTokens = tokenUsage.input || 0;
+    const outputTokens = tokenUsage.output || 0;
+    
+    const inputCost = (inputTokens / 1000) * inputCostPer1K;
+    const outputCost = (outputTokens / 1000) * outputCostPer1K;
+    const totalCost = inputCost + outputCost;
+
+    return {
+      estimated: true,
+      inputTokens,
+      outputTokens,
+      totalTokens: inputTokens + outputTokens,
+      inputCost: parseFloat(inputCost.toFixed(6)),
+      outputCost: parseFloat(outputCost.toFixed(6)),
+      totalCost: parseFloat(totalCost.toFixed(6)),
+      currency: 'USD',
+      note: 'Estimated based on Claude 3.5 Sonnet pricing',
+    };
+  }
+
+  /**
+   * Classify SDK error types for better categorization
+   * @param {Error} error - The error object to classify
+   * @returns {string} Error classification
+   * @private
+   */
+  classifySDKError(error) {
+    if (!error || !error.message) {
+      return 'unknown_error';
+    }
+
+    const message = error.message.toLowerCase();
+    const name = error.name ? error.name.toLowerCase() : '';
+
+    // Network and connection errors
+    if (message.includes('network') || message.includes('connection') ||
+        message.includes('timeout') || message.includes('econnreset') ||
+        message.includes('enotfound') || name.includes('network')) {
+      return 'connection_error';
+    }
+
+    // Authentication errors
+    if (message.includes('unauthorized') || message.includes('authentication') ||
+        message.includes('api key') || message.includes('forbidden') ||
+        error.status === 401 || error.status === 403) {
+      return 'authentication_error';
+    }
+
+    // Rate limiting
+    if (message.includes('rate limit') || message.includes('too many requests') ||
+        error.status === 429) {
+      return 'rate_limit_error';
+    }
+
+    // Validation errors
+    if (message.includes('validation') || message.includes('invalid') ||
+        message.includes('malformed') || error.status === 400) {
+      return 'validation_error';
+    }
+
+    // Abort/cancellation errors
+    if (message.includes('abort') || message.includes('cancel') ||
+        name.includes('abort')) {
+      return 'request_cancelled';
+    }
+
+    // Server errors
+    if (error.status >= 500 || message.includes('internal server') ||
+        message.includes('service unavailable')) {
+      return 'server_error';
+    }
+
+    // SDK-specific errors
+    if (name.includes('sdk') || message.includes('claude') ||
+        message.includes('anthropic')) {
+      return 'sdk_error';
+    }
+
+    return 'unknown_error';
   }
 }
 

@@ -33,14 +33,14 @@ class GitStatusChecker {
 
       // Get fresh git status
       const status = await this.getGitStatus();
-      
+
       const result = {
         isClean: status.isClean,
         hasUncommittedChanges: status.modified.length > 0,
         hasUntrackedFiles: status.untracked.length > 0,
         hasStagedChanges: status.staged.length > 0,
         details: status,
-        gitDir
+        gitDir,
       };
 
       // Cache the result
@@ -59,11 +59,11 @@ class GitStatusChecker {
    */
   async findGitDirectory() {
     try {
-      const gitDir = execSync('git rev-parse --git-dir', { 
+      const gitDir = execSync('git rev-parse --git-dir', {
         encoding: 'utf8',
-        stdio: 'pipe'
+        stdio: 'pipe',
       }).trim();
-      
+
       // Convert to absolute path
       return path.resolve(gitDir);
     } catch (error) {
@@ -78,16 +78,16 @@ class GitStatusChecker {
   async getGitStatus() {
     try {
       // Get porcelain status for reliable parsing
-      const result = execSync('git status --porcelain', { 
+      const result = execSync('git status --porcelain', {
         encoding: 'utf8',
-        stdio: 'pipe'
+        stdio: 'pipe',
       });
 
       const modified = [];
       const untracked = [];
       const staged = [];
 
-      result.split('\n').forEach(line => {
+      result.split('\n').forEach((line) => {
         if (line.trim()) {
           const status = line.substring(0, 2);
           const file = line.substring(3);
@@ -102,7 +102,7 @@ class GitStatusChecker {
             staged.push({
               file,
               status: stagedChar,
-              type: this.getStatusType(stagedChar)
+              type: this.getStatusType(stagedChar),
             });
           }
 
@@ -111,7 +111,7 @@ class GitStatusChecker {
             modified.push({
               file,
               status: workingChar,
-              type: this.getStatusType(workingChar)
+              type: this.getStatusType(workingChar),
             });
           }
 
@@ -120,7 +120,7 @@ class GitStatusChecker {
             untracked.push({
               file,
               status: '??',
-              type: 'untracked'
+              type: 'untracked',
             });
           }
         }
@@ -130,7 +130,7 @@ class GitStatusChecker {
         isClean: modified.length === 0 && untracked.length === 0 && staged.length === 0,
         modified,
         untracked,
-        staged
+        staged,
       };
     } catch (error) {
       throw new Error(`Failed to get git status: ${error.message}`);
@@ -144,13 +144,13 @@ class GitStatusChecker {
    */
   getStatusType(statusCode) {
     const statusTypes = {
-      'M': 'modified',
-      'A': 'added',
-      'D': 'deleted',
-      'R': 'renamed',
-      'C': 'copied',
-      'U': 'unmerged',
-      '??': 'untracked'
+      M: 'modified',
+      A: 'added',
+      D: 'deleted',
+      R: 'renamed',
+      C: 'copied',
+      U: 'unmerged',
+      '??': 'untracked',
     };
 
     return statusTypes[statusCode] || 'unknown';
@@ -186,9 +186,9 @@ class GitStatusChecker {
    */
   getDetailedFileInfo(status) {
     return {
-      modified: status.details.modified.map(item => `  ${item.file} (${item.type})`).join('\n'),
-      untracked: status.details.untracked.map(item => `  ${item.file}`).join('\n'),
-      staged: status.details.staged.map(item => `  ${item.file} (${item.type})`).join('\n')
+      modified: status.details.modified.map((item) => `  ${item.file} (${item.type})`).join('\n'),
+      untracked: status.details.untracked.map((item) => `  ${item.file}`).join('\n'),
+      staged: status.details.staged.map((item) => `  ${item.file} (${item.type})`).join('\n'),
     };
   }
 
@@ -197,8 +197,8 @@ class GitStatusChecker {
    * @returns {boolean} True if cache is valid
    */
   isStatusCacheValid() {
-    return this.statusCache && 
-           (Date.now() - this.lastCacheTime) < this.cacheTimeout;
+    return this.statusCache
+           && (Date.now() - this.lastCacheTime) < this.cacheTimeout;
   }
 
   /**
@@ -224,7 +224,7 @@ class GitStatusChecker {
         return {
           isValid: false,
           error: 'NOT_IN_GIT_REPO',
-          message: 'Current directory is not in a git repository'
+          message: 'Current directory is not in a git repository',
         };
       }
 
@@ -233,19 +233,19 @@ class GitStatusChecker {
         return {
           isValid: false,
           error: 'GIT_DIR_NOT_ACCESSIBLE',
-          message: 'Git directory is not accessible'
+          message: 'Git directory is not accessible',
         };
       }
 
       return {
         isValid: true,
-        gitDir
+        gitDir,
       };
     } catch (error) {
       return {
         isValid: false,
         error: 'GIT_NOT_AVAILABLE',
-        message: 'Git is not available in system PATH'
+        message: 'Git is not available in system PATH',
       };
     }
   }

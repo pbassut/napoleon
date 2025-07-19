@@ -24,7 +24,7 @@ class WorktreeCleanupQueue {
       totalProcessed: 0,
       totalSuccessful: 0,
       totalFailed: 0,
-      currentlyProcessing: 0
+      currentlyProcessing: 0,
     };
   }
 
@@ -43,11 +43,11 @@ class WorktreeCleanupQueue {
       attempts: 0,
       maxAttempts: options.maxAttempts || this.retryAttempts,
       lastError: null,
-      status: 'queued'
+      status: 'queued',
     };
 
     // Insert based on priority (higher numbers = higher priority)
-    const insertIndex = this.queue.findIndex(item => item.priority < queueItem.priority);
+    const insertIndex = this.queue.findIndex((item) => item.priority < queueItem.priority);
     if (insertIndex === -1) {
       this.queue.push(queueItem);
     } else {
@@ -55,12 +55,12 @@ class WorktreeCleanupQueue {
     }
 
     this.metrics.totalEnqueued++;
-    
+
     logger.info('Worktree enqueued for cleanup', {
       id: queueItem.id,
       worktreePath: queueItem.worktreePath,
       priority: queueItem.priority,
-      queueLength: this.queue.length
+      queueLength: this.queue.length,
     });
 
     this.notifyProgress();
@@ -87,10 +87,10 @@ class WorktreeCleanupQueue {
     try {
       while (this.queue.length > 0 && this.metrics.currentlyProcessing < this.maxConcurrent) {
         const batch = this.queue.splice(0, this.maxConcurrent - this.metrics.currentlyProcessing);
-        
+
         if (batch.length > 0) {
           // Process batch concurrently
-          const promises = batch.map(item => this.processCleanupItem(item));
+          const promises = batch.map((item) => this.processCleanupItem(item));
           await Promise.allSettled(promises);
         }
       }
@@ -98,7 +98,7 @@ class WorktreeCleanupQueue {
       logger.error('Error in cleanup queue processing', { error: error.message });
     } finally {
       this.processing = false;
-      
+
       // Continue processing if there are more items
       if (this.queue.length > 0) {
         setImmediate(() => this.processQueue());
@@ -121,47 +121,46 @@ class WorktreeCleanupQueue {
       id: item.id,
       worktreePath: item.worktreePath,
       attempt: item.attempts,
-      maxAttempts: item.maxAttempts
+      maxAttempts: item.maxAttempts,
     });
 
     try {
       await this.cleanupWorktree(item);
-      
+
       item.status = 'completed';
       this.metrics.totalSuccessful++;
       this.metrics.totalProcessed++;
-      
+
       logger.info('Worktree cleanup successful', {
         id: item.id,
         worktreePath: item.worktreePath,
-        attempts: item.attempts
+        attempts: item.attempts,
       });
-
     } catch (error) {
       item.lastError = error.message;
       item.status = 'failed';
-      
+
       logger.warn('Worktree cleanup failed', {
         id: item.id,
         worktreePath: item.worktreePath,
         attempt: item.attempts,
         maxAttempts: item.maxAttempts,
-        error: error.message
+        error: error.message,
       });
 
       // Retry logic with exponential backoff
       if (item.attempts < item.maxAttempts) {
         const delay = Math.min(
-          this.retryDelayMs * Math.pow(2, item.attempts - 1),
-          this.maxRetryDelayMs
+          this.retryDelayMs * 2 ** (item.attempts - 1),
+          this.maxRetryDelayMs,
         );
-        
+
         item.status = 'retry-scheduled';
-        
+
         logger.debug('Scheduling cleanup retry', {
           id: item.id,
           delay,
-          nextAttempt: item.attempts + 1
+          nextAttempt: item.attempts + 1,
         });
 
         setTimeout(() => {
@@ -169,7 +168,7 @@ class WorktreeCleanupQueue {
           item.priority += 10;
           item.status = 'queued';
           this.queue.unshift(item);
-          
+
           if (!this.processing) {
             setImmediate(() => this.processQueue());
           }
@@ -177,12 +176,12 @@ class WorktreeCleanupQueue {
       } else {
         this.metrics.totalFailed++;
         this.metrics.totalProcessed++;
-        
+
         logger.error('Worktree cleanup failed permanently', {
           id: item.id,
           worktreePath: item.worktreePath,
           totalAttempts: item.attempts,
-          lastError: item.lastError
+          lastError: item.lastError,
         });
       }
     } finally {
@@ -219,20 +218,20 @@ class WorktreeCleanupQueue {
 
     // Remove git worktree
     try {
-      const command = force 
+      const command = force
         ? `git worktree remove "${worktreePath}" --force`
         : `git worktree remove "${worktreePath}"`;
-        
+
       await execAsync(command, {
         cwd: process.cwd(),
-        timeout: 30000
+        timeout: 30000,
       });
-      
+
       logger.debug('Git worktree removed successfully', { worktreePath });
     } catch (gitError) {
       logger.warn('Git worktree removal failed, attempting manual cleanup', {
         worktreePath,
-        error: gitError.message
+        error: gitError.message,
       });
 
       // Manual filesystem cleanup as fallback
@@ -254,14 +253,14 @@ class WorktreeCleanupQueue {
     try {
       const { stdout } = await execAsync('git status --porcelain', {
         cwd: worktreePath,
-        timeout: 5000
+        timeout: 5000,
       });
-      
+
       return stdout.trim().length > 0;
     } catch (error) {
-      logger.debug('Failed to check git status', { 
-        worktreePath, 
-        error: error.message 
+      logger.debug('Failed to check git status', {
+        worktreePath,
+        error: error.message,
       });
       // Assume no changes if we can't check
       return false;
@@ -275,25 +274,25 @@ class WorktreeCleanupQueue {
     try {
       // Create a commit with any uncommitted changes
       await execAsync('git add .', { cwd: worktreePath, timeout: 10000 });
-      
+
       const { stdout: statusOutput } = await execAsync('git status --porcelain', {
         cwd: worktreePath,
-        timeout: 5000
+        timeout: 5000,
       });
-      
+
       if (statusOutput.trim()) {
         const timestamp = new Date().toISOString();
         await execAsync(`git commit -m "Auto-save before worktree cleanup - ${timestamp}"`, {
           cwd: worktreePath,
-          timeout: 10000
+          timeout: 10000,
         });
-        
+
         logger.info('Branch changes preserved before cleanup', { worktreePath });
       }
     } catch (error) {
       logger.warn('Failed to preserve branch changes', {
         worktreePath,
-        error: error.message
+        error: error.message,
       });
       // Don't fail cleanup if preservation fails
     }
@@ -304,32 +303,32 @@ class WorktreeCleanupQueue {
    */
   calculatePriority(options) {
     let priority = 0;
-    
+
     // Higher priority for older worktrees
     if (options.age) {
       priority += Math.min(Math.floor(options.age / (24 * 60 * 60 * 1000)), 10);
     }
-    
+
     // Higher priority for larger worktrees
     if (options.size) {
       priority += Math.min(Math.floor(options.size / (100 * 1024 * 1024)), 5);
     }
-    
+
     // Higher priority for force cleanup
     if (options.force) {
       priority += 20;
     }
-    
+
     // Higher priority for orphaned worktrees
     if (options.orphaned) {
       priority += 15;
     }
-    
+
     // Higher priority for explicit cleanup requests
     if (options.explicit) {
       priority += 50;
     }
-    
+
     return priority;
   }
 
@@ -356,7 +355,7 @@ class WorktreeCleanupQueue {
       queueLength: this.queue.length,
       processing: this.processing,
       currentlyProcessing: this.metrics.currentlyProcessing,
-      metrics: { ...this.metrics }
+      metrics: { ...this.metrics },
     };
 
     for (const callback of this.progressCallbacks) {
@@ -377,14 +376,14 @@ class WorktreeCleanupQueue {
       processing: this.processing,
       currentlyProcessing: this.metrics.currentlyProcessing,
       metrics: { ...this.metrics },
-      queue: this.queue.map(item => ({
+      queue: this.queue.map((item) => ({
         id: item.id,
         worktreePath: item.worktreePath,
         status: item.status,
         priority: item.priority,
         attempts: item.attempts,
-        timestamp: item.timestamp
-      }))
+        timestamp: item.timestamp,
+      })),
     };
   }
 
@@ -394,10 +393,10 @@ class WorktreeCleanupQueue {
   clear() {
     const clearedCount = this.queue.length;
     this.queue = [];
-    
+
     logger.info('Cleanup queue cleared', { clearedCount });
     this.notifyProgress();
-    
+
     return clearedCount;
   }
 
@@ -409,7 +408,7 @@ class WorktreeCleanupQueue {
       ...options,
       force: true,
       priority: 100,
-      explicit: true
+      explicit: true,
     });
   }
 
@@ -419,21 +418,21 @@ class WorktreeCleanupQueue {
   async shutdown() {
     logger.info('Shutting down cleanup queue', {
       queueLength: this.queue.length,
-      processing: this.processing
+      processing: this.processing,
     });
 
     // Wait for current processing to complete
     const maxWaitMs = 30000; // 30 seconds
     const startTime = Date.now();
-    
+
     while (this.processing && (Date.now() - startTime) < maxWaitMs) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
     // Clear remaining queue
     this.clear();
     this.progressCallbacks.clear();
-    
+
     logger.info('Cleanup queue shutdown completed');
   }
 }

@@ -62,7 +62,7 @@ class AgentDetailView {
       top: 0,
       left: 0,
       width: '100%',
-      height: 6,
+      height: 7,
       border: {
         type: 'line',
       },
@@ -80,21 +80,22 @@ class AgentDetailView {
       top: 1,
       left: 1,
       width: '100%-2',
-      height: 4,
+      height: 5,
       content: '',
       style: {
         fg: 'white',
       },
+      tags: true, // Enable color tags for status indicators
     });
 
     // Logs section with scrollable content
     this.logsBox = blessed.box({
       parent: this.overlay,
       label: ' Logs ',
-      top: 6,
+      top: 7,
       left: 0,
       width: '100%',
-      height: '100%-9',
+      height: '100%-10',
       border: {
         type: 'line',
       },
@@ -148,7 +149,7 @@ class AgentDetailView {
       left: 1,
       width: '100%-2',
       height: 1,
-      content: '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help',
+      content: '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [l] External | [h] History | [ESC/q] Back | [?] Help',
       style: {
         fg: 'cyan',
       },
@@ -249,8 +250,18 @@ class AgentDetailView {
         this.toggleAutoScroll();
       });
 
-      // Help
+      // Open log file in external viewer
+      this.overlay.key(['l'], () => {
+        this.openLogInExternalViewer();
+      });
+
+      // Historical logs access
       this.overlay.key(['h'], () => {
+        this.showHistoricalLogsDialog();
+      });
+
+      // Help (moved to different key)
+      this.overlay.key(['?'], () => {
         this.showHelp();
       });
     }
@@ -349,13 +360,134 @@ class AgentDetailView {
     const sdkStatus = agent.sdkStatus || 'N/A';
     const sessionId = agent.sessionId || agent.id;
 
+    // Get persistent log file information
+    const logInfo = this.getLogFileInfo(agent.id);
+
     const info = [
       `Agent: ${agent.id} [${branchInfo}] │ SDK Status: ${sdkStatus}`,
       `Started: ${AgentDetailView.formatTimestamp(agent.spawnTime || agent.startTime)} │ Runtime: ${runtime}`,
       `Session ID: ${sessionId} │ Status: ${agent.status} │ Instructions: "${agent.instructions || 'N/A'}"`,
+      logInfo,
     ].join('\n');
 
     this.agentInfoText.setContent(info);
+  }
+
+  /**
+   * Get persistent log file information for display
+   * @param {string} agentId - Agent identifier
+   * @returns {string} - Formatted log file information
+   */
+  getLogFileInfo(agentId) {
+    try {
+      // Get AgentLogManager instance from agent manager
+      const agentLogManager = this.agentManager.agentLogManager;
+      if (!agentLogManager) {
+        return 'Log File: {red-fg}Persistent logging disabled{/red-fg}';
+      }
+
+      // Check if agent log manager is initialized
+      if (!agentLogManager.isInitialized()) {
+        return 'Log File: {yellow-fg}Logging system initializing{/yellow-fg}';
+      }
+
+      // Get current log file path for active agent
+      const logPath = agentLogManager.getLogPath(agentId);
+      if (!logPath) {
+        const agentStatus = this.currentAgent?.status || 'unknown';
+        if (agentStatus === 'terminated' || agentStatus === 'failed') {
+          return 'Log File: {cyan-fg}Agent terminated - check historical logs{/cyan-fg}';
+        }
+        return 'Log File: {yellow-fg}No active log file (agent not logging){/yellow-fg}';
+      }
+
+      // Get detailed file information and status
+      const fileStatus = this.getLogFileStatus(logPath);
+      const path = require('path');
+      const filename = path.basename(logPath);
+      
+      let statusIndicator;
+      let sizeInfo = '';
+      
+      switch (fileStatus.status) {
+        case 'active':
+          statusIndicator = '{green-fg}●{/green-fg} Active';
+          sizeInfo = ` ({green-fg}${fileStatus.sizeKB}KB{/green-fg})`;
+          break;
+        case 'readonly':
+          statusIndicator = '{blue-fg}●{/blue-fg} Read-only';
+          sizeInfo = ` ({blue-fg}${fileStatus.sizeKB}KB{/blue-fg})`;
+          break;
+        case 'missing':
+          statusIndicator = '{red-fg}●{/red-fg} Missing';
+          sizeInfo = '';
+          break;
+        case 'error':
+          statusIndicator = '{red-fg}●{/red-fg} Error';
+          sizeInfo = fileStatus.sizeKB ? ` (${fileStatus.sizeKB}KB)` : '';
+          break;
+        default:
+          statusIndicator = '{yellow-fg}●{/yellow-fg} Unknown';
+          sizeInfo = fileStatus.sizeKB ? ` (${fileStatus.sizeKB}KB)` : '';
+      }
+
+      return `Log File: ${filename}${sizeInfo} │ Status: ${statusIndicator} │ Path: ${logPath}`;
+    } catch (error) {
+      logger.error('Failed to get log file info', {
+        agentId,
+        error: error.message,
+      });
+      return 'Log File: {red-fg}Error retrieving log information{/red-fg}';
+    }
+  }
+
+  /**
+   * Get detailed log file status information
+   * @param {string} logPath - Path to log file
+   * @returns {Object} - File status object
+   */
+  getLogFileStatus(logPath) {
+    try {
+      const fs = require('fs');
+      
+      if (!fs.existsSync(logPath)) {
+        return { status: 'missing', sizeKB: 0 };
+      }
+
+      const stats = fs.statSync(logPath);
+      const sizeKB = Math.round(stats.size / 1024);
+      
+      // Check if file is writable (indicates active logging)
+      try {
+        fs.accessSync(logPath, fs.constants.W_OK);
+        
+        // Check if file was modified recently (within last 30 seconds)
+        const now = Date.now();
+        const lastModified = stats.mtime.getTime();
+        const isRecentlyActive = (now - lastModified) < 30000;
+        
+        return {
+          status: isRecentlyActive ? 'active' : 'readonly',
+          sizeKB,
+          lastModified: stats.mtime,
+          accessible: true,
+        };
+      } catch (accessError) {
+        // File exists but not writable
+        return {
+          status: 'readonly',
+          sizeKB,
+          lastModified: stats.mtime,
+          accessible: false,
+        };
+      }
+    } catch (error) {
+      logger.warn('Failed to get log file status', {
+        logPath,
+        error: error.message,
+      });
+      return { status: 'error', sizeKB: 0 };
+    }
   }
 
   /**
@@ -603,9 +735,115 @@ class AgentDetailView {
     this.currentSearchIndex = 0;
     this.updateLogsDisplay();
     this.footerText.setContent(
-      '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help',
+      '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [l] External | [h] History | [ESC/q] Back | [?] Help',
     );
     this.render();
+  }
+
+  /**
+   * Open the current agent's log file in external viewer
+   */
+  openLogInExternalViewer() {
+    if (!this.currentAgent) {
+      this.showStatusMessage('No agent selected', 'red');
+      return;
+    }
+
+    try {
+      // Get AgentLogManager instance from agent manager
+      const agentLogManager = this.agentManager.agentLogManager;
+      if (!agentLogManager) {
+        this.showStatusMessage('Persistent logging not available', 'red');
+        return;
+      }
+
+      // Get current log file path for active agent
+      const logPath = agentLogManager.getLogPath(this.currentAgent.id);
+      if (!logPath) {
+        this.showStatusMessage('No persistent log file found for this agent', 'yellow');
+        return;
+      }
+
+      // Check if file exists
+      const fs = require('fs');
+      if (!fs.existsSync(logPath)) {
+        this.showStatusMessage('Log file does not exist yet', 'yellow');
+        return;
+      }
+
+      // Open file with system default application
+      this.openFileWithSystemDefault(logPath);
+      this.showStatusMessage(`Opening log file: ${require('path').basename(logPath)}`, 'green');
+    } catch (error) {
+      logger.error('Failed to open log in external viewer', {
+        agentId: this.currentAgent.id,
+        error: error.message,
+      });
+      this.showStatusMessage(`Error opening log file: ${error.message}`, 'red');
+    }
+  }
+
+  /**
+   * Open file with system default application
+   * @param {string} filePath - Path to file to open
+   */
+  openFileWithSystemDefault(filePath) {
+    const { spawn } = require('child_process');
+    const os = require('os');
+    
+    let command, args;
+    
+    // Determine command based on platform
+    switch (os.platform()) {
+      case 'darwin': // macOS
+        command = 'open';
+        args = [filePath];
+        break;
+      case 'win32': // Windows
+        command = 'cmd';
+        args = ['/c', 'start', '""', filePath];
+        break;
+      default: // Linux and others
+        command = 'xdg-open';
+        args = [filePath];
+        break;
+    }
+
+    // Spawn process to open file
+    const child = spawn(command, args, {
+      detached: true,
+      stdio: 'ignore',
+    });
+
+    // Detach the child process so it can run independently
+    child.unref();
+
+    logger.info('Opening log file in external viewer', {
+      filePath,
+      command,
+      platform: os.platform(),
+    });
+  }
+
+  /**
+   * Show temporary status message in footer
+   * @param {string} message - Message to show
+   * @param {string} color - Color for the message
+   */
+  showStatusMessage(message, color = 'cyan') {
+    const originalContent = this.footerText.content;
+    const originalColor = this.footerText.style.fg;
+
+    this.footerText.setContent(message);
+    this.footerText.style.fg = color;
+    this.render();
+
+    // Restore original footer after 3 seconds
+    setTimeout(() => {
+      this.footerText.setContent(originalContent);
+      this.footerText.style.fg = originalColor;
+      this.render();
+    }, 3000);
   }
 
   /**
@@ -618,7 +856,7 @@ class AgentDetailView {
 
     setTimeout(() => {
       this.footerText.setContent(
-        '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [ESC/q] Back | [h] Help',
+        '[/] Search | [j/k] Scroll | [G] Bottom | [gg] Top | [l] External | [h] History | [ESC/q] Back | [?] Help',
       );
       this.render();
     }, 2000);
@@ -636,8 +874,8 @@ class AgentDetailView {
       label: ' Agent Detail View Help ',
       top: 'center',
       left: 'center',
-      width: 70,
-      height: 20,
+      width: 75,
+      height: 27,
       border: {
         type: 'line',
       },
@@ -654,7 +892,7 @@ class AgentDetailView {
     const helpContent = [
       'Agent Detail View - Keyboard Shortcuts:',
       '',
-      'Navigation:',
+      'Navigation & Scrolling:',
       '  j/↓        - Scroll down one line',
       '  k/↑        - Scroll up one line',
       '  PageDown   - Scroll down one page',
@@ -663,15 +901,28 @@ class AgentDetailView {
       '  gg         - Go to top of logs',
       '  a          - Toggle auto-scroll mode',
       '',
-      'Search:',
-      '  /          - Enter search mode',
+      'Search & Filter:',
+      '  /          - Enter search mode (regex supported)',
       '  n          - Next search result',
       '  N          - Previous search result',
-      '  ESC        - Clear search',
+      '  ESC        - Clear search and return to normal mode',
+      '',
+      'Persistent Logging:',
+      '  l          - Open current log file in external viewer',
+      '  h          - Browse historical agent logs',
+      '',
+      'Status Indicators:',
+      '  ● Green    - Active logging (file being written)',
+      '  ● Blue     - Read-only log (agent terminated)',
+      '  ● Red      - Error or missing log file',
+      '  ● Yellow   - Unknown or initializing state',
       '',
       'General:',
-      '  h          - Show this help',
+      '  ?          - Show this help dialog',
       '  q/ESC      - Return to main dashboard',
+      '',
+      'Log file paths are shown in agent details header.',
+      'External viewer uses system defaults (VS Code, etc.)',
       '',
       'Press any key to close this help...',
     ];
@@ -697,6 +948,147 @@ class AgentDetailView {
       this.overlay.focus();
       this.render();
     });
+  }
+
+  /**
+   * Show historical logs dialog for browsing archived agent logs
+   */
+  showHistoricalLogsDialog() {
+    try {
+      // Create historical logs overlay
+      const historyOverlay = blessed.box({
+        parent: this.screen,
+        label: ' Historical Agent Logs ',
+        top: 'center',
+        left: 'center',
+        width: 90,
+        height: 25,
+        border: {
+          type: 'line',
+        },
+        style: {
+          fg: 'white',
+          bg: 'black',
+          border: {
+            fg: 'magenta',
+          },
+        },
+        shadow: true,
+      });
+
+      // Get available historical logs
+      const historicalLogs = this.getHistoricalLogs();
+
+      let content;
+      if (historicalLogs.length === 0) {
+        content = [
+          'No historical agent logs found.',
+          '',
+          'Historical logs are created when agents terminate.',
+          'Start and terminate some agents to see their logs here.',
+          '',
+          'Press any key to close...',
+        ].join('\n');
+      } else {
+        content = [
+          'Available Historical Logs:',
+          '',
+          ...historicalLogs.map((log, index) => {
+            const date = new Date(log.date).toLocaleString();
+            const duration = log.duration ? `${log.duration}ms` : 'unknown';
+            const size = log.size ? `${Math.round(log.size / 1024)}KB` : 'unknown';
+            return `${index + 1}. ${log.filename}`;
+          }),
+          '',
+          'Features coming soon:',
+          '• Select and view historical logs',
+          '• Filter by date range or keywords',
+          '• Open historical logs in external viewer',
+          '',
+          'Press any key to close...',
+        ].join('\n');
+      }
+
+      blessed.text({
+        parent: historyOverlay,
+        top: 1,
+        left: 2,
+        width: '100%-4',
+        height: '100%-2',
+        content,
+        style: {
+          fg: 'white',
+        },
+      });
+
+      historyOverlay.focus();
+      this.render();
+
+      // Close on any key
+      historyOverlay.once('keypress', () => {
+        historyOverlay.destroy();
+        this.overlay.focus();
+        this.render();
+      });
+    } catch (error) {
+      logger.error('Failed to show historical logs dialog', {
+        error: error.message,
+      });
+      this.showStatusMessage('Error accessing historical logs', 'red');
+    }
+  }
+
+  /**
+   * Get list of available historical log files
+   * @returns {Array} - Array of historical log metadata
+   */
+  getHistoricalLogs() {
+    try {
+      const fs = require('fs');
+      const path = require('path');
+      const os = require('os');
+
+      // Get logs directory path
+      const napoleonDir = path.join(os.homedir(), '.napoleon');
+      const logsDir = path.join(napoleonDir, 'logs', 'agents');
+
+      if (!fs.existsSync(logsDir)) {
+        return [];
+      }
+
+      // Read log files and extract metadata
+      const files = fs.readdirSync(logsDir);
+      const logFiles = files
+        .filter(file => file.endsWith('.log'))
+        .map(filename => {
+          const filePath = path.join(logsDir, filename);
+          try {
+            const stats = fs.statSync(filePath);
+            return {
+              filename,
+              filePath,
+              date: stats.mtime,
+              size: stats.size,
+              created: stats.ctime,
+            };
+          } catch (error) {
+            logger.warn('Failed to read log file stats', {
+              filename,
+              error: error.message,
+            });
+            return null;
+          }
+        })
+        .filter(log => log !== null)
+        .sort((a, b) => b.date - a.date); // Sort by most recent first
+
+      return logFiles;
+    } catch (error) {
+      logger.error('Failed to get historical logs', {
+        error: error.message,
+      });
+      return [];
+    }
   }
 
   /**

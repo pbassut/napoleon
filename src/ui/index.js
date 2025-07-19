@@ -531,8 +531,8 @@ class TerminalUI {
       const agentId = this.agentManager.generateAgentId();
       const pendingAgent = this.agentManager.addPendingAgent({
         id: agentId,
-        instructions: instructions,
-        startTime: Date.now()
+        instructions,
+        startTime: Date.now(),
       });
 
       // Update UI immediately to show loading state
@@ -543,14 +543,14 @@ class TerminalUI {
 
       // Start actual creation process in background
       this.performAgentCreation(pendingAgent)
-        .then(agent => {
+        .then((agent) => {
           // Update UI with completed agent
           this.agentManager.updatePendingAgentStatus(agent.id, 'idle');
           this.updateAgentsList();
           this.showSpawnSuccess(agent);
           logger.info('Agent spawned successfully from UI', { agentId: agent.id });
         })
-        .catch(error => {
+        .catch((error) => {
           // Update UI with error state
           this.agentManager.updatePendingAgentStatus(pendingAgent.id, 'error', error.message);
           this.updateAgentsList();
@@ -562,7 +562,6 @@ class TerminalUI {
             this.updateAgentsList();
           }, 5000);
         });
-
     } catch (error) {
       logger.error('Agent spawn initiation failed', { error: error.message });
       this.updateStatus(`Failed to start agent creation: ${error.message}`, { fg: 'red', bold: true });
@@ -856,12 +855,12 @@ class TerminalUI {
       const sdkStatusText = agent.sdkStatus ? `SDK: ${agent.sdkStatus}`.padEnd(12) : 'SDK: N/A'.padEnd(12);
       const isSelected = index === this.selectedAgentIndex;
       const prefix = isSelected ? '> ' : '  ';
-      
+
       // Show progress for spawning agents
-      const progressText = agent.status === AgentStatus.SPAWNING && agent.progress 
-        ? ` - ${agent.progress}` 
+      const progressText = agent.status === AgentStatus.SPAWNING && agent.progress
+        ? ` - ${agent.progress}`
         : '';
-      
+
       return `${prefix}${statusIcon} ${agent.id.padEnd(18)} [${statusText}] ${sdkStatusText} Runtime: ${runtime}${progressText}`;
     });
 
@@ -1061,17 +1060,17 @@ class TerminalUI {
    */
   cleanupTerminalGracefully() {
     logger.debug('Attempting graceful terminal cleanup');
-    
+
     // Try to clear the screen content first
     if (this.screen && this.screen.clear) {
       this.screen.clear();
     }
-    
+
     // Attempt normal blessed screen destruction
     if (this.screen && this.screen.destroy) {
       this.screen.destroy();
     }
-    
+
     logger.debug('Graceful terminal cleanup completed');
   }
 
@@ -1080,14 +1079,14 @@ class TerminalUI {
    */
   forceTerminalCleanup() {
     logger.debug('Attempting forced terminal cleanup');
-    
+
     try {
       // Force clear any blessed screen state
       if (this.screen) {
         // Manually reset screen properties to prevent errors
         this.screen.focused = null;
         this.screen.grabKeys = false;
-        
+
         // Try destroy with error suppression
         if (this.screen.destroy) {
           this.screen.destroy();
@@ -1096,10 +1095,10 @@ class TerminalUI {
     } catch (error) {
       // Suppress all blessed cleanup errors - they're cosmetic during exit
       if (error.message && (
-        error.message.includes('Setulc') ||
-        error.message.includes('color') ||
-        error.message.includes('cursor') ||
-        error.message.includes('terminfo')
+        error.message.includes('Setulc')
+        || error.message.includes('color')
+        || error.message.includes('cursor')
+        || error.message.includes('terminfo')
       )) {
         logger.debug('Suppressed blessed terminal error during forced cleanup', {
           error: error.message,
@@ -1110,7 +1109,7 @@ class TerminalUI {
         });
       }
     }
-    
+
     logger.debug('Forced terminal cleanup completed');
   }
 
@@ -1119,19 +1118,19 @@ class TerminalUI {
    */
   restoreTerminalState() {
     logger.debug('Restoring terminal state');
-    
+
     try {
       // Reset terminal to normal state
       if (process.stdout && process.stdout.write) {
         // Disable mouse tracking
         process.stdout.write('\x1b[?1000l');
         process.stdout.write('\x1b[?1002l');
-        
+
         // Reset cursor and screen state
         process.stdout.write('\x1b[?25h'); // Show cursor
-        process.stdout.write('\x1b[0m');   // Reset colors
-        process.stdout.write('\x1b[2J');   // Clear screen
-        process.stdout.write('\x1b[H');    // Move cursor to home
+        process.stdout.write('\x1b[0m'); // Reset colors
+        process.stdout.write('\x1b[2J'); // Clear screen
+        process.stdout.write('\x1b[H'); // Move cursor to home
       }
     } catch (error) {
       // Even terminal state restoration errors should not prevent clean exit
@@ -1139,7 +1138,7 @@ class TerminalUI {
         error: error.message,
       });
     }
-    
+
     logger.debug('Terminal state restoration completed');
   }
 

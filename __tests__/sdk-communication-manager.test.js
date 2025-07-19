@@ -1,6 +1,7 @@
 const SDKCommunicationManager = require('../src/core/sdk/communication-manager');
 const { EnvironmentValidationError, ConfigurationError } = require('../src/utils/errors');
 const logger = require('../src/utils/logger');
+const AgentLogManager = require('../src/core/logging/agent-log-manager');
 
 // Mock Claude Code SDK
 jest.mock('@anthropic-ai/claude-code', () => ({
@@ -14,21 +15,36 @@ jest.mock('../src/utils/logger', () => ({
   warn: jest.fn(),
 }));
 
+jest.mock('../src/core/logging/agent-log-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    writeLogEntry: jest.fn().mockResolvedValue(true),
+    isInitialized: jest.fn().mockReturnValue(true),
+  }));
+});
+
 describe('SDKCommunicationManager', () => {
   let manager;
   let mockQuery;
+  let mockAgentLogManager;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    manager = new SDKCommunicationManager();
+    mockAgentLogManager = new AgentLogManager();
+    manager = new SDKCommunicationManager(mockAgentLogManager);
     mockQuery = require('@anthropic-ai/claude-code').query;
   });
 
   describe('constructor', () => {
-    it('should initialize with empty sessions map', () => {
+    it('should initialize with empty sessions map and optional AgentLogManager', () => {
       expect(manager.sessions).toBeInstanceOf(Map);
       expect(manager.sessions.size).toBe(0);
       expect(manager.logger).toBe(logger);
+      expect(manager.agentLogManager).toBe(mockAgentLogManager);
+    });
+
+    it('should initialize without AgentLogManager when not provided', () => {
+      const managerWithoutLogger = new SDKCommunicationManager();
+      expect(managerWithoutLogger.agentLogManager).toBeNull();
     });
   });
 
@@ -152,6 +168,277 @@ describe('SDKCommunicationManager', () => {
       const session = manager.getSession(agentId);
       expect(session.messageHistory).toHaveLength(1);
       expect(session.messageHistory[0].type).toBe('error');
+    });
+
+    describe('SDK Logging Integration', () => {
+      let testManager;
+      let testMockAgentLogManager;
+
+      beforeEach(() => {
+        // Create a fresh manager for logging tests to avoid session conflicts
+        testMockAgentLogManager = new AgentLogManager();
+        testManager = new SDKCommunicationManager(testMockAgentLogManager);
+      });
+
+      it('should log SDK request before executing query', async () => {
+        const agentId = 'test-agent-1';
+        const prompt = 'Test prompt for SDK request logging';
+        const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        await testManager.executeQuery(agentId, prompt);
+
+        expect(testMockAgentLogManager.writeLogEntry).toHaveBeenCalledWith(agentId, 
+          expect.objectContaining({
+            type: 'sdk_request',
+            source: 'claude_sdk',
+            content: expect.stringContaining('Test prompt for SDK request logging'),
+            metadata: expect.objectContaining({
+              promptLength: prompt.length,
+              requestTimestamp: expect.any(String),
+              requestStartTime: expect.any(Number),
+            }),
+          })
+        );
+      });
+
+      it('should truncate long prompts in request logs', async () => {
+        const agentId = 'test-agent-2';
+        const longPrompt = 'A'.repeat(300); // 300 characters
+        const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        await testManager.executeQuery(agentId, longPrompt);
+
+        const requestLogCall = testMockAgentLogManager.writeLogEntry.mock.calls.find(
+          call => call[1].type === 'sdk_request'
+        );
+        
+        expect(requestLogCall).toBeDefined();
+        const logContent = JSON.parse(requestLogCall[1].content);
+        expect(logContent.prompt).toHaveLength(203); // 200 + '...'
+        expect(logContent.prompt).toMatch(/\.\.\.$/); // Ends with '...'
+      });
+
+      it('should log each SDK response message', async () => {
+        const agentId = 'test-agent-3';
+        const prompt = 'Test prompt';
+        const mockMessages = [
+          { id: 'msg1', content: 'Response 1', usage: { input: 10, output: 5 } },
+          { id: 'msg2', content: 'Response 2', usage: { input: 15, output: 8 } },
+        ];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        await testManager.executeQuery(agentId, prompt);
+
+        const responseLogCalls = testMockAgentLogManager.writeLogEntry.mock.calls.filter(
+          call => call[1].type === 'sdk_response'
+        );
+        
+        expect(responseLogCalls).toHaveLength(2);
+        
+        expect(responseLogCalls[0][1]).toEqual(expect.objectContaining({
+          type: 'sdk_response',
+          source: 'claude_sdk',
+          content: JSON.stringify(mockMessages[0], null, 2),
+          metadata: expect.objectContaining({
+            messageId: 'msg1',
+            duration: expect.any(Number),
+            tokenUsage: { input: 10, output: 5 },
+            messageIndex: 0,
+            totalMessages: 1,
+          }),
+        }));
+      });
+
+      it('should log SDK summary after successful completion', async () => {
+        const agentId = 'test-agent-4';
+        const prompt = 'Test prompt';
+        const mockMessages = [
+          { id: 'msg1', content: 'Response 1', usage: { input: 10, output: 5 } },
+        ];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        await testManager.executeQuery(agentId, prompt);
+
+        const summaryLogCall = testMockAgentLogManager.writeLogEntry.mock.calls.find(
+          call => call[1].type === 'sdk_summary'
+        );
+        
+        expect(summaryLogCall).toBeDefined();
+        expect(summaryLogCall[1]).toEqual(expect.objectContaining({
+          type: 'sdk_summary',
+          source: 'claude_sdk',
+          content: 'SDK query completed successfully',
+          metadata: expect.objectContaining({
+            totalDuration: expect.any(Number),
+            messageCount: 1,
+            finalTokenUsage: { input: 10, output: 5 },
+            costEstimate: expect.any(Object),
+            averageResponseTime: expect.any(Number),
+            performanceWarning: false,
+          }),
+        }));
+      });
+
+      it('should log performance warning for slow requests', async () => {
+        const agentId = 'test-agent-5';
+        const prompt = 'Test prompt';
+        const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        // Mock Date.now to simulate slow request without actually waiting
+        const originalDateNow = Date.now;
+        let callCount = 0;
+        Date.now = jest.fn(() => {
+          callCount++;
+          // First call: start time, subsequent calls: end time (35 seconds later)
+          return callCount === 1 ? 1000000 : 1000000 + 35000;
+        });
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        await testManager.executeQuery(agentId, prompt);
+
+        const warningLogCall = testMockAgentLogManager.writeLogEntry.mock.calls.find(
+          call => call[1].type === 'sdk_warning'
+        );
+        
+        expect(warningLogCall).toBeDefined();
+        expect(warningLogCall[1]).toEqual(expect.objectContaining({
+          type: 'sdk_warning',
+          source: 'claude_sdk',
+          content: 'Slow SDK request detected: 35000ms (threshold: 30000ms)',
+          metadata: expect.objectContaining({
+            duration: 35000,
+            threshold: 30000,
+            promptLength: prompt.length,
+            messageCount: 1,
+          }),
+        }));
+
+        // Restore original Date.now
+        Date.now = originalDateNow;
+      });
+
+      it('should log SDK errors with complete context', async () => {
+        const agentId = 'test-agent-6';
+        const prompt = 'Test prompt';
+        const error = new Error('SDK query failed');
+        error.name = 'SDKError';
+        error.stack = 'Error: SDK query failed\n    at test';
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        mockQuery.mockImplementation(async function* () {
+          throw error;
+        });
+
+        await expect(testManager.executeQuery(agentId, prompt)).rejects.toThrow('SDK query failed');
+
+        const errorLogCall = testMockAgentLogManager.writeLogEntry.mock.calls.find(
+          call => call[1].type === 'sdk_error'
+        );
+        
+        expect(errorLogCall).toBeDefined();
+        expect(errorLogCall[1]).toEqual(expect.objectContaining({
+          type: 'sdk_error',
+          source: 'claude_sdk',
+          content: 'SDK Error: SDK query failed',
+          metadata: expect.objectContaining({
+            error: 'SDKError',
+            message: 'SDK query failed',
+            stack: error.stack,
+            duration: expect.any(Number),
+            promptLength: prompt.length,
+            requestOptions: {},
+            requestTimestamp: expect.any(String),
+            errorType: expect.any(String),
+          }),
+        }));
+      });
+
+      it('should continue SDK operation if logging fails', async () => {
+        const agentId = 'test-agent-7';
+        const prompt = 'Test prompt';
+        const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
+
+        await testManager.initializeSDKSession(agentId, '/test/path');
+
+        // Make logging fail
+        testMockAgentLogManager.writeLogEntry.mockRejectedValue(new Error('Logging failed'));
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        // Should not throw despite logging failures
+        const result = await testManager.executeQuery(agentId, prompt);
+        expect(result).toEqual(mockMessages);
+
+        // Should log warnings about logging failures
+        expect(logger.warn).toHaveBeenCalledWith(
+          'Failed to log SDK request',
+          expect.objectContaining({
+            agentId,
+            error: 'Logging failed',
+          })
+        );
+      });
+
+      it('should work correctly without AgentLogManager', async () => {
+        const managerWithoutLogger = new SDKCommunicationManager();
+        await managerWithoutLogger.initializeSDKSession('test-agent-8', '/test/path');
+        
+        const agentId = 'test-agent-8';
+        const prompt = 'Test prompt';
+        const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
+
+        mockQuery.mockImplementation(async function* () {
+          for (const message of mockMessages) {
+            yield message;
+          }
+        });
+
+        // Should work normally without logging
+        const result = await managerWithoutLogger.executeQuery(agentId, prompt);
+        expect(result).toEqual(mockMessages);
+      });
     });
   });
 
@@ -350,6 +637,146 @@ describe('SDKCommunicationManager', () => {
       // Remove the test that checks error handling inside handleSDKMessage
       // since the function is designed to handle errors gracefully
       expect(true).toBe(true);
+    });
+  });
+
+  describe('helper methods', () => {
+    describe('calculateCostEstimate', () => {
+      it('should calculate cost estimate correctly for valid token usage', () => {
+        const tokenUsage = { input: 1000, output: 500 };
+        const result = manager.calculateCostEstimate(tokenUsage);
+
+        expect(result).toEqual({
+          estimated: true,
+          inputTokens: 1000,
+          outputTokens: 500,
+          totalTokens: 1500,
+          inputCost: 0.003, // 1000/1000 * 0.003
+          outputCost: 0.0075, // 500/1000 * 0.015
+          totalCost: 0.0105,
+          currency: 'USD',
+          note: 'Estimated based on Claude 3.5 Sonnet pricing',
+        });
+      });
+
+      it('should handle missing token counts', () => {
+        const tokenUsage = { input: 1000 }; // Missing output
+        const result = manager.calculateCostEstimate(tokenUsage);
+
+        expect(result.inputTokens).toBe(1000);
+        expect(result.outputTokens).toBe(0);
+        expect(result.totalTokens).toBe(1000);
+      });
+
+      it('should handle invalid token usage data', () => {
+        const result = manager.calculateCostEstimate(null);
+        expect(result).toEqual({
+          estimated: false,
+          error: 'Invalid token usage data',
+        });
+
+        const result2 = manager.calculateCostEstimate('invalid');
+        expect(result2).toEqual({
+          estimated: false,
+          error: 'Invalid token usage data',
+        });
+      });
+    });
+
+    describe('classifySDKError', () => {
+      it('should classify connection errors', () => {
+        const error = new Error('Network connection failed');
+        expect(manager.classifySDKError(error)).toBe('connection_error');
+
+        const timeoutError = new Error('Request timeout');
+        expect(manager.classifySDKError(timeoutError)).toBe('connection_error');
+
+        const econnError = new Error('ECONNRESET');
+        expect(manager.classifySDKError(econnError)).toBe('connection_error');
+      });
+
+      it('should classify authentication errors', () => {
+        const authError = new Error('Unauthorized access');
+        expect(manager.classifySDKError(authError)).toBe('authentication_error');
+
+        const apiKeyError = new Error('Invalid API key provided');
+        expect(manager.classifySDKError(apiKeyError)).toBe('authentication_error');
+
+        const statusError = new Error('Forbidden');
+        statusError.status = 401;
+        expect(manager.classifySDKError(statusError)).toBe('authentication_error');
+      });
+
+      it('should classify rate limit errors', () => {
+        const rateLimitError = new Error('Rate limit exceeded');
+        expect(manager.classifySDKError(rateLimitError)).toBe('rate_limit_error');
+
+        const tooManyError = new Error('Too many requests');
+        expect(manager.classifySDKError(tooManyError)).toBe('rate_limit_error');
+
+        const statusError = new Error('Rate limited');
+        statusError.status = 429;
+        expect(manager.classifySDKError(statusError)).toBe('rate_limit_error');
+      });
+
+      it('should classify validation errors', () => {
+        const validationError = new Error('Validation failed');
+        expect(manager.classifySDKError(validationError)).toBe('validation_error');
+
+        const invalidError = new Error('Invalid request format');
+        expect(manager.classifySDKError(invalidError)).toBe('validation_error');
+
+        const statusError = new Error('Bad request');
+        statusError.status = 400;
+        expect(manager.classifySDKError(statusError)).toBe('validation_error');
+      });
+
+      it('should classify abort/cancellation errors', () => {
+        const abortError = new Error('Request was aborted');
+        expect(manager.classifySDKError(abortError)).toBe('request_cancelled');
+
+        const cancelError = new Error('Operation cancelled');
+        expect(manager.classifySDKError(cancelError)).toBe('request_cancelled');
+
+        const abortNameError = new Error('Something failed');
+        abortNameError.name = 'AbortError';
+        expect(manager.classifySDKError(abortNameError)).toBe('request_cancelled');
+      });
+
+      it('should classify server errors', () => {
+        const serverError = new Error('Internal server error');
+        expect(manager.classifySDKError(serverError)).toBe('server_error');
+
+        const statusError = new Error('Server error');
+        statusError.status = 500;
+        expect(manager.classifySDKError(statusError)).toBe('server_error');
+
+        const unavailableError = new Error('Service unavailable');
+        expect(manager.classifySDKError(unavailableError)).toBe('server_error');
+      });
+
+      it('should classify SDK-specific errors', () => {
+        const sdkError = new Error('Claude SDK error');
+        expect(manager.classifySDKError(sdkError)).toBe('sdk_error');
+
+        const anthropicError = new Error('Anthropic API error');
+        expect(manager.classifySDKError(anthropicError)).toBe('sdk_error');
+
+        const nameError = new Error('Some error');
+        nameError.name = 'SDKError';
+        expect(manager.classifySDKError(nameError)).toBe('sdk_error');
+      });
+
+      it('should classify unknown errors', () => {
+        const unknownError = new Error('Some random error');
+        expect(manager.classifySDKError(unknownError)).toBe('unknown_error');
+
+        const nullError = null;
+        expect(manager.classifySDKError(nullError)).toBe('unknown_error');
+
+        const noMessageError = {};
+        expect(manager.classifySDKError(noMessageError)).toBe('unknown_error');
+      });
     });
   });
 });

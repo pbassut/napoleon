@@ -31,7 +31,7 @@ class LogQueryService {
       metadataIndex: new Map(),
       timeIndex: new Map(),
       agentIndex: new Map(),
-      lastBuilt: new Date().toISOString()
+      lastBuilt: new Date().toISOString(),
     };
 
     try {
@@ -40,15 +40,14 @@ class LogQueryService {
         return;
       }
 
-      const logFiles = fs.readdirSync(this.logsDir).filter(file => file.endsWith('.log'));
-      
-      for (const logFile of logFiles) {
-        await this.indexLogFile(path.join(this.logsDir, logFile));
-      }
+      const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
 
-      logger.info('Search index built successfully', { 
+      // Use Promise.all for better performance while avoiding for-of loop
+      await Promise.all(logFiles.map((logFile) => this.indexLogFile(path.join(this.logsDir, logFile))));
+
+      logger.info('Search index built successfully', {
         filesIndexed: logFiles.length,
-        indexSize: this.searchIndex.textIndex.size 
+        indexSize: this.searchIndex.textIndex.size,
       });
     } catch (error) {
       logger.error('Failed to build search index', { error: error.message });
@@ -59,16 +58,16 @@ class LogQueryService {
   async indexLogFile(logFilePath) {
     try {
       const content = fs.readFileSync(logFilePath, 'utf8');
-      const lines = content.split('\n').filter(line => line.trim());
+      const lines = content.split('\n').filter((line) => line.trim());
 
-      for (let i = 0; i < lines.length; i++) {
+      lines.forEach((line, i) => {
         try {
-          const entry = JSON.parse(lines[i]);
+          const entry = JSON.parse(line);
           this.addToIndex(entry, logFilePath, i);
         } catch (parseError) {
           logger.debug('Skipping non-JSON log line', { file: logFilePath, line: i });
         }
-      }
+      });
     } catch (error) {
       logger.error('Failed to index log file', { file: logFilePath, error: error.message });
     }
@@ -76,12 +75,12 @@ class LogQueryService {
 
   addToIndex(entry, filePath, lineNumber) {
     const entryId = `${filePath}:${lineNumber}`;
-    
+
     // Text indexing
     const textContent = `${entry.content || ''} ${JSON.stringify(entry.metadata || {})}`.toLowerCase();
-    const words = textContent.split(/\s+/).filter(word => word.length > 2);
-    
-    words.forEach(word => {
+    const words = textContent.split(/\s+/).filter((word) => word.length > 2);
+
+    words.forEach((word) => {
       if (!this.searchIndex.textIndex.has(word)) {
         this.searchIndex.textIndex.set(word, new Set());
       }
@@ -117,10 +116,10 @@ class LogQueryService {
 
   async searchLogs(query, options = {}) {
     const startTime = Date.now();
-    
+
     try {
       let results = new Set();
-      
+
       if (typeof query === 'string') {
         results = await this.performTextSearch(query, options);
       } else if (query.pattern && query.pattern instanceof RegExp) {
@@ -130,15 +129,15 @@ class LogQueryService {
       }
 
       const resultArray = await this.retrieveLogEntries(Array.from(results), options);
-      
+
       return {
         results: resultArray,
         metadata: {
           total: resultArray.length,
           duration: Date.now() - startTime,
-          query: query,
-          options: options
-        }
+          query,
+          options,
+        },
       };
     } catch (error) {
       logger.error('Search failed', { query, error: error.message });
@@ -147,24 +146,24 @@ class LogQueryService {
   }
 
   async performTextSearch(queryText, options) {
-    const words = queryText.toLowerCase().split(/\s+/).filter(word => word.length > 2);
+    const words = queryText.toLowerCase().split(/\s+/).filter((word) => word.length > 2);
     let results = new Set();
-    
+
     // Handle AND/OR operators
     if (queryText.includes(' AND ')) {
-      const andTerms = queryText.split(' AND ').map(term => term.trim().toLowerCase());
+      const andTerms = queryText.split(' AND ').map((term) => term.trim().toLowerCase());
       results = this.intersectSearchTerms(andTerms);
     } else if (queryText.includes(' OR ')) {
-      const orTerms = queryText.split(' OR ').map(term => term.trim().toLowerCase());
+      const orTerms = queryText.split(' OR ').map((term) => term.trim().toLowerCase());
       results = this.unionSearchTerms(orTerms);
     } else {
       // Simple word search
-      words.forEach(word => {
+      words.forEach((word) => {
         const wordResults = this.searchIndex.textIndex.get(word) || new Set();
         if (results.size === 0) {
           results = new Set(wordResults);
         } else {
-          results = new Set([...results].filter(x => wordResults.has(x)));
+          results = new Set([...results].filter((x) => wordResults.has(x)));
         }
       });
     }
@@ -180,31 +179,31 @@ class LogQueryService {
 
   async performRegexSearch(pattern, options) {
     const results = new Set();
-    
+
     try {
       if (!fs.existsSync(this.logsDir)) {
         return results;
       }
 
-      const logFiles = fs.readdirSync(this.logsDir).filter(file => file.endsWith('.log'));
-      
+      const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
+
       for (const logFile of logFiles) {
         const filePath = path.join(this.logsDir, logFile);
         const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n').filter(line => line.trim());
+        const lines = content.split('\n').filter((line) => line.trim());
 
-        for (let i = 0; i < lines.length; i++) {
+        lines.forEach((line, i) => {
           try {
-            const entry = JSON.parse(lines[i]);
+            const entry = JSON.parse(line);
             const searchText = `${entry.content || ''} ${JSON.stringify(entry.metadata || {})}`;
-            
+
             if (pattern.test(searchText)) {
               results.add(`${filePath}:${i}`);
             }
           } catch (parseError) {
             // Skip non-JSON lines
           }
-        }
+        });
       }
     } catch (error) {
       logger.error('Regex search failed', { pattern: pattern.toString(), error: error.message });
@@ -215,12 +214,12 @@ class LogQueryService {
 
   async performComplexSearch(query, options) {
     let results = new Set();
-    
+
     // Start with all entries if no text query
     if (!query.text) {
       // Get all indexed entries
-      this.searchIndex.textIndex.forEach(entrySet => {
-        entrySet.forEach(entryId => results.add(entryId));
+      this.searchIndex.textIndex.forEach((entrySet) => {
+        entrySet.forEach((entryId) => results.add(entryId));
       });
     } else {
       results = await this.performTextSearch(query.text, {});
@@ -241,7 +240,7 @@ class LogQueryService {
       this.searchIndex.timeIndex.forEach((entrySet, dateKey) => {
         const date = new Date(dateKey);
         if ((!fromDate || date >= fromDate) && (!toDate || date <= toDate)) {
-          entrySet.forEach(entryId => {
+          entrySet.forEach((entryId) => {
             if (filtered.has(entryId)) {
               dateFiltered.add(entryId);
             }
@@ -254,9 +253,9 @@ class LogQueryService {
     // Agent ID filter
     if (filters.agentIds && filters.agentIds.length > 0) {
       const agentFiltered = new Set();
-      filters.agentIds.forEach(agentId => {
+      filters.agentIds.forEach((agentId) => {
         const agentEntries = this.searchIndex.agentIndex.get(agentId) || new Set();
-        agentEntries.forEach(entryId => {
+        agentEntries.forEach((entryId) => {
           if (filtered.has(entryId)) {
             agentFiltered.add(entryId);
           }
@@ -268,9 +267,9 @@ class LogQueryService {
     // Log type filter
     if (filters.logTypes && filters.logTypes.length > 0) {
       const typeFiltered = new Set();
-      filters.logTypes.forEach(logType => {
+      filters.logTypes.forEach((logType) => {
         const typeEntries = this.searchIndex.metadataIndex.get(`type:${logType}`) || new Set();
-        typeEntries.forEach(entryId => {
+        typeEntries.forEach((entryId) => {
           if (filtered.has(entryId)) {
             typeFiltered.add(entryId);
           }
@@ -284,13 +283,13 @@ class LogQueryService {
 
   intersectSearchTerms(terms) {
     let results = null;
-    
-    terms.forEach(term => {
+
+    terms.forEach((term) => {
       const termResults = this.searchIndex.textIndex.get(term) || new Set();
       if (results === null) {
         results = new Set(termResults);
       } else {
-        results = new Set([...results].filter(x => termResults.has(x)));
+        results = new Set([...results].filter((x) => termResults.has(x)));
       }
     });
 
@@ -299,10 +298,10 @@ class LogQueryService {
 
   unionSearchTerms(terms) {
     const results = new Set();
-    
-    terms.forEach(term => {
+
+    terms.forEach((term) => {
       const termResults = this.searchIndex.textIndex.get(term) || new Set();
-      termResults.forEach(entryId => results.add(entryId));
+      termResults.forEach((entryId) => results.add(entryId));
     });
 
     return results;
@@ -312,10 +311,10 @@ class LogQueryService {
     const results = new Set();
     const threshold = 0.7;
 
-    words.forEach(queryWord => {
+    words.forEach((queryWord) => {
       this.searchIndex.textIndex.forEach((entrySet, indexedWord) => {
         if (this.calculateSimilarity(queryWord, indexedWord) >= threshold) {
-          entrySet.forEach(entryId => results.add(entryId));
+          entrySet.forEach((entryId) => results.add(entryId));
         }
       });
     });
@@ -326,24 +325,24 @@ class LogQueryService {
   calculateSimilarity(str1, str2) {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
-    
+
     if (longer.length === 0) return 1.0;
-    
+
     const distance = this.levenshteinDistance(longer, shorter);
     return (longer.length - distance) / longer.length;
   }
 
   levenshteinDistance(str1, str2) {
     const matrix = [];
-    
+
     for (let i = 0; i <= str2.length; i++) {
       matrix[i] = [i];
     }
-    
+
     for (let j = 0; j <= str1.length; j++) {
       matrix[0][j] = j;
     }
-    
+
     for (let i = 1; i <= str2.length; i++) {
       for (let j = 1; j <= str1.length; j++) {
         if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
@@ -352,34 +351,34 @@ class LogQueryService {
           matrix[i][j] = Math.min(
             matrix[i - 1][j - 1] + 1,
             matrix[i][j - 1] + 1,
-            matrix[i - 1][j] + 1
+            matrix[i - 1][j] + 1,
           );
         }
       }
     }
-    
+
     return matrix[str2.length][str1.length];
   }
 
   async retrieveLogEntries(entryIds, options) {
     const entries = [];
     const contextLines = options.contextLines || 0;
-    
+
     try {
       for (const entryId of entryIds) {
         const [filePath, lineNumber] = entryId.split(':');
         const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n').filter(line => line.trim());
-        
+        const lines = content.split('\n').filter((line) => line.trim());
+
         const targetLine = parseInt(lineNumber);
         const startLine = Math.max(0, targetLine - contextLines);
         const endLine = Math.min(lines.length - 1, targetLine + contextLines);
-        
+
         const entryData = {
           file: path.basename(filePath),
           line: targetLine,
           entry: null,
-          context: []
+          context: [],
         };
 
         for (let i = startLine; i <= endLine; i++) {
@@ -390,7 +389,7 @@ class LogQueryService {
             } else {
               entryData.context.push({
                 line: i,
-                entry: parsedEntry
+                entry: parsedEntry,
               });
             }
           } catch (parseError) {
@@ -431,7 +430,7 @@ class LogQueryService {
       errorRate: 0,
       tokenUsage: { total: 0, average: 0 },
       executionTimes: { min: Infinity, max: 0, average: 0 },
-      agentPerformance: new Map()
+      agentPerformance: new Map(),
     };
 
     const sessions = this.groupLogsBySession(logs);
@@ -444,11 +443,11 @@ class LogQueryService {
 
     sessions.forEach((sessionLogs, agentId) => {
       const sessionMetrics = this.analyzeSession(sessionLogs);
-      
+
       if (sessionMetrics.duration > 0) {
         totalDuration += sessionMetrics.duration;
       }
-      
+
       if (sessionMetrics.successful) {
         successfulSessions++;
       }
@@ -469,7 +468,7 @@ class LogQueryService {
     metrics.errorRate = 100 - metrics.successRate;
     metrics.tokenUsage.average = metrics.totalSessions > 0 ? metrics.tokenUsage.total / metrics.totalSessions : 0;
     metrics.executionTimes.average = executionTimeCount > 0 ? totalExecutionTime / executionTimeCount : 0;
-    
+
     if (metrics.executionTimes.min === Infinity) {
       metrics.executionTimes.min = 0;
     }
@@ -479,8 +478,8 @@ class LogQueryService {
 
   groupLogsBySession(logs) {
     const sessions = new Map();
-    
-    logs.forEach(log => {
+
+    logs.forEach((log) => {
       if (log.agentId) {
         if (!sessions.has(log.agentId)) {
           sessions.set(log.agentId, []);
@@ -496,15 +495,15 @@ class LogQueryService {
     const sortedLogs = sessionLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     const startTime = new Date(sortedLogs[0].timestamp);
     const endTime = new Date(sortedLogs[sortedLogs.length - 1].timestamp);
-    
+
     const duration = endTime - startTime;
-    const errorCount = sortedLogs.filter(log => log.type === 'error' || log.type === 'sdk_error').length;
+    const errorCount = sortedLogs.filter((log) => log.type === 'error' || log.type === 'sdk_error').length;
     const successful = errorCount === 0;
-    
+
     let tokenUsage = 0;
     let executionTime = 0;
 
-    sortedLogs.forEach(log => {
+    sortedLogs.forEach((log) => {
       if (log.metadata) {
         if (log.metadata.tokens) {
           tokenUsage += log.metadata.tokens;
@@ -521,7 +520,7 @@ class LogQueryService {
       errorCount,
       tokenUsage,
       executionTime,
-      logCount: sortedLogs.length
+      logCount: sortedLogs.length,
     };
   }
 
@@ -530,23 +529,23 @@ class LogQueryService {
       dailyActivity: new Map(),
       errorTrends: new Map(),
       performanceTrends: new Map(),
-      usagePatterns: new Map()
+      usagePatterns: new Map(),
     };
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const date = new Date(log.timestamp).toISOString().split('T')[0];
-      
+
       // Daily activity
       if (!trends.dailyActivity.has(date)) {
         trends.dailyActivity.set(date, { sessions: 0, errors: 0, tokens: 0 });
       }
       const dayData = trends.dailyActivity.get(date);
       dayData.sessions++;
-      
+
       if (log.type === 'error' || log.type === 'sdk_error') {
         dayData.errors++;
       }
-      
+
       if (log.metadata && log.metadata.tokens) {
         dayData.tokens += log.metadata.tokens;
       }
@@ -564,14 +563,14 @@ class LogQueryService {
         type: 'warning',
         category: 'success_rate',
         message: `Low success rate detected: ${metrics.successRate.toFixed(1)}%`,
-        recommendation: 'Review error patterns and improve prompt quality'
+        recommendation: 'Review error patterns and improve prompt quality',
       });
     } else if (metrics.successRate > 95) {
       insights.push({
         type: 'positive',
         category: 'success_rate',
         message: `Excellent success rate: ${metrics.successRate.toFixed(1)}%`,
-        recommendation: 'Current configuration is performing well'
+        recommendation: 'Current configuration is performing well',
       });
     }
 
@@ -581,7 +580,7 @@ class LogQueryService {
         type: 'optimization',
         category: 'token_usage',
         message: `High token usage per session: ${metrics.tokenUsage.average.toFixed(0)}`,
-        recommendation: 'Consider optimizing prompts to reduce token consumption'
+        recommendation: 'Consider optimizing prompts to reduce token consumption',
       });
     }
 
@@ -591,7 +590,7 @@ class LogQueryService {
         type: 'performance',
         category: 'execution_time',
         message: `Slow average execution time: ${(metrics.executionTimes.average / 1000).toFixed(1)}s`,
-        recommendation: 'Investigate performance bottlenecks and optimize processing'
+        recommendation: 'Investigate performance bottlenecks and optimize processing',
       });
     }
 
@@ -601,8 +600,8 @@ class LogQueryService {
   async detectErrorPatterns(timeWindow = '7d') {
     try {
       const logs = await this.getAllLogsInTimeWindow(timeWindow);
-      const errorLogs = logs.filter(log => log.type === 'error' || log.type === 'sdk_error');
-      
+      const errorLogs = logs.filter((log) => log.type === 'error' || log.type === 'sdk_error');
+
       const patterns = this.identifyErrorPatterns(errorLogs);
       const trends = this.analyzeErrorTrends(errorLogs, timeWindow);
       const recommendations = this.generateErrorRecommendations(patterns, trends);
@@ -616,11 +615,11 @@ class LogQueryService {
 
   identifyErrorPatterns(errorLogs) {
     const patterns = new Map();
-    
-    errorLogs.forEach(log => {
+
+    errorLogs.forEach((log) => {
       const errorType = this.categorizeError(log);
       const errorKey = `${errorType}:${this.extractErrorSignature(log)}`;
-      
+
       if (!patterns.has(errorKey)) {
         patterns.set(errorKey, {
           type: errorType,
@@ -629,7 +628,7 @@ class LogQueryService {
           examples: [],
           firstSeen: log.timestamp,
           lastSeen: log.timestamp,
-          affectedAgents: new Set()
+          affectedAgents: new Set(),
         });
       }
 
@@ -637,13 +636,13 @@ class LogQueryService {
       pattern.count++;
       pattern.lastSeen = log.timestamp;
       pattern.affectedAgents.add(log.agentId);
-      
+
       if (pattern.examples.length < 3) {
         pattern.examples.push({
           timestamp: log.timestamp,
           agentId: log.agentId,
           content: log.content,
-          metadata: log.metadata
+          metadata: log.metadata,
         });
       }
     });
@@ -665,16 +664,16 @@ class LogQueryService {
     if (combined.includes('parse') || combined.includes('syntax')) return 'parsing';
     if (combined.includes('memory') || combined.includes('out of memory')) return 'memory';
     if (combined.includes('disk') || combined.includes('storage')) return 'storage';
-    
+
     return 'unknown';
   }
 
   extractErrorSignature(log) {
     // Extract key parts of error message for pattern matching
-    const content = log.content;
+    const { content } = log;
     const lines = content.split('\n');
     const firstLine = lines[0] || '';
-    
+
     // Remove timestamps, IDs, and variable data
     return firstLine
       .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/, '[TIMESTAMP]')
@@ -688,12 +687,12 @@ class LogQueryService {
       frequency: new Map(),
       growth: 'stable',
       peakTimes: [],
-      affectedAgents: new Set()
+      affectedAgents: new Set(),
     };
 
     // Group by time periods
     const timeUnit = this.getTimeUnit(timeWindow);
-    errorLogs.forEach(log => {
+    errorLogs.forEach((log) => {
       const timeKey = this.getTimeKey(log.timestamp, timeUnit);
       if (!trends.frequency.has(timeKey)) {
         trends.frequency.set(timeKey, 0);
@@ -707,7 +706,7 @@ class LogQueryService {
     if (frequencies.length > 1) {
       const recent = frequencies.slice(-3).reduce((a, b) => a + b, 0);
       const earlier = frequencies.slice(0, -3).reduce((a, b) => a + b, 0);
-      
+
       if (recent > earlier * 1.5) {
         trends.growth = 'increasing';
       } else if (recent < earlier * 0.5) {
@@ -744,14 +743,14 @@ class LogQueryService {
   generateErrorRecommendations(patterns, trends) {
     const recommendations = [];
 
-    patterns.forEach(pattern => {
+    patterns.forEach((pattern) => {
       if (pattern.count > 10) {
         recommendations.push({
           type: 'high_frequency',
           pattern: pattern.type,
           message: `${pattern.type} errors occurring frequently (${pattern.count} times)`,
           action: this.getErrorRecommendation(pattern.type),
-          priority: 'high'
+          priority: 'high',
         });
       }
     });
@@ -761,7 +760,7 @@ class LogQueryService {
         type: 'trend_alert',
         message: 'Error frequency is increasing',
         action: 'Monitor system closely and investigate root causes',
-        priority: 'high'
+        priority: 'high',
       });
     }
 
@@ -777,7 +776,7 @@ class LogQueryService {
       rate_limit: 'Implement backoff strategies and reduce request frequency',
       parsing: 'Validate input formats and improve error handling',
       memory: 'Optimize memory usage or increase available memory',
-      storage: 'Clean up disk space or optimize storage usage'
+      storage: 'Clean up disk space or optimize storage usage',
     };
 
     return recommendations[errorType] || 'Investigate error details and implement appropriate fixes';
@@ -805,7 +804,7 @@ class LogQueryService {
       toolUsage: new Map(),
       interactionTypes: new Map(),
       successPatterns: [],
-      failurePatterns: []
+      failurePatterns: [],
     };
 
     const sessions = this.groupLogsBySession(agentLogs);
@@ -817,29 +816,35 @@ class LogQueryService {
       totalSessionLength += sessionLength;
 
       // Analyze prompts and tool usage
-      sessionLogs.forEach(log => {
+      sessionLogs.forEach((log) => {
         if (log.metadata) {
           if (log.metadata.prompt) {
             const promptPattern = this.extractPromptPattern(log.metadata.prompt);
-            behavior.commonPromptPatterns.set(promptPattern, 
-              (behavior.commonPromptPatterns.get(promptPattern) || 0) + 1);
+            behavior.commonPromptPatterns.set(
+              promptPattern,
+              (behavior.commonPromptPatterns.get(promptPattern) || 0) + 1,
+            );
           }
 
           if (log.metadata.tool) {
-            behavior.toolUsage.set(log.metadata.tool,
-              (behavior.toolUsage.get(log.metadata.tool) || 0) + 1);
+            behavior.toolUsage.set(
+              log.metadata.tool,
+              (behavior.toolUsage.get(log.metadata.tool) || 0) + 1,
+            );
           }
 
           if (log.type) {
-            behavior.interactionTypes.set(log.type,
-              (behavior.interactionTypes.get(log.type) || 0) + 1);
+            behavior.interactionTypes.set(
+              log.type,
+              (behavior.interactionTypes.get(log.type) || 0) + 1,
+            );
           }
         }
       });
     });
 
-    behavior.averageSessionLength = behavior.sessionCount > 0 ? 
-      totalSessionLength / behavior.sessionCount : 0;
+    behavior.averageSessionLength = behavior.sessionCount > 0
+      ? totalSessionLength / behavior.sessionCount : 0;
 
     return behavior;
   }
@@ -847,11 +852,9 @@ class LogQueryService {
   extractPromptPattern(prompt) {
     // Simplified pattern extraction - could be enhanced with NLP
     const words = prompt.toLowerCase().split(/\s+/);
-    const keyWords = words.filter(word => 
-      word.length > 4 && 
-      !['the', 'and', 'for', 'with', 'this', 'that', 'from', 'they', 'have', 'been'].includes(word)
-    );
-    
+    const keyWords = words.filter((word) => word.length > 4
+      && !['the', 'and', 'for', 'with', 'this', 'that', 'from', 'they', 'have', 'been'].includes(word));
+
     return keyWords.slice(0, 3).join(' ') || 'unknown';
   }
 
@@ -867,7 +870,7 @@ class LogQueryService {
       const sessionMetrics = this.analyzeSession(sessionLogs);
       totalDuration += sessionMetrics.duration;
       totalTokens += sessionMetrics.tokenUsage;
-      
+
       if (sessionMetrics.successful) {
         successfulSessions++;
       }
@@ -877,7 +880,7 @@ class LogQueryService {
       averageDuration: sessionCount > 0 ? totalDuration / sessionCount : 0,
       successRate: sessionCount > 0 ? (successfulSessions / sessionCount) * 100 : 0,
       averageTokenUsage: sessionCount > 0 ? totalTokens / sessionCount : 0,
-      totalSessions: sessionCount
+      totalSessions: sessionCount,
     };
   }
 
@@ -888,7 +891,7 @@ class LogQueryService {
       recommendations.push({
         type: 'performance',
         message: `Low success rate: ${performance.successRate.toFixed(1)}%`,
-        suggestion: 'Review and optimize prompts for this agent'
+        suggestion: 'Review and optimize prompts for this agent',
       });
     }
 
@@ -896,7 +899,7 @@ class LogQueryService {
       recommendations.push({
         type: 'efficiency',
         message: 'High token usage detected',
-        suggestion: 'Consider more concise prompts to reduce costs'
+        suggestion: 'Consider more concise prompts to reduce costs',
       });
     }
 
@@ -904,7 +907,7 @@ class LogQueryService {
       recommendations.push({
         type: 'complexity',
         message: 'Long average session length',
-        suggestion: 'Break down complex tasks into smaller steps'
+        suggestion: 'Break down complex tasks into smaller steps',
       });
     }
 
@@ -913,18 +916,18 @@ class LogQueryService {
 
   async getAllLogsInRange(dateRange, filters = {}) {
     const logs = [];
-    
+
     try {
       if (!fs.existsSync(this.logsDir)) {
         return logs;
       }
 
-      const logFiles = fs.readdirSync(this.logsDir).filter(file => file.endsWith('.log'));
-      
+      const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
+
       for (const logFile of logFiles) {
         const filePath = path.join(this.logsDir, logFile);
         const content = fs.readFileSync(filePath, 'utf8');
-        const lines = content.split('\n').filter(line => line.trim());
+        const lines = content.split('\n').filter((line) => line.trim());
 
         for (const line of lines) {
           try {
@@ -951,7 +954,7 @@ class LogQueryService {
 
     return this.getAllLogsInRange({
       from: fromDate.toISOString(),
-      to: now.toISOString()
+      to: now.toISOString(),
     });
   }
 
@@ -961,18 +964,18 @@ class LogQueryService {
 
     const [, amount, unit] = match;
     const multipliers = { h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000, w: 7 * 24 * 60 * 60 * 1000 };
-    
+
     return parseInt(amount) * (multipliers[unit] || multipliers.d);
   }
 
   async getAgentLogs(agentId, options = {}) {
     const allLogs = await this.getAllLogsInRange(options.dateRange || {});
-    return allLogs.filter(log => log.agentId === agentId);
+    return allLogs.filter((log) => log.agentId === agentId);
   }
 
   isInDateRange(timestamp, dateRange) {
     if (!dateRange) return true;
-    
+
     const date = new Date(timestamp);
     const fromDate = dateRange.from ? new Date(dateRange.from) : null;
     const toDate = dateRange.to ? new Date(dateRange.to) : null;
@@ -984,19 +987,19 @@ class LogQueryService {
     this.reportTemplates.set('performance_summary', {
       title: 'Performance Summary Report',
       sections: ['metrics', 'trends', 'insights', 'recommendations'],
-      format: 'html'
+      format: 'html',
     });
 
     this.reportTemplates.set('error_analysis', {
       title: 'Error Analysis Report',
       sections: ['patterns', 'trends', 'recommendations'],
-      format: 'html'
+      format: 'html',
     });
 
     this.reportTemplates.set('agent_behavior', {
       title: 'Agent Behavior Analysis',
       sections: ['behavior', 'performance', 'recommendations'],
-      format: 'html'
+      format: 'html',
     });
   }
 
@@ -1021,7 +1024,7 @@ class LogQueryService {
 
   async gatherReportData(reportType, options) {
     const dateRange = options.dateRange || this.getDefaultDateRange();
-    
+
     switch (reportType) {
       case 'performance_summary':
         return this.analyzePerformance(dateRange, options);
@@ -1038,10 +1041,10 @@ class LogQueryService {
   getDefaultDateRange() {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
+
     return {
       from: weekAgo.toISOString(),
-      to: now.toISOString()
+      to: now.toISOString(),
     };
   }
 
@@ -1050,10 +1053,10 @@ class LogQueryService {
       title: template.title,
       generatedAt: new Date().toISOString(),
       timeRange: options.dateRange || this.getDefaultDateRange(),
-      sections: {}
+      sections: {},
     };
 
-    template.sections.forEach(section => {
+    template.sections.forEach((section) => {
       if (reportData[section]) {
         report.sections[section] = reportData[section];
       }
@@ -1070,7 +1073,7 @@ class LogQueryService {
       visualizations.push({
         type: 'timeline',
         title: 'Daily Activity',
-        data: Array.from(reportData.trends.dailyActivity.entries())
+        data: Array.from(reportData.trends.dailyActivity.entries()),
       });
     }
 
@@ -1078,7 +1081,7 @@ class LogQueryService {
       visualizations.push({
         type: 'bar_chart',
         title: 'Agent Performance Comparison',
-        data: Array.from(reportData.metrics.agentPerformance.entries())
+        data: Array.from(reportData.metrics.agentPerformance.entries()),
       });
     }
 
@@ -1087,7 +1090,7 @@ class LogQueryService {
 
   prepareExportData(reportData, options) {
     const format = options.format || 'json';
-    
+
     switch (format) {
       case 'json':
         return JSON.stringify(reportData, null, 2);
@@ -1101,7 +1104,7 @@ class LogQueryService {
   convertToCSV(data) {
     // Simple CSV conversion for metrics data
     const lines = ['timestamp,metric,value,agent_id'];
-    
+
     if (data.metrics && data.metrics.agentPerformance) {
       data.metrics.agentPerformance.forEach((metrics, agentId) => {
         lines.push(`${new Date().toISOString()},duration,${metrics.duration},${agentId}`);
@@ -1116,7 +1119,7 @@ class LogQueryService {
   async exportData(format, filters = {}) {
     try {
       const logs = await this.getAllLogsInRange(filters.dateRange || {}, filters);
-      
+
       switch (format.toLowerCase()) {
         case 'json':
           return JSON.stringify(logs, null, 2);
@@ -1137,14 +1140,14 @@ class LogQueryService {
     const headers = ['timestamp', 'agentId', 'type', 'source', 'content', 'metadata'];
     const lines = [headers.join(',')];
 
-    logs.forEach(log => {
+    logs.forEach((log) => {
       const row = [
         log.timestamp || '',
         log.agentId || '',
         log.type || '',
         log.source || '',
         `"${(log.content || '').replace(/"/g, '""')}"`,
-        `"${JSON.stringify(log.metadata || {}).replace(/"/g, '""')}"`
+        `"${JSON.stringify(log.metadata || {}).replace(/"/g, '""')}"`,
       ];
       lines.push(row.join(','));
     });
@@ -1182,7 +1185,7 @@ class LogQueryService {
             </tr>
         </thead>
         <tbody>
-            ${logs.map(log => `
+            ${logs.map((log) => `
                 <tr class="${log.type === 'error' ? 'error' : log.type === 'warning' ? 'warning' : ''}">
                     <td>${log.timestamp || ''}</td>
                     <td>${log.agentId || ''}</td>
@@ -1222,7 +1225,7 @@ class LogQueryService {
       metadataIndexSize: this.searchIndex.metadataIndex.size,
       timeIndexSize: this.searchIndex.timeIndex.size,
       agentIndexSize: this.searchIndex.agentIndex.size,
-      lastBuilt: this.searchIndex.lastBuilt
+      lastBuilt: this.searchIndex.lastBuilt,
     };
   }
 }

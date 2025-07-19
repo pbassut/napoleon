@@ -28,7 +28,7 @@ class WorktreeDiscovery {
       const [filesystemWorktrees, gitWorktrees, runningProcesses] = await Promise.all([
         this.scanFilesystemWorktrees(),
         this.getGitWorktreeList(),
-        this.getRunningProcesses()
+        this.getRunningProcesses(),
       ]);
 
       // Match filesystem worktrees with git metadata and running processes
@@ -36,15 +36,15 @@ class WorktreeDiscovery {
       const orphanedWorktrees = [];
 
       for (const fsWorktree of filesystemWorktrees) {
-        const gitWorktree = gitWorktrees.find(gw => gw.path === fsWorktree.path);
+        const gitWorktree = gitWorktrees.find((gw) => gw.path === fsWorktree.path);
         const isActiveProcess = this.isWorktreeProcessActive(fsWorktree, runningProcesses);
-        
+
         const worktreeInfo = {
           ...fsWorktree,
           gitMetadata: gitWorktree,
           isGitValid: !!gitWorktree,
           isProcessActive: isActiveProcess,
-          lastValidation: new Date().toISOString()
+          lastValidation: new Date().toISOString(),
         };
 
         if (isActiveProcess && gitWorktree) {
@@ -57,18 +57,18 @@ class WorktreeDiscovery {
       logger.info('Worktree discovery completed', {
         total: filesystemWorktrees.length,
         active: activeWorktrees.length,
-        orphaned: orphanedWorktrees.length
+        orphaned: orphanedWorktrees.length,
       });
 
       return {
         active: activeWorktrees,
         orphaned: orphanedWorktrees,
-        total: filesystemWorktrees.length
+        total: filesystemWorktrees.length,
       };
     } catch (error) {
-      logger.error('Failed to discover worktrees', { 
+      logger.error('Failed to discover worktrees', {
         error: error.message,
-        worktreesDir: this.worktreesDir 
+        worktreesDir: this.worktreesDir,
       });
       throw error;
     }
@@ -93,14 +93,14 @@ class WorktreeDiscovery {
         if (entry.isDirectory() && entry.name.startsWith('agent-')) {
           const worktreePath = path.join(this.worktreesDir, entry.name);
           const worktreeInfo = this.parseWorktreeInfo(entry.name, worktreePath);
-          
+
           if (worktreeInfo) {
             // Get additional filesystem info
             const stats = await fs.stat(worktreePath);
             worktreeInfo.createdAt = stats.birthtime;
             worktreeInfo.lastModified = stats.mtime;
             worktreeInfo.size = await this.getDirectorySize(worktreePath);
-            
+
             worktrees.push(worktreeInfo);
           }
         }
@@ -108,9 +108,9 @@ class WorktreeDiscovery {
 
       return worktrees.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     } catch (error) {
-      logger.error('Failed to scan filesystem worktrees', { 
+      logger.error('Failed to scan filesystem worktrees', {
         error: error.message,
-        worktreesDir: this.worktreesDir 
+        worktreesDir: this.worktreesDir,
       });
       return [];
     }
@@ -133,7 +133,7 @@ class WorktreeDiscovery {
       path: fullPath,
       agentId: `agent-${agentId}`,
       timestamp: parseInt(timestamp, 10),
-      spawnTime: new Date(parseInt(timestamp, 10)).toISOString()
+      spawnTime: new Date(parseInt(timestamp, 10)).toISOString(),
     };
   }
 
@@ -142,25 +142,25 @@ class WorktreeDiscovery {
    */
   async getGitWorktreeList() {
     const now = Date.now();
-    
+
     // Return cached result if still valid
-    if (this.gitWorktreeCache && this.cacheTimestamp && 
-        (now - this.cacheTimestamp) < this.cacheValidityMs) {
+    if (this.gitWorktreeCache && this.cacheTimestamp
+        && (now - this.cacheTimestamp) < this.cacheValidityMs) {
       return this.gitWorktreeCache;
     }
 
     try {
       const { stdout } = await execAsync('git worktree list --porcelain', {
         cwd: process.cwd(),
-        timeout: 10000
+        timeout: 10000,
       });
 
       const worktrees = this.parseGitWorktreeList(stdout);
-      
+
       // Update cache
       this.gitWorktreeCache = worktrees;
       this.cacheTimestamp = now;
-      
+
       logger.debug('Git worktree list retrieved', { count: worktrees.length });
       return worktrees;
     } catch (error) {
@@ -175,8 +175,8 @@ class WorktreeDiscovery {
    */
   parseGitWorktreeList(stdout) {
     const worktrees = [];
-    const lines = stdout.split('\n').filter(line => line.trim());
-    
+    const lines = stdout.split('\n').filter((line) => line.trim());
+
     let currentWorktree = {};
     for (const line of lines) {
       if (line.startsWith('worktree ')) {
@@ -199,12 +199,12 @@ class WorktreeDiscovery {
         currentWorktree.lockReason = line.substring(7);
       }
     }
-    
+
     // Add the last worktree
     if (currentWorktree.path) {
       worktrees.push(currentWorktree);
     }
-    
+
     return worktrees;
   }
 
@@ -215,21 +215,21 @@ class WorktreeDiscovery {
     try {
       // SDK-based approach: Get active sessions from agent manager
       const activeSessions = [];
-      
+
       // This would be injected by agent manager if needed for worktree discovery
       if (this.agentManager && this.agentManager.sdkManager) {
         const sdkSessions = this.agentManager.sdkManager.getActiveSessions();
-        
+
         for (const session of sdkSessions) {
           activeSessions.push({
             sessionId: session.agentId,
             workingDirectory: session.workingDirectory,
             isActive: session.isActive,
-            lastActivity: session.lastActivity
+            lastActivity: session.lastActivity,
           });
         }
       }
-      
+
       logger.debug('Retrieved active SDK sessions', { count: activeSessions.length });
       return activeSessions;
     } catch (error) {
@@ -245,32 +245,32 @@ class WorktreeDiscovery {
     // Look for SDK sessions that might be associated with this agent/worktree
     const agentIdPattern = worktree.agentId;
     const worktreePathPattern = worktree.path;
-    
+
     for (const session of activeSessions) {
       // Check for SDK session matches
       const isSessionMatch = (
         // Exact agent ID match
-        session.sessionId === agentIdPattern ||
-        
+        session.sessionId === agentIdPattern
+
         // Working directory matches worktree path
-        session.workingDirectory === worktreePathPattern ||
-        
+        || session.workingDirectory === worktreePathPattern
+
         // Session is active and related to this worktree
-        (session.isActive && session.workingDirectory && 
-         session.workingDirectory.includes(worktreePathPattern))
+        || (session.isActive && session.workingDirectory
+         && session.workingDirectory.includes(worktreePathPattern))
       );
-      
+
       if (isSessionMatch) {
         logger.debug('Found active SDK session for worktree', {
           worktree: worktree.name,
           agentId: worktree.agentId,
           sessionId: session.sessionId,
-          workingDirectory: session.workingDirectory
+          workingDirectory: session.workingDirectory,
         });
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -284,20 +284,20 @@ class WorktreeDiscovery {
       // Get both git worktrees and filesystem worktrees
       const [gitWorktrees, filesystemWorktrees] = await Promise.all([
         this.getGitWorktreeList(),
-        this.scanFilesystemWorktrees()
+        this.scanFilesystemWorktrees(),
       ]);
 
       const inconsistencies = this.findWorktreeInconsistencies(gitWorktrees, filesystemWorktrees);
-      
+
       if (inconsistencies.length > 0) {
-        logger.warn('Found worktree inconsistencies', { 
+        logger.warn('Found worktree inconsistencies', {
           count: inconsistencies.length,
-          inconsistencies: inconsistencies.map(i => i.type)
+          inconsistencies: inconsistencies.map((i) => i.type),
         });
 
         // Prune invalid git worktree entries
         await this.pruneInvalidWorktrees();
-        
+
         // Clear cache after pruning
         this.gitWorktreeCache = null;
         this.cacheTimestamp = null;
@@ -306,13 +306,13 @@ class WorktreeDiscovery {
       return {
         valid: inconsistencies.length === 0,
         inconsistencies: inconsistencies.length,
-        repaired: inconsistencies.length > 0
+        repaired: inconsistencies.length > 0,
       };
     } catch (error) {
       logger.error('Failed to validate worktree state', { error: error.message });
       return {
         valid: false,
-        error: error.message
+        error: error.message,
       };
     }
   }
@@ -326,12 +326,12 @@ class WorktreeDiscovery {
     // Check for git worktrees without filesystem directories
     for (const gitWorktree of gitWorktrees) {
       if (gitWorktree.path.includes('.napoleon-worktrees')) {
-        const hasFilesystem = filesystemWorktrees.some(fs => fs.path === gitWorktree.path);
+        const hasFilesystem = filesystemWorktrees.some((fs) => fs.path === gitWorktree.path);
         if (!hasFilesystem) {
           inconsistencies.push({
             type: 'git-without-filesystem',
             gitWorktree,
-            description: 'Git metadata exists but filesystem directory is missing'
+            description: 'Git metadata exists but filesystem directory is missing',
           });
         }
       }
@@ -339,12 +339,12 @@ class WorktreeDiscovery {
 
     // Check for filesystem worktrees without git metadata
     for (const fsWorktree of filesystemWorktrees) {
-      const hasGitMetadata = gitWorktrees.some(git => git.path === fsWorktree.path);
+      const hasGitMetadata = gitWorktrees.some((git) => git.path === fsWorktree.path);
       if (!hasGitMetadata) {
         inconsistencies.push({
           type: 'filesystem-without-git',
           fsWorktree,
-          description: 'Filesystem directory exists but git metadata is missing'
+          description: 'Filesystem directory exists but git metadata is missing',
         });
       }
     }
@@ -359,13 +359,13 @@ class WorktreeDiscovery {
     try {
       const { stdout, stderr } = await execAsync('git worktree prune', {
         cwd: process.cwd(),
-        timeout: 10000
+        timeout: 10000,
       });
-      
+
       if (stdout || stderr) {
-        logger.info('Pruned invalid git worktree entries', { 
+        logger.info('Pruned invalid git worktree entries', {
           stdout: stdout.trim(),
-          stderr: stderr.trim()
+          stderr: stderr.trim(),
         });
       }
     } catch (error) {
@@ -380,7 +380,7 @@ class WorktreeDiscovery {
     try {
       let totalSize = 0;
       const items = await fs.readdir(dirPath, { withFileTypes: true });
-      
+
       for (const item of items) {
         const itemPath = path.join(dirPath, item.name);
         if (item.isDirectory()) {
@@ -390,12 +390,12 @@ class WorktreeDiscovery {
           totalSize += stats.size;
         }
       }
-      
+
       return totalSize;
     } catch (error) {
-      logger.debug('Failed to get directory size', { 
-        dirPath, 
-        error: error.message 
+      logger.debug('Failed to get directory size', {
+        dirPath,
+        error: error.message,
       });
       return 0;
     }

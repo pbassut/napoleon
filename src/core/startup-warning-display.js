@@ -39,7 +39,6 @@ class StartupWarningDisplay {
 
       // Prompt for user choice
       return await this.promptUserChoice();
-
     } catch (error) {
       logger.error('Failed to display git warning', { error: error.message });
       // Fallback to safe default
@@ -67,8 +66,8 @@ class StartupWarningDisplay {
 
     const message = this.gitChecker.generateWarningMessage(statusResult);
     const lines = message.split('\n');
-    
-    lines.forEach(line => {
+
+    lines.forEach((line) => {
       if (line.trim()) {
         console.log(this.chalk.red(`  ${line}`));
       }
@@ -85,7 +84,7 @@ class StartupWarningDisplay {
     console.log();
 
     const recommendations = this.generateRecommendations(statusResult);
-    recommendations.forEach(rec => {
+    recommendations.forEach((rec) => {
       console.log(this.chalk.cyan(`  ${rec.icon} ${rec.action}`));
       if (rec.command) {
         console.log(this.chalk.gray(`     ${rec.command}`));
@@ -106,7 +105,7 @@ class StartupWarningDisplay {
       recommendations.push({
         icon: '📝',
         action: 'Commit your current changes:',
-        command: 'git add . && git commit -m "WIP: save current work"'
+        command: 'git add . && git commit -m "WIP: save current work"',
       });
     }
 
@@ -114,7 +113,7 @@ class StartupWarningDisplay {
       recommendations.push({
         icon: '📁',
         action: 'Handle untracked files:',
-        command: 'git add . (to track files) or add to .gitignore'
+        command: 'git add . (to track files) or add to .gitignore',
       });
     }
 
@@ -122,7 +121,7 @@ class StartupWarningDisplay {
       recommendations.push({
         icon: '✅',
         action: 'Commit your staged changes:',
-        command: 'git commit -m "commit staged changes"'
+        command: 'git commit -m "commit staged changes"',
       });
     }
 
@@ -130,7 +129,7 @@ class StartupWarningDisplay {
     recommendations.push({
       icon: '🔧',
       action: 'Or stash your changes temporarily:',
-      command: 'git stash push -m "temp stash before napoleon"'
+      command: 'git stash push -m "temp stash before napoleon"',
     });
 
     return recommendations;
@@ -176,15 +175,15 @@ class StartupWarningDisplay {
   displayRiskExplanation() {
     console.log(this.chalk.white.bold('Why This Matters:'));
     console.log();
-    
+
     const risks = [
       'Napoleon agents work in isolated git worktrees',
       'Dirty working tree can cause worktree creation conflicts',
       'Uncommitted changes may interfere with agent operations',
-      'Clean state ensures reliable agent isolation'
+      'Clean state ensures reliable agent isolation',
     ];
 
-    risks.forEach(risk => {
+    risks.forEach((risk) => {
       console.log(this.chalk.white(`  • ${risk}`));
     });
     console.log();
@@ -204,15 +203,15 @@ class StartupWarningDisplay {
           {
             name: '🚪 Exit to resolve git issues first (recommended)',
             value: 'exit',
-            short: 'Exit (recommended)'
+            short: 'Exit (recommended)',
           },
           {
             name: '⚠️  Continue anyway (I understand the risks)',
             value: 'continue',
-            short: 'Continue with risks'
-          }
+            short: 'Continue with risks',
+          },
         ],
-        default: 'exit'
+        default: 'exit',
       }]);
 
       return answer.action;
@@ -245,9 +244,9 @@ class StartupWarningDisplay {
     console.log(this.chalk.gray('  • Agent isolation problems'));
     console.log(this.chalk.gray('  • Merge conflicts with agent changes'));
     console.log();
-    
+
     // Brief pause to let user read the warning
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
       setTimeout(() => {
         console.log(this.chalk.cyan('Starting Napoleon in 3 seconds...'));
         setTimeout(resolve, 3000);

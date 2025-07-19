@@ -17,22 +17,22 @@ async function validateGitWorkingTree() {
   try {
     // First validate git repository context
     const repositoryValidation = await gitChecker.validateGitRepository();
-    
+
     if (!repositoryValidation.isValid) {
       await warningDisplay.displayGitValidationError(repositoryValidation);
       throw new EnvironmentValidationError(
         repositoryValidation.message,
         repositoryValidation.error,
-        'Please ensure you are in a git repository with proper access'
+        'Please ensure you are in a git repository with proper access',
       );
     }
 
     // Check working tree status
     const gitStatus = await gitChecker.checkWorkingTreeStatus();
-    
+
     if (!gitStatus.isClean) {
       const userChoice = await warningDisplay.displayGitWarning(gitStatus);
-      
+
       if (userChoice === 'exit') {
         warningDisplay.displayExitMessage();
         process.exit(0);
@@ -48,7 +48,7 @@ async function validateGitWorkingTree() {
       warningDisplay.displayNonGitRepoError();
       process.exit(1);
     }
-    
+
     throw error;
   }
 }

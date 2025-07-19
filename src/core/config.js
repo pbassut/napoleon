@@ -17,6 +17,13 @@ const DEFAULT_CONFIG = {
     autoCleanup: true,
     notifications: true,
   },
+  logging: {
+    agents: {
+      enabled: true,
+      directory: path.join(os.homedir(), '.napoleon', 'logs', 'agents'),
+      maxPromptLength: 50,
+    },
+  },
 };
 
 const DEFAULT_SESSIONS = {

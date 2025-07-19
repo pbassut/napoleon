@@ -13,9 +13,9 @@ class WorktreeLifecycleManager {
     this.discovery = new WorktreeDiscovery(this.worktreesDir);
     this.cleanupQueue = new WorktreeCleanupQueue({
       maxConcurrent: options.maxConcurrentCleanups || 2,
-      retryAttempts: options.retryAttempts || 3
+      retryAttempts: options.retryAttempts || 3,
     });
-    
+
     this.activeAgents = new Map(); // Track active agent sessions
     this.recoveredWorktrees = new Map(); // Track recovered worktrees
     this.metrics = {
@@ -23,9 +23,9 @@ class WorktreeLifecycleManager {
       discoveredWorktrees: 0,
       recoveredWorktrees: 0,
       cleanedUpWorktrees: 0,
-      validationErrors: 0
+      validationErrors: 0,
     };
-    
+
     // Bind cleanup queue progress monitoring
     this.cleanupQueue.onProgress(this.handleCleanupProgress.bind(this));
   }
@@ -52,7 +52,7 @@ class WorktreeLifecycleManager {
       logger.info('Worktree discovery completed', {
         total: discoveryResult.total,
         active: discoveryResult.active.length,
-        orphaned: discoveryResult.orphaned.length
+        orphaned: discoveryResult.orphaned.length,
       });
 
       // Step 3: Handle orphaned worktrees
@@ -66,22 +66,21 @@ class WorktreeLifecycleManager {
       }
 
       this.metrics.startupTime = Date.now() - startTime;
-      
+
       logger.info('Worktree lifecycle management initialized successfully', {
         startupTimeMs: this.metrics.startupTime,
-        metrics: this.metrics
+        metrics: this.metrics,
       });
 
       return {
         success: true,
         metrics: this.metrics,
-        discoveryResult
+        discoveryResult,
       };
-
     } catch (error) {
       logger.error('Failed to initialize worktree lifecycle management', {
         error: error.message,
-        startupTimeMs: Date.now() - startTime
+        startupTimeMs: Date.now() - startTime,
       });
       throw error;
     }
@@ -102,22 +101,21 @@ class WorktreeLifecycleManager {
           age,
           size: worktree.size,
           orphaned: true,
-          priority: this.calculateOrphanedPriority(worktree)
+          priority: this.calculateOrphanedPriority(worktree),
         };
 
         const cleanupId = await this.cleanupQueue.enqueue(worktree.path, cleanupOptions);
-        
+
         logger.debug('Orphaned worktree enqueued for cleanup', {
           worktree: worktree.name,
           agentId: worktree.agentId,
           cleanupId,
-          age: Math.round(age / (1000 * 60)) + ' minutes'
+          age: `${Math.round(age / (1000 * 60))} minutes`,
         });
-
       } catch (error) {
         logger.error('Failed to enqueue orphaned worktree for cleanup', {
           worktree: worktree.name,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -136,20 +134,19 @@ class WorktreeLifecycleManager {
         this.recoveredWorktrees.set(worktree.agentId, {
           worktree,
           recoveredAt: new Date().toISOString(),
-          status: 'available-for-resume'
+          status: 'available-for-resume',
         });
 
         this.metrics.recoveredWorktrees++;
-        
+
         logger.debug('Worktree marked as available for agent resume', {
           agentId: worktree.agentId,
-          worktreePath: worktree.path
+          worktreePath: worktree.path,
         });
-
       } catch (error) {
         logger.error('Failed to process active worktree', {
           worktree: worktree.name,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -161,7 +158,7 @@ class WorktreeLifecycleManager {
   registerActiveAgent(agentId, agentSession) {
     this.activeAgents.set(agentId, {
       session: agentSession,
-      registeredAt: new Date().toISOString()
+      registeredAt: new Date().toISOString(),
     });
 
     // Remove from recovered worktrees if it was there
@@ -184,8 +181,8 @@ class WorktreeLifecycleManager {
     }
 
     this.activeAgents.delete(agentId);
-    
-    const session = agentInfo.session;
+
+    const { session } = agentInfo;
     if (session && session.worktreePath) {
       // Queue worktree for cleanup
       const cleanupOptions = {
@@ -193,16 +190,16 @@ class WorktreeLifecycleManager {
         explicit: true,
         force: options.force || false,
         preserveBranch: options.preserveBranch || false,
-        priority: 50 // High priority for explicit cleanup
+        priority: 50, // High priority for explicit cleanup
       };
 
       try {
         const cleanupId = await this.cleanupQueue.enqueue(session.worktreePath, cleanupOptions);
-        
+
         logger.info('Agent worktree queued for cleanup', {
           agentId,
           worktreePath: session.worktreePath,
-          cleanupId
+          cleanupId,
         });
 
         return cleanupId;
@@ -210,7 +207,7 @@ class WorktreeLifecycleManager {
         logger.error('Failed to queue agent worktree for cleanup', {
           agentId,
           worktreePath: session.worktreePath,
-          error: error.message
+          error: error.message,
         });
         throw error;
       }
@@ -246,12 +243,12 @@ class WorktreeLifecycleManager {
   async scanForOrphans() {
     try {
       logger.debug('Scanning for newly orphaned worktrees');
-      
+
       const discoveryResult = await this.discovery.discoverWorktrees();
-      const newOrphans = discoveryResult.orphaned.filter(worktree => {
+      const newOrphans = discoveryResult.orphaned.filter((worktree) => {
         // Only consider worktrees that aren't already in cleanup queue
         const queueStatus = this.cleanupQueue.getStatus();
-        return !queueStatus.queue.some(item => item.worktreePath === worktree.path);
+        return !queueStatus.queue.some((item) => item.worktreePath === worktree.path);
       });
 
       if (newOrphans.length > 0) {
@@ -261,9 +258,8 @@ class WorktreeLifecycleManager {
 
       return {
         scanned: discoveryResult.total,
-        newOrphans: newOrphans.length
+        newOrphans: newOrphans.length,
       };
-
     } catch (error) {
       logger.error('Failed to scan for orphaned worktrees', { error: error.message });
       throw error;
@@ -280,7 +276,7 @@ class WorktreeLifecycleManager {
     const ageHours = (Date.now() - new Date(worktree.createdAt).getTime()) / (1000 * 60 * 60);
     priority += Math.min(Math.floor(ageHours), 48); // Max 48 points for age
 
-    // Larger worktrees get higher priority  
+    // Larger worktrees get higher priority
     const sizeMB = (worktree.size || 0) / (1024 * 1024);
     priority += Math.min(Math.floor(sizeMB / 50), 20); // Max 20 points for size
 
@@ -299,7 +295,7 @@ class WorktreeLifecycleManager {
       logger.info('Cleanup queue processing completed', {
         totalProcessed: progress.metrics.totalProcessed,
         successful: progress.metrics.totalSuccessful,
-        failed: progress.metrics.totalFailed
+        failed: progress.metrics.totalFailed,
       });
     }
   }
@@ -313,7 +309,7 @@ class WorktreeLifecycleManager {
       activeAgents: this.activeAgents.size,
       recoveredWorktrees: this.recoveredWorktrees.size,
       cleanupQueue: this.cleanupQueue.getStatus(),
-      worktreesDir: this.worktreesDir
+      worktreesDir: this.worktreesDir,
     };
   }
 
@@ -323,7 +319,7 @@ class WorktreeLifecycleManager {
   getMetrics() {
     return {
       ...this.metrics,
-      cleanupMetrics: this.cleanupQueue.getStatus().metrics
+      cleanupMetrics: this.cleanupQueue.getStatus().metrics,
     };
   }
 
@@ -336,7 +332,7 @@ class WorktreeLifecycleManager {
     try {
       // Shutdown cleanup queue
       await this.cleanupQueue.shutdown();
-      
+
       // Clear caches
       this.discovery.clearCache();
       this.activeAgents.clear();
@@ -345,7 +341,7 @@ class WorktreeLifecycleManager {
       logger.info('Worktree lifecycle manager shutdown completed');
     } catch (error) {
       logger.error('Error during worktree lifecycle manager shutdown', {
-        error: error.message
+        error: error.message,
       });
       throw error;
     }
