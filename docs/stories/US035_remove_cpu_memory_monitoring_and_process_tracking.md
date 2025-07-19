@@ -1,4 +1,4 @@
-# Story 1.4: Remove CPU/Memory Monitoring and Process Resource Tracking
+# US035: Remove CPU/Memory Monitoring and Process Resource Tracking
 
 ## Status
 Approved
@@ -49,7 +49,7 @@ Approved
 ## Dev Notes
 
 ### Previous Story Insights
-**Stories 1.1-1.3 Context:** UI, core management, and documentation have been updated for SDK architecture. Resource monitoring was the final piece tied to process-based operations and must be completely removed to eliminate process dependencies.
+**US032-US034 Context:** UI, core management, and documentation have been updated for SDK architecture. Resource monitoring was the final piece tied to process-based operations and must be completely removed to eliminate process dependencies.
 
 ### Resource Monitoring Removal Strategy
 **Current Implementation Analysis:** [Source: architecture/tech-stack-alignment.md#existing-technology-stack]
@@ -293,7 +293,7 @@ Approved
 ### Final Recommendations
 
 #### ✅ APPROVE FOR PRODUCTION
-Story 1.4 implementation successfully removes all CPU/memory monitoring and process resource tracking while maintaining full system functionality. The transition to SDK architecture is complete and well-tested.
+US035 implementation successfully removes all CPU/memory monitoring and process resource tracking while maintaining full system functionality. The transition to SDK architecture is complete and well-tested.
 
 #### Follow-up Actions: NONE REQUIRED
 All acceptance criteria met. Implementation is production-ready.

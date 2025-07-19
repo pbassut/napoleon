@@ -20,13 +20,15 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 
 ## Stories
 
-1. **Story 1:** Remove PID Display from Agent UI Components - Eliminates process references from agent list, detail view, and termination dialog while maintaining visual consistency and information clarity
+1. **US032:** Remove PID Display from Agent UI Components - Eliminates process references from agent list, detail view, and termination dialog while maintaining visual consistency and information clarity
 
-2. **Story 2:** Remove Process Management from Agent Core - Replaces process spawning, validation, and termination with SDK session lifecycle management while preserving all agent management capabilities
+2. **US033:** Remove Process Management from Agent Core - Replaces process spawning, validation, and termination with SDK session lifecycle management while preserving all agent management capabilities
 
-3. **Story 3:** Update Documentation and Configuration for SDK Architecture - Removes process references from documentation, schemas, and migration scripts while maintaining development workflow integration
+3. **US034:** Update Documentation and Configuration for SDK Architecture - Removes process references from documentation, schemas, and migration scripts while maintaining development workflow integration
 
-4. **Story 4:** Remove CPU/Memory Monitoring and Process Resource Tracking - Eliminates process-based resource monitoring and updates QA scripts while preserving agent status information display
+4. **US035:** Remove CPU/Memory Monitoring and Process Resource Tracking - Eliminates process-based resource monitoring and updates QA scripts while preserving agent status information display
+
+**Note:** Stories renumbered from 1.1-1.4 to US032-US035 for consistency with main story sequence.
 
 ## Compatibility Requirements
 
@@ -43,14 +45,14 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 
 ## Definition of Done
 
-- [ ] All 4 stories completed with acceptance criteria met
-- [ ] Existing agent functionality verified through comprehensive testing
-- [ ] SDK integration points working correctly for agent lifecycle
-- [ ] Documentation updated to reflect SDK architecture
-- [ ] No regression in existing agent management features
-- [ ] All 89+ PID references eliminated from codebase
-- [ ] 26 test files updated for SDK-based assertions
-- [ ] QA scripts updated for single-process architecture
+- [x] All 4 stories (US032-US035) completed with acceptance criteria met
+- [x] Existing agent functionality verified through comprehensive testing
+- [x] SDK integration points working correctly for agent lifecycle
+- [x] Documentation updated to reflect SDK architecture
+- [x] No regression in existing agent management features
+- [x] All 89+ PID references eliminated from codebase
+- [x] 26 test files updated for SDK-based assertions
+- [x] QA scripts updated for single-process architecture
 
 ## Technical Impact Summary
 
@@ -62,7 +64,7 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 
 ## Detailed Story Breakdown
 
-### Story 1: Remove PID Display from Agent UI Components
+### US032: Remove PID Display from Agent UI Components
 
 **Files to Modify:**
 - `/src/ui/index.js:804` - Remove pidText formatting and display
@@ -75,7 +77,7 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 - Termination dialog displays agent name and session ID instead of PID
 - All UI tests updated and passing
 
-### Story 2: Remove Process Management from Agent Core
+### US033: Remove Process Management from Agent Core
 
 **Files to Modify:**
 - `/src/core/agent-manager.js:90-119` - Replace process validation with SDK status
@@ -90,7 +92,7 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 - Update agent termination to use SDK session abort instead of process.kill()
 - Session restoration logic adapted for SDK sessions
 
-### Story 3: Update Documentation and Configuration for SDK Architecture
+### US034: Update Documentation and Configuration for SDK Architecture
 
 **Files to Modify:**
 - `/docs/prd/data-models-and-schema-changes.md:27` - Remove PID field documentation
@@ -103,7 +105,7 @@ Completely eliminate operating system process dependencies from Napoleon agent m
 - Update migration script to handle SDK sessions instead of process references
 - All documentation internally consistent
 
-### Story 4: Remove CPU/Memory Monitoring and Process Resource Tracking
+### US035: Remove CPU/Memory Monitoring and Process Resource Tracking
 
 **Files to Modify:**
 - `/src/ui/components/agent-detail-view.js:350-351,696-709` - Remove CPU/Memory methods

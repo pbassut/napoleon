@@ -1,4 +1,4 @@
-# Story 1.1: Remove PID Display from Agent UI Components
+# US032: Remove PID Display from Agent UI Components
 
 ## Status
 Ready for Review

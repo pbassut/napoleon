@@ -64,6 +64,17 @@ These stories address critical bugs discovered in the agent spawn dialog functio
 | US029 | Agent Spawn Dialog Modal Close Bug | Fix modal not closing immediately during agent spawn, causing poor UX | CRITICAL | 🐛 **Bug Report** |
 | US030 | Agent Spawn Dialog Input Duplication Bug | Fix keystroke duplication on second modal use causing double input | CRITICAL | 🐛 **Bug Report** |
 
+### Phase 5: Napoleon SDK Migration Epic (US032-US035)
+
+These stories complete the process-to-SDK architecture migration for Napoleon (formerly numbered 1.1-1.4).
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US032 | Remove PID Display from Agent UI | Eliminates process references from agent UI components | HIGH | ✅ **Done** |
+| US033 | Remove Process Management from Agent Core | Replaces process spawning with SDK session lifecycle | HIGH | ✅ **Done** |
+| US034 | Update Documentation and Configuration for SDK | Removes process references from documentation and config | HIGH | ✅ **Done** |
+| US035 | Remove CPU/Memory Monitoring and Process Tracking | Eliminates process-based resource monitoring | HIGH | ✅ **Done** |
+
 ## Development Notes
 
 1. **Phase 1 Must Complete First**: The Napoleon SDK integration stories (US001-US010) must be completed before Phase 2, as they establish the new foundation.
@@ -85,9 +96,10 @@ These stories address critical bugs discovered in the agent spawn dialog functio
 
 ## Approval Status Summary
 
-- **✅ 28 stories approved**: US001-US028 approved by Scrum Master Bob on 2025-07-18
+- **✅ 32 stories approved**: US001-US028 approved by Scrum Master Bob on 2025-07-18, US032-US035 (completed epic stories)
 - **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues
-- **3 stories already completed**: US007, US008, US013
+- **7 stories already completed**: US007, US008, US013, US032-US035
+- **4 epic stories integrated**: US032-US035 represent completed Napoleon SDK Migration Epic (formerly 1.1-1.4)
 - **25 stories ready for implementation**: US001-US006, US009-US012, US014-US028
 - **2 critical bug fixes needed**: US029-US030 address modal close and input duplication bugs
 - **Phase 4 bug priority**: Critical bugs should be addressed before continuing with new features

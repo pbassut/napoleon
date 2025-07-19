@@ -1,4 +1,4 @@
-# Story 1.3: Update Documentation and Configuration for SDK Architecture
+# US034: Update Documentation and Configuration for SDK Architecture
 
 ## Status
 Approved
@@ -44,7 +44,7 @@ Approved
 ## Dev Notes
 
 ### Previous Story Insights
-**Story 1.1 & 1.2 Context:** UI components and core agent management have been updated to use SDK sessions. Documentation must now accurately reflect these implementation changes and remove outdated process references.
+**US032 & US033 Context:** UI components and core agent management have been updated to use SDK sessions. Documentation must now accurately reflect these implementation changes and remove outdated process references.
 
 ### Documentation Structure Requirements
 **Existing Documentation Patterns:** [Source: architecture/source-tree-integration.md#integration-guidelines]

@@ -1,4 +1,4 @@
-# Story 1.2: Remove Process Management from Agent Core
+# US033: Remove Process Management from Agent Core
 
 ## Status
 Ready for Review
@@ -49,7 +49,7 @@ Ready for Review
 ## Dev Notes
 
 ### Previous Story Insights
-**Story 1.1 Context:** UI components have been updated to remove PID displays. Agent core must now provide SDK-based status information instead of process data to maintain UI functionality.
+**US032 Context:** UI components have been updated to remove PID displays. Agent core must now provide SDK-based status information instead of process data to maintain UI functionality.
 
 ### Data Models
 **SDK Session Management:** [Source: architecture/data-models-and-schema-changes.md#sdk-session-model]
