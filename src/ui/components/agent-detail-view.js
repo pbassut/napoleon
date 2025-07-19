@@ -498,7 +498,10 @@ class AgentDetailView {
 
     try {
       // Get logs from agent manager
-      this.logs = this.agentManager.getAgentLogs(this.currentAgent.id) || [];
+      const allLogs = this.agentManager.getAgentLogs(this.currentAgent.id) || [];
+      
+      // Filter logs based on MESSAGE_TYPES environment variable
+      this.logs = this.filterLogsByMessageTypes(allLogs);
       this.updateLogsDisplay();
 
       // Auto-scroll to bottom if enabled
@@ -517,6 +520,31 @@ class AgentDetailView {
       }];
       this.updateLogsDisplay();
     }
+  }
+
+  /**
+   * Filter logs based on MESSAGE_TYPES environment variable
+   * @param {Array} logs - Array of log entries
+   * @returns {Array} - Filtered log entries
+   */
+  filterLogsByMessageTypes(logs) {
+    // Get allowed message types from environment variable
+    // Default to showing only 'assistant' type messages
+    const messageTypesEnv = process.env.MESSAGE_TYPES || 'assistant';
+    const allowedTypes = messageTypesEnv.split(',').map(type => type.trim().toLowerCase());
+
+    return logs.filter(log => {
+      if (!log || typeof log !== 'object') return false;
+
+      // Check the log type field
+      const logType = log.type ? log.type.toLowerCase() : '';
+      
+      // Check the SDK type in metadata
+      const sdkType = log.metadata?.sdkType ? log.metadata.sdkType.toLowerCase() : '';
+
+      // Include the log if either type matches the allowed types
+      return allowedTypes.includes(logType) || allowedTypes.includes(sdkType);
+    });
   }
 
   /**
