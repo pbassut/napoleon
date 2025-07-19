@@ -1027,25 +1027,22 @@ class TerminalUI {
         this.detailView.destroy();
       }
 
+      // Enhanced terminal cleanup with comprehensive error handling
       if (this.screen) {
         try {
-          this.screen.destroy();
+          // First attempt graceful cleanup
+          this.cleanupTerminalGracefully();
         } catch (error) {
-          // Ignore blessed terminal color capability errors during cleanup
-          // These are cosmetic and don't affect functionality
-          if (error.message && error.message.includes('Setulc')) {
-            logger.debug('Ignoring blessed terminal color error during cleanup', {
-              error: error.message,
-            });
-          } else {
-            logger.warn('Error during screen cleanup', { error: error.message });
-          }
+          // Fallback to forced cleanup if graceful fails
+          logger.debug('Graceful cleanup failed, attempting forced cleanup', {
+            error: error.message,
+          });
+          this.forceTerminalCleanup();
         }
       }
 
-      // Restore terminal state
-      process.stdout.write('\x1b[?1000l'); // Disable mouse tracking
-      process.stdout.write('\x1b[?1002l'); // Disable button event tracking
+      // Restore terminal state with error handling
+      this.restoreTerminalState();
 
       logger.info('Terminal UI shutdown complete');
       process.exit(0);
@@ -1053,6 +1050,93 @@ class TerminalUI {
       logger.error('Error during terminal UI shutdown', { error: error.message });
       process.exit(1);
     }
+  }
+
+  /**
+   * Graceful terminal cleanup with blessed screen destroy
+   */
+  cleanupTerminalGracefully() {
+    logger.debug('Attempting graceful terminal cleanup');
+    
+    // Try to clear the screen content first
+    if (this.screen && this.screen.clear) {
+      this.screen.clear();
+    }
+    
+    // Attempt normal blessed screen destruction
+    if (this.screen && this.screen.destroy) {
+      this.screen.destroy();
+    }
+    
+    logger.debug('Graceful terminal cleanup completed');
+  }
+
+  /**
+   * Force terminal cleanup when graceful cleanup fails
+   */
+  forceTerminalCleanup() {
+    logger.debug('Attempting forced terminal cleanup');
+    
+    try {
+      // Force clear any blessed screen state
+      if (this.screen) {
+        // Manually reset screen properties to prevent errors
+        this.screen.focused = null;
+        this.screen.grabKeys = false;
+        
+        // Try destroy with error suppression
+        if (this.screen.destroy) {
+          this.screen.destroy();
+        }
+      }
+    } catch (error) {
+      // Suppress all blessed cleanup errors - they're cosmetic during exit
+      if (error.message && (
+        error.message.includes('Setulc') ||
+        error.message.includes('color') ||
+        error.message.includes('cursor') ||
+        error.message.includes('terminfo')
+      )) {
+        logger.debug('Suppressed blessed terminal error during forced cleanup', {
+          error: error.message,
+        });
+      } else {
+        logger.warn('Unexpected error during forced terminal cleanup', {
+          error: error.message,
+        });
+      }
+    }
+    
+    logger.debug('Forced terminal cleanup completed');
+  }
+
+  /**
+   * Restore terminal state with comprehensive error handling
+   */
+  restoreTerminalState() {
+    logger.debug('Restoring terminal state');
+    
+    try {
+      // Reset terminal to normal state
+      if (process.stdout && process.stdout.write) {
+        // Disable mouse tracking
+        process.stdout.write('\x1b[?1000l');
+        process.stdout.write('\x1b[?1002l');
+        
+        // Reset cursor and screen state
+        process.stdout.write('\x1b[?25h'); // Show cursor
+        process.stdout.write('\x1b[0m');   // Reset colors
+        process.stdout.write('\x1b[2J');   // Clear screen
+        process.stdout.write('\x1b[H');    // Move cursor to home
+      }
+    } catch (error) {
+      // Even terminal state restoration errors should not prevent clean exit
+      logger.debug('Error restoring terminal state (non-critical)', {
+        error: error.message,
+      });
+    }
+    
+    logger.debug('Terminal state restoration completed');
   }
 
   /**
