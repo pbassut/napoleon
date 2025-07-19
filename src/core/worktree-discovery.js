@@ -247,13 +247,26 @@ class WorktreeDiscovery {
     // Look for processes that might be associated with this agent/worktree
     const agentIdPattern = worktree.agentId;
     const worktreePathPattern = worktree.path;
+    const worktreeName = worktree.name;
     
     for (const process of runningProcesses) {
-      // Check if process command contains agent ID or worktree path
-      if (process.command.includes(agentIdPattern) || 
-          process.command.includes(worktreePathPattern) ||
-          process.command.includes('claude') || 
-          process.command.includes('napoleon')) {
+      // More specific checks to avoid false positives from general claude/napoleon processes
+      const isSpecificMatch = (
+        // Exact agent ID match combined with node/napoleon process
+        (process.command.includes(agentIdPattern) && 
+         (process.command.includes('node') || process.command.includes('napoleon'))) ||
+        
+        // Process working directory is the worktree path
+        process.command.includes(worktreePathPattern) ||
+        
+        // Process command explicitly mentions the worktree directory name
+        process.command.includes(worktreeName) ||
+        
+        // Napoleon process with agent ID context
+        (process.command.includes('napoleon') && process.command.includes(agentIdPattern))
+      );
+      
+      if (isSpecificMatch) {
         logger.debug('Found potentially active process for worktree', {
           worktree: worktree.name,
           agentId: worktree.agentId,
