@@ -581,10 +581,26 @@ class TerminalUI {
    */
   async performAgentCreation(pendingAgent) {
     try {
-      // Update progress
+      // Update progress - Step 1: Git worktree
       this.agentManager.updatePendingAgentStatus(pendingAgent.id, 'spawning');
       pendingAgent.progress = 'Creating git worktree...';
       this.updateAgentsList();
+
+      // Update progress - Step 2: Initializing SDK
+      setTimeout(() => {
+        if (pendingAgent.status === 'spawning') {
+          pendingAgent.progress = 'Initializing Claude SDK...';
+          this.updateAgentsList();
+        }
+      }, 1000);
+
+      // Update progress - Step 3: Sending instructions
+      setTimeout(() => {
+        if (pendingAgent.status === 'spawning') {
+          pendingAgent.progress = 'Sending instructions to Claude...';
+          this.updateAgentsList();
+        }
+      }, 2000);
 
       // Call the actual spawn method with the pending agent's ID
       const session = await this.agentManager.spawnAgent(

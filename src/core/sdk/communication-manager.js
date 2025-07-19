@@ -154,6 +154,7 @@ class SDKCommunicationManager {
         agentId,
         promptLength: prompt.length,
         options: queryOptions,
+        promptPreview: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       });
 
       const messages = [];
