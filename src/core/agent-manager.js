@@ -100,7 +100,7 @@ class AgentManager {
 
       // Create and initialize AgentLogManager
       this.agentLogManager = new AgentLogManager({
-        napoleonDir: path.dirname(loggingConfig.directory),
+        napoleonDir: loggingConfig.directory ? path.dirname(loggingConfig.directory) : undefined,
         maxPromptLength: loggingConfig.maxPromptLength || 50,
       });
 
