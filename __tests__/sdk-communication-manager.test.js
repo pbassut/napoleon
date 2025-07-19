@@ -252,6 +252,10 @@ describe('SDKCommunicationManager', () => {
 
         await testManager.executeQuery(agentId, prompt);
 
+        // Wait for asynchronous logging to complete
+        await new Promise(resolve => setImmediate(resolve));
+        await new Promise(resolve => setImmediate(resolve));
+
         const responseLogCalls = testMockAgentLogManager.writeLogEntry.mock.calls.filter(
           call => call[1].type === 'sdk_response'
         );
@@ -644,7 +648,7 @@ describe('SDKCommunicationManager', () => {
     describe('calculateCostEstimate', () => {
       it('should calculate cost estimate correctly for valid token usage', () => {
         const tokenUsage = { input: 1000, output: 500 };
-        const result = manager.calculateCostEstimate(tokenUsage);
+        const result = SDKCommunicationManager.calculateCostEstimate(tokenUsage);
 
         expect(result).toEqual({
           estimated: true,
@@ -661,7 +665,7 @@ describe('SDKCommunicationManager', () => {
 
       it('should handle missing token counts', () => {
         const tokenUsage = { input: 1000 }; // Missing output
-        const result = manager.calculateCostEstimate(tokenUsage);
+        const result = SDKCommunicationManager.calculateCostEstimate(tokenUsage);
 
         expect(result.inputTokens).toBe(1000);
         expect(result.outputTokens).toBe(0);
@@ -669,13 +673,13 @@ describe('SDKCommunicationManager', () => {
       });
 
       it('should handle invalid token usage data', () => {
-        const result = manager.calculateCostEstimate(null);
+        const result = SDKCommunicationManager.calculateCostEstimate(null);
         expect(result).toEqual({
           estimated: false,
           error: 'Invalid token usage data',
         });
 
-        const result2 = manager.calculateCostEstimate('invalid');
+        const result2 = SDKCommunicationManager.calculateCostEstimate('invalid');
         expect(result2).toEqual({
           estimated: false,
           error: 'Invalid token usage data',
@@ -686,96 +690,96 @@ describe('SDKCommunicationManager', () => {
     describe('classifySDKError', () => {
       it('should classify connection errors', () => {
         const error = new Error('Network connection failed');
-        expect(manager.classifySDKError(error)).toBe('connection_error');
+        expect(SDKCommunicationManager.classifySDKError(error)).toBe('connection_error');
 
         const timeoutError = new Error('Request timeout');
-        expect(manager.classifySDKError(timeoutError)).toBe('connection_error');
+        expect(SDKCommunicationManager.classifySDKError(timeoutError)).toBe('connection_error');
 
         const econnError = new Error('ECONNRESET');
-        expect(manager.classifySDKError(econnError)).toBe('connection_error');
+        expect(SDKCommunicationManager.classifySDKError(econnError)).toBe('connection_error');
       });
 
       it('should classify authentication errors', () => {
         const authError = new Error('Unauthorized access');
-        expect(manager.classifySDKError(authError)).toBe('authentication_error');
+        expect(SDKCommunicationManager.classifySDKError(authError)).toBe('authentication_error');
 
         const apiKeyError = new Error('Invalid API key provided');
-        expect(manager.classifySDKError(apiKeyError)).toBe('authentication_error');
+        expect(SDKCommunicationManager.classifySDKError(apiKeyError)).toBe('authentication_error');
 
         const statusError = new Error('Forbidden');
         statusError.status = 401;
-        expect(manager.classifySDKError(statusError)).toBe('authentication_error');
+        expect(SDKCommunicationManager.classifySDKError(statusError)).toBe('authentication_error');
       });
 
       it('should classify rate limit errors', () => {
         const rateLimitError = new Error('Rate limit exceeded');
-        expect(manager.classifySDKError(rateLimitError)).toBe('rate_limit_error');
+        expect(SDKCommunicationManager.classifySDKError(rateLimitError)).toBe('rate_limit_error');
 
         const tooManyError = new Error('Too many requests');
-        expect(manager.classifySDKError(tooManyError)).toBe('rate_limit_error');
+        expect(SDKCommunicationManager.classifySDKError(tooManyError)).toBe('rate_limit_error');
 
         const statusError = new Error('Rate limited');
         statusError.status = 429;
-        expect(manager.classifySDKError(statusError)).toBe('rate_limit_error');
+        expect(SDKCommunicationManager.classifySDKError(statusError)).toBe('rate_limit_error');
       });
 
       it('should classify validation errors', () => {
         const validationError = new Error('Validation failed');
-        expect(manager.classifySDKError(validationError)).toBe('validation_error');
+        expect(SDKCommunicationManager.classifySDKError(validationError)).toBe('validation_error');
 
         const invalidError = new Error('Invalid request format');
-        expect(manager.classifySDKError(invalidError)).toBe('validation_error');
+        expect(SDKCommunicationManager.classifySDKError(invalidError)).toBe('validation_error');
 
         const statusError = new Error('Bad request');
         statusError.status = 400;
-        expect(manager.classifySDKError(statusError)).toBe('validation_error');
+        expect(SDKCommunicationManager.classifySDKError(statusError)).toBe('validation_error');
       });
 
       it('should classify abort/cancellation errors', () => {
         const abortError = new Error('Request was aborted');
-        expect(manager.classifySDKError(abortError)).toBe('request_cancelled');
+        expect(SDKCommunicationManager.classifySDKError(abortError)).toBe('request_cancelled');
 
         const cancelError = new Error('Operation cancelled');
-        expect(manager.classifySDKError(cancelError)).toBe('request_cancelled');
+        expect(SDKCommunicationManager.classifySDKError(cancelError)).toBe('request_cancelled');
 
         const abortNameError = new Error('Something failed');
         abortNameError.name = 'AbortError';
-        expect(manager.classifySDKError(abortNameError)).toBe('request_cancelled');
+        expect(SDKCommunicationManager.classifySDKError(abortNameError)).toBe('request_cancelled');
       });
 
       it('should classify server errors', () => {
         const serverError = new Error('Internal server error');
-        expect(manager.classifySDKError(serverError)).toBe('server_error');
+        expect(SDKCommunicationManager.classifySDKError(serverError)).toBe('server_error');
 
         const statusError = new Error('Server error');
         statusError.status = 500;
-        expect(manager.classifySDKError(statusError)).toBe('server_error');
+        expect(SDKCommunicationManager.classifySDKError(statusError)).toBe('server_error');
 
         const unavailableError = new Error('Service unavailable');
-        expect(manager.classifySDKError(unavailableError)).toBe('server_error');
+        expect(SDKCommunicationManager.classifySDKError(unavailableError)).toBe('server_error');
       });
 
       it('should classify SDK-specific errors', () => {
         const sdkError = new Error('Claude SDK error');
-        expect(manager.classifySDKError(sdkError)).toBe('sdk_error');
+        expect(SDKCommunicationManager.classifySDKError(sdkError)).toBe('sdk_error');
 
         const anthropicError = new Error('Anthropic API error');
-        expect(manager.classifySDKError(anthropicError)).toBe('sdk_error');
+        expect(SDKCommunicationManager.classifySDKError(anthropicError)).toBe('sdk_error');
 
         const nameError = new Error('Some error');
         nameError.name = 'SDKError';
-        expect(manager.classifySDKError(nameError)).toBe('sdk_error');
+        expect(SDKCommunicationManager.classifySDKError(nameError)).toBe('sdk_error');
       });
 
       it('should classify unknown errors', () => {
         const unknownError = new Error('Some random error');
-        expect(manager.classifySDKError(unknownError)).toBe('unknown_error');
+        expect(SDKCommunicationManager.classifySDKError(unknownError)).toBe('unknown_error');
 
         const nullError = null;
-        expect(manager.classifySDKError(nullError)).toBe('unknown_error');
+        expect(SDKCommunicationManager.classifySDKError(nullError)).toBe('unknown_error');
 
         const noMessageError = {};
-        expect(manager.classifySDKError(noMessageError)).toBe('unknown_error');
+        expect(SDKCommunicationManager.classifySDKError(noMessageError)).toBe('unknown_error');
       });
     });
   });
