@@ -93,7 +93,7 @@ class AgentManager {
     try {
       // Check if persistent logging is enabled in config
       const loggingConfig = this.config.logging?.agents;
-      if (!loggingConfig?.enabled) {
+      if (!loggingConfig || !loggingConfig.enabled) {
         logger.info('Persistent agent logging disabled via configuration');
         return;
       }
