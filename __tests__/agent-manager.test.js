@@ -231,7 +231,10 @@ describe('AgentManager', () => {
       // With SDK, instructions are sent directly via the query function
       expect(session.logs).toBeDefined();
       expect(session.logs.length).toBeGreaterThan(0);
-      expect(session.logs[0].content).toBe('Mock response from Claude SDK');
+      
+      // Check that SDK response is in the logs (may not be first due to spawn logging)
+      const sdkResponseLog = session.logs.find(log => log.content === 'Mock response from Claude SDK');
+      expect(sdkResponseLog).toBeDefined();
     });
   });
 
