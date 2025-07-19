@@ -1,5 +1,5 @@
-const AgentDetailView = require('../src/ui/components/agent-detail-view');
 const blessed = require('blessed');
+const AgentDetailView = require('../src/ui/components/agent-detail-view');
 const { AgentStatus } = require('../src/core/agent-manager');
 
 // Mock blessed screen
@@ -385,14 +385,25 @@ describe('AgentDetailView', () => {
   describe('Timestamp Formatting', () => {
     test('should format timestamps correctly', () => {
       const testDate = new Date('2025-07-17T10:30:45Z');
-      const formatted = agentDetailView.formatTimestamp(testDate);
+      const formatted = AgentDetailView.formatTimestamp(testDate);
       expect(formatted).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/); // Should include date
     });
 
     test('should format log timestamps correctly', () => {
       const testDate = new Date('2025-07-17T10:30:45Z');
-      const formatted = agentDetailView.formatLogTimestamp(testDate);
+      const formatted = AgentDetailView.formatLogTimestamp(testDate);
       expect(formatted).toMatch(/\d{1,2}:\d{2}:\d{2}/); // Should be time-only format
+    });
+
+    test('should handle null timestamps gracefully', () => {
+      expect(AgentDetailView.formatTimestamp(null)).toBe('N/A');
+      expect(AgentDetailView.formatTimestamp(undefined)).toBe('N/A');
+      expect(AgentDetailView.formatTimestamp('')).toBe('N/A');
+    });
+
+    test('should handle invalid timestamps gracefully', () => {
+      expect(AgentDetailView.formatTimestamp('invalid-date')).toBe('Invalid date');
+      expect(AgentDetailView.formatTimestamp('not-a-date')).toBe('Invalid date');
     });
   });
 

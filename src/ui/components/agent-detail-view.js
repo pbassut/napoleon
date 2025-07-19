@@ -352,8 +352,8 @@ class AgentDetailView {
 
     const info = [
       `Agent: ${agent.id} [${branchInfo}] │ SDK Status: ${sdkStatus}`,
-      `Started: ${this.formatTimestamp(agent.startTime)} │ Runtime: ${runtime}`,
-      `Worktree: ${worktreePath}`,
+      `Started: ${AgentDetailView.formatTimestamp(agent.spawnTime || agent.startTime)} │ Runtime: ${runtime}`,
+      `${worktreePath}`,
       `Session ID: ${sessionId} │ Status: ${agent.status} │ Instructions: "${agent.instructions || 'N/A'}"`,
     ].join('\n');
 
@@ -400,7 +400,7 @@ class AgentDetailView {
 
     const formattedLogs = this.logs.map((log, index) => {
       const lineNum = String(index + 1).padStart(3, ' ');
-      const timestamp = this.formatLogTimestamp(log.timestamp);
+      const timestamp = AgentDetailView.formatLogTimestamp(log.timestamp);
       const isSearchResult = this.searchResults.includes(index);
       const isCurrentResult = this.searchResults[this.currentSearchIndex] === index;
 
@@ -669,7 +669,7 @@ class AgentDetailView {
       'Press any key to close this help...',
     ];
 
-    const helpText = blessed.text({
+    blessed.text({
       parent: helpOverlay,
       top: 1,
       left: 2,
@@ -692,18 +692,29 @@ class AgentDetailView {
     });
   }
 
-
   /**
    * Format timestamp for display
    */
-  formatTimestamp(timestamp) {
-    return new Date(timestamp).toLocaleString();
+  static formatTimestamp(timestamp) {
+    if (!timestamp) {
+      return 'N/A';
+    }
+
+    try {
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      return date.toLocaleString();
+    } catch (error) {
+      return 'Invalid date';
+    }
   }
 
   /**
    * Format log timestamp (shorter format)
    */
-  formatLogTimestamp(timestamp) {
+  static formatLogTimestamp(timestamp) {
     return new Date(timestamp).toLocaleTimeString();
   }
 
