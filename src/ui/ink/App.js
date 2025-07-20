@@ -96,6 +96,18 @@ const App = ({ agentManager }) => {
   const { AgentList } = require('./components/AgentList');
   const { DetailView } = require('./components/DetailView');
 
+  // If detail view is open, show only the detail view
+  if (isDetailViewOpen && selectedAgent) {
+    return React.createElement(
+      ErrorBoundary,
+      null,
+      React.createElement(DetailView, {
+        agent: selectedAgent,
+        onClose: () => setIsDetailViewOpen(false),
+      }),
+    );
+  }
+
   return React.createElement(
     ErrorBoundary,
     null,
