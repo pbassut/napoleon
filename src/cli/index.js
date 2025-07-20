@@ -30,7 +30,7 @@ async function initializeApplication(program) {
 
         try {
           // eslint-disable-next-line global-require
-          const TerminalUI = require('../ui/index');
+          const TerminalUI = require('../ui/index').default;
           const ui = new TerminalUI();
 
           await ui.initialize();
