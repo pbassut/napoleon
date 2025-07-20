@@ -1,12 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput, useFocus } from 'ink';
-import TextInput from 'ink-text-input';
+const React = require('react');
+const { useState, useEffect } = React;
 
-export const SpawnDialog = ({
-  isOpen,
-  onClose,
-  onSubmit
-}) => {
+const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput }) => {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -65,90 +60,98 @@ export const SpawnDialog = ({
   const lineCount = lines.length;
   const charCount = text.length;
 
-  return (
-    <>
-      {/* Modal backdrop */}
-      <Box
-        position="absolute"
-        width="100%"
-        height="100%"
-        display={isOpen ? 'flex' : 'none'}
-      >
-        {/* Modal container */}
-        <Box
-          width={70}
-          height={18}
-          borderStyle="single"
-          borderColor="green"
-          flexDirection="column"
-          paddingX={1}
-          marginLeft="auto"
-          marginRight="auto"
-          marginTop="auto"
-          marginBottom="auto"
-        >
-          {/* Header */}
-          <Box marginBottom={1}>
-            <Text color="white" bold> Spawn New Agent </Text>
-          </Box>
-
-          {/* Instructions */}
-          <Box marginBottom={1} flexDirection="column">
-            <Text color="cyan">Enter instructions for the Claude agent:</Text>
-            <Text> </Text>
-            <Text color="gray">• Be specific about the task you want the agent to perform</Text>
-            <Text color="gray">• Include any relevant context or constraints</Text>
-            <Text color="gray">• Agent will work in isolated git worktree</Text>
-          </Box>
-
-          {/* Text input area */}
-          <Box 
-            borderStyle="single" 
-            borderColor={error ? 'red' : (isFocused ? 'green' : 'gray')}
-            flexGrow={1}
-            paddingX={1}
-            marginBottom={1}
-          >
-            <Box flexDirection="column" width="100%">
-              <Box marginBottom={1}>
-                <Text color="gray"> Agent Instructions </Text>
-              </Box>
-              <TextInput
-                value={text}
-                onChange={setText}
-                placeholder="Type your instructions here..."
-                focus={isFocused}
-              />
-              <Box marginTop={1}>
-                <Text color="gray" dimColor>
-                  {lineCount} line{lineCount !== 1 ? 's' : ''}, {charCount} character{charCount !== 1 ? 's' : ''}
-                </Text>
-              </Box>
-            </Box>
-          </Box>
-
-          {/* Error display */}
-          {error && (
-            <Box>
-              <Text color="red">Error: {error}</Text>
-            </Box>
-          )}
-
-          {/* Loading state */}
-          {isLoading && (
-            <Box>
-              <Text color="yellow">Creating agent...</Text>
-            </Box>
-          )}
-
-          {/* Footer with shortcuts */}
-          <Box justifyContent="center">
-            <Text color="yellow" bold>
-              Ctrl+Enter to spawn | Enter for new line | Escape to cancel
-            </Text>
-          </Box>
-        </Box>
-      </Box>
-    </>
+  return React.createElement(React.Fragment, null,
+    React.createElement(Box, {
+      position: "absolute",
+      width: "100%",
+      height: "100%",
+      display: isOpen ? 'flex' : 'none'
+    },
+      React.createElement(Box, {
+        width: 70,
+        height: 18,
+        borderStyle: "single",
+        borderColor: "green",
+        flexDirection: "column",
+        paddingX: 1,
+        marginLeft: "auto",
+        marginRight: "auto",
+        marginTop: "auto",
+        marginBottom: "auto"
+      },
+        React.createElement(Box, { marginBottom: 1 },
+          React.createElement(Text, { color: "white", bold: true }, " Spawn New Agent ")
+        ),
+        React.createElement(Box, { marginBottom: 1, flexDirection: "column" },
+          React.createElement(Text, { color: "cyan" }, "Enter instructions for the Claude agent:"),
+          React.createElement(Text, null, " "),
+          React.createElement(Text, { color: "gray" }, "• Be specific about the task you want the agent to perform"),
+          React.createElement(Text, { color: "gray" }, "• Include any relevant context or constraints"),
+          React.createElement(Text, { color: "gray" }, "• Agent will work in isolated git worktree")
+        ),
+        React.createElement(Box, {
+          borderStyle: "single",
+          borderColor: error ? 'red' : (isFocused ? 'green' : 'gray'),
+          flexGrow: 1,
+          paddingX: 1,
+          marginBottom: 1
+        },
+          React.createElement(Box, { flexDirection: "column", width: "100%" },
+            React.createElement(Box, { marginBottom: 1 },
+              React.createElement(Text, { color: "gray" }, " Agent Instructions ")
+            ),
+            React.createElement(TextInput, {
+              value: text,
+              onChange: setText,
+              placeholder: "Type your instructions here...",
+              focus: isFocused
+            }),
+            React.createElement(Box, { marginTop: 1 },
+              React.createElement(Text, { color: "gray", dimColor: true },
+                `${lineCount} line${lineCount !== 1 ? 's' : ''}, ${charCount} character${charCount !== 1 ? 's' : ''}`
+              )
+            )
+          )
+        ),
+        error && React.createElement(Box, null,
+          React.createElement(Text, { color: "red" }, `Error: ${error}`)
+        ),
+        isLoading && React.createElement(Box, null,
+          React.createElement(Text, { color: "yellow" }, "Creating agent...")
+        ),
+        React.createElement(Box, { justifyContent: "center" },
+          React.createElement(Text, { color: "yellow", bold: true },
+            "Ctrl+Enter to spawn | Enter for new line | Escape to cancel"
+          )
+        )
+      )
+    )
   );
 };
+
+const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
+  const [inkComponents, setInkComponents] = useState(null);
+  const [TextInput, setTextInput] = useState(null);
+
+  useEffect(() => {
+    Promise.all([
+      import('ink'),
+      import('ink-text-input')
+    ]).then(([ink, textInput]) => {
+      setInkComponents(ink);
+      setTextInput(() => textInput.default || textInput);
+    });
+  }, []);
+
+  if (!inkComponents || !TextInput) {
+    return null;
+  }
+
+  const { Box, Text, useInput, useFocus } = inkComponents;
+
+  return React.createElement(SpawnDialogInner, {
+    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput
+  });
+};
+
+module.exports = { SpawnDialog };

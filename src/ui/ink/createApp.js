@@ -97,8 +97,8 @@ module.exports = async function createApp() {
     const { Header } = require('./components/Layout/Header');
     const { MainContent } = require('./components/Layout/MainContent');
     const { Footer } = require('./components/Layout/Footer');
-    // Temporarily disable dialogs to fix startup
-    const SpawnDialog = () => null;
+    // Import restored SpawnDialog
+    const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
     const TerminationDialog = () => null;
     // Use a simplified AgentList to avoid ESM issues
     const SimpleAgentList = ({ agents, selectedIndex, onSelectionChange }) => {
