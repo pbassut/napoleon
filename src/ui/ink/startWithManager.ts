@@ -100,10 +100,14 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     // Create the app element with AgentManager
     const appElement = React.createElement(App, { agentManager });
 
+    // Enable debug mode when performance debugging is active
+    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true' || 
+                     process.env.NODE_ENV === 'development';
+    
     // Render the app with error handling for raw mode
     let result: any;
     try {
-      result = render(appElement);
+      result = render(appElement, { debug: debugMode });
     } catch (renderError: any) {
       if (renderError.message.includes('Raw mode is not supported')) {
         logger.warn('Raw mode not supported, falling back to console UI');

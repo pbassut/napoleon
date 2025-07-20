@@ -25,6 +25,16 @@ Napoleon uses [why-did-you-render](https://github.com/welldone-software/why-did-
    NAPOLEON_DEBUG=true npm run dev
    ```
 
+### Viewing Debug Logs
+
+When performance debugging is enabled, Ink's debug mode is automatically activated. This allows you to see console logs alongside the UI:
+
+- **Debug logs appear below the UI** - The terminal is split with the UI at the top and logs at the bottom
+- **Logs are preserved** - You can scroll through the debug output to see all re-render logs
+- **Real-time updates** - Logs appear immediately as components re-render
+
+The debug mode is essential for seeing why-did-you-render output, as the normal Ink UI would otherwise hide console logs.
+
 ### What Gets Tracked
 
 By default, the following components are tracked:

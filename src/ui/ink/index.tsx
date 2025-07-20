@@ -22,7 +22,13 @@ async function startInkUI() {
       maxAgents: 3,
     };
 
-    const { clear } = render(<App agentManager={mockAgentManager} />);
+    // Enable debug mode when performance debugging is active
+    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true' || 
+                     process.env.NODE_ENV === 'development';
+    
+    const { clear } = render(<App agentManager={mockAgentManager} />, {
+      debug: debugMode
+    });
 
     process.on('exit', () => {
       clear();
