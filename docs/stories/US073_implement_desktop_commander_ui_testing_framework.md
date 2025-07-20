@@ -1,7 +1,7 @@
 # US073: Implement DesktopCommander UI Testing Framework
 
 ## Status
-**Status:** Draft  
+**Status:** Approved  
 **Priority:** High  
 **Type:** Feature  
 **Assignee:** Unassigned  
@@ -96,3 +96,56 @@ assert(output.includes('Create a hello world program'));
 - [ ] Integration with npm test command
 - [ ] CI/CD pipeline integration
 - [ ] No impact on production code
+
+## Dev Notes
+
+### File Structure
+Create the UI testing framework in the following structure:
+```
+src/
+  ui-tests/
+    framework/
+      ProcessManager.ts      # Wrapper for DesktopCommander
+      InputSimulator.ts      # Keyboard input handling
+      OutputParser.ts        # Terminal output parsing
+      TestRunner.ts          # Test orchestration
+      types.ts              # TypeScript interfaces
+    tests/
+      navigation.test.ts     # Navigation tests
+      agent-management.test.ts # Agent spawn/terminate tests
+      ui-state.test.ts      # UI state verification tests
+    helpers/
+      assertions.ts         # Custom assertion helpers
+      utils.ts             # Test utilities
+```
+
+### DesktopCommander Integration
+DesktopCommander is available as a global tool per the user's CLAUDE.md configuration. Access it through the process management commands:
+- Use for spawning Napoleon instances
+- Send keyboard input via interact_with_process
+- Read terminal output for assertions
+- Ensure proper process cleanup in afterEach hooks
+
+### Existing Test Infrastructure
+- Napoleon uses Jest as the test runner (see package.json)
+- Follow existing test patterns from src/testing/
+- Use the existing test utilities where applicable
+- Ensure new tests integrate with `npm test` command
+
+### Technical Patterns
+- Use async/await for all DesktopCommander interactions
+- Implement proper timeouts for UI operations (default: 5000ms)
+- Parse ANSI escape codes using existing terminal utilities
+- Follow Napoleon's TypeScript conventions and linting rules
+
+### Key Implementation Notes
+1. **Process Isolation**: Each test should spawn its own Napoleon instance
+2. **Output Buffering**: Buffer terminal output to handle async UI updates
+3. **Timing**: Add configurable delays between actions for UI rendering
+4. **Cleanup**: Always terminate processes in afterEach, even on test failure
+5. **Cross-platform**: Test on macOS, Windows, and Linux in CI
+
+### Testing the Test Framework
+- Create unit tests for each framework component
+- Mock DesktopCommander for framework unit tests
+- Integration tests should use real Napoleon instances
