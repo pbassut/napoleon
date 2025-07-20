@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Box, useApp, Text, useInput } from 'ink';
-import { useAgentManager } from './hooks/useAgentManager.mjs';
-import ErrorBoundary from './components/Common/ErrorBoundary.mjs';
-import { Header } from './components/Layout/Header.tsx';
-import { MainContent } from './components/Layout/MainContent.tsx';
-import { Footer } from './components/Layout/Footer.tsx';
-import { SpawnDialog } from './components/Dialogs/SpawnDialog.tsx';
-import { TerminationDialog } from './components/Dialogs/TerminationDialog.tsx';
-import { AgentList } from './components/AgentList/index.tsx';
-import { DetailView } from './components/DetailView/index.ts';
+import { useAgentManager } from './hooks/useAgentManager.js';
+import ErrorBoundary from './components/Common/ErrorBoundary.js';
+import { Header } from './components/Layout/Header.js';
+import { MainContent } from './components/Layout/MainContent.js';
+import { Footer } from './components/Layout/Footer.js';
+import { SpawnDialog } from './components/Dialogs/SpawnDialog.js';
+import { TerminationDialog } from './components/Dialogs/TerminationDialog.js';
+import { AgentList } from './components/AgentList/AgentList.js';
+import { DetailView } from './components/DetailView/DetailView.js';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
@@ -97,6 +97,7 @@ const App = ({ agentManager }) => {
         <DetailView
           agent={selectedAgent}
           onClose={() => setIsDetailViewOpen(false)}
+          agentManager={agentManager}
         />
       </ErrorBoundary>
     );
@@ -131,22 +132,20 @@ const App = ({ agentManager }) => {
           )}
         </MainContent>
         <Footer agentCount={agents.length} />
-        
+
         {/* Spawn Dialog Modal */}
         <SpawnDialog
           isOpen={isSpawnDialogOpen}
           onClose={() => setIsSpawnDialogOpen(false)}
           onSubmit={handleSpawnAgent}
         />
-        
+
         {/* Termination Dialog Modal */}
         <TerminationDialog
           isOpen={isTerminationDialogOpen}
           agent={selectedAgent}
           onConfirm={handleTerminateAgent}
-          onCancel={() => {
-            setIsTerminationDialogOpen(false);
-          }}
+          onCancel={() => setIsTerminationDialogOpen(false)}
         />
       </Box>
     </ErrorBoundary>
