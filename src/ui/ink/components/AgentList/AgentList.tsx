@@ -20,6 +20,16 @@ const AgentList: React.FC<AgentListProps> = ({
 }) => {
   const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
+  const [, forceUpdate] = useState({});
+
+  // Force re-render every second to update runtime counters
+  useEffect(() => {
+    const interval = setInterval(() => {
+      forceUpdate({});
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Reserve lines for header and potential scroll indicators
   const visibleItems = Math.max(1, height - 3);

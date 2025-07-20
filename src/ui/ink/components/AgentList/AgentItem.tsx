@@ -78,10 +78,7 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       </Box>
     </Box>
   );
-}, (prevProps, nextProps) => prevProps.agent.status === nextProps.agent.status
-         && prevProps.agent.name === nextProps.agent.name
-         && prevProps.isSelected === nextProps.isSelected
-         && prevProps.isFocused === nextProps.isFocused);
+});
 
 AgentItem.displayName = 'AgentItem';
 
