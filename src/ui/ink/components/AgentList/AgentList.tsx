@@ -10,6 +10,7 @@ interface AgentListProps {
   selectedIndex: number;
   onSelectionChange: (index: number) => void;
   height?: number;
+  isModalOpen?: boolean;
 }
 
 const AgentList: React.FC<AgentListProps> = ({
@@ -17,6 +18,7 @@ const AgentList: React.FC<AgentListProps> = ({
   selectedIndex,
   onSelectionChange,
   height = 10,
+  isModalOpen = false,
 }) => {
   const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
@@ -91,9 +93,11 @@ const AgentList: React.FC<AgentListProps> = ({
         >
           <Box flexDirection="column" alignItems="center">
             <Text color="gray">No agents running</Text>
-            <Box marginTop={1}>
-              <Text color="gray">Press 'n' to spawn a new agent</Text>
-            </Box>
+            {!isModalOpen && (
+              <Box marginTop={1}>
+                <Text color="gray">Press 'n' to spawn a new agent</Text>
+              </Box>
+            )}
           </Box>
         </Box>
       </Box>

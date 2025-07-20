@@ -29,12 +29,11 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
       alignItems="center"
       display={isOpen ? 'flex' : 'none'}
     >
-      {/* Solid black overlay background to hide underlying content */}
+      {/* Semi-transparent overlay background */}
       <Box
         position="absolute"
         width="100%"
         height="100%"
-        backgroundColor="black"
       />
       
       {/* Modal content - only render when open to prevent unnecessary renders */}

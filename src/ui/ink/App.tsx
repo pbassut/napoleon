@@ -157,6 +157,7 @@ const App = ({ agentManager }) => {
                   selectedIndex={selectedIndex}
                   onSelectionChange={handleSelectionChange}
                   height={Math.max(10, stdout.rows - 12)}
+                  isModalOpen={isSpawnDialogOpen || isTerminationDialogOpen}
                 />
               )}
             </MainContent>
