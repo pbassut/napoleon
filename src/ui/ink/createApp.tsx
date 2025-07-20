@@ -13,7 +13,7 @@ interface AppProps {
   agentManager: AgentManager;
 }
 
-export default async function createApp(): Promise<React.FC<AppProps>> {
+async function createApp(): Promise<React.FC<AppProps>> {
   const App: React.FC<AppProps> = ({ agentManager }) => {
     const { exit } = useApp();
     const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);

@@ -60,4 +60,4 @@ function createErrorBoundary(React: any, Box: any, Text: any) {
   return ErrorBoundary;
 }
 
-module.exports = createErrorBoundary;
+export default createErrorBoundary;

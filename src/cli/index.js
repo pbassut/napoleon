@@ -29,8 +29,8 @@ async function initializeApplication(program) {
         process.env.TERMINAL_UI_MODE = 'true';
 
         try {
-          // eslint-disable-next-line global-require
-          const TerminalUI = require('../ui/index').default;
+          // Use dynamic import for ES module
+          const { default: TerminalUI } = await import('../ui/index.ts');
           const ui = new TerminalUI();
 
           await ui.initialize();
