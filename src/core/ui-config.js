@@ -71,7 +71,7 @@ class UIConfig {
     // 4. Default
 
     // Check command line flag
-    if (cliArgs.useLegacyUI || process.argv.includes('--use-legacy-ui')) {
+    if (cliArgs.useLegacyUI || process.argv.includes('--use-legacy-ui') || process.env.NAPOLEON_USE_LEGACY_UI === 'true') {
       logger.info('Legacy UI requested via CLI flag');
       return this.canUseLegacyUI() ? 'blessed' : 'ink';
     }

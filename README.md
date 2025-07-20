@@ -42,13 +42,25 @@ napoleon --help
 
 ## Features
 
-- Terminal-based user interface
+- **Modern React-based Terminal UI** - Built with Ink for better performance and reliability
 - Multiple concurrent Claude Code SDK sessions
 - Git worktree isolation for each agent
 - Session persistence and recovery
 - Cross-platform compatibility (macOS, Linux, Windows)
 - Enhanced API key management and authentication
+- Terminal compatibility across iTerm2, Windows Terminal, GNOME Terminal, and more
 - Real-time agent communication and coordination
+
+## UI Migration Notice 🎉
+
+Napoleon now features a modern React-based terminal UI built with Ink! The new UI provides better performance, improved terminal compatibility, and a more responsive experience.
+
+**For existing users**: The classic UI is still temporarily available with:
+```bash
+napoleon start --use-legacy-ui
+```
+
+See the [UI Migration Guide](./docs/UI_MIGRATION_GUIDE.md) for more information.
 
 ## Configuration
 
@@ -57,6 +69,7 @@ Configuration files are stored in `~/.napoleon/`:
 - `sessions.json` - Active session data
 - `logs/` - Application logs
 - `api-keys.json` - Encrypted API key storage
+- `ui-config.json` - UI preferences and settings
 
 ## Development
 
