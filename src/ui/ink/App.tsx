@@ -85,9 +85,9 @@ const App = ({ agentManager }) => {
 
   // Import components dynamically
   const ErrorBoundary = require('./components/Common/ErrorBoundary').default;
-  const { Header } = require('./components/Layout/Header');
-  const { MainContent } = require('./components/Layout/MainContent');
-  const { Footer } = require('./components/Layout/Footer');
+  const { Header } = require('./components/Layout/Header.tsx');
+  const { MainContent } = require('./components/Layout/MainContent.tsx');
+  const { Footer } = require('./components/Layout/Footer.tsx');
   const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
   const { TerminationDialog } = require('./components/Dialogs/TerminationDialog');
   const { AgentList } = require('./components/AgentList');

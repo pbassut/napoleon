@@ -60,12 +60,12 @@ The Napoleon project currently uses React.createElement() syntax throughout all 
   - [x] Update build configuration for JSX compilation
   - [x] Test core app functionality with JSX conversion
 
-- [ ] Phase 2: Convert Layout Components to JSX (AC1)
-  - [ ] Convert Header.js → Header.tsx with JSX syntax
-  - [ ] Convert Footer.js → Footer.tsx with JSX syntax
-  - [ ] Convert MainContent.js → MainContent.tsx with JSX syntax
-  - [ ] Update all layout imports and references
-  - [ ] Test layout rendering with JSX components
+- [x] Phase 2: Convert Layout Components to JSX (AC1)
+  - [x] Convert Header.js → Header.tsx with JSX syntax
+  - [x] Convert Footer.js → Footer.tsx with JSX syntax
+  - [x] Convert MainContent.js → MainContent.tsx with JSX syntax
+  - [x] Update all layout imports and references
+  - [x] Test layout rendering with JSX components
 
 - [ ] Phase 3: Convert Agent List Components to JSX (AC1)
   - [ ] Convert AgentList.js → AgentList.tsx with JSX syntax
@@ -271,6 +271,9 @@ _TBD_
 - **Converted to TSX (JSX Syntax):**
   - src/ui/ink/App.tsx (converted from App.js)
   - src/ui/ink/index.tsx (converted from index.js) 
+  - src/ui/ink/components/Layout/Header.tsx (converted from Header.js)
+  - src/ui/ink/components/Layout/Footer.tsx (converted from Footer.js)
+  - src/ui/ink/components/Layout/MainContent.tsx (converted from MainContent.js)
   - src/ui/ink/types.ts (new shared type definitions)
 
 - **Deferred:**
