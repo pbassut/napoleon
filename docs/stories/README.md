@@ -58,6 +58,17 @@ Each story file contains:
 - Definition of done checklist
 - Related stories and dependencies
 
+### Definition of Done (DOD) Files
+Some stories have companion `*_dod.md` files (e.g., `US044_core_layout_components_dod.md`) which are **completion tracking documents**, not duplicates. These files contain:
+- Requirements met checklist with detailed verification
+- Coding standards compliance verification
+- Testing status and coverage reports
+- Functionality verification steps
+- Story administration and handoff notes
+- Dependencies and build status tracking
+
+**Important**: DOD files are separate from the main story files and serve as implementation tracking tools. They are not duplicate stories and should be maintained alongside their corresponding story files.
+
 ### Development Approach
 1. **Sequential Epic Development**: Complete Epic 1 before moving to Epic 2
 2. **Story Independence**: Each story is self-contained and can be assigned to different agents

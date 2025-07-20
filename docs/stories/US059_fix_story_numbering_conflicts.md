@@ -53,19 +53,19 @@ This story addresses numbering conflicts and clarifies documentation structure. 
 
 ## Tasks/Subtasks
 
-- [ ] Analyze conflicts (All ACs)
-  - [ ] Document all duplicate files
-  - [ ] Check for references to duplicates
-  - [ ] Determine which files to keep
-  - [ ] Plan renumbering strategy
-  - [ ] Create backup of current state
+- [x] Analyze conflicts (All ACs)
+  - [x] Document all duplicate files
+  - [x] Check for references to duplicates
+  - [x] Determine which files to keep
+  - [x] Plan renumbering strategy
+  - [x] Create backup of current state
 
-- [ ] Document DOD files (AC1, AC2)
-  - [ ] Add README explaining _dod.md file purpose
-  - [ ] Update contributor guidelines
-  - [ ] Verify no actual conflicts for US044
-  - [ ] Verify no actual conflicts for US047
-  - [ ] Document DOD file convention
+- [x] Document DOD files (AC1, AC2)
+  - [x] Add README explaining _dod.md file purpose
+  - [x] Update contributor guidelines
+  - [x] Verify no actual conflicts for US044
+  - [x] Verify no actual conflicts for US047
+  - [x] Document DOD file convention
 
 - [ ] Fix US051 conflict (AC3)
   - [ ] Identify next available number (likely US060)

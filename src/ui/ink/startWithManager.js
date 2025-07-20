@@ -57,7 +57,7 @@ async function startFallbackUI(agentManager) {
   
   // List current agents
   try {
-    const agents = await agentManager.listAgents();
+    const agents = agentManager.getActiveAgents();
     if (agents.length === 0) {
       console.log('No agents currently running.');
     } else {
