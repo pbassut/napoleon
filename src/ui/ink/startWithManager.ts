@@ -18,6 +18,11 @@ function isInkSupported(): boolean {
     return false;
   }
 
+  // Debug mode: Force Ink rendering even without proper TTY
+  if (process.env.NAPOLEON_DEBUG_INFINITE_LOOP === 'true') {
+    return true;
+  }
+
   // Check if we have a TTY
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     return false;
@@ -102,12 +107,26 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     // Render the app with error handling for raw mode
     let result: any;
     try {
+      // Debug mode: Force rendering even if raw mode isn't supported
+      if (process.env.NAPOLEON_DEBUG_INFINITE_LOOP === 'true') {
+        // Mock stdin.setRawMode if it doesn't exist
+        if (typeof process.stdin.setRawMode !== 'function') {
+          process.stdin.setRawMode = () => process.stdin;
+        }
+        logger.info('Debug mode: Forcing Ink render despite environment limitations');
+      }
+      
       result = render(appElement);
     } catch (renderError: any) {
-      if (renderError.message.includes('Raw mode is not supported')) {
-        logger.warn('Raw mode not supported, falling back to blessed UI');
+      if (renderError.message.includes('Raw mode is not supported') && process.env.NAPOLEON_DEBUG_INFINITE_LOOP !== 'true') {
+        logger.warn('Raw mode not supported, falling back to console UI');
         await startFallbackUI(agentManager);
         return;
+      }
+      // In debug mode, let render errors show to see the infinite loop
+      if (process.env.NAPOLEON_DEBUG_INFINITE_LOOP === 'true') {
+        logger.error('Debug mode: Ink render error (this may show infinite loop behavior)', { error: renderError.message });
+        // Don't fallback - let it crash or continue to show the infinite loop
       }
       throw renderError;
     }
