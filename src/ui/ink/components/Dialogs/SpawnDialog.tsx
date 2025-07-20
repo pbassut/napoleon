@@ -82,7 +82,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     
     try {
       await onSubmit(prompt);
-      onClose();
+      // Don't close here - let the parent handle closing after successful spawn
     } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Failed to spawn agent');
       setIsLoading(false);

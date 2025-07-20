@@ -144,7 +144,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }, []);
 
   // Spawn new agent
-  const spawnAgent = useCallback(async (instructions: string, workingDirectory: string) => {
+  const spawnAgent = useCallback(async ({ instructions, workingDirectory }: { instructions: string, workingDirectory: string }) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
     }

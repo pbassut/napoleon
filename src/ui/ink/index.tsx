@@ -7,17 +7,32 @@ import logger from '../../utils/logger';
 
 async function startInkUI() {
   try {
-    // Mock AgentManager for now
+    // Mock AgentManager with state
+    const mockAgents = [];
+    let agentCounter = 1;
+    
     const mockAgentManager = {
       initialize: async () => {},
-      getActiveAgents: () => [],
-      canSpawnAgent: () => true,
+      getActiveAgents: () => [...mockAgents],
+      canSpawnAgent: () => mockAgents.length < 3,
       spawnAgent: async ({ instructions, workingDirectory }) => {
         logger.info('Mock spawn agent', { instructions, workingDirectory });
-        return { id: `agent-${Date.now()}`, name: 'mock-agent', status: 'running' };
+        const newAgent = { 
+          id: `agent-${Date.now()}`, 
+          name: `Agent ${agentCounter++}: ${instructions.substring(0, 30)}...`,
+          status: 'running',
+          instructions,
+          startTime: new Date()
+        };
+        mockAgents.push(newAgent);
+        return newAgent;
       },
       terminateAgent: async (agentId) => {
         logger.info('Mock terminate agent', { agentId });
+        const index = mockAgents.findIndex(a => a.id === agentId);
+        if (index >= 0) {
+          mockAgents.splice(index, 1);
+        }
       },
       maxAgents: 3,
     };

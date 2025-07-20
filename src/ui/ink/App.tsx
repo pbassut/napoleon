@@ -82,7 +82,10 @@ const App = ({ agentManager }) => {
 
   const handleSpawnAgent = async (prompt) => {
     try {
-      await spawnAgent(prompt, process.cwd());
+      await spawnAgent({ 
+        instructions: prompt, 
+        workingDirectory: process.cwd() 
+      });
       setIsSpawnDialogOpen(false);
     } catch (error) {
       // Re-throw to let dialog handle the error
