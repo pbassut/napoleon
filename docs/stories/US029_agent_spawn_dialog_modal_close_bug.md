@@ -293,11 +293,17 @@ class AgentManager {
 
 ## Approval Status
 
-**Status:** 🐛 Bug Report - Ready for Implementation
+**Status:** ❌ Closed - Won't Do
 
 **Priority:** CRITICAL
 
 **Created:** 2025-07-18
+
+**Closed Date:** 2025-07-20
+
+**Closed by:** Scrum Master Bob
+
+**Reason:** Resolved with Ink migration - modal behavior works correctly in new UI implementation (US047)
 
 **Bug Classification:** UX Breaking - Modal Lifecycle Management
 

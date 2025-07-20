@@ -1,8 +1,7 @@
 const React = require('react');
-
 const { Component } = React;
-const { Box, Text } = require('ink');
 
+// ErrorBoundary that works with dynamic imports
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
@@ -19,27 +18,11 @@ class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
-      return React.createElement(Box, {
-        borderStyle: 'round',
-        borderColor: 'red',
-        padding: 1,
-        flexDirection: 'column',
-      }, [
-        React.createElement(
-          Text,
-          { key: 'title', color: 'red', bold: true },
-          '⚠️  An error occurred',
-        ),
-        React.createElement(
-          Text,
-          { key: 'error', color: 'white' },
-          this.state.error?.message || 'Unknown error',
-        ),
-        React.createElement(
-          Text,
-          { key: 'help', color: 'gray' },
-          '\nPress Ctrl+C to exit',
-        ),
+      // Since we can't use Ink components directly due to ESM issues,
+      // return a simple React element
+      return React.createElement('div', null, [
+        React.createElement('div', { key: 'error' }, '⚠️  An error occurred: ' + (this.state.error?.message || 'Unknown error')),
+        React.createElement('div', { key: 'help' }, 'Press Ctrl+C to exit'),
       ]);
     }
 
