@@ -48,7 +48,6 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 
   return (
     <Box 
-      paddingX={1} 
       width="100%"
     >
       {/* Selection indicator */}

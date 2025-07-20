@@ -116,62 +116,49 @@ const App = ({ agentManager }) => {
   return (
     <ErrorBoundary>
       <Box flexDirection="column" width="100%" height="100%">
-        {/* Top border */}
-        <Text>┌{'─'.repeat(80)}┐</Text>
-        
-        {/* Header with side borders */}
-        <Box>
-          <Text>│</Text>
-          <Box width={80}><Header /></Box>
-          <Text>│</Text>
-        </Box>
-        
-        {/* Header separator */}
-        <Box>
-          <Text>│{'─'.repeat(80)}│</Text>
-        </Box>
-        
-        {/* Main content with side borders */}
-        <Box flexGrow={1}>
-          <Text>│</Text>
-          <Box width={80} flexGrow={1}>
+        {/* Main bordered container */}
+        <Box flexDirection="column" borderStyle="single" width="100%" height="100%">
+          {/* Header */}
+          <Box paddingX={2} paddingY={1}>
+            <Header />
+          </Box>
+          
+          {/* Divider */}
+          <Box paddingX={1}>
+            <Text>{'─'.repeat(process.stdout.columns - 4)}</Text>
+          </Box>
+          
+          {/* Main content with padding */}
+          <Box flexGrow={1} paddingX={2} paddingY={1}>
             <MainContent>
               {isLoading ? (
-                <Box padding={1}>
+                <Box paddingY={2} justifyContent="center" alignItems="center">
                   <Text color="yellow">Loading agents...</Text>
                 </Box>
               ) : error ? (
-                <Box padding={1}>
+                <Box paddingY={2} justifyContent="center" alignItems="center">
                   <Text color="red">Error: {error.message}</Text>
                 </Box>
               ) : (
-                <Box flexGrow={1} flexDirection="column">
-                  <AgentList
-                    agents={agents}
-                    selectedIndex={selectedIndex}
-                    onSelectionChange={handleSelectionChange}
-                  />
-                </Box>
+                <AgentList
+                  agents={agents}
+                  selectedIndex={selectedIndex}
+                  onSelectionChange={handleSelectionChange}
+                />
               )}
             </MainContent>
           </Box>
-          <Text>│</Text>
+          
+          {/* Divider */}
+          <Box paddingX={1}>
+            <Text>{'─'.repeat(process.stdout.columns - 4)}</Text>
+          </Box>
+          
+          {/* Footer */}
+          <Box paddingX={2} paddingY={1}>
+            <Footer agentCount={agents.length} />
+          </Box>
         </Box>
-        
-        {/* Footer separator */}
-        <Box>
-          <Text>│{'─'.repeat(80)}│</Text>
-        </Box>
-        
-        {/* Footer with side borders */}
-        <Box>
-          <Text>│</Text>
-          <Box width={80}><Footer agentCount={agents.length} /></Box>
-          <Text>│</Text>
-        </Box>
-        
-        {/* Bottom border */}
-        <Text>└{'─'.repeat(80)}┘</Text>
 
         {/* Spawn Dialog Modal */}
         <SpawnDialog

@@ -64,7 +64,7 @@ const AgentList: React.FC<AgentListProps> = ({
     return (
       <Box flexDirection="column" flexGrow={1}>
         {/* Column headers */}
-        <Box paddingX={1}>
+        <Box>
           <Box width={2}><Text> </Text></Box>
           <Box width={50}><Text bold>Agent</Text></Box>
           <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
@@ -72,8 +72,8 @@ const AgentList: React.FC<AgentListProps> = ({
         </Box>
         
         {/* Separator line */}
-        <Box width="100%" paddingX={1}>
-          <Text>{'─'.repeat(78)}</Text>
+        <Box width="100%">
+          <Text>{'─'.repeat(process.stdout.columns - 8)}</Text>
         </Box>
 
         {/* Empty state message */}
@@ -101,7 +101,7 @@ const AgentList: React.FC<AgentListProps> = ({
   return (
     <Box flexDirection="column" flexGrow={1}>
       {/* Column headers */}
-      <Box paddingX={1}>
+      <Box>
         <Box width={2}><Text> </Text></Box>
         <Box width={50}><Text bold>Agent</Text></Box>
         <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
@@ -109,13 +109,13 @@ const AgentList: React.FC<AgentListProps> = ({
       </Box>
       
       {/* Separator line */}
-      <Box width="100%" paddingX={1}>
-        <Text>{'─'.repeat(78)}</Text>
+      <Box width="100%">
+        <Text>{'─'.repeat(process.stdout.columns - 8)}</Text>
       </Box>
 
       {/* Scroll indicator - top */}
       {showScrollIndicators && hasMoreAbove && (
-        <Box paddingX={1} paddingY={0}>
+        <Box paddingY={0}>
           <Text color="gray" dimColor>{`↑ ${scrollOffset} more above ↑`}</Text>
         </Box>
       )}
@@ -135,7 +135,7 @@ const AgentList: React.FC<AgentListProps> = ({
 
       {/* Scroll indicator - bottom */}
       {showScrollIndicators && hasMoreBelow && (
-        <Box paddingX={1} paddingY={0}>
+        <Box paddingY={0}>
           <Text color="gray" dimColor>
             {`↓ ${agents.length - scrollOffset - visibleItems} more below ↓`}
           </Text>
