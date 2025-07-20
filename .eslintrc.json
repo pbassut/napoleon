@@ -15,5 +15,33 @@
   "rules": {
     "no-console": "off",
     "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.spec.js", "jest.config.js"]}]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.ts", "*.tsx"],
+      "parser": "@typescript-eslint/parser",
+      "plugins": ["@typescript-eslint"],
+      "extends": [
+        "airbnb-base",
+        "@typescript-eslint/recommended"
+      ],
+      "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module",
+        "ecmaFeatures": {
+          "jsx": true
+        }
+      },
+      "rules": {
+        "no-console": "off",
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.test.ts", "**/*.spec.js", "**/*.spec.ts", "jest.config.js"]}],
+        "import/extensions": ["error", "ignorePackages", {
+          "js": "never",
+          "jsx": "never",
+          "ts": "never",
+          "tsx": "never"
+        }]
+      }
+    }
+  ]
 }
