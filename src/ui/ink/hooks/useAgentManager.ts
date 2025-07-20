@@ -163,6 +163,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
 
     try {
+      logger.debug('useAgentManager: Calling agentManager.spawnAgent', { 
+        instructions, 
+        workingDirectory,
+        instructionsType: typeof instructions,
+        instructionsEmpty: !instructions || instructions.trim() === ''
+      });
+      
       await agentManager.spawnAgent({
         instructions,
         workingDirectory: workingDirectory || process.cwd(),
@@ -175,6 +182,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         setAgents(convertedAgents);
       }
     } catch (err) {
+      logger.error('useAgentManager: Error in spawnAgent', { error: err });
       setError(err as Error);
       throw err;
     }
