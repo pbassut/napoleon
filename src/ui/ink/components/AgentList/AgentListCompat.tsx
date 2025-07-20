@@ -165,4 +165,5 @@ const AgentListCompat: React.FC<AgentListCompatProps> = ({
   return <AgentListContent />;
 };
 
+export default AgentListCompat;
 export { AgentListCompat };
