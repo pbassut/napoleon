@@ -7,7 +7,7 @@ US070
 Fix UI Rendering Performance and Eliminate Periodic Blinking
 
 ## Status
-Draft
+Approved
 
 ## Story
 **As a** Napoleon user,
