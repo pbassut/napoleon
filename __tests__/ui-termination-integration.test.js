@@ -397,8 +397,8 @@ describe('Terminal UI Termination Integration', () => {
 
     it('should handle termination dialog creation error gracefully', () => {
       // Mock AgentTerminationDialog to throw error
-      const originalTerminationDialog = require('../src/ui/components/agent-termination-dialog');
-      jest.doMock('../src/ui/components/agent-termination-dialog', () => {
+      const originalTerminationDialog = require('../src/ui/blessed/components/agent-termination-dialog');
+      jest.doMock('../src/ui/blessed/components/agent-termination-dialog', () => {
         return jest.fn(() => {
           throw new Error('Dialog creation failed');
         });

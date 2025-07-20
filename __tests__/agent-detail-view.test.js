@@ -1,5 +1,5 @@
 const blessed = require('blessed');
-const AgentDetailView = require('../src/ui/components/agent-detail-view');
+const AgentDetailView = require('../src/ui/blessed/components/agent-detail-view');
 const { AgentStatus } = require('../src/core/agent-manager');
 
 // Mock blessed screen

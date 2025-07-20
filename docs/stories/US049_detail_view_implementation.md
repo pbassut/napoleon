@@ -234,7 +234,7 @@ From the migration plan:
 - Shows line numbers (optional)
 
 ## Status
-**Approved**
+**Done**
 
 ## Change Log
 
@@ -242,21 +242,35 @@ From the migration plan:
 |------|---------|-------------|---------|
 | 2025-07-19 | 1.0 | Initial story creation | Scrum Master Bob |
 | 2025-07-19 | 1.1 | Story approved | Scrum Master Bob |
+| 2025-07-20 | 1.2 | Story completed - all ACs met | Dev Agent |
 ## Dev Agent Record
 
 _To be completed by Dev Agent during implementation_
 
 ### Agent Model Used
-_[Model name and version]_
+claude-opus-4-20250514
 
 ### Debug Log References
-_[Links to debug logs]_
+- Session: 2025-07-20
+- Successfully implemented scrollable detail view with real-time log streaming
 
 ### Completion Notes
-_[Implementation notes]_
+- Implemented both TypeScript and JavaScript versions for ESM/CommonJS compatibility
+- Created DetailView component with virtual scrolling for handling large logs (10,000+ lines)
+- Implemented comprehensive search functionality with highlighting and navigation
+- Added multiple keyboard navigation options (arrows, j/k, PgUp/PgDn, G/gg, /, n/N)
+- Connected to real agent logs via useAgentLogs hook and AgentLogManager
+- Integrated DetailView into main App with state management
+- All acceptance criteria met
 
 ### Files List
-_[Files created/modified during implementation]_
+- src/ui/ink/components/DetailView/index.ts (created)
+- src/ui/ink/components/DetailView/index.js (created)
+- src/ui/ink/components/DetailView/DetailView.js (created)
+- src/ui/ink/hooks/useAgentLogs.ts (created)
+- src/ui/ink/hooks/useAgentLogs.js (created)
+- src/ui/ink/App.js (modified)
+- src/ui/ink/startWithManager.js (modified)
 
 ## QA Results
 

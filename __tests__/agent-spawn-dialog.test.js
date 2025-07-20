@@ -1,5 +1,5 @@
 const blessed = require('blessed');
-const AgentSpawnDialog = require('../src/ui/components/agent-spawn-dialog');
+const AgentSpawnDialog = require('../src/ui/blessed/components/agent-spawn-dialog');
 
 jest.mock('blessed');
 jest.mock('../src/utils/logger');

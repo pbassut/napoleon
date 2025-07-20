@@ -1,4 +1,4 @@
-const AgentDetailView = require('../src/ui/components/agent-detail-view');
+const AgentDetailView = require('../src/ui/blessed/components/agent-detail-view');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');

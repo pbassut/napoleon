@@ -1,5 +1,5 @@
 const blessed = require('blessed');
-const AgentTerminationDialog = require('../src/ui/components/agent-termination-dialog');
+const AgentTerminationDialog = require('../src/ui/blessed/components/agent-termination-dialog');
 const logger = require('../src/utils/logger');
 
 // Mock blessed components
