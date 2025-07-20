@@ -39,20 +39,25 @@ const App = ({ agentManager }) => {
   }, [selectedAgentId, agents]);
 
   // Get selected agent from the list
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
+  const selectedAgent =
+    agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
 
   // Handle agent selection changes from AgentList
-  const handleSelectionChange = useCallback((index) => {
-    const agent = agents[index];
-    if (agent && agent.id !== selectedAgentId) {
-      selectAgent(agent.id);
-    }
-  }, [agents, selectedAgentId, selectAgent]);
+  const handleSelectionChange = useCallback(
+    (index) => {
+      const agent = agents[index];
+      if (agent && agent.id !== selectedAgentId) {
+        selectAgent(agent.id);
+      }
+    },
+    [agents, selectedAgentId, selectAgent]
+  );
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
     // Don't process global shortcuts when dialog or detail view is open
-    if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen) return;
+    if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen)
+      return;
 
     // Quit with 'q'
     if (input === 'q') {
@@ -118,17 +123,23 @@ const App = ({ agentManager }) => {
     <ErrorBoundary>
       <Box flexDirection="column" width="100%" height={stdout.rows}>
         {/* Main bordered container */}
-        <Box flexDirection="column" borderStyle="single" width="100%" flexGrow={1} minHeight={stdout.rows - 2}>
+        <Box
+          flexDirection="column"
+          borderStyle="single"
+          width="100%"
+          flexGrow={1}
+          minHeight={stdout.rows - 2}
+        >
           {/* Header */}
           <Box paddingX={2} paddingY={1}>
             <Header />
           </Box>
-          
+
           {/* Divider */}
           <Box paddingX={1}>
             <Text>{'─'.repeat(process.stdout.columns - 4)}</Text>
           </Box>
-          
+
           {/* Main content with padding */}
           <Box flexGrow={1} paddingX={2} paddingY={1}>
             <MainContent>
@@ -150,12 +161,12 @@ const App = ({ agentManager }) => {
               )}
             </MainContent>
           </Box>
-          
+
           {/* Divider */}
           <Box paddingX={1}>
             <Text>{'─'.repeat(process.stdout.columns - 4)}</Text>
           </Box>
-          
+
           {/* Footer */}
           <Box paddingX={2} paddingY={1}>
             <Footer agentCount={agents.length} />

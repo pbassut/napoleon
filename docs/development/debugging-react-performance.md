@@ -167,6 +167,15 @@ MyComponent.whyDidYouRender = {
 
 why-did-you-render only runs in development mode and has no impact on production builds. The tool is automatically excluded from production bundles.
 
+### UI Flickering Behavior
+
+An interesting side effect: enabling debug mode (`NAPOLEON_DEBUG_RENDERS=true`) may actually **reduce** UI flickering, particularly when opening/closing modals. This is because Ink's debug mode changes the rendering pipeline to accommodate the split terminal view. 
+
+If you're experiencing modal flickering in normal mode:
+1. Try running with `NAPOLEON_DEBUG_RENDERS=true` to confirm it's a rendering issue
+2. Check the why-did-you-render output to identify unnecessary re-renders
+3. Consider keeping debug mode enabled during development for a smoother experience
+
 ## Best Practices
 
 1. **Fix the biggest offenders first** - Focus on components that re-render most frequently

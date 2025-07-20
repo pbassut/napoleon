@@ -19,7 +19,7 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
   zIndex = 1000 
 }) => {
   // Always render the structure to prevent flickering
-  // Use opacity/visibility for show/hide
+  // Keep in DOM but control visibility and interactivity
   return (
     <Box
       position="absolute"
@@ -36,10 +36,12 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
         height="100%"
       />
       
-      {/* Modal content */}
-      <Box position="relative">
-        {children}
-      </Box>
+      {/* Modal content - only render when open to prevent unnecessary renders */}
+      {isOpen && (
+        <Box position="relative">
+          {children}
+        </Box>
+      )}
     </Box>
   );
 });
