@@ -20,7 +20,7 @@ class InkUIWrapper {
       await this.agentManager!.initialize();
 
       // Start Ink UI with AgentManager
-      const startInkWithManager = require('./ink/startWithManager');
+      const startInkWithManager = require('./ink/startWithManager').default;
       await startInkWithManager(this.agentManager);
 
       logger.info('Ink UI initialized successfully');
