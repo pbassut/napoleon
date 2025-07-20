@@ -177,7 +177,7 @@ const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
     return () => {
       mountedRef.current = false;
     };
-  }, [components]);
+  }, []); // Empty dependency array - run only once on mount
 
   if (!isOpen) {
     return null;
