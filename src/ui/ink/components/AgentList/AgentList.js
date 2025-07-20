@@ -29,7 +29,7 @@ const AgentList = ({
 
   useEffect(() => {
     adjustScrollOffset(selectedIndex);
-  }, [selectedIndex]);
+  }, [selectedIndex, visibleItems]);
 
   useInput((input, key) => {
     if (!isFocused) return;
