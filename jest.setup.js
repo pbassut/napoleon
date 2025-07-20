@@ -51,8 +51,10 @@ afterEach(() => {
     jest.runOnlyPendingTimers();
   }
   
-  // Ensure we're using real timers for the next test
-  jest.useRealTimers();
+  // Only use real timers if they weren't explicitly set by the test
+  if (!global.__jestUsingFakeTimers) {
+    jest.useRealTimers();
+  }
   
   // Restore original process methods
   process.stdout.write = originalWrite;

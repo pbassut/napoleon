@@ -6,9 +6,24 @@ const { validateEnvironment } = require('../src/cli/validators/environment');
 jest.mock('../src/core/config');
 jest.mock('../src/cli/validators/environment');
 
+const { loadConfig } = require('../src/core/config');
+
+// Mock loadConfig to return a valid config object
+loadConfig.mockReturnValue({
+  napoleonDir: '/test/.napoleon',
+  sessionStorage: '/test/.napoleon/sessions',
+  maxPromptLength: 50
+});
+
 describe('CLI Application', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-apply config mock after clearAllMocks
+    loadConfig.mockReturnValue({
+      napoleonDir: '/test/.napoleon',
+      sessionStorage: '/test/.napoleon/sessions',
+      maxPromptLength: 50
+    });
     // Reset commander program
     program.commands = [];
     program._name = undefined;

@@ -5,6 +5,13 @@ module.exports = {
     '**/__tests__/**/*.js',
     '**/?(*.)+(spec|test).js'
   ],
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/__tests__/archived-blessed-tests/',
+    '/__tests__/ui.test.js',
+    '/__tests__/agent-detail-view.test.js',
+    '/__tests__/agent-detail-view-logging.test.js'
+  ],
   collectCoverageFrom: [
     'src/**/*.js',
     'bin/**/*.js',

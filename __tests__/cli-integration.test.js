@@ -8,11 +8,19 @@ jest.mock('../src/core/config');
 jest.mock('../src/cli/validators/environment');
 jest.mock('../src/ui/index');
 
+const { loadConfig } = require('../src/core/config');
+
 describe('CLI Integration with Terminal UI', () => {
   let mockTerminalUI;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-apply config mock after clearAllMocks
+    loadConfig.mockReturnValue({
+      napoleonDir: '/test/.napoleon',
+      sessionStorage: '/test/.napoleon/sessions',
+      maxPromptLength: 50
+    });
     jest.useFakeTimers();
     
     // Mock TerminalUI

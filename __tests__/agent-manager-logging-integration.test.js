@@ -24,8 +24,10 @@ describe('AgentManager - Persistent Logging Integration', () => {
     
     // Mock configuration with logging enabled
     loadConfig.mockReturnValue({
+      napoleonDir: '/test/.napoleon/logs',
       maxAgents: 3,
       logLevel: 'info',
+      maxPromptLength: 50,
       logging: {
         agents: {
           enabled: true,

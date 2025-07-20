@@ -12,7 +12,7 @@ jest.mock('../../src/core/git-status-checker');
 jest.mock('../../src/core/startup-warning-display');
 
 const { execSync } = require('child_process');
-const { initializeSessionStorage } = require('../../src/core/config');
+const { initializeSessionStorage, loadConfig } = require('../../src/core/config');
 const ApiKeyValidator = require('../../src/core/api-key-validator');
 const ApiKeySetupGuide = require('../../src/core/api-key-setup-guide');
 const GitStatusChecker = require('../../src/core/git-status-checker');
@@ -25,6 +25,12 @@ describe('Startup Validation Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Re-apply config mock after clearAllMocks
+    loadConfig.mockReturnValue({
+      napoleonDir: '/test/.napoleon',
+      sessionStorage: '/test/.napoleon/sessions',
+      maxPromptLength: 50
+    });
     originalEnv = { ...process.env };
     consoleSpy = {
       log: jest.spyOn(console, 'log').mockImplementation(() => {}),
