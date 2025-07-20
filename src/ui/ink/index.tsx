@@ -1,8 +1,8 @@
 // Ink UI entry point for direct testing with real AgentManager
-import './wdyr'; // Must be first import
+import './wdyr.js'; // Must be first import
 import React from 'react';
 import { render } from 'ink';
-import App from './App';
+import App from './App.js';
 import logger from '../../utils/logger.js';
 import AgentManagerClass from '../../core/agent-manager.js';
 

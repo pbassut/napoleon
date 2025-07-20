@@ -1,1 +1,1 @@
-export { DetailView } from './DetailView';
+export { DetailView } from './DetailView.js';

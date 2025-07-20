@@ -1,7 +1,7 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
-import AgentItem from './AgentItem';
-import { Agent } from '../../types';
+import AgentItem from './AgentItem.js';
+import { Agent } from '../../types.js';
 
 describe('AgentItem', () => {
   const baseAgent: Agent = {

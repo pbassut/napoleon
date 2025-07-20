@@ -1,4 +1,4 @@
-import { AGENT_STATUS, getStatusInfo } from './agentStatus';
+import { AGENT_STATUS, getStatusInfo } from './agentStatus.js';
 
 describe('Agent Status Constants', () => {
   describe('AGENT_STATUS', () => {

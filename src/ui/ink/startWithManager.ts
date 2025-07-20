@@ -1,7 +1,7 @@
 // Start Ink UI with AgentManager integration
-import { AgentManager } from './types';
+import { AgentManager } from './types.js';
 import logger from '../../utils/logger.js';
-import createAppDefault from './createApp';
+import createAppDefault from './createApp.js';
 import { render } from 'ink';
 import React from 'react';
 

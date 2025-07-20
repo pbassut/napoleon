@@ -11,8 +11,8 @@ export class ProcessManager {
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
     return new Promise((resolve, reject) => {
-      // Spawn Napoleon as a child process
-      const napoleonProcess = spawn('node', ['./bin/napoleon.js', 'start'], {
+      // Spawn Napoleon as a child process using ts-node to handle TypeScript files
+      const napoleonProcess = spawn('npx', ['ts-node', './bin/napoleon.js', 'start'], {
         env: { ...process.env, ...env },
         cwd: process.cwd(),
         detached: false,

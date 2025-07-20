@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
-import { Agent } from '../../types';
-import { ModalOverlay } from '../Common/ModalOverlay';
+import { Agent } from '../../types.js';
+import { ModalOverlay } from '../Common/ModalOverlay.js';
 
 interface TerminationDialogProps {
   isOpen: boolean;

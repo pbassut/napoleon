@@ -1,8 +1,8 @@
 import React from 'react';
-import { getBoxChar, getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities';
-import { normalizeKey, matchesBinding } from '../../utils/input-normalizer';
+import { getBoxChar, getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities.js';
+import { normalizeKey, matchesBinding } from '../../utils/input-normalizer.js';
 import { Box, Text, useInput, useFocus } from 'ink';
-import { Agent } from '../../types';
+import { Agent } from '../../types.js';
 
 const { useState, useEffect, useMemo } = React;
 
