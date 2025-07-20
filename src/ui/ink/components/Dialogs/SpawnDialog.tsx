@@ -56,14 +56,14 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       return;
     }
 
-    // Handle enter for new line
-    if (key.return && !key.ctrl) {
+    // Handle Shift+Enter for new line
+    if (key.shift && key.return) {
       setText(prev => prev + '\n');
       return;
     }
 
-    // Handle Ctrl+Enter to submit
-    if (key.ctrl && key.return) {
+    // Handle Enter to submit
+    if (key.return && !key.shift) {
       handleSubmit();
       return;
     }
@@ -157,7 +157,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         
         <Box justifyContent="center">
           <Text color="yellow" bold>
-            Ctrl+Enter to spawn | Enter for new line | Escape to cancel
+            Enter to spawn | Shift+Enter for new line | Escape to cancel
           </Text>
         </Box>
       </Box>
