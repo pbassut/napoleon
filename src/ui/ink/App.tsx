@@ -194,4 +194,4 @@ const App = ({ agentManager }) => {
   );
 };
 
-module.exports = App;
+export default App;
