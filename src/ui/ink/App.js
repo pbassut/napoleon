@@ -11,6 +11,7 @@ const App = ({ agentManager }) => {
   const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);
   const [isTerminationDialogOpen, setIsTerminationDialogOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
 
   // Use the AgentManager hook
   const {

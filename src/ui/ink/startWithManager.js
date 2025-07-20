@@ -7,8 +7,8 @@ async function startInkWithManager(agentManager) {
     const { render } = await import('ink');
     const React = await import('react');
 
-    // Import the main App component (Use TypeScript version)
-    const App = require('./App.tsx').default || require('./App.tsx');
+    // Import the main App component
+    const { default: App } = await import('./App.js');
 
     // Create the app element with AgentManager
     const appElement = React.createElement(App, { agentManager });
