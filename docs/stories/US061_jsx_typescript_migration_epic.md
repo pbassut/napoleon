@@ -87,21 +87,21 @@ The Napoleon project currently uses React.createElement() syntax throughout all 
   - [x] Update error handling patterns in JSX
   - [x] Test error boundary functionality
 
-- [ ] Phase 6: Convert Hooks and UI Utilities to TypeScript (AC2)
-  - [ ] Convert useAgentManager.js → useAgentManager.ts with proper types
-  - [ ] Convert useAgentLogs.js → useAgentLogs.ts with proper types
-  - [ ] Convert input-normalizer.js → input-normalizer.ts with types
-  - [ ] Convert performance-monitor.js → performance-monitor.ts with types
-  - [ ] Convert terminal-capabilities.js → terminal-capabilities.ts with types
-  - [ ] Convert terminal-test.js → terminal-test.ts with types
-  - [ ] Create shared TypeScript interfaces for common types
+- [x] Phase 6: Convert Hooks and UI Utilities to TypeScript (AC2)
+  - [x] Convert useAgentManager.js → useAgentManager.ts with proper types
+  - [x] Convert useAgentLogs.js → useAgentLogs.ts with proper types
+  - [x] Convert input-normalizer.js → input-normalizer.ts with types
+  - [x] Convert performance-monitor.js → performance-monitor.ts with types
+  - [x] Convert terminal-capabilities.js → terminal-capabilities.ts with types
+  - [x] Convert terminal-test.js → terminal-test.ts with types
+  - [x] Create shared TypeScript interfaces for common types
 
-- [ ] Phase 7: Update All Import References (AC4)
-  - [ ] Update all import statements throughout the codebase
-  - [ ] Fix any module resolution issues
-  - [ ] Update require() statements to import statements where applicable
-  - [ ] Verify tree shaking still works properly
-  - [ ] Update documentation references to new file names
+- [x] Phase 7: Update All Import References (AC4)
+  - [x] Update all import statements throughout the codebase
+  - [x] Fix any module resolution issues
+  - [x] Update require() statements to import statements where applicable
+  - [x] Verify tree shaking still works properly
+  - [x] Update documentation references to new file names
 
 - [ ] Phase 8: Testing and Build Validation (AC3, AC5)
   - [ ] Update Jest configuration for .tsx/.ts files
@@ -256,7 +256,7 @@ Create shared interfaces for:
 _To be completed by Dev Agent during implementation_
 
 ### Developer Status
-**In Progress**
+**Phase 7 Complete - All Import References Updated Successfully**
 
 ### Agent Model Used
 claude-sonnet-4-20250514
@@ -265,7 +265,14 @@ claude-sonnet-4-20250514
 _TBD_
 
 ### Completion Notes
-_TBD_
+**Phase 7 - Import References Update:**
+- Updated all import statements throughout the codebase to reference correct file extensions
+- Fixed module resolution issue by updating tsconfig.json from "node" to "bundler" moduleResolution
+- Updated module type from "commonjs" to "es2020" to support bundler resolution
+- Converted internal component imports from require() to ES modules where applicable
+- Updated documentation reference to terminal-test.ts in terminal-compatibility-matrix.md
+- Build verification successful - all imports resolve correctly
+- TypeScript compilation passes without errors
 
 ### Files List
 - **Converted to TSX (JSX Syntax):**
@@ -278,7 +285,19 @@ _TBD_
   - src/ui/ink/components/AgentList/AgentItem.tsx (converted from AgentItem.js)
   - src/ui/ink/components/AgentList/AgentListCompat.tsx (converted from AgentListCompat.js)
   - src/ui/ink/components/AgentList/index.tsx (converted from index.js)
+  - src/ui/ink/components/Dialogs/SpawnDialog.tsx (converted from SpawnDialog.js)
+  - src/ui/ink/components/Dialogs/TerminationDialog.tsx (converted from TerminationDialog.js)
+  - src/ui/ink/components/DetailView/DetailView.tsx (converted from DetailView.js)
+  - src/ui/ink/components/Common/ErrorBoundary.tsx (converted from ErrorBoundary.js)
   - src/ui/ink/types.ts (new shared type definitions)
+
+- **Converted to TypeScript (TS):**
+  - src/ui/ink/hooks/useAgentManager.ts (converted from useAgentManager.js)
+  - src/ui/ink/hooks/useAgentLogs.ts (converted from useAgentLogs.js)
+  - src/ui/ink/utils/input-normalizer.ts (converted from input-normalizer.js)
+  - src/ui/ink/utils/performance-monitor.ts (converted from performance-monitor.js)
+  - src/ui/ink/utils/terminal-capabilities.ts (converted from terminal-capabilities.js)
+  - src/ui/ink/utils/terminal-test.ts (converted from terminal-test.js)
 
 - **Deferred:**
   - src/ui/ink/createApp.js (kept as .js due to ESM/CommonJS complexity)

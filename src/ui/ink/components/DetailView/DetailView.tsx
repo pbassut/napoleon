@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 const { Box, Text, useInput, useFocus } = require('ink');
 import { Agent } from '../../types';
+import { useAgentLogs } from '../../hooks/useAgentLogs';
 
 interface DetailViewProps {
   agent: Agent;
@@ -25,7 +26,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const contentHeight = terminalHeight - 6; // Header + footer + borders
 
   // Use real logs if agentManager is provided
-  const { useAgentLogs } = require('../../hooks/useAgentLogs');
   const { logs: realLogs, isLoading } = useAgentLogs({
     agentId: agent.id,
     agentManager,

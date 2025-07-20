@@ -194,7 +194,7 @@ export NAPOLEON_NO_MOUSE=true
 Run the terminal compatibility test:
 
 ```bash
-node src/ui/ink/utils/terminal-test.js
+node src/ui/ink/utils/terminal-test.ts
 ```
 
 This will show:

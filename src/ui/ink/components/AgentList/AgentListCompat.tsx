@@ -1,6 +1,6 @@
 import React from 'react';
-const { getBoxChar, getStatusSymbol, detectCapabilities } = require('../../utils/terminal-capabilities');
-const { normalizeKey, matchesBinding } = require('../../utils/input-normalizer');
+import { getBoxChar, getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities';
+import { normalizeKey, matchesBinding } from '../../utils/input-normalizer';
 const { Box, Text, useInput, useFocus } = require('ink');
 import { Agent } from '../../types';
 

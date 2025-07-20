@@ -1,9 +1,14 @@
 module.exports = {
   testEnvironment: 'node',
+  transform: {
+    '^.+\\.(ts|tsx)$': 'ts-jest'
+  },
   roots: ['<rootDir>/src', '<rootDir>/__tests__'],
   testMatch: [
     '**/__tests__/**/*.js',
-    '**/?(*.)+(spec|test).js'
+    '**/__tests__/**/*.ts',
+    '**/?(*.)+(spec|test).js',
+    '**/?(*.)+(spec|test).ts'
   ],
   testPathIgnorePatterns: [
     '/node_modules/',
@@ -14,9 +19,13 @@ module.exports = {
   ],
   collectCoverageFrom: [
     'src/**/*.js',
+    'src/**/*.ts',
+    'src/**/*.tsx',
     'bin/**/*.js',
     '!src/**/*.test.js',
-    '!src/**/*.spec.js'
+    '!src/**/*.test.ts',
+    '!src/**/*.spec.js',
+    '!src/**/*.spec.ts'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

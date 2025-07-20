@@ -11,17 +11,17 @@ async function startInkUI() {
     } = await import('ink');
 
     // Import our components
-    const AgentListModule = await import('./components/AgentList/AgentList.js');
+    const AgentListModule = await import('./components/AgentList/AgentList');
     const AgentList = AgentListModule.default;
 
     // Mock data for now
     const mockAgents = [
-      { id: '1', name: 'feature-branch-agent', status: 'running' },
-      { id: '2', name: 'bugfix-auth-agent', status: 'pending' },
-      { id: '3', name: 'refactor-ui-agent', status: 'error' },
-      { id: '4', name: 'docs-update-agent', status: 'success' },
-      { id: '5', name: 'test-coverage-agent', status: 'running' },
-      { id: '6', name: 'performance-optimization-agent', status: 'terminated' },
+      { id: '1', name: 'feature-branch-agent', status: 'running', startTime: new Date() },
+      { id: '2', name: 'bugfix-auth-agent', status: 'pending', startTime: new Date() },
+      { id: '3', name: 'refactor-ui-agent', status: 'error', startTime: new Date() },
+      { id: '4', name: 'docs-update-agent', status: 'success', startTime: new Date() },
+      { id: '5', name: 'test-coverage-agent', status: 'running', startTime: new Date() },
+      { id: '6', name: 'performance-optimization-agent', status: 'terminated', startTime: new Date() },
     ];
 
     const App = () => {

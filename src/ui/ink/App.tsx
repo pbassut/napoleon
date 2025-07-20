@@ -1,7 +1,7 @@
 import React from 'react';
 const { useState } = React;
 const { Box, useApp, Text, useInput } = require('ink');
-const { useAgentManager } = require('./hooks/useAgentManager');
+import { useAgentManager } from './hooks/useAgentManager';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
