@@ -10,3 +10,4 @@ export const Header: React.FC = memo(() => (
 ));
 
 Header.displayName = 'Header';
+Header.whyDidYouRender = true;

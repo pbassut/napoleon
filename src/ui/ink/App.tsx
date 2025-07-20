@@ -183,4 +183,7 @@ const App = ({ agentManager }) => {
   );
 };
 
+// Enable why-did-you-render for this component
+App.whyDidYouRender = true;
+
 export default App;

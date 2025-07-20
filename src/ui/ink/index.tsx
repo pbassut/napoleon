@@ -1,4 +1,5 @@
 // Ink UI entry point for CommonJS compatibility with ESM module
+import './wdyr'; // Must be first import
 import React from 'react';
 import { render } from 'ink';
 import App from './App';

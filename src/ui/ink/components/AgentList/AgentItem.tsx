@@ -101,5 +101,6 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 });
 
 AgentItem.displayName = 'AgentItem';
+AgentItem.whyDidYouRender = true;
 
 export default AgentItem;

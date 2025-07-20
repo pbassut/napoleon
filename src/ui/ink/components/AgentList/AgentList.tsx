@@ -151,4 +151,7 @@ const AgentList: React.FC<AgentListProps> = ({
   );
 };
 
+// Enable why-did-you-render for this component
+AgentList.whyDidYouRender = true;
+
 export default AgentList;

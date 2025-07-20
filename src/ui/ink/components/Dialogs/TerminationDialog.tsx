@@ -174,4 +174,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
   );
 };
 
+// Enable why-did-you-render for this component
+TerminationDialog.whyDidYouRender = true;
+
 export { TerminationDialog };

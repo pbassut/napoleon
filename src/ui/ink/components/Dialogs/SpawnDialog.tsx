@@ -165,4 +165,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   );
 };
 
+// Enable why-did-you-render for this component
+SpawnDialog.whyDidYouRender = true;
+
 export { SpawnDialog };

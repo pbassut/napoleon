@@ -26,3 +26,4 @@ export const Footer: React.FC<FooterProps> = memo(() => (
 ));
 
 Footer.displayName = 'Footer';
+Footer.whyDidYouRender = true;

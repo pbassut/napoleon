@@ -10,3 +10,5 @@ export const MainContent: React.FC<MainContentProps> = ({ children }) => (
     {children}
   </Box>
 );
+
+MainContent.whyDidYouRender = true;
