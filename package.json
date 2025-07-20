@@ -22,6 +22,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ui": "node test-ink-ui.js",
+    "test:ui-framework": "ts-node src/ui-tests/run-ui-tests.ts",
     "lint": "eslint src/ bin/ --ext .js,.ts,.tsx",
     "lint:fix": "eslint src/ bin/ --ext .js,.ts,.tsx --fix",
     "format": "prettier --write src/ bin/ __tests__/",
@@ -59,6 +60,7 @@
     "jest": "^29.7.0",
     "prettier": "^3.0.0",
     "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.3.3"
   },
   "keywords": [
