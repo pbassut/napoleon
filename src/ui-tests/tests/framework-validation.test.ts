@@ -1,4 +1,4 @@
-import { UITestSuite } from '../framework';
+import { UITestSuite } from '../framework/TestRunner';
 
 // Simple validation test to ensure framework is properly set up
 export const frameworkValidationTestSuite: UITestSuite = {

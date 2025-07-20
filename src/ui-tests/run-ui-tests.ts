@@ -1,4 +1,4 @@
-import { TestRunner } from './framework';
+import { TestRunner } from './framework/TestRunner';
 import { frameworkValidationTestSuite } from './tests/framework-validation.test';
 import { navigationTestSuite } from './tests/navigation.test';
 import { agentManagementTestSuite } from './tests/agent-management.test';

@@ -1,4 +1,4 @@
-import { UITestSuite } from '../framework';
+import { UITestSuite } from '../framework/TestRunner';
 import { createAssertions } from '../helpers/assertions';
 import { spawnAgent, terminateAgent, waitForUIStable, TestDataBuilder } from '../helpers/utils';
 

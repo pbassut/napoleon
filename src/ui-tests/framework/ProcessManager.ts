@@ -6,6 +6,7 @@ const execAsync = promisify(exec);
 export class ProcessManager {
   private processCleanupQueue: Set<number> = new Set();
   private outputBuffers: Map<number, string[]> = new Map();
+  private bufferIntervals: Map<number, NodeJS.Timeout> = new Map();
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
     const envString = env ? Object.entries(env).map(([k, v]) => `${k}=${v}`).join(' ') : '';
@@ -32,6 +33,13 @@ export class ProcessManager {
       await execAsync(`desktop-commander terminate_process ${pid}`);
       this.processCleanupQueue.delete(pid);
       this.outputBuffers.delete(pid);
+      
+      // Clean up buffer interval
+      const interval = this.bufferIntervals.get(pid);
+      if (interval) {
+        clearInterval(interval);
+        this.bufferIntervals.delete(pid);
+      }
     } catch (error) {
       // Process might already be terminated
       console.warn(`Failed to terminate process ${pid}:`, error);
@@ -90,11 +98,12 @@ export class ProcessManager {
       } catch (error) {
         // Process might be terminated
         clearInterval(bufferInterval);
+        this.bufferIntervals.delete(pid);
       }
     }, 100);
     
     // Store interval for cleanup
-    (global as any)[`buffer_${pid}`] = bufferInterval;
+    this.bufferIntervals.set(pid, bufferInterval);
   }
 
   private delay(ms: number): Promise<void> {

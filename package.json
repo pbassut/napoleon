@@ -22,7 +22,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ui": "node test-ink-ui.js",
-    "test:ui-framework": "ts-node src/ui-tests/run-ui-tests.ts",
+    "test:ui-framework": "ts-node --project src/ui-tests/tsconfig.json src/ui-tests/run-ui-tests.ts",
     "lint": "eslint src/ bin/ --ext .js,.ts,.tsx",
     "lint:fix": "eslint src/ bin/ --ext .js,.ts,.tsx --fix",
     "format": "prettier --write src/ bin/ __tests__/",
