@@ -67,7 +67,7 @@ develop-story:
     - CRITICAL: You are ONLY authorized to edit these specific sections of story files - Tasks / Subtasks Checkboxes, Dev Agent Record section and all its subsections, Agent Model Used, Debug Log References, Completion Notes List, File List, Change Log, Status
     - CRITICAL: DO NOT modify Status, Story, Acceptance Criteria, Dev Notes, Testing sections, or any other sections not listed above
   blocking: 'HALT for: Unapproved deps needed, confirm with user | Ambiguous after story check | 3 failures attempting to implement or fix something repeatedly | Missing config | Failing regression | Status In progress'
-  ready-for-review: 'Code matches requirements + All validations pass + Follows standards + File List complete'
+  ready-for-review: 'Code matches requirements + All validations pass + Follows standards + File List complete + All files modified were committed'
   completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist story-dod-checklist→set story status: 'Ready for Review'→HALT"
 
 dependencies:
