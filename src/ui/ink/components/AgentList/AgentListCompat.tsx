@@ -129,7 +129,6 @@ const AgentListCompat: React.FC<AgentListCompatProps> = ({
               <Box
                 key={agent.id}
                 paddingX={1}
-                backgroundColor={isSelected && isFocused ? 'blue' : undefined}
               >
                 <Box width="100%" gap={1}>
                   <Text color={statusInfo.color}>{statusInfo.symbol}</Text>

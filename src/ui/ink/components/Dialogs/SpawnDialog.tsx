@@ -109,10 +109,8 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         borderColor="green"
         flexDirection="column"
         paddingX={1}
-        marginLeft="auto"
-        marginRight="auto"
-        marginTop="auto"
-        marginBottom="auto"
+        alignSelf="center"
+        justifyContent="center"
       >
         <Box marginBottom={1}>
           <Text color="white" bold>

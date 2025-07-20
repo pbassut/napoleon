@@ -2,14 +2,14 @@ import React from 'react';
 const { useState, useEffect, useMemo, useCallback } = React;
 import { Box, useApp, Text, useInput } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
-import ErrorBoundaryDefault from './components/Common/ErrorBoundary.tsx';
-import { Header } from './components/Layout/Header.tsx';
-import { MainContent } from './components/Layout/MainContent.tsx';
-import { Footer } from './components/Layout/Footer.tsx';
-import { SpawnDialog } from './components/Dialogs/SpawnDialog.tsx';
-import { TerminationDialog } from './components/Dialogs/TerminationDialog.tsx';
-import AgentListDefault from './components/AgentList/AgentList.tsx';
-import { DetailView } from './components/DetailView/DetailView.tsx';
+import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
+import { Header } from './components/Layout/Header';
+import { MainContent } from './components/Layout/MainContent';
+import { Footer } from './components/Layout/Footer';
+import { SpawnDialog } from './components/Dialogs/SpawnDialog';
+import { TerminationDialog } from './components/Dialogs/TerminationDialog';
+import AgentListDefault from './components/AgentList/AgentList';
+import { DetailView } from './components/DetailView/DetailView';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();

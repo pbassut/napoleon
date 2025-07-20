@@ -33,7 +33,6 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 }) => {
   const statusInfo = statusSymbols[agent.status] || { symbol: '?', color: 'gray' };
 
-  const backgroundColor = isSelected && isFocused ? 'blue' : undefined;
   const textColor = isSelected && isFocused ? 'white' : 'white';
 
   const truncateName = (name: string, maxLength: number = 30): string => {
@@ -42,17 +41,15 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
   };
 
   return (
-    <Box paddingX={1} backgroundColor={backgroundColor}>
-      <Box width="100%" gap={1}>
-        <Text color={statusInfo.color}>{statusInfo.symbol}</Text>
-        <Text color="gray">{`[${String(index + 1).padStart(2, '0')}]`}</Text>
-        <Box flexGrow={1}>
-          <Text color={textColor} bold={isSelected}>
-            {truncateName(agent.name)}
-          </Text>
-        </Box>
-        <Text color={statusInfo.color}>{agent.status.toUpperCase()}</Text>
+    <Box paddingX={1} width="100%" gap={1}>
+      <Text color={statusInfo.color}>{statusInfo.symbol}</Text>
+      <Text color="gray">{`[${String(index + 1).padStart(2, '0')}]`}</Text>
+      <Box flexGrow={1}>
+        <Text color={textColor} bold={isSelected}>
+          {truncateName(agent.name)}
+        </Text>
       </Box>
+      <Text color={statusInfo.color}>{agent.status.toUpperCase()}</Text>
     </Box>
   );
 }, (prevProps, nextProps) => prevProps.agent.status === nextProps.agent.status

@@ -25,7 +25,7 @@ export interface AgentManager {
   initialize: () => Promise<void>;
   getActiveAgents: () => any[];
   canSpawnAgent: () => boolean;
-  spawnAgent: (options: { instructions: string; workingDirectory: string }) => Promise<void>;
+  spawnAgent: (options: { instructions: string; workingDirectory: string }) => Promise<any>;
   terminateAgent: (agentId: string) => Promise<void>;
   maxAgents: number;
 }

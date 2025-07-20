@@ -150,7 +150,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
           <Box marginTop={2} justifyContent="center" gap={4}>
             <Box
               paddingX={2}
-              borderStyle={selectedOption === 'no' ? 'single' : 'none'}
+              borderStyle={selectedOption === 'no' ? 'single' : undefined}
               borderColor="green"
             >
               <Text color={selectedOption === 'no' ? 'green' : 'gray'}>
@@ -159,7 +159,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
             </Box>
             <Box
               paddingX={2}
-              borderStyle={selectedOption === 'yes' ? 'single' : 'none'}
+              borderStyle={selectedOption === 'yes' ? 'single' : undefined}
               borderColor="red"
             >
               <Text color={selectedOption === 'yes' ? 'red' : 'gray'}>

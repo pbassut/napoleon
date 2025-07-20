@@ -16,6 +16,13 @@
     "no-console": "off",
     "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.spec.js", "jest.config.js"]}]
   },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx"]
+      }
+    }
+  },
   "overrides": [
     {
       "files": ["*.ts", "*.tsx"],
@@ -23,7 +30,7 @@
       "plugins": ["@typescript-eslint"],
       "extends": [
         "airbnb-base",
-        "@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended"
       ],
       "parserOptions": {
         "ecmaVersion": "latest",

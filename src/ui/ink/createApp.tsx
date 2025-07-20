@@ -95,7 +95,7 @@ async function createApp(): Promise<React.FC<AppProps>> {
     };
 
     // Import components dynamically
-    const ErrorBoundary = createErrorBoundary(React, Box, Text);
+    const ErrorBoundary = createErrorBoundary(React, Box, Text) as any;
     const TerminationDialog: React.FC<any> = () => null;
 
     // Use a simplified AgentList to avoid ESM issues
