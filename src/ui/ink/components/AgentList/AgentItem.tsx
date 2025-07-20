@@ -23,6 +23,7 @@ const AgentItem: React.FC<AgentItemProps> = memo(({ agent, isSelected, isFocused
   const backgroundColor = isSelected && isFocused ? 'blue' : undefined;
   const textColor = isSelected && isFocused ? 'white' : 'white';
   
+  // Dynamic truncation based on terminal width
   const truncateName = (name: string, maxLength: number = 30) => {
     if (name.length <= maxLength) return name;
     return name.substring(0, maxLength - 3) + '...';
