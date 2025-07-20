@@ -29,28 +29,24 @@ function createErrorBoundary(React: any, Box: any, Text: any) {
 
     render(): React.ReactNode {
       if (this.state.hasError) {
-        return React.createElement(Box, {
-          borderStyle: 'round',
-          borderColor: 'red',
-          padding: 1,
-          flexDirection: 'column',
-        }, [
-          React.createElement(
-            Text,
-            { key: 'title', color: 'red', bold: true },
-            '⚠️  An error occurred',
-          ),
-          React.createElement(
-            Text,
-            { key: 'error', color: 'white' },
-            this.state.error?.message || 'Unknown error',
-          ),
-          React.createElement(
-            Text,
-            { key: 'help', color: 'gray' },
-            '\nPress Ctrl+C to exit',
-          ),
-        ]);
+        return (
+          <Box
+            borderStyle="round"
+            borderColor="red"
+            padding={1}
+            flexDirection="column"
+          >
+            <Text color="red" bold>
+              ⚠️  An error occurred
+            </Text>
+            <Text color="white">
+              {this.state.error?.message || 'Unknown error'}
+            </Text>
+            <Text color="gray">
+              {'\nPress Ctrl+C to exit'}
+            </Text>
+          </Box>
+        );
       }
 
       return this.props.children;

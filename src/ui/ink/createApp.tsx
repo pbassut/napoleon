@@ -13,7 +13,41 @@ interface AppProps {
   agentManager: AgentManager;
 }
 
+// Placeholder components
+const TerminationDialog: React.FC<any> = () => null;
+const DetailView: React.FC<any> = () => null;
+
+// Simplified AgentList to avoid ESM issues
+interface SimpleAgentListProps {
+  agents: Agent[];
+  selectedIndex: number;
+  onSelectionChange: (index: number) => void;
+}
+
+const SimpleAgentList: React.FC<SimpleAgentListProps> = ({ agents, selectedIndex, onSelectionChange }) => {
+  if (agents.length === 0) {
+    return <Text color="gray">No agents running</Text>;
+  }
+  
+  return (
+    <Box flexDirection="column">
+      {agents.map((agent, index) => (
+        <Text 
+          key={agent.id}
+          color={index === selectedIndex ? 'cyan' : 'white'}
+          backgroundColor={index === selectedIndex ? 'blue' : undefined}
+        >
+          {`${index === selectedIndex ? '> ' : '  '}${agent.name} (${agent.status})`}
+        </Text>
+      ))}
+    </Box>
+  );
+};
+
 async function createApp(): Promise<React.FC<AppProps>> {
+  // Create ErrorBoundary once, outside of the App component
+  const ErrorBoundary = createErrorBoundary(React, Box, Text) as any;
+  
   const App: React.FC<AppProps> = ({ agentManager }) => {
     const { exit } = useApp();
     const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);
@@ -94,39 +128,7 @@ async function createApp(): Promise<React.FC<AppProps>> {
       }
     };
 
-    // Import components dynamically
-    const ErrorBoundary = createErrorBoundary(React, Box, Text) as any;
-    const TerminationDialog: React.FC<any> = () => null;
-
-    // Use a simplified AgentList to avoid ESM issues
-    interface SimpleAgentListProps {
-      agents: Agent[];
-      selectedIndex: number;
-      onSelectionChange: (index: number) => void;
-    }
-
-    const SimpleAgentList: React.FC<SimpleAgentListProps> = ({ agents, selectedIndex, onSelectionChange }) => {
-      if (agents.length === 0) {
-        return <Text color="gray">No agents running</Text>;
-      }
-      
-      return (
-        <Box flexDirection="column">
-          {agents.map((agent, index) => (
-            <Text 
-              key={agent.id}
-              color={index === selectedIndex ? 'cyan' : 'white'}
-              backgroundColor={index === selectedIndex ? 'blue' : undefined}
-            >
-              {`${index === selectedIndex ? '> ' : '  '}${agent.name} (${agent.status})`}
-            </Text>
-          ))}
-        </Box>
-      );
-    };
-
-    // Temporarily disable DetailView to fix startup
-    const DetailView: React.FC<any> = () => null;
+    // Components are now defined outside to prevent re-creation on each render
 
     // If detail view is open, show only the detail view
     if (isDetailViewOpen && selectedAgent) {
