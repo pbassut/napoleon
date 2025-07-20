@@ -21,8 +21,8 @@ const AgentList: React.FC<AgentListProps> = ({
   const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Reserve 4 lines for header row, borders, and potential scroll indicators
-  const visibleItems = Math.max(1, height - 4);
+  // Reserve lines for header and potential scroll indicators
+  const visibleItems = Math.max(1, height - 3);
 
   const visibleAgents = useMemo(() => agents.slice(scrollOffset, scrollOffset + visibleItems), [agents, scrollOffset, visibleItems]);
 
@@ -62,15 +62,9 @@ const AgentList: React.FC<AgentListProps> = ({
   // Empty state
   if (agents.length === 0) {
     return (
-      <Box
-        flexDirection="column"
-        height={height}
-        borderStyle="round"
-        borderColor="gray"
-        paddingX={2}
-      >
+      <Box flexDirection="column" flexGrow={1}>
         {/* Column headers */}
-        <Box paddingY={1} paddingX={1}>
+        <Box paddingX={1}>
           <Box width={2}><Text> </Text></Box>
           <Box width={50}><Text bold>Agent</Text></Box>
           <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
@@ -87,10 +81,13 @@ const AgentList: React.FC<AgentListProps> = ({
           flexGrow={1}
           justifyContent="center"
           alignItems="center"
+          paddingY={2}
         >
           <Box flexDirection="column" alignItems="center">
             <Text color="gray">No agents running</Text>
-            <Text color="gray">Press 'n' to spawn a new agent</Text>
+            <Box marginTop={1}>
+              <Text color="gray">Press 'n' to spawn a new agent</Text>
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -102,14 +99,9 @@ const AgentList: React.FC<AgentListProps> = ({
   const hasMoreBelow = scrollOffset + visibleItems < agents.length;
 
   return (
-    <Box
-      flexDirection="column"
-      height={height}
-      borderStyle="round"
-      borderColor={isFocused ? 'cyan' : 'gray'}
-    >
+    <Box flexDirection="column" flexGrow={1}>
       {/* Column headers */}
-      <Box paddingY={1} paddingX={2}>
+      <Box paddingX={1}>
         <Box width={2}><Text> </Text></Box>
         <Box width={50}><Text bold>Agent</Text></Box>
         <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
@@ -117,34 +109,33 @@ const AgentList: React.FC<AgentListProps> = ({
       </Box>
       
       {/* Separator line */}
-      <Box width="100%" paddingX={2}>
+      <Box width="100%" paddingX={1}>
         <Text>{'─'.repeat(80)}</Text>
       </Box>
 
       {/* Scroll indicator - top */}
       {showScrollIndicators && hasMoreAbove && (
-        <Box paddingX={2}>
+        <Box paddingX={1} paddingY={0}>
           <Text color="gray" dimColor>{`↑ ${scrollOffset} more above ↑`}</Text>
         </Box>
       )}
 
-      {/* Agent list with spacing */}
-      <Box flexDirection="column" flexGrow={1} paddingTop={1}>
+      {/* Agent list */}
+      <Box flexDirection="column" flexGrow={1}>
         {visibleAgents.map((agent, index) => (
-          <Box key={agent.id} paddingY={0}>
-            <AgentItem
-              agent={agent}
-              isSelected={scrollOffset + index === selectedIndex}
-              isFocused={isFocused}
-              index={scrollOffset + index}
-            />
-          </Box>
+          <AgentItem
+            key={agent.id}
+            agent={agent}
+            isSelected={scrollOffset + index === selectedIndex}
+            isFocused={isFocused}
+            index={scrollOffset + index}
+          />
         ))}
       </Box>
 
       {/* Scroll indicator - bottom */}
       {showScrollIndicators && hasMoreBelow && (
-        <Box paddingX={2} paddingBottom={1}>
+        <Box paddingX={1} paddingY={0}>
           <Text color="gray" dimColor>
             {`↓ ${agents.length - scrollOffset - visibleItems} more below ↓`}
           </Text>

@@ -115,8 +115,16 @@ const App = ({ agentManager }) => {
 
   return (
     <ErrorBoundary>
-      <Box flexDirection="column" height="100%">
+      <Box 
+        flexDirection="column" 
+        height="100%"
+        borderStyle="round"
+        borderColor="gray"
+      >
         <Header />
+        <Box width="100%" paddingX={1}>
+          <Text>{'─'.repeat(80)}</Text>
+        </Box>
         <MainContent>
           {isLoading ? (
             <Box padding={1}>
@@ -136,6 +144,9 @@ const App = ({ agentManager }) => {
             </Box>
           )}
         </MainContent>
+        <Box width="100%" paddingX={1}>
+          <Text>{'─'.repeat(80)}</Text>
+        </Box>
         <Footer agentCount={agents.length} />
 
         {/* Spawn Dialog Modal */}
