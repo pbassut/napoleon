@@ -1,5 +1,5 @@
 const React = require('react');
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput }) => {
   const [text, setText] = useState('');
@@ -129,40 +129,69 @@ const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useF
   );
 };
 
+// Module-level component cache to avoid re-loading on every instance
+let componentCache = null;
+let isLoadingComponents = false;
+
 const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
-  const [inkComponents, setInkComponents] = useState(null);
-  const [TextInput, setTextInput] = useState(null);
+  const [components, setComponents] = useState(componentCache);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let mounted = true;
-    
-    Promise.all([
-      import('ink'),
-      import('ink-text-input')
-    ]).then(([ink, textInput]) => {
-      if (mounted) {
-        setInkComponents(ink);
-        setTextInput(() => textInput.default || textInput);
-      }
-    });
+    // If components are already cached, use them immediately
+    if (componentCache && !components) {
+      setComponents(componentCache);
+      return;
+    }
+
+    // If not already loading and no cache, start loading
+    if (!isLoadingComponents && !componentCache) {
+      isLoadingComponents = true;
+      
+      Promise.all([
+        import('ink'),
+        import('ink-text-input')
+      ]).then(([ink, textInput]) => {
+        const loadedComponents = {
+          ...ink,
+          TextInput: textInput.default || textInput
+        };
+        
+        // Cache for future instances
+        componentCache = loadedComponents;
+        
+        // Update this instance if still mounted
+        if (mountedRef.current) {
+          setComponents(loadedComponents);
+        }
+        
+        isLoadingComponents = false;
+      }).catch(() => {
+        isLoadingComponents = false;
+        if (mountedRef.current) {
+          setComponents({}); // Empty object to indicate loading failed
+        }
+      });
+    }
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
     };
-  }, []);
+  }, [components]);
 
   if (!isOpen) {
     return null;
   }
 
-  if (!inkComponents || !TextInput) {
+  // If components not ready, return null (no flashing)
+  if (!components || !components.Box) {
     return null;
   }
 
-  const { Box, Text, useInput, useFocus } = inkComponents;
+  const { Box, Text, useInput, useFocus } = components;
 
   return React.createElement(SpawnDialogInner, {
-    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput
+    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput: components.TextInput
   });
 };
 
