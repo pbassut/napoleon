@@ -3,8 +3,7 @@ const { useState, useEffect, useMemo, useRef } = React;
 const { Box, Text, useInput, useFocus } = require('ink');
 const TextInput = require('ink-text-input').default;
 
-const DetailView = ({ agent, onClose }) => {
-  const [logs, setLogs] = useState([]);
+const DetailView = ({ agent, onClose, agentManager }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState(false);
@@ -17,31 +16,47 @@ const DetailView = ({ agent, onClose }) => {
   const terminalHeight = process.stdout.rows || 24;
   const contentHeight = terminalHeight - 6; // Header + footer + borders
   
-  // Generate mock logs for testing
-  useEffect(() => {
-    const mockLogs = [
-      { timestamp: new Date().toISOString(), content: 'Agent started', type: 'system' },
-      { timestamp: new Date().toISOString(), content: `Instructions: ${agent.instructions || 'No instructions provided'}`, type: 'system' },
-      { timestamp: new Date().toISOString(), content: 'Initializing workspace...', type: 'output' },
-      { timestamp: new Date().toISOString(), content: 'Running command: git status', type: 'command' },
-      { timestamp: new Date().toISOString(), content: 'On branch main', type: 'output' },
-      { timestamp: new Date().toISOString(), content: 'Your branch is up to date', type: 'output' },
-    ];
-    
-    // Add more mock logs
-    for (let i = 0; i < 100; i++) {
-      mockLogs.push({
-        timestamp: new Date(Date.now() + i * 1000).toISOString(),
-        content: `Log entry ${i + 1}: Processing task...`,
-        type: i % 10 === 0 ? 'error' : 'output',
-      });
-    }
-    
-    setLogs(mockLogs);
-  }, [agent]);
+  // Use real logs if agentManager is provided
+  const { useAgentLogs } = require('../../hooks/useAgentLogs');
+  const { logs: realLogs, isLoading } = useAgentLogs({ 
+    agentId: agent.id, 
+    agentManager,
+    refreshInterval: 500 // Faster refresh for detail view
+  });
   
-  // Simulate real-time log updates
+  // Generate mock logs for testing when no real logs available
+  const [mockLogs, setMockLogs] = useState([]);
   useEffect(() => {
+    if (!agentManager || realLogs.length === 0) {
+      const mocks = [
+        { timestamp: new Date().toISOString(), content: 'Agent started', type: 'system' },
+        { timestamp: new Date().toISOString(), content: `Instructions: ${agent.instructions || 'No instructions provided'}`, type: 'system' },
+        { timestamp: new Date().toISOString(), content: 'Initializing workspace...', type: 'output' },
+        { timestamp: new Date().toISOString(), content: 'Running command: git status', type: 'command' },
+        { timestamp: new Date().toISOString(), content: 'On branch main', type: 'output' },
+        { timestamp: new Date().toISOString(), content: 'Your branch is up to date', type: 'output' },
+      ];
+      
+      // Add more mock logs
+      for (let i = 0; i < 100; i++) {
+        mocks.push({
+          timestamp: new Date(Date.now() + i * 1000).toISOString(),
+          content: `Log entry ${i + 1}: Processing task...`,
+          type: i % 10 === 0 ? 'error' : 'output',
+        });
+      }
+      
+      setMockLogs(mocks);
+    }
+  }, [agent, agentManager, realLogs.length]);
+  
+  // Use real logs if available, otherwise use mock logs
+  const logs = realLogs.length > 0 ? realLogs : mockLogs;
+  
+  // Simulate real-time log updates for mock logs only
+  useEffect(() => {
+    if (agentManager && realLogs.length > 0) return; // Skip if using real logs
+    
     const interval = setInterval(() => {
       if (Math.random() > 0.7) {
         const newLog = {
@@ -50,7 +65,7 @@ const DetailView = ({ agent, onClose }) => {
           type: Math.random() > 0.8 ? 'error' : 'output',
         };
         
-        setLogs(prev => {
+        setMockLogs(prev => {
           const updated = [...prev, newLog];
           // Limit to 10,000 entries
           if (updated.length > 10000) {

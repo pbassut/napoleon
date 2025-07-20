@@ -104,6 +104,7 @@ const App = ({ agentManager }) => {
       React.createElement(DetailView, {
         agent: selectedAgent,
         onClose: () => setIsDetailViewOpen(false),
+        agentManager,
       }),
     );
   }
