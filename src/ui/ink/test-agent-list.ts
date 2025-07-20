@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 
-const React = require('react');
+import React, { useState } from 'react';
+import { Agent } from './types';
 const { render, Box, Text } = require('ink');
 
-const { useState } = React;
-
 // Mock agent data generator
-function generateMockAgents(count) {
+function generateMockAgents(count: number): Agent[] {
   const statuses = ['running', 'pending', 'error', 'terminated', 'success'];
   const prefixes = ['feature', 'bugfix', 'refactor', 'docs', 'test', 'perf', 'security', 'deploy'];
   const suffixes = ['auth', 'ui', 'api', 'database', 'cache', 'logging', 'monitoring', 'config'];
 
-  const agents = [];
+  const agents: Agent[] = [];
   for (let i = 0; i < count; i++) {
     const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
     const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
@@ -21,15 +20,16 @@ function generateMockAgents(count) {
       id: `agent-${i + 1}`,
       name: `${prefix}-${suffix}-agent-${i + 1}`,
       status,
+      startTime: new Date(),
     });
   }
   return agents;
 }
 
 // Test App
-const TestApp = () => {
-  const [agents] = useState(() => generateMockAgents(50));
-  const [selectedIndex, setSelectedIndex] = useState(0);
+const TestApp: React.FC = () => {
+  const [agents] = useState<Agent[]>(() => generateMockAgents(50));
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   // Import AgentList dynamically
   const AgentList = require('./components/AgentList/AgentList').default;

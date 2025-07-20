@@ -1,22 +1,33 @@
 // Wrapper to create ErrorBoundary with dynamic imports
-module.exports = function createErrorBoundary(React, Box, Text) {
+import React from 'react';
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+function createErrorBoundary(React: any, Box: any, Text: any) {
   const { Component } = React;
 
-  class ErrorBoundary extends Component {
-    constructor(props) {
+  class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    constructor(props: ErrorBoundaryProps) {
       super(props);
       this.state = { hasError: false, error: null };
     }
 
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError(error: Error): ErrorBoundaryState {
       return { hasError: true, error };
     }
 
-    componentDidCatch(error, errorInfo) {
+    componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
 
-    render() {
+    render(): React.ReactNode {
       if (this.state.hasError) {
         return React.createElement(Box, {
           borderStyle: 'round',
@@ -47,4 +58,6 @@ module.exports = function createErrorBoundary(React, Box, Text) {
   }
 
   return ErrorBoundary;
-};
+}
+
+module.exports = createErrorBoundary;
