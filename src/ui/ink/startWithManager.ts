@@ -1,10 +1,11 @@
 // Start Ink UI with AgentManager integration
+import { AgentManager } from './types';
 const logger = require('../../utils/logger');
 
 /**
  * Check if the current environment supports Ink UI
  */
-function isInkSupported() {
+function isInkSupported(): boolean {
   // Allow override for testing/development
   if (process.env.NAPOLEON_FORCE_INK === 'true') {
     return true;
@@ -40,7 +41,7 @@ function isInkSupported() {
 /**
  * Start fallback console interface when Ink is not supported
  */
-async function startFallbackUI(agentManager) {
+async function startFallbackUI(agentManager: AgentManager): Promise<void> {
   logger.info('Starting console interface (Ink not supported in this environment)');
   
   // Simple console interface
@@ -66,7 +67,7 @@ async function startFallbackUI(agentManager) {
         console.log(`  ${index + 1}. ${agent.name} (${agent.status})`);
       });
     }
-  } catch (error) {
+  } catch (error: any) {
     console.log('Could not list agents:', error.message);
   }
   
@@ -80,7 +81,7 @@ async function startFallbackUI(agentManager) {
   console.log('');
 }
 
-async function startInkWithManager(agentManager) {
+async function startInkWithManager(agentManager: AgentManager): Promise<void> {
   // Check if Ink is supported in current environment
   if (!isInkSupported()) {
     logger.info('Ink UI not supported in current environment, using fallback');
@@ -101,10 +102,10 @@ async function startInkWithManager(agentManager) {
     const appElement = React.createElement(App, { agentManager });
 
     // Render the app with error handling for raw mode
-    let result;
+    let result: any;
     try {
       result = render(appElement);
-    } catch (renderError) {
+    } catch (renderError: any) {
       if (renderError.message.includes('Raw mode is not supported')) {
         logger.warn('Raw mode not supported, falling back to blessed UI');
         await startFallbackUI(agentManager);
@@ -124,7 +125,7 @@ async function startInkWithManager(agentManager) {
     await waitUntilExit();
 
     logger.info('Ink UI closed');
-  } catch (error) {
+  } catch (error: any) {
     logger.error('Failed to start Ink UI with AgentManager', { error: error.message });
     
     // Try fallback UI if Ink fails
@@ -137,4 +138,4 @@ async function startInkWithManager(agentManager) {
   }
 }
 
-module.exports = startInkWithManager;
+export default startInkWithManager;
