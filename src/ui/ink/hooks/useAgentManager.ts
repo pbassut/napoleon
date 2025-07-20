@@ -170,8 +170,8 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         instructionsEmpty: !instructions || instructions.trim() === ''
       });
       
-      await agentManager.spawnAgent({
-        instructions,
+      // Call with correct signature: spawnAgent(instructions, options)
+      await agentManager.spawnAgent(instructions, {
         workingDirectory: workingDirectory || process.cwd(),
       });
 
