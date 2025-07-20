@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-const { Box, Text, useInput, useFocus } = require('ink');
+import { Box, Text, useInput, useFocus } from 'ink';
 
 // We'll use a simple text input for now instead of ink-text-input
 const SimpleTextInput = ({ value, onChange, placeholder, focus }) => {

@@ -5,7 +5,7 @@
  * Run this to test terminal capabilities and rendering
  */
 
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities';
 
 console.log('Napoleon Terminal Compatibility Test\n');

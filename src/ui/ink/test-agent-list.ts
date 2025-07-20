@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import { Agent } from './types';
-const { render, Box, Text } = require('ink');
+import { render, Box, Text } from 'ink';
+import AgentListDefault from './components/AgentList/AgentList';
 
 // Mock agent data generator
 function generateMockAgents(count: number): Agent[] {
@@ -32,7 +33,7 @@ const TestApp: React.FC = () => {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
 
   // Import AgentList dynamically
-  const AgentList = require('./components/AgentList/AgentList').default;
+  const AgentList = AgentListDefault;
 
   return React.createElement(
     Box,

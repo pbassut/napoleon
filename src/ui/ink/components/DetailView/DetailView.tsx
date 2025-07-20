@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-const { Box, Text, useInput, useFocus } = require('ink');
+import { Box, Text, useInput, useFocus } from 'ink';
 import { Agent } from '../../types';
 import { useAgentLogs } from '../../hooks/useAgentLogs';
 

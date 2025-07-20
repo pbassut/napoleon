@@ -1,7 +1,7 @@
 // Ink UI entry point for CommonJS compatibility with ESM module
 import React from 'react';
 const { useState, useEffect } = React;
-const logger = require('../../utils/logger');
+import logger from '../../utils/logger';
 
 async function startInkUI() {
   try {

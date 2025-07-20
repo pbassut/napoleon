@@ -3,6 +3,11 @@ import React, { useState } from 'react';
 import { Box, useApp, Text, useInput } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
 import { Agent, AgentManager } from './types';
+import createErrorBoundary from './components/Common/ErrorBoundaryWrapper';
+import { Header } from './components/Layout/Header';
+import { MainContent } from './components/Layout/MainContent';
+import { Footer } from './components/Layout/Footer';
+import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 
 interface AppProps {
   agentManager: AgentManager;
@@ -90,13 +95,7 @@ export default async function createApp(): Promise<React.FC<AppProps>> {
     };
 
     // Import components dynamically
-    const createErrorBoundary = require('./components/Common/ErrorBoundaryWrapper');
     const ErrorBoundary = createErrorBoundary(React, Box, Text);
-    const { Header } = require('./components/Layout/Header');
-    const { MainContent } = require('./components/Layout/MainContent');
-    const { Footer } = require('./components/Layout/Footer');
-    // Import restored SpawnDialog
-    const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
     const TerminationDialog: React.FC<any> = () => null;
 
     // Use a simplified AgentList to avoid ESM issues

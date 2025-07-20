@@ -1,5 +1,5 @@
 import React from 'react';
-const { Box, Text } = require('ink');
+import { Box, Text } from 'ink';
 import { Agent } from '../../types';
 
 const { memo } = React;

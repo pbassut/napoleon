@@ -1,7 +1,5 @@
 import React from 'react';
-const {
-  Box, Text, useInput, useFocus,
-} = require('ink');
+import { Box, Text, useInput, useFocus } from 'ink';
 import AgentItem from './AgentItem';
 import { Agent } from '../../types';
 

@@ -1,6 +1,8 @@
 import chalk from 'chalk';
 import logger from '../utils/logger';
 import { AgentManager } from './ink/types';
+import AgentManagerClass from '../core/agent-manager';
+import startInkWithManager from './ink/startWithManager';
 
 /**
  * Napoleon UI Entry Point
@@ -15,12 +17,10 @@ class InkUIWrapper {
 
     try {
       // Initialize AgentManager
-      const AgentManagerClass = require('../core/agent-manager');
       this.agentManager = new AgentManagerClass();
       await this.agentManager!.initialize();
 
       // Start Ink UI with AgentManager
-      const startInkWithManager = require('./ink/startWithManager').default;
       await startInkWithManager(this.agentManager);
 
       logger.info('Ink UI initialized successfully');

@@ -1,7 +1,15 @@
 import React from 'react';
 const { useState } = React;
-const { Box, useApp, Text, useInput } = require('ink');
+import { Box, useApp, Text, useInput } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
+import ErrorBoundaryDefault from './components/Common/ErrorBoundary.tsx';
+import { Header } from './components/Layout/Header.tsx';
+import { MainContent } from './components/Layout/MainContent.tsx';
+import { Footer } from './components/Layout/Footer.tsx';
+import { SpawnDialog } from './components/Dialogs/SpawnDialog.tsx';
+import { TerminationDialog } from './components/Dialogs/TerminationDialog.tsx';
+import AgentListDefault from './components/AgentList/AgentList.tsx';
+import { DetailView } from './components/DetailView/DetailView.tsx';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
@@ -84,14 +92,8 @@ const App = ({ agentManager }) => {
   };
 
   // Import components dynamically
-  const ErrorBoundary = require('./components/Common/ErrorBoundary.tsx').default;
-  const { Header } = require('./components/Layout/Header.tsx');
-  const { MainContent } = require('./components/Layout/MainContent.tsx');
-  const { Footer } = require('./components/Layout/Footer.tsx');
-  const { SpawnDialog } = require('./components/Dialogs/SpawnDialog.tsx');
-  const { TerminationDialog } = require('./components/Dialogs/TerminationDialog.tsx');
-  const AgentList = require('./components/AgentList/AgentList.tsx').default;
-  const { DetailView } = require('./components/DetailView/DetailView.tsx');
+  const ErrorBoundary = ErrorBoundaryDefault;
+  const AgentList = AgentListDefault;
 
   // If detail view is open, show only the detail view
   if (isDetailViewOpen && selectedAgent) {

@@ -1,6 +1,7 @@
 // Start Ink UI with AgentManager integration
 import { AgentManager } from './types';
-const logger = require('../../utils/logger');
+import logger from '../../utils/logger';
+import createAppDefault from './createApp';
 
 /**
  * Check if the current environment supports Ink UI
@@ -95,8 +96,7 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     const React = await import('react');
 
     // Create the App component with dynamic imports
-    const createApp = require('./createApp');
-    const App = await createApp();
+    const App = await createAppDefault();
 
     // Create the app element with AgentManager
     const appElement = React.createElement(App, { agentManager });

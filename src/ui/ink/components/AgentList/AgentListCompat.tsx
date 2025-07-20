@@ -1,7 +1,7 @@
 import React from 'react';
 import { getBoxChar, getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities';
 import { normalizeKey, matchesBinding } from '../../utils/input-normalizer';
-const { Box, Text, useInput, useFocus } = require('ink');
+import { Box, Text, useInput, useFocus } from 'ink';
 import { Agent } from '../../types';
 
 const { useState, useEffect, useMemo } = React;

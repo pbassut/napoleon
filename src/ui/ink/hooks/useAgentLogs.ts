@@ -41,7 +41,7 @@ export const useAgentLogs = ({ agentId, agentManager, refreshInterval = 1000 }: 
         }
 
         // Read log file
-        const fs = require('fs').promises;
+        const { promises: fs } = await import('fs');
         const content = await fs.readFile(logPath, 'utf8');
         const lines = content.split('\n').filter((line: string) => line.trim());
 
