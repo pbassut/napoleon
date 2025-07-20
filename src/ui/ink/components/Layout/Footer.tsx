@@ -15,7 +15,7 @@ export const Footer: React.FC<FooterProps> = ({ agentCount }) => {
       justifyContent="space-between"
     >
       <Text color="white">
-        q=quit | n=new agent | k=kill agent | Enter=view details | h=help
+        q=quit | n=new agent | d=delete agent | Enter=view details | h=help
       </Text>
       <Text color="gray">
         {agentCount} agent{agentCount !== 1 ? 's' : ''} running
