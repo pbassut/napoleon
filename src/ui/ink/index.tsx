@@ -1,18 +1,11 @@
 // Ink UI entry point for CommonJS compatibility with ESM module
-import React from 'react';
-const { useState, useEffect } = React;
+import React, { useState, useEffect } from 'react';
+import { render, Box, Text, useApp } from 'ink';
+import AgentListDefault from './components/AgentList/AgentList';
 import logger from '../../utils/logger';
 
 async function startInkUI() {
   try {
-    // Dynamic import for ESM module
-    const {
-      render, Box, Text, useApp,
-    } = await import('ink');
-
-    // Import our components
-    const AgentListModule = await import('./components/AgentList/AgentList');
-    const AgentList = AgentListModule.default;
 
     // Mock data for now
     const mockAgents = [
@@ -49,7 +42,7 @@ async function startInkUI() {
             </Text>
           </Box>
           <Box flexGrow={1} paddingX={1} paddingY={1}>
-            <AgentList
+            <AgentListDefault
               agents={mockAgents}
               selectedIndex={selectedIndex}
               onSelectionChange={setSelectedIndex}

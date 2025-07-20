@@ -2,6 +2,8 @@
 import { AgentManager } from './types';
 import logger from '../../utils/logger';
 import createAppDefault from './createApp';
+import { render } from 'ink';
+import React from 'react';
 
 /**
  * Check if the current environment supports Ink UI
@@ -91,11 +93,7 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
   }
 
   try {
-    // Dynamic import for ESM modules
-    const { render } = await import('ink');
-    const React = await import('react');
-
-    // Create the App component with dynamic imports
+    // Create the App component
     const App = await createAppDefault();
 
     // Create the app element with AgentManager

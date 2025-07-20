@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { promises as fs } from 'fs';
 
 interface LogEntry {
   id: string;
@@ -41,7 +42,7 @@ export const useAgentLogs = ({ agentId, agentManager, refreshInterval = 1000 }: 
         }
 
         // Read log file
-        const { promises: fs } = await import('fs');
+        // fs is now imported at the top
         const content = await fs.readFile(logPath, 'utf8');
         const lines = content.split('\n').filter((line: string) => line.trim());
 
