@@ -129,46 +129,40 @@ const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useF
   );
 };
 
-// Pre-load imports immediately when module is loaded
-let cachedComponents = null;
-const loadPromise = Promise.all([
-  import('ink'),
-  import('ink-text-input')
-]).then(([ink, textInput]) => {
-  cachedComponents = {
-    ...ink,
-    TextInput: textInput.default || textInput
-  };
-  return cachedComponents;
-}).catch(() => {
-  cachedComponents = {}; // Set to empty object on error
-});
-
 const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
-  const [components, setComponents] = useState(cachedComponents);
+  const [inkComponents, setInkComponents] = useState(null);
+  const [TextInput, setTextInput] = useState(null);
 
   useEffect(() => {
-    if (!cachedComponents) {
-      loadPromise.then((comps) => {
-        setComponents(comps);
-      });
-    }
+    let mounted = true;
+    
+    Promise.all([
+      import('ink'),
+      import('ink-text-input')
+    ]).then(([ink, textInput]) => {
+      if (mounted) {
+        setInkComponents(ink);
+        setTextInput(() => textInput.default || textInput);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // Don't render anything when closed
   if (!isOpen) {
     return null;
   }
 
-  // If components not loaded yet, return null to prevent flashing
-  if (!components) {
+  if (!inkComponents || !TextInput) {
     return null;
   }
 
-  const { Box, Text, useInput, useFocus } = components;
+  const { Box, Text, useInput, useFocus } = inkComponents;
 
   return React.createElement(SpawnDialogInner, {
-    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput: components.TextInput
+    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput
   });
 };
 
