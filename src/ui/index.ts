@@ -41,5 +41,5 @@ class InkUIWrapper {
   }
 }
 
-// Export the UI class directly
-export default InkUIWrapper;
+// Export the UI class using CommonJS for compatibility with require()
+module.exports = InkUIWrapper;
