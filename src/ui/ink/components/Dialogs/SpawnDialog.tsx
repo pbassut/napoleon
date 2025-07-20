@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
+import { ModalOverlay } from '../Common/ModalOverlay';
 
 // We'll use a simple text input for now instead of ink-text-input
 const SimpleTextInput = ({ value, onChange, placeholder, focus }) => {
@@ -88,20 +89,13 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     }
   };
 
-  if (!isOpen) return null;
-
   // Calculate dimensions
   const lines = text.split('\n');
   const lineCount = lines.length;
   const charCount = text.length;
 
   return (
-    <Box
-      position="absolute"
-      width="100%"
-      height="100%"
-      display={isOpen ? 'flex' : 'none'}
-    >
+    <ModalOverlay isOpen={isOpen}>
       <Box
         width={70}
         height={18}
@@ -109,8 +103,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         borderColor="green"
         flexDirection="column"
         paddingX={1}
-        alignSelf="center"
-        justifyContent="center"
       >
         <Box marginBottom={1}>
           <Text color="white" bold>
@@ -169,7 +161,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
           </Text>
         </Box>
       </Box>
-    </Box>
+    </ModalOverlay>
   );
 };
 

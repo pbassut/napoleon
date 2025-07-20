@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
 import { Agent } from '../../types';
+import { ModalOverlay } from '../Common/ModalOverlay';
 
 interface TerminationDialogProps {
   isOpen: boolean;
@@ -75,11 +76,9 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
     }
   }, { isActive: isOpen && isFocused });
 
-  if (!isOpen || !agent) return null;
-
   // Calculate runtime
   const getRuntime = () => {
-    if (!agent.startTime) return 'Unknown';
+    if (!agent || !agent.startTime) return 'Unknown';
     const runtime = Date.now() - new Date(agent.startTime).getTime();
     const minutes = Math.floor(runtime / 60000);
     const seconds = Math.floor((runtime % 60000) / 1000);
@@ -89,15 +88,10 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
     return `${seconds}s`;
   };
 
+  if (!agent) return null;
+
   return (
-    <Box
-      position="absolute"
-      width="100%"
-      height="100%"
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-    >
+    <ModalOverlay isOpen={isOpen}>
       <Box
         width={50}
         height={16}
@@ -176,7 +170,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
           </Box>
         )}
       </Box>
-    </Box>
+    </ModalOverlay>
   );
 };
 

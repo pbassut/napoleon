@@ -128,6 +128,9 @@ claude-3-5-sonnet-20241022
 - [x] Implemented selective update logic in useAgentManager
 - [x] Added proper memo comparison to AgentItem
 - [x] TypeScript compilation successful
+- [x] Fixed modal flickering issue by creating ModalOverlay component
+- [x] Fixed SpawnDialog centering issue
+- [x] Updated both dialogs to use consistent modal rendering
 
 ### File List
 - [x] src/ui/ink/components/AgentList/AgentList.tsx - Removed forceUpdate, memoized separator
@@ -135,6 +138,9 @@ claude-3-5-sonnet-20241022
 - [x] src/ui/ink/hooks/useAgentManager.ts - Updated to 500ms polling, selective updates
 - [x] src/ui/ink/components/Layout/Header.tsx - Added React.memo
 - [x] src/ui/ink/components/Layout/Footer.tsx - Added React.memo
+- [x] src/ui/ink/components/Common/ModalOverlay.tsx - Created reusable modal overlay component
+- [x] src/ui/ink/components/Dialogs/SpawnDialog.tsx - Fixed centering, use ModalOverlay
+- [x] src/ui/ink/components/Dialogs/TerminationDialog.tsx - Updated to use ModalOverlay
 
 ## QA Results
 (To be filled by QA Agent)
