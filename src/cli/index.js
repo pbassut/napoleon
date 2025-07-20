@@ -24,27 +24,19 @@ async function initializeApplication(program) {
     program
       .command('start')
       .description('Start the Napoleon terminal interface')
-      .option('--use-legacy-ui', 'Use the classic Blessed UI (deprecated)')
-      .action(async (options) => {
+      .action(async () => {
         // Set environment variable to indicate we're running in terminal UI mode
         process.env.TERMINAL_UI_MODE = 'true';
 
-        // Pass CLI options to UI config
-        if (options.useLegacyUi) {
-          process.env.NAPOLEON_USE_LEGACY_UI = 'true';
-        }
-
         try {
           // eslint-disable-next-line global-require
-          const getTerminalUI = require('../ui/index');
-          const TerminalUI = await getTerminalUI();
+          const TerminalUI = require('../ui/index');
           const ui = new TerminalUI();
 
           await ui.initialize();
           logger.info('Terminal UI started successfully');
         } catch (error) {
           logger.error('Failed to start terminal UI', { error: error.message });
-          // Use stderr for error output in terminal UI mode to avoid interfering with blessed
           process.stderr.write(`Failed to start terminal interface: ${error.message}\n`);
           process.exit(1);
         }

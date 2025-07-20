@@ -1,8 +1,6 @@
 const React = require('react');
 
-const MainContent = ({ children }) => {
+const MainContent = ({ children }) =>
   // Just pass through children for now
-  return children;
-};
-
+  children;
 module.exports = { MainContent };

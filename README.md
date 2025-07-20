@@ -51,16 +51,9 @@ napoleon --help
 - Terminal compatibility across iTerm2, Windows Terminal, GNOME Terminal, and more
 - Real-time agent communication and coordination
 
-## UI Migration Notice 🎉
+## Modern UI 🎉
 
-Napoleon now features a modern React-based terminal UI built with Ink! The new UI provides better performance, improved terminal compatibility, and a more responsive experience.
-
-**For existing users**: The classic UI is still temporarily available with:
-```bash
-napoleon start --use-legacy-ui
-```
-
-See the [UI Migration Guide](./docs/UI_MIGRATION_GUIDE.md) for more information.
+Napoleon features a modern React-based terminal UI built with Ink! This provides excellent performance, broad terminal compatibility, and a responsive user experience across all supported platforms.
 
 ## Configuration
 
@@ -69,7 +62,6 @@ Configuration files are stored in `~/.napoleon/`:
 - `sessions.json` - Active session data
 - `logs/` - Application logs
 - `api-keys.json` - Encrypted API key storage
-- `ui-config.json` - UI preferences and settings
 
 ## Development
 

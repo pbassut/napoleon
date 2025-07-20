@@ -59,15 +59,15 @@ function detectColorSupport() {
   if (process.env.COLORTERM === 'truecolor' || process.env.COLORTERM === '24bit') {
     return 'truecolor';
   }
-  
+
   if (process.stdout.hasColors && process.stdout.hasColors(256)) {
     return 256;
   }
-  
+
   if (process.stdout.hasColors && process.stdout.hasColors()) {
     return 16;
   }
-  
+
   return 16; // Fallback to basic colors
 }
 
@@ -79,13 +79,13 @@ function detectUnicodeSupport() {
   if (os.platform() === 'win32' && !isWindowsTerminal()) {
     return false;
   }
-  
+
   // Check locale
   const locale = process.env.LC_ALL || process.env.LC_CTYPE || process.env.LANG || '';
   if (locale.includes('UTF-8') || locale.includes('UTF8')) {
     return true;
   }
-  
+
   // Most modern terminals support Unicode
   return !process.env.TERM || !['dumb', 'cons25', 'emacs'].includes(process.env.TERM);
 }
@@ -106,12 +106,12 @@ function detectMouseSupport() {
   if (process.env.SSH_CLIENT || process.env.SSH_TTY) {
     return false;
   }
-  
+
   // Disable if not TTY
   if (!process.stdout.isTTY) {
     return false;
   }
-  
+
   // Known terminals with good mouse support
   return isITerm2() || isWindowsTerminal() || isHyper() || isAlacritty();
 }
@@ -124,7 +124,7 @@ function detectAltBufferSupport() {
   if (isMacTerminal()) {
     return false;
   }
-  
+
   // Most modern terminals support it
   return process.stdout.isTTY;
 }
@@ -137,12 +137,12 @@ function detectItalicsSupport() {
   if (os.platform() === 'win32' && !isWindowsTerminal()) {
     return false;
   }
-  
+
   // macOS Terminal.app has limited italics support
   if (isMacTerminal()) {
     return false;
   }
-  
+
   return true;
 }
 
@@ -174,21 +174,21 @@ function detectCapabilities() {
     hyperlinks: isITerm2() || isWindowsTerminal() || isHyper(),
     terminalName: getTerminalName(),
   };
-  
+
   // Allow environment variable overrides
   if (process.env.NAPOLEON_FORCE_ASCII === 'true') {
     capabilities.unicode = false;
     capabilities.boxDrawing = false;
   }
-  
+
   if (process.env.NAPOLEON_NO_COLOR === 'true') {
     capabilities.colors = 16;
   }
-  
+
   if (process.env.NAPOLEON_NO_MOUSE === 'true') {
     capabilities.mouse = false;
   }
-  
+
   return capabilities;
 }
 

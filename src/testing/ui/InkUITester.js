@@ -1,6 +1,6 @@
 /**
- * Parallel UI Testing Framework
- * Runs both Blessed and Ink UIs simultaneously for comparison testing
+ * Ink UI Testing Framework
+ * Tests the Ink-based UI for functionality and performance
  */
 
 const { spawn } = require('child_process');
@@ -8,129 +8,118 @@ const EventEmitter = require('events');
 const path = require('path');
 const fs = require('fs').promises;
 
-class ParallelUITester extends EventEmitter {
+class InkUITester extends EventEmitter {
   constructor(options = {}) {
     super();
-    
+
     this.options = {
-      blessedEntry: options.blessedEntry || 'src/index.js',
-      inkEntry: options.inkEntry || 'src/ui/ink/index.js',
+      entryPoint: options.entryPoint || 'bin/napoleon.js',
       timeout: options.timeout || 30000,
       captureOutput: options.captureOutput !== false,
       env: options.env || {},
-      ...options
+      ...options,
     };
-    
-    this.blessedProcess = null;
-    this.inkProcess = null;
-    this.blessedOutput = [];
-    this.inkOutput = [];
+
+    this.process = null;
+    this.output = [];
     this.isRunning = false;
     this.startTime = null;
   }
 
   /**
-   * Start both UI processes
+   * Start the UI process
    */
-  async startProcesses() {
+  async startProcess() {
     if (this.isRunning) {
-      throw new Error('Processes already running');
+      throw new Error('Process already running');
     }
 
     this.startTime = Date.now();
     this.isRunning = true;
-    
-    // Start Blessed UI
-    this.blessedProcess = await this.startProcess('blessed', this.options.blessedEntry);
-    
-    // Start Ink UI  
-    this.inkProcess = await this.startProcess('ink', this.options.inkEntry);
-    
-    // Wait for both processes to initialize
+
+    // Start Napoleon UI
+    this.process = await this.startNapoleonProcess();
+
+    // Wait for initialization
     await this.waitForInitialization();
-    
-    this.emit('processes-started', {
-      blessed: this.blessedProcess.pid,
-      ink: this.inkProcess.pid
+
+    this.emit('process-started', {
+      pid: this.process.pid,
     });
   }
 
   /**
-   * Start a single UI process
+   * Start Napoleon UI process
    */
-  async startProcess(type, entryPoint) {
+  async startNapoleonProcess() {
     const env = {
       ...process.env,
       ...this.options.env,
-      NAPOLEON_UI_MODE: type,
+      NAPOLEON_UI_MODE: 'ink',
       NAPOLEON_TEST_MODE: 'true',
       FORCE_COLOR: '1',
-      NODE_ENV: 'test'
+      NODE_ENV: 'test',
     };
 
-    const proc = spawn('node', [entryPoint], {
+    const proc = spawn('node', [this.options.entryPoint, 'start'], {
       env,
       stdio: ['pipe', 'pipe', 'pipe'],
-      shell: false
+      shell: false,
     });
 
     // Capture output
     if (this.options.captureOutput) {
-      const output = type === 'blessed' ? this.blessedOutput : this.inkOutput;
-      
       proc.stdout.on('data', (data) => {
         const frame = {
           type: 'stdout',
           data: data.toString(),
-          timestamp: Date.now() - this.startTime
+          timestamp: Date.now() - this.startTime,
         };
-        output.push(frame);
-        this.emit(`${type}-output`, frame);
+        this.output.push(frame);
+        this.emit('output', frame);
       });
 
       proc.stderr.on('data', (data) => {
         const frame = {
           type: 'stderr',
           data: data.toString(),
-          timestamp: Date.now() - this.startTime
+          timestamp: Date.now() - this.startTime,
         };
-        output.push(frame);
-        this.emit(`${type}-error`, frame);
+        this.output.push(frame);
+        this.emit('error-output', frame);
       });
     }
 
     // Handle process exit
     proc.on('exit', (code, signal) => {
-      this.emit(`${type}-exit`, { code, signal });
+      this.emit('process-exit', { code, signal });
       if (this.isRunning) {
-        this.handleProcessExit(type, code, signal);
+        this.handleProcessExit(code, signal);
       }
     });
 
     proc.on('error', (error) => {
-      this.emit(`${type}-error`, { error });
+      this.emit('process-error', { error });
     });
 
     return proc;
   }
 
   /**
-   * Wait for both processes to initialize
+   * Wait for process initialization
    */
   async waitForInitialization() {
     const timeout = this.options.initTimeout || 5000;
     const startTime = Date.now();
-    
+
     return new Promise((resolve, reject) => {
       const checkInterval = setInterval(() => {
-        // Check if both processes are ready
-        // This could be enhanced to wait for specific initialization markers
-        if (this.blessedProcess && this.inkProcess && 
-            !this.blessedProcess.killed && !this.inkProcess.killed) {
+        // Check if process is ready
+        if (this.process && !this.process.killed) {
           clearInterval(checkInterval);
           resolve();
         }
-        
+
         // Timeout check
         if (Date.now() - startTime > timeout) {
           clearInterval(checkInterval);
@@ -141,23 +130,17 @@ class ParallelUITester extends EventEmitter {
   }
 
   /**
-   * Send input to both processes
+   * Send input to the process
    */
   async sendInput(input) {
     if (!this.isRunning) {
-      throw new Error('Processes not running');
+      throw new Error('Process not running');
     }
 
     const inputData = this.normalizeInput(input);
-    
-    // Send to both processes
-    const promises = [
-      this.sendToProcess(this.blessedProcess, inputData),
-      this.sendToProcess(this.inkProcess, inputData)
-    ];
-    
-    await Promise.all(promises);
-    
+
+    await this.sendToProcess(inputData);
+
     // Wait for processing
     if (input.waitAfter) {
       await this.delay(input.waitAfter);
@@ -165,17 +148,17 @@ class ParallelUITester extends EventEmitter {
   }
 
   /**
-   * Send input to a specific process
+   * Send input to process
    */
-  async sendToProcess(proc, input) {
+  async sendToProcess(input) {
     return new Promise((resolve, reject) => {
-      if (!proc || proc.killed) {
+      if (!this.process || this.process.killed) {
         reject(new Error('Process not available'));
         return;
       }
 
       try {
-        proc.stdin.write(input.data, (err) => {
+        this.process.stdin.write(input.data, (err) => {
           if (err) reject(err);
           else resolve();
         });
@@ -194,7 +177,7 @@ class ParallelUITester extends EventEmitter {
     }
 
     let data = '';
-    
+
     if (input.key) {
       // Handle special keys
       switch (input.key) {
@@ -208,10 +191,10 @@ class ParallelUITester extends EventEmitter {
         case 'backspace': data = '\x7f'; break;
         default: data = input.key;
       }
-      
+
       // Add modifiers
       if (input.ctrl) data = String.fromCharCode(data.charCodeAt(0) - 64);
-      if (input.meta) data = '\x1b' + data;
+      if (input.meta) data = `\x1b${data}`;
     } else if (input.text) {
       data = input.text;
     }
@@ -220,77 +203,63 @@ class ParallelUITester extends EventEmitter {
   }
 
   /**
-   * Stop both processes
+   * Stop the process
    */
-  async stopProcesses() {
+  async stopProcess() {
     if (!this.isRunning) return;
-    
+
     this.isRunning = false;
-    
-    const promises = [];
-    
-    if (this.blessedProcess && !this.blessedProcess.killed) {
-      promises.push(this.terminateProcess(this.blessedProcess, 'blessed'));
+
+    if (this.process && !this.process.killed) {
+      await this.terminateProcess();
     }
-    
-    if (this.inkProcess && !this.inkProcess.killed) {
-      promises.push(this.terminateProcess(this.inkProcess, 'ink'));
-    }
-    
-    await Promise.all(promises);
-    
-    this.emit('processes-stopped');
+
+    this.emit('process-stopped');
   }
 
   /**
-   * Terminate a single process
+   * Terminate the process
    */
-  async terminateProcess(proc, type) {
+  async terminateProcess() {
     return new Promise((resolve) => {
       const timeout = setTimeout(() => {
-        if (!proc.killed) {
-          proc.kill('SIGKILL');
+        if (!this.process.killed) {
+          this.process.kill('SIGKILL');
         }
         resolve();
       }, 5000);
 
-      proc.once('exit', () => {
+      this.process.once('exit', () => {
         clearTimeout(timeout);
         resolve();
       });
 
       // Try graceful shutdown first
-      proc.stdin.end();
-      proc.kill('SIGTERM');
+      this.process.stdin.end();
+      this.process.kill('SIGTERM');
     });
   }
 
   /**
    * Handle unexpected process exit
    */
-  handleProcessExit(type, code, signal) {
-    console.warn(`${type} process exited unexpectedly:`, { code, signal });
-    
-    // Stop all processes if one exits unexpectedly
-    this.stopProcesses().catch(console.error);
+  handleProcessExit(code, signal) {
+    console.warn('UI process exited unexpectedly:', { code, signal });
+    this.stopProcess().catch(console.error);
   }
 
   /**
    * Get captured output
    */
   getOutput() {
-    return {
-      blessed: [...this.blessedOutput],
-      ink: [...this.inkOutput]
-    };
+    return [...this.output];
   }
 
   /**
    * Clear captured output
    */
   clearOutput() {
-    this.blessedOutput = [];
-    this.inkOutput = [];
+    this.output = [];
   }
 
   /**
@@ -299,31 +268,28 @@ class ParallelUITester extends EventEmitter {
   async waitForStability(timeout = 1000) {
     const startTime = Date.now();
     let lastOutputTime = Date.now();
-    
-    // Track output from both processes
+
+    // Track output
     const outputHandler = () => {
       lastOutputTime = Date.now();
     };
-    
-    this.on('blessed-output', outputHandler);
-    this.on('ink-output', outputHandler);
-    
+
+    this.on('output', outputHandler);
+
     return new Promise((resolve) => {
       const checkInterval = setInterval(() => {
         const now = Date.now();
-        
+
         if (now - lastOutputTime >= timeout) {
           clearInterval(checkInterval);
-          this.removeListener('blessed-output', outputHandler);
-          this.removeListener('ink-output', outputHandler);
+          this.removeListener('output', outputHandler);
           resolve();
         }
-        
+
         // Overall timeout to prevent hanging
         if (now - startTime > timeout * 10) {
           clearInterval(checkInterval);
-          this.removeListener('blessed-output', outputHandler);
-          this.removeListener('ink-output', outputHandler);
+          this.removeListener('output', outputHandler);
           resolve();
         }
       }, 100);
@@ -334,7 +300,7 @@ class ParallelUITester extends EventEmitter {
    * Utility delay function
    */
   delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -346,14 +312,13 @@ class ParallelUITester extends EventEmitter {
       duration: Date.now() - this.startTime,
       output: this.getOutput(),
       metadata: {
-        blessedEntry: this.options.blessedEntry,
-        inkEntry: this.options.inkEntry,
-        env: this.options.env
-      }
+        entryPoint: this.options.entryPoint,
+        env: this.options.env,
+      },
     };
-    
+
     await fs.writeFile(filename, JSON.stringify(results, null, 2));
   }
 }
 
-module.exports = { ParallelUITester };
+module.exports = { InkUITester };

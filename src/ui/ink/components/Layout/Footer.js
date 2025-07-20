@@ -1,8 +1,6 @@
 const React = require('react');
 
-const Footer = ({ agentCount }) => {
+const Footer = ({ agentCount }) =>
   // Return null for now - we'll implement this properly later
-  return null;
-};
-
+  null;
 module.exports = { Footer };

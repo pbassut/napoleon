@@ -18,18 +18,18 @@ class PerformanceMetrics {
 
   addRenderTime(componentName, duration) {
     this.renderTimes.push({ componentName, duration, timestamp: Date.now() });
-    
+
     // Track per-component stats
     if (!this.componentRenders.has(componentName)) {
       this.componentRenders.set(componentName, []);
     }
     this.componentRenders.get(componentName).push(duration);
-    
+
     // Track slow renders (> 16.67ms for 60fps)
     if (duration > 16.67) {
       this.slowRenders.push({ componentName, duration, timestamp: Date.now() });
     }
-    
+
     // Keep only last 1000 renders in memory
     if (this.renderTimes.length > 1000) {
       this.renderTimes = this.renderTimes.slice(-500);
@@ -47,7 +47,9 @@ class PerformanceMetrics {
       const avg = times.reduce((sum, t) => sum + t, 0) / times.length;
       const max = Math.max(...times);
       const min = Math.min(...times);
-      componentStats[component] = { avg, max, min, count: times.length };
+      componentStats[component] = {
+        avg, max, min, count: times.length,
+      };
     });
 
     return {
@@ -78,10 +80,10 @@ const globalMetrics = new PerformanceMetrics();
  */
 function usePerformanceMonitor(componentName, options = {}) {
   const renderStartRef = useRef();
-  const { 
+  const {
     warnThreshold = 16.67, // Default to 60fps threshold
     logSlow = false,
-    disabled = false 
+    disabled = false,
   } = options;
 
   useEffect(() => {
@@ -121,14 +123,14 @@ function useOperationTimer(operationName) {
 
   const endTimer = () => {
     if (!startTimeRef.current) return;
-    
+
     const duration = performance.now() - startTimeRef.current;
     console.log(`[Performance] ${operationName}: ${duration.toFixed(2)}ms`);
-    
+
     if (duration > 100) {
       console.warn(`[Performance] Slow operation detected: ${operationName} took ${duration.toFixed(2)}ms`);
     }
-    
+
     return duration;
   };
 
@@ -143,11 +145,11 @@ function useOperationTimer(operationName) {
 function debounceRender(func, wait = 16) {
   let timeout;
   let lastCall = 0;
-  
+
   return function debounced(...args) {
     const now = Date.now();
     const timeSinceLastCall = now - lastCall;
-    
+
     // If called too frequently, debounce
     if (timeSinceLastCall < wait) {
       clearTimeout(timeout);
@@ -168,15 +170,15 @@ function debounceRender(func, wait = 16) {
  */
 const terminalRAF = (() => {
   let lastTime = 0;
-  
+
   return (callback) => {
     const currentTime = Date.now();
     const timeToCall = Math.max(0, 16 - (currentTime - lastTime));
-    
+
     const id = setTimeout(() => {
       callback(currentTime + timeToCall);
     }, timeToCall);
-    
+
     lastTime = currentTime + timeToCall;
     return id;
   };
@@ -188,7 +190,7 @@ const terminalRAF = (() => {
 function getPerformanceReport() {
   const stats = globalMetrics.getStats();
   const report = [];
-  
+
   report.push('Napoleon UI Performance Report');
   report.push('=============================');
   report.push(`Total Renders: ${stats.totalRenders}`);
@@ -196,7 +198,7 @@ function getPerformanceReport() {
   report.push(`Slow Renders (>16.67ms): ${stats.slowRenderCount}`);
   report.push(`Uptime: ${(stats.uptime / 1000).toFixed(1)}s`);
   report.push('');
-  
+
   report.push('Component Performance:');
   Object.entries(stats.componentStats).forEach(([component, data]) => {
     report.push(`  ${component}:`);
@@ -205,16 +207,16 @@ function getPerformanceReport() {
     report.push(`    Max: ${data.max.toFixed(2)}ms`);
     report.push(`    Min: ${data.min.toFixed(2)}ms`);
   });
-  
+
   if (stats.recentSlowRenders.length > 0) {
     report.push('');
     report.push('Recent Slow Renders:');
-    stats.recentSlowRenders.forEach(render => {
+    stats.recentSlowRenders.forEach((render) => {
       const time = new Date(render.timestamp).toLocaleTimeString();
       report.push(`  ${time} - ${render.componentName}: ${render.duration.toFixed(2)}ms`);
     });
   }
-  
+
   return report.join('\n');
 }
 

@@ -16,11 +16,11 @@ const AgentListCompat = ({
 }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [capabilities] = useState(() => detectCapabilities());
-  
+
   const visibleItems = Math.max(1, height - 2);
   const visibleAgents = useMemo(
     () => agents.slice(scrollOffset, scrollOffset + visibleItems),
-    [agents, scrollOffset, visibleItems]
+    [agents, scrollOffset, visibleItems],
   );
 
   const adjustScrollOffset = (newSelectedIndex) => {
@@ -43,7 +43,7 @@ const AgentListCompat = ({
 
   useEffect(() => {
     // Dynamic import for ESM modules
-    import('ink').then(ink => {
+    import('ink').then((ink) => {
       setText(() => ink.Box);
       setTextComponent(() => ink.Text);
       setUseInput(() => ink.useInput);
@@ -134,7 +134,7 @@ const AgentListCompat = ({
         React.createElement(
           Text,
           { color: 'gray' },
-          `${getStatusSymbol('arrowUp', capabilities)} ${scrollOffset} more above`
+          `${getStatusSymbol('arrowUp', capabilities)} ${scrollOffset} more above`,
         ),
       ),
 
@@ -148,7 +148,7 @@ const AgentListCompat = ({
         visibleAgents.map((agent, index) => {
           const isSelected = scrollOffset + index === selectedIndex;
           const statusInfo = statusSymbols[agent.status] || { symbol: '?', color: 'gray' };
-          
+
           return React.createElement(
             Box,
             {
@@ -160,33 +160,33 @@ const AgentListCompat = ({
               React.createElement(
                 Text,
                 { key: 'status', color: statusInfo.color },
-                statusInfo.symbol
+                statusInfo.symbol,
               ),
               React.createElement(
                 Text,
                 { key: 'index', color: 'gray' },
-                `[${String(scrollOffset + index + 1).padStart(2, '0')}]`
+                `[${String(scrollOffset + index + 1).padStart(2, '0')}]`,
               ),
               React.createElement(
                 Box,
                 { key: 'name', flexGrow: 1 },
                 React.createElement(
                   Text,
-                  { 
+                  {
                     color: isSelected && isFocused ? 'white' : 'white',
-                    bold: isSelected 
+                    bold: isSelected,
                   },
-                  agent.name.length > 30 ? agent.name.substring(0, 27) + '...' : agent.name
-                )
+                  agent.name.length > 30 ? `${agent.name.substring(0, 27)}...` : agent.name,
+                ),
               ),
               React.createElement(
                 Text,
                 { key: 'status-text', color: statusInfo.color },
-                agent.status.toUpperCase()
+                agent.status.toUpperCase(),
               ),
-            ])
+            ]),
           );
-        })
+        }),
       ),
 
       showScrollIndicators && hasMoreBelow && React.createElement(
@@ -198,7 +198,7 @@ const AgentListCompat = ({
         React.createElement(
           Text,
           { color: 'gray' },
-          `${getStatusSymbol('arrowDown', capabilities)} ${agents.length - scrollOffset - visibleItems} more below`
+          `${getStatusSymbol('arrowDown', capabilities)} ${agents.length - scrollOffset - visibleItems} more below`,
         ),
       ),
     ]);

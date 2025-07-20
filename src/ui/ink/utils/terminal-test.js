@@ -5,8 +5,8 @@
  * Run this to test terminal capabilities and rendering
  */
 
-const { detectCapabilities, getBoxChar, getStatusSymbol } = require('./terminal-capabilities');
 const chalk = require('chalk');
+const { detectCapabilities, getBoxChar, getStatusSymbol } = require('./terminal-capabilities');
 
 console.log('Napoleon Terminal Compatibility Test\n');
 
@@ -20,7 +20,7 @@ console.log('Node Version:', chalk.cyan(process.version));
 console.log('');
 
 console.log('Capabilities:');
-console.log('  Color Support:', chalk.green(capabilities.colors === 'truecolor' ? '24-bit True Color' : capabilities.colors + ' colors'));
+console.log('  Color Support:', chalk.green(capabilities.colors === 'truecolor' ? '24-bit True Color' : `${capabilities.colors} colors`));
 console.log('  Unicode:', capabilities.unicode ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));
 console.log('  Box Drawing:', capabilities.boxDrawing ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));
 console.log('  Mouse:', capabilities.mouse ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));
@@ -31,11 +31,11 @@ console.log('');
 
 // Test box drawing
 console.log('Box Drawing Test:');
-console.log('  ' + getBoxChar('topLeft') + getBoxChar('horizontal').repeat(20) + getBoxChar('topRight'));
-console.log('  ' + getBoxChar('vertical') + ' Box Drawing Test   ' + getBoxChar('vertical'));
-console.log('  ' + getBoxChar('teeRight') + getBoxChar('horizontal').repeat(20) + getBoxChar('teeLeft'));
-console.log('  ' + getBoxChar('vertical') + ' Unicode: ' + (capabilities.unicode ? 'Enabled ' : 'Disabled') + '    ' + getBoxChar('vertical'));
-console.log('  ' + getBoxChar('bottomLeft') + getBoxChar('horizontal').repeat(20) + getBoxChar('bottomRight'));
+console.log(`  ${getBoxChar('topLeft')}${getBoxChar('horizontal').repeat(20)}${getBoxChar('topRight')}`);
+console.log(`  ${getBoxChar('vertical')} Box Drawing Test   ${getBoxChar('vertical')}`);
+console.log(`  ${getBoxChar('teeRight')}${getBoxChar('horizontal').repeat(20)}${getBoxChar('teeLeft')}`);
+console.log(`  ${getBoxChar('vertical')} Unicode: ${capabilities.unicode ? 'Enabled ' : 'Disabled'}    ${getBoxChar('vertical')}`);
+console.log(`  ${getBoxChar('bottomLeft')}${getBoxChar('horizontal').repeat(20)}${getBoxChar('bottomRight')}`);
 console.log('');
 
 // Test status symbols
@@ -71,8 +71,8 @@ if (capabilities.colors === 'truecolor') {
   console.log(colors);
 } else {
   console.log('  16 Color Test:');
-  console.log('  ' + chalk.black.bgWhite(' Black ') + ' ' + chalk.red(' Red ') + ' ' + chalk.green(' Green ') + ' ' + chalk.yellow(' Yellow '));
-  console.log('  ' + chalk.blue(' Blue ') + ' ' + chalk.magenta(' Magenta ') + ' ' + chalk.cyan(' Cyan ') + ' ' + chalk.white(' White '));
+  console.log(`  ${chalk.black.bgWhite(' Black ')} ${chalk.red(' Red ')} ${chalk.green(' Green ')} ${chalk.yellow(' Yellow ')}`);
+  console.log(`  ${chalk.blue(' Blue ')} ${chalk.magenta(' Magenta ')} ${chalk.cyan(' Cyan ')} ${chalk.white(' White ')}`);
 }
 console.log('');
 
@@ -95,16 +95,16 @@ console.log('');
 // Test recommendations
 console.log('Recommendations:');
 if (!capabilities.unicode) {
-  console.log('  - ' + chalk.yellow('Unicode not supported. UI will use ASCII fallbacks.'));
+  console.log(`  - ${chalk.yellow('Unicode not supported. UI will use ASCII fallbacks.')}`);
 }
 if (capabilities.colors === 16) {
-  console.log('  - ' + chalk.yellow('Limited color support. Consider upgrading your terminal.'));
+  console.log(`  - ${chalk.yellow('Limited color support. Consider upgrading your terminal.')}`);
 }
 if (!capabilities.mouse) {
-  console.log('  - ' + chalk.yellow('Mouse support not detected. Keyboard navigation only.'));
+  console.log(`  - ${chalk.yellow('Mouse support not detected. Keyboard navigation only.')}`);
 }
 if (capabilities.unicode && capabilities.colors >= 256 && capabilities.mouse) {
-  console.log('  - ' + chalk.green('Your terminal has excellent compatibility!'));
+  console.log(`  - ${chalk.green('Your terminal has excellent compatibility!')}`);
 }
 
 console.log('\nPress Ctrl+C to exit.');

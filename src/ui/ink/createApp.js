@@ -3,7 +3,9 @@ module.exports = async function createApp() {
   // Dynamic imports for ESM modules
   const React = await import('react');
   const inkModule = await import('ink');
-  const { Box, useApp, Text, useInput } = inkModule;
+  const {
+    Box, useApp, Text, useInput,
+  } = inkModule;
   const { useState } = React.default || React;
 
   // Import hooks and components
