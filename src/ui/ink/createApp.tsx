@@ -194,3 +194,5 @@ export default async function createApp(): Promise<React.FC<AppProps>> {
 
   return App;
 }
+
+export default createApp;
