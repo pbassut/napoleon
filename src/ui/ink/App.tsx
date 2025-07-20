@@ -1,6 +1,6 @@
 import React from 'react';
 const { useState, useEffect, useMemo, useCallback } = React;
-import { Box, useApp, Text, useInput } from 'ink';
+import { Box, useApp, Text, useInput, useStdout } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
 import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
 import { Header } from './components/Layout/Header';
@@ -13,6 +13,7 @@ import { DetailView } from './components/DetailView/DetailView';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
+  const { stdout } = useStdout();
   const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);
   const [isTerminationDialogOpen, setIsTerminationDialogOpen] = useState(false);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
@@ -115,9 +116,9 @@ const App = ({ agentManager }) => {
 
   return (
     <ErrorBoundary>
-      <Box flexDirection="column" width="100%" height="100%">
+      <Box flexDirection="column" width="100%" height={stdout.rows}>
         {/* Main bordered container */}
-        <Box flexDirection="column" borderStyle="single" width="100%" height="100%">
+        <Box flexDirection="column" borderStyle="single" width="100%" flexGrow={1} minHeight={stdout.rows - 2}>
           {/* Header */}
           <Box paddingX={2} paddingY={1}>
             <Header />
@@ -144,6 +145,7 @@ const App = ({ agentManager }) => {
                   agents={agents}
                   selectedIndex={selectedIndex}
                   onSelectionChange={handleSelectionChange}
+                  height={Math.max(10, stdout.rows - 12)}
                 />
               )}
             </MainContent>

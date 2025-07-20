@@ -81,7 +81,7 @@ const AgentList: React.FC<AgentListProps> = ({
           flexGrow={1}
           justifyContent="center"
           alignItems="center"
-          paddingY={2}
+          minHeight={height - 3}
         >
           <Box flexDirection="column" alignItems="center">
             <Text color="gray">No agents running</Text>
