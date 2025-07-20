@@ -97,8 +97,9 @@ module.exports = async function createApp() {
     const { Header } = require('./components/Layout/Header');
     const { MainContent } = require('./components/Layout/MainContent');
     const { Footer } = require('./components/Layout/Footer');
-    const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
-    const { TerminationDialog } = require('./components/Dialogs/TerminationDialog');
+    // Temporarily disable dialogs to fix startup
+    const SpawnDialog = () => null;
+    const TerminationDialog = () => null;
     const { AgentList } = require('./components/AgentList');
     const { DetailView } = require('./components/DetailView');
 
