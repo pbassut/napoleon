@@ -26,6 +26,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   // Reset state when dialog opens
   useEffect(() => {
     if (isOpen) {
+      logger.debug('SpawnDialog: Dialog opened, resetting state');
       setText('');
       setError('');
       setIsLoading(false);
@@ -39,8 +40,14 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   useInput((input: string, key: any) => {
     if (!isOpen || isLoading) return;
 
+    // Log key presses for debugging
+    if (key.return) {
+      logger.debug('SpawnDialog: Enter key pressed', { shift: key.shift, ctrl: key.ctrl });
+    }
+
     // Handle Escape to close
     if (key.escape) {
+      logger.debug('SpawnDialog: Escape pressed, closing dialog');
       onClose();
       return;
     }
@@ -59,12 +66,14 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
     // Handle Shift+Enter for new line
     if (key.shift && key.return) {
+      logger.debug('SpawnDialog: Shift+Enter pressed, adding new line');
       setText(prev => prev + '\n');
       return;
     }
 
     // Handle Enter to submit
     if (key.return && !key.shift) {
+      logger.debug('SpawnDialog: Enter pressed, submitting', { text: text.trim() });
       handleSubmit();
       return;
     }

@@ -67,6 +67,7 @@ const App = ({ agentManager }) => {
 
     // Open spawn dialog with 'n'
     if (input === 'n' && canSpawnAgent) {
+      logger.debug('App: n key pressed, opening spawn dialog');
       setIsSpawnDialogOpen(true);
     }
 
