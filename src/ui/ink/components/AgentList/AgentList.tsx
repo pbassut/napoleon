@@ -91,14 +91,14 @@ const AgentList: React.FC<AgentListProps> = ({
           alignItems="center"
           minHeight={height - 3}
         >
-          <Box flexDirection="column" alignItems="center">
-            <Text color="gray">No agents running</Text>
-            {!isModalOpen && (
+          {!isModalOpen && (
+            <Box flexDirection="column" alignItems="center">
+              <Text color="gray">No agents running</Text>
               <Box marginTop={1}>
                 <Text color="gray">Press 'n' to spawn a new agent</Text>
               </Box>
-            )}
-          </Box>
+            </Box>
+          )}
         </Box>
       </Box>
     );
