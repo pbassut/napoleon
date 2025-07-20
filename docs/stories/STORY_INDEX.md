@@ -102,6 +102,7 @@ These stories migrate the terminal UI from Blessed to Ink for a modern React-bas
 | US047 | Spawn Dialog Implementation | Modal dialog for spawning new agents | HIGH | ✅ **Approved** |
 | US048 | Termination Dialog Implementation | Confirmation dialog for agent termination | HIGH | ✅ **Approved** |
 | US049 | Detail View Implementation | Real-time log viewer with search functionality | HIGH | ✅ **Approved** |
+| US051 | Spawn Dialog Multi-line Input Enhancement | True multi-line text editing for agent instructions | MEDIUM | 🆕 **Ready for Development** |
 
 ### Technical Debt Stories
 
