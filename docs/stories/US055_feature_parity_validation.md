@@ -214,20 +214,21 @@ const getUI = (): 'blessed' | 'ink' => {
 ```
 
 ## Status
-**Draft**
+**Approved**
 
 ## Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-07-20 | 1.0 | Initial story creation | Scrum Master Bob |
+| 2025-07-20 | 1.1 | Story approved | Scrum Master Bob |
 
 ## Dev Agent Record
 
 _To be completed by Dev Agent during implementation_
 
 ### Agent Model Used
-_[Model name]_
+claude-opus-4-20250514
 
 ### Debug Log References
 _[Links to debug logs]_
