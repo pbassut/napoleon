@@ -104,6 +104,24 @@ These stories migrate the terminal UI from Blessed to Ink for a modern React-bas
 | US049 | Detail View Implementation | Real-time log viewer with search functionality | HIGH | ✅ **Approved** |
 | US051 | Spawn Dialog Multi-line Input Enhancement | True multi-line text editing for agent instructions | MEDIUM | 🆕 **Ready for Development** |
 
+### Phase 8: Blessed to Ink Migration - Polish & Testing (US054-US055)
+
+These stories ensure the Ink migration is production-ready with comprehensive testing and validation.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US054 | Terminal Compatibility Testing | Test and fix Ink UI across different terminal emulators | HIGH | 📝 **Draft** |
+| US055 | Feature Parity Validation | Ensure all Blessed features work identically in Ink | HIGH | 📝 **Draft** |
+
+### Phase 9: Blessed to Ink Migration - Cutover (US056-US057)
+
+These stories complete the migration with parallel testing and final cutover to Ink UI.
+
+| Story ID | Title | Description | Priority | Status |
+|----------|-------|-------------|----------|---------|
+| US056 | Parallel UI Testing | Run both UIs simultaneously for comparison testing | MEDIUM | 📝 **Draft** |
+| US057 | Migration Cutover | Complete switch from Blessed to Ink and cleanup | MEDIUM | 📝 **Draft** |
+
 ### Technical Debt Stories
 
 | Story | Title | Description | Priority | Status |
@@ -134,15 +152,15 @@ These stories migrate the terminal UI from Blessed to Ink for a modern React-bas
 ## Approval Status Summary
 
 - **✅ 46 stories approved**: US001-US028, US032-US049 approved by Scrum Master Bob
-- **📝 3 technical debt stories created**: US050-US052 address technical debt from US043 implementation
+- **📝 7 stories in draft**: US050-US052 (technical debt), US054-US057 (Ink migration phases 4-5)
 - **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues  
 - **7 stories already completed**: US007, US008, US013, US032-US035
 - **4 epic stories integrated**: US032-US035 represent completed Napoleon SDK Migration Epic (formerly 1.1-1.4)
 - **39 stories ready for implementation**: US001-US006, US009-US012, US014-US028, US036-US049
-- **3 technical debt stories ready**: US050-US052 improve TypeScript/ESLint configuration and test suite
-- **2 critical bug fixes needed**: US029-US030 address modal close and input duplication bugs
+- **7 draft stories ready for review**: US050-US052 (technical debt), US054-US057 (migration completion)
+- **2 critical bug fixes closed**: US029-US030 resolved by Ink migration
 - **New Epic 6 (Logging)**: US036-US042 provide comprehensive agent logging infrastructure
-- **New Epic 7 (Blessed to Ink)**: US043-US049 migrate UI to modern React architecture
+- **New Epic 7 (Blessed to Ink)**: US043-US049, US054-US057 complete UI migration to modern React architecture
 - **Ready for development handoff**: All approved stories include detailed acceptance criteria and integration verification requirements
 
 ## File Locations
