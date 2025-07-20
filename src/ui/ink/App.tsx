@@ -88,8 +88,8 @@ const App = ({ agentManager }) => {
   const { Header } = require('./components/Layout/Header.tsx');
   const { MainContent } = require('./components/Layout/MainContent.tsx');
   const { Footer } = require('./components/Layout/Footer.tsx');
-  const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
-  const { TerminationDialog } = require('./components/Dialogs/TerminationDialog');
+  const { SpawnDialog } = require('./components/Dialogs/SpawnDialog.tsx');
+  const { TerminationDialog } = require('./components/Dialogs/TerminationDialog.tsx');
   const AgentList = require('./components/AgentList/AgentList.tsx').default;
   const { DetailView } = require('./components/DetailView');
 

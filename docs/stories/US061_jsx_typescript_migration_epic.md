@@ -74,12 +74,12 @@ The Napoleon project currently uses React.createElement() syntax throughout all 
   - [x] Update complex state and event handling in JSX format
   - [x] Test agent list functionality thoroughly
 
-- [ ] Phase 4: Convert Dialog Components to JSX (AC1)
-  - [ ] Convert SpawnDialog.js → SpawnDialog.tsx with JSX syntax
-  - [ ] Convert TerminationDialog.js → TerminationDialog.tsx with JSX syntax
-  - [ ] Handle complex async operations in JSX format
-  - [ ] Update modal and dialog state management
-  - [ ] Test all dialog interactions and edge cases
+- [x] Phase 4: Convert Dialog Components to JSX (AC1)
+  - [x] Convert SpawnDialog.js → SpawnDialog.tsx with JSX syntax
+  - [x] Convert TerminationDialog.js → TerminationDialog.tsx with JSX syntax
+  - [x] Handle complex async operations in JSX format
+  - [x] Update modal and dialog state management
+  - [x] Test all dialog interactions and edge cases
 
 - [ ] Phase 5: Convert Remaining UI Components to JSX (AC1)
   - [ ] Convert DetailView.js → DetailView.tsx with JSX syntax
