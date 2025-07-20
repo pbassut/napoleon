@@ -1,11 +1,14 @@
 const React = require('react');
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useRef, useMemo } = React;
 
 const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput }) => {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { isFocused } = useFocus({ autoFocus: isOpen });
+  
+  // Memoize useFocus options to prevent infinite re-renders
+  const focusOptions = useMemo(() => ({ autoFocus: isOpen }), [isOpen]);
+  const { isFocused } = useFocus(focusOptions);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -16,6 +19,9 @@ const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useF
     }
   }, [isOpen]);
 
+  // Memoize useInput options to prevent infinite re-renders
+  const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
+  
   // Handle keyboard input
   useInput((input, key) => {
     if (!isOpen || isLoading) return;
@@ -31,7 +37,7 @@ const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useF
       handleSubmit();
       return;
     }
-  });
+  }, inputOptions);
 
   const handleSubmit = async () => {
     const prompt = text.trim();
