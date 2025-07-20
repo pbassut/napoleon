@@ -40,8 +40,8 @@ const App = ({ agentManager }) => {
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
-    // Don't process global shortcuts when dialog is open
-    if (isSpawnDialogOpen || isTerminationDialogOpen) return;
+    // Don't process global shortcuts when dialog or detail view is open
+    if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen) return;
 
     // Quit with 'q'
     if (input === 'q') {
@@ -60,8 +60,7 @@ const App = ({ agentManager }) => {
 
     // View agent details with 'enter' or 'i'
     if ((key.return || input === 'i') && selectedAgent) {
-      // TODO: Implement agent detail view
-      console.log('View details for agent:', selectedAgent.id);
+      setIsDetailViewOpen(true);
     }
   });
 
