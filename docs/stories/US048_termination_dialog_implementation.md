@@ -228,7 +228,7 @@ Example layout:
 _To be completed by Dev Agent during implementation_
 
 ### Agent Model Used
-_[Model name and version]_
+claude-opus-4-20250514
 
 ### Debug Log References
 _[Links to debug logs]_
