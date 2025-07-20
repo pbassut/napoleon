@@ -1,7 +1,9 @@
 const React = require('react');
 const { useState, useEffect } = React;
+const { Box, Text, useInput, useFocus } = require('ink');
+const TextInput = require('ink-text-input').default;
 
-const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput }) => {
+const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -129,29 +131,5 @@ const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useF
   );
 };
 
-const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
-  const [inkComponents, setInkComponents] = useState(null);
-  const [TextInput, setTextInput] = useState(null);
-
-  useEffect(() => {
-    Promise.all([
-      import('ink'),
-      import('ink-text-input')
-    ]).then(([ink, textInput]) => {
-      setInkComponents(ink);
-      setTextInput(() => textInput.default || textInput);
-    });
-  }, []);
-
-  if (!inkComponents || !TextInput) {
-    return null;
-  }
-
-  const { Box, Text, useInput, useFocus } = inkComponents;
-
-  return React.createElement(SpawnDialogInner, {
-    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput
-  });
-};
 
 module.exports = { SpawnDialog };
