@@ -4,7 +4,7 @@ module.exports = async function createApp() {
   const React = await import('react');
   const inkModule = await import('ink');
   const { Box, useApp, Text, useInput } = inkModule;
-  const { useState } = React;
+  const { useState } = React.default || React;
 
   // Import hooks and components
   const { useAgentManager } = require('./hooks/useAgentManager');
@@ -90,7 +90,8 @@ module.exports = async function createApp() {
     };
 
     // Import components dynamically
-    const ErrorBoundary = require('./components/Common/ErrorBoundary').default;
+    const createErrorBoundary = require('./components/Common/ErrorBoundaryWrapper');
+    const ErrorBoundary = createErrorBoundary(React.default || React, Box, Text);
     const { Header } = require('./components/Layout/Header');
     const { MainContent } = require('./components/Layout/MainContent');
     const { Footer } = require('./components/Layout/Footer');
