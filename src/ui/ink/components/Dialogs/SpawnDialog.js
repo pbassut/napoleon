@@ -1,9 +1,7 @@
 const React = require('react');
 const { useState, useEffect } = React;
-const { Box, Text, useInput, useFocus } = require('ink');
-const TextInput = require('ink-text-input').default;
 
-const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
+const SpawnDialogInner = ({ isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput }) => {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -131,5 +129,47 @@ const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
   );
 };
 
+// Pre-load imports immediately when module is loaded
+let cachedComponents = null;
+const loadPromise = Promise.all([
+  import('ink'),
+  import('ink-text-input')
+]).then(([ink, textInput]) => {
+  cachedComponents = {
+    ...ink,
+    TextInput: textInput.default || textInput
+  };
+  return cachedComponents;
+}).catch(() => {
+  cachedComponents = {}; // Set to empty object on error
+});
+
+const SpawnDialog = ({ isOpen, onClose, onSubmit }) => {
+  const [components, setComponents] = useState(cachedComponents);
+
+  useEffect(() => {
+    if (!cachedComponents) {
+      loadPromise.then((comps) => {
+        setComponents(comps);
+      });
+    }
+  }, []);
+
+  // Don't render anything when closed
+  if (!isOpen) {
+    return null;
+  }
+
+  // If components not loaded yet, return null to prevent flashing
+  if (!components) {
+    return null;
+  }
+
+  const { Box, Text, useInput, useFocus } = components;
+
+  return React.createElement(SpawnDialogInner, {
+    isOpen, onClose, onSubmit, Box, Text, useInput, useFocus, TextInput: components.TextInput
+  });
+};
 
 module.exports = { SpawnDialog };
