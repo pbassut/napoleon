@@ -94,6 +94,7 @@ const App = ({ agentManager }) => {
   const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
   const { TerminationDialog } = require('./components/Dialogs/TerminationDialog');
   const { AgentList } = require('./components/AgentList');
+  const { DetailView } = require('./components/DetailView');
 
   return React.createElement(
     ErrorBoundary,
