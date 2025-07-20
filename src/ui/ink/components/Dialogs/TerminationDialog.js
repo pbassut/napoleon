@@ -1,61 +1,19 @@
 const React = require('react');
 const { Box, Text } = require('ink');
+
 const { useState, useEffect } = React;
 const { useInput, useFocus } = require('ink');
 
-const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
+const TerminationDialog = ({
+  isOpen, agent, onConfirm, onCancel,
+}) => {
   const [selectedOption, setSelectedOption] = useState('no');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Auto-focus when dialog opens
   const { isFocused } = useFocus({ autoFocus: isOpen });
-  
-  // Reset state when dialog opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      setSelectedOption('no');
-      setError(null);
-      setIsLoading(false);
-    }
-  }, [isOpen]);
-  
-  // Handle keyboard input
-  useInput((input, key) => {
-    if (!isOpen || isLoading) return;
-    
-    // Cancel on Escape
-    if (key.escape) {
-      onCancel();
-      return;
-    }
-    
-    // Quick shortcuts
-    if (input === 'y') {
-      handleConfirm();
-      return;
-    }
-    if (input === 'n') {
-      onCancel();
-      return;
-    }
-    
-    // Arrow navigation
-    if (key.leftArrow || key.rightArrow || key.tab) {
-      setSelectedOption(current => current === 'no' ? 'yes' : 'no');
-      return;
-    }
-    
-    // Enter confirms current selection
-    if (key.return) {
-      if (selectedOption === 'yes') {
-        handleConfirm();
-      } else {
-        onCancel();
-      }
-    }
-  }, { isActive: isOpen && isFocused });
-  
+
   const handleConfirm = async () => {
     setIsLoading(true);
     setError(null);
@@ -66,9 +24,54 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
       setIsLoading(false);
     }
   };
-  
+
+  // Reset state when dialog opens/closes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedOption('no');
+      setError(null);
+      setIsLoading(false);
+    }
+  }, [isOpen]);
+
+  // Handle keyboard input
+  useInput((input, key) => {
+    if (!isOpen || isLoading) return;
+
+    // Cancel on Escape
+    if (key.escape) {
+      onCancel();
+      return;
+    }
+
+    // Quick shortcuts
+    if (input === 'y') {
+      handleConfirm();
+      return;
+    }
+    if (input === 'n') {
+      onCancel();
+      return;
+    }
+
+    // Arrow navigation
+    if (key.leftArrow || key.rightArrow || key.tab) {
+      setSelectedOption((current) => (current === 'no' ? 'yes' : 'no'));
+      return;
+    }
+
+    // Enter confirms current selection
+    if (key.return) {
+      if (selectedOption === 'yes') {
+        handleConfirm();
+      } else {
+        onCancel();
+      }
+    }
+  }, { isActive: isOpen && isFocused });
+
   if (!isOpen || !agent) return null;
-  
+
   // Calculate runtime
   const getRuntime = () => {
     if (!agent.startTime) return 'Unknown';
@@ -80,7 +83,7 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
     }
     return `${seconds}s`;
   };
-  
+
   return React.createElement(
     Box,
     {
@@ -109,10 +112,10 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
         React.createElement(
           Text,
           { bold: true, color: 'red' },
-          'Terminate Agent?'
-        )
+          'Terminate Agent?',
+        ),
       ),
-      
+
       // Agent Info
       React.createElement(
         Box,
@@ -121,15 +124,15 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
           Text,
           null,
           'Agent: ',
-          React.createElement(Text, { bold: true, color: 'cyan' }, agent.name || agent.id)
+          React.createElement(Text, { bold: true, color: 'cyan' }, agent.name || agent.id),
         ),
         React.createElement(
           Text,
           { dimColor: true },
-          `Status: ${agent.status || 'Unknown'} (${getRuntime()})`
-        )
+          `Status: ${agent.status || 'Unknown'} (${getRuntime()})`,
+        ),
       ),
-      
+
       // Warning Message
       React.createElement(
         Box,
@@ -137,10 +140,10 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
         React.createElement(
           Text,
           { color: 'yellow' },
-          '⚠️  This will stop the agent and end its session immediately.'
-        )
+          '⚠️  This will stop the agent and end its session immediately.',
+        ),
       ),
-      
+
       // Error Message
       error && React.createElement(
         Box,
@@ -148,10 +151,10 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
         React.createElement(
           Text,
           { color: 'red' },
-          `Error: ${error}`
-        )
+          `Error: ${error}`,
+        ),
       ),
-      
+
       // Loading State
       isLoading && React.createElement(
         Box,
@@ -159,10 +162,10 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
         React.createElement(
           Text,
           { color: 'cyan' },
-          'Terminating agent...'
-        )
+          'Terminating agent...',
+        ),
       ),
-      
+
       // Buttons
       !isLoading && React.createElement(
         Box,
@@ -177,8 +180,8 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
           React.createElement(
             Text,
             { color: selectedOption === 'no' ? 'green' : 'gray' },
-            '[ No ]'
-          )
+            '[ No ]',
+          ),
         ),
         React.createElement(
           Box,
@@ -190,11 +193,11 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
           React.createElement(
             Text,
             { color: selectedOption === 'yes' ? 'red' : 'gray' },
-            '[ Yes ]'
-          )
-        )
+            '[ Yes ]',
+          ),
+        ),
       ),
-      
+
       // Instructions
       !isLoading && React.createElement(
         Box,
@@ -202,10 +205,10 @@ const TerminationDialog = ({ isOpen, agent, onConfirm, onCancel }) => {
         React.createElement(
           Text,
           { dimColor: true },
-          'Press y/n or Enter to confirm'
-        )
-      )
-    )
+          'Press y/n or Enter to confirm',
+        ),
+      ),
+    ),
   );
 };
 
