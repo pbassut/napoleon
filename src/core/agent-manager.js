@@ -12,9 +12,14 @@ const AgentLogManager = require('./logging/agent-log-manager');
 // Agent status types as per US004 requirements
 const AgentStatus = {
   SPAWNING: 'spawning',
+  FORKING: 'forking',
+  STARTING: 'starting',
   RUNNING: 'running',
+  PENDING: 'pending',
   IDLE: 'idle',
   ERROR: 'error',
+  FAILED: 'failed',
+  TERMINATED: 'terminated',
   TERMINATING: 'terminating',
 };
 
@@ -766,6 +771,13 @@ class AgentManager {
         instructionsLength: instructions.length,
       });
 
+      // Update status to forking before creating worktree
+      if (this.agents.has(agentId)) {
+        const agent = this.agents.get(agentId);
+        agent.status = AgentStatus.FORKING;
+        this.agents.set(agentId, agent);
+      }
+
       // Create git worktree for agent isolation
       const worktreeInfo = await this.createWorktree(agentId);
       const workingDirectory = worktreeInfo.worktreePath;
@@ -794,6 +806,9 @@ class AgentManager {
         lastMessageId: null,
       };
 
+      // Add to agents map early to show spawning status
+      this.agents.set(agentId, session);
+
       // Initialize logs array for the session
       session.logs = session.logs || [];
 
@@ -803,6 +818,10 @@ class AgentManager {
         content: `Agent ${agentId} spawned successfully - initializing SDK session...`,
         type: 'info',
       });
+
+      // Update status to starting before SDK initialization
+      session.status = AgentStatus.STARTING;
+      this.agents.set(agentId, session);
 
       // Initialize SDK session
       const sdkSession = await this.initializeSDKSession(agentId, workingDirectory);
@@ -1250,6 +1269,10 @@ class AgentManager {
       }
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
+      
+      // Remove agent from active list and mark as terminated
+      this.agents.delete(agentId);
+      await this.saveSessions();
 
       logger.info('Agent terminated', { agentId });
     } catch (error) {

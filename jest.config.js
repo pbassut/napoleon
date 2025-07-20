@@ -7,8 +7,10 @@ module.exports = {
   testMatch: [
     '**/__tests__/**/*.js',
     '**/__tests__/**/*.ts',
+    '**/__tests__/**/*.tsx',
     '**/?(*.)+(spec|test).js',
-    '**/?(*.)+(spec|test).ts'
+    '**/?(*.)+(spec|test).ts',
+    '**/?(*.)+(spec|test).tsx'
   ],
   testPathIgnorePatterns: [
     '/node_modules/',

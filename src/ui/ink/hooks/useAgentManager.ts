@@ -4,9 +4,14 @@ import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
 // Agent status types from AgentManager
 const AgentStatus = {
   SPAWNING: 'spawning',
+  FORKING: 'forking',
+  STARTING: 'starting',
   RUNNING: 'running',
+  PENDING: 'pending',
   IDLE: 'idle',
   ERROR: 'error',
+  FAILED: 'failed',
+  TERMINATED: 'terminated',
   TERMINATING: 'terminating',
 };
 
