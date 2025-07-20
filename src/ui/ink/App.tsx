@@ -84,14 +84,14 @@ const App = ({ agentManager }) => {
   };
 
   // Import components dynamically
-  const ErrorBoundary = require('./components/Common/ErrorBoundary').default;
+  const ErrorBoundary = require('./components/Common/ErrorBoundary.tsx').default;
   const { Header } = require('./components/Layout/Header.tsx');
   const { MainContent } = require('./components/Layout/MainContent.tsx');
   const { Footer } = require('./components/Layout/Footer.tsx');
   const { SpawnDialog } = require('./components/Dialogs/SpawnDialog.tsx');
   const { TerminationDialog } = require('./components/Dialogs/TerminationDialog.tsx');
   const AgentList = require('./components/AgentList/AgentList.tsx').default;
-  const { DetailView } = require('./components/DetailView');
+  const { DetailView } = require('./components/DetailView/DetailView.tsx');
 
   // If detail view is open, show only the detail view
   if (isDetailViewOpen && selectedAgent) {

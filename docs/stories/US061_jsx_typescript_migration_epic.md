@@ -81,11 +81,11 @@ The Napoleon project currently uses React.createElement() syntax throughout all 
   - [x] Update modal and dialog state management
   - [x] Test all dialog interactions and edge cases
 
-- [ ] Phase 5: Convert Remaining UI Components to JSX (AC1)
-  - [ ] Convert DetailView.js → DetailView.tsx with JSX syntax
-  - [ ] Convert ErrorBoundary.js → ErrorBoundary.tsx with JSX syntax
-  - [ ] Update error handling patterns in JSX
-  - [ ] Test error boundary functionality
+- [x] Phase 5: Convert Remaining UI Components to JSX (AC1)
+  - [x] Convert DetailView.js → DetailView.tsx with JSX syntax
+  - [x] Convert ErrorBoundary.js → ErrorBoundary.tsx with JSX syntax
+  - [x] Update error handling patterns in JSX
+  - [x] Test error boundary functionality
 
 - [ ] Phase 6: Convert Hooks and UI Utilities to TypeScript (AC2)
   - [ ] Convert useAgentManager.js → useAgentManager.ts with proper types
