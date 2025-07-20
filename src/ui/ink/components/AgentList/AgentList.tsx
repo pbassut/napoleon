@@ -21,7 +21,8 @@ const AgentList: React.FC<AgentListProps> = ({
   const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  const visibleItems = Math.max(1, height - 2);
+  // Reserve 4 lines for header row, borders, and potential scroll indicators
+  const visibleItems = Math.max(1, height - 4);
 
   const visibleAgents = useMemo(() => agents.slice(scrollOffset, scrollOffset + visibleItems), [agents, scrollOffset, visibleItems]);
 
@@ -37,6 +38,7 @@ const AgentList: React.FC<AgentListProps> = ({
     adjustScrollOffset(selectedIndex);
   }, [selectedIndex, adjustScrollOffset]);
 
+  // Handle keyboard input for future features
   useInput(useCallback((input: string, key: any) => {
     if (!isFocused) return;
 
@@ -48,24 +50,48 @@ const AgentList: React.FC<AgentListProps> = ({
       const newIndex = Math.min(agents.length - 1, selectedIndex + 1);
       onSelectionChange(newIndex);
       adjustScrollOffset(newIndex);
+    } else if (input === '/') {
+      // Future: Search functionality
+      // For now, we could show a message
+    } else if (input === 'f') {
+      // Future: Follow mode
+      // For now, we could show a message
     }
   }, [isFocused, selectedIndex, agents.length, onSelectionChange, adjustScrollOffset]), { isActive: isFocused });
 
+  // Empty state
   if (agents.length === 0) {
     return (
       <Box
         flexDirection="column"
         height={height}
-        borderStyle="single"
+        borderStyle="round"
         borderColor="gray"
+        paddingX={2}
       >
+        {/* Column headers */}
+        <Box paddingY={1} paddingX={1}>
+          <Box width={2}><Text> </Text></Box>
+          <Box width={50}><Text bold>Agent</Text></Box>
+          <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
+          <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
+        </Box>
+        
+        {/* Separator line */}
+        <Box width="100%" paddingX={1}>
+          <Text>{'─'.repeat(80)}</Text>
+        </Box>
+
+        {/* Empty state message */}
         <Box
-          paddingX={1}
-          paddingY={1}
+          flexGrow={1}
           justifyContent="center"
           alignItems="center"
         >
-          <Text color="gray">No agents running</Text>
+          <Box flexDirection="column" alignItems="center">
+            <Text color="gray">No agents running</Text>
+            <Text color="gray">Press 'n' to spawn a new agent</Text>
+          </Box>
         </Box>
       </Box>
     );
@@ -79,31 +105,48 @@ const AgentList: React.FC<AgentListProps> = ({
     <Box
       flexDirection="column"
       height={height}
-      borderStyle="single"
+      borderStyle="round"
       borderColor={isFocused ? 'cyan' : 'gray'}
     >
+      {/* Column headers */}
+      <Box paddingY={1} paddingX={2}>
+        <Box width={2}><Text> </Text></Box>
+        <Box width={50}><Text bold>Agent</Text></Box>
+        <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
+        <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
+      </Box>
+      
+      {/* Separator line */}
+      <Box width="100%" paddingX={2}>
+        <Text>{'─'.repeat(80)}</Text>
+      </Box>
+
+      {/* Scroll indicator - top */}
       {showScrollIndicators && hasMoreAbove && (
-        <Box paddingX={1}>
-          <Text color="gray">{`▲ ${scrollOffset} more above`}</Text>
+        <Box paddingX={2}>
+          <Text color="gray" dimColor>{`↑ ${scrollOffset} more above ↑`}</Text>
         </Box>
       )}
 
-      <Box flexDirection="column" flexGrow={1}>
+      {/* Agent list with spacing */}
+      <Box flexDirection="column" flexGrow={1} paddingTop={1}>
         {visibleAgents.map((agent, index) => (
-          <AgentItem
-            key={agent.id}
-            agent={agent}
-            isSelected={scrollOffset + index === selectedIndex}
-            isFocused={isFocused}
-            index={scrollOffset + index}
-          />
+          <Box key={agent.id} paddingY={0}>
+            <AgentItem
+              agent={agent}
+              isSelected={scrollOffset + index === selectedIndex}
+              isFocused={isFocused}
+              index={scrollOffset + index}
+            />
+          </Box>
         ))}
       </Box>
 
+      {/* Scroll indicator - bottom */}
       {showScrollIndicators && hasMoreBelow && (
-        <Box paddingX={1}>
-          <Text color="gray">
-            {`▼ ${agents.length - scrollOffset - visibleItems} more below`}
+        <Box paddingX={2} paddingBottom={1}>
+          <Text color="gray" dimColor>
+            {`↓ ${agents.length - scrollOffset - visibleItems} more below ↓`}
           </Text>
         </Box>
       )}

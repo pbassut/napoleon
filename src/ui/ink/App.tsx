@@ -126,11 +126,6 @@ const App = ({ agentManager }) => {
             <Box padding={1}>
               <Text color="red">Error: {error.message}</Text>
             </Box>
-          ) : agents.length === 0 ? (
-            <Box padding={1}>
-              <Text color="gray">No agents running</Text>
-              <Text color="gray">{"\nPress 'n' to spawn a new agent"}</Text>
-            </Box>
           ) : (
             <Box flexGrow={1} flexDirection="column">
               <AgentList
