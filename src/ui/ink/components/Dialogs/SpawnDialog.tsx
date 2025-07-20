@@ -40,10 +40,17 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   useInput((input: string, key: any) => {
     if (!isOpen || isLoading) return;
 
-    // Log key presses for debugging
-    if (key.return) {
-      logger.debug('SpawnDialog: Enter key pressed', { shift: key.shift, ctrl: key.ctrl });
-    }
+    // Log all inputs for debugging
+    logger.debug('SpawnDialog: Input received', { 
+      input, 
+      inputLength: input?.length,
+      key: {
+        return: key.return,
+        shift: key.shift,
+        ctrl: key.ctrl,
+        escape: key.escape
+      }
+    });
 
     // Handle Escape to close
     if (key.escape) {
@@ -52,15 +59,15 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       return;
     }
 
-    // Handle text input
-    if (!key.ctrl && !key.meta && input.length === 1) {
-      setText(prev => prev + input);
-      return;
-    }
-
-    // Handle backspace
-    if (key.backspace || key.delete) {
-      setText(prev => prev.slice(0, -1));
+    // Handle Enter to submit (check this BEFORE text input)
+    if (key.return && !key.shift) {
+      logger.debug('SpawnDialog: Enter pressed, submitting', { 
+        text: text.trim(), 
+        textLength: text.length,
+        isLoading,
+        isOpen
+      });
+      handleSubmit();
       return;
     }
 
@@ -71,10 +78,15 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       return;
     }
 
-    // Handle Enter to submit
-    if (key.return && !key.shift) {
-      logger.debug('SpawnDialog: Enter pressed, submitting', { text: text.trim() });
-      handleSubmit();
+    // Handle text input
+    if (!key.ctrl && !key.meta && !key.return && input && input.length === 1) {
+      setText(prev => prev + input);
+      return;
+    }
+
+    // Handle backspace
+    if (key.backspace || key.delete) {
+      setText(prev => prev.slice(0, -1));
       return;
     }
   }, inputOptions);
