@@ -100,8 +100,24 @@ module.exports = async function createApp() {
     // Temporarily disable dialogs to fix startup
     const SpawnDialog = () => null;
     const TerminationDialog = () => null;
-    const { AgentList } = require('./components/AgentList');
-    const { DetailView } = require('./components/DetailView');
+    // Use a simplified AgentList to avoid ESM issues
+    const SimpleAgentList = ({ agents, selectedIndex, onSelectionChange }) => {
+      if (agents.length === 0) {
+        return React.createElement(Text, { color: 'gray' }, 'No agents running');
+      }
+      
+      return React.createElement(Box, { flexDirection: 'column' }, 
+        agents.map((agent, index) => 
+          React.createElement(Text, { 
+            key: agent.id,
+            color: index === selectedIndex ? 'cyan' : 'white',
+            backgroundColor: index === selectedIndex ? 'blue' : undefined
+          }, `${index === selectedIndex ? '> ' : '  '}${agent.name} (${agent.status})`)
+        )
+      );
+    };
+    // Temporarily disable DetailView to fix startup
+    const DetailView = () => null;
 
     // If detail view is open, show only the detail view
     if (isDetailViewOpen && selectedAgent) {
@@ -144,7 +160,7 @@ module.exports = async function createApp() {
                 : React.createElement(
                   Box,
                   { flexGrow: 1, flexDirection: 'column' },
-                  React.createElement(AgentList, {
+                  React.createElement(SimpleAgentList, {
                     agents,
                     selectedIndex,
                     onSelectionChange: handleSelectionChange,
