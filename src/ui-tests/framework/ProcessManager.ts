@@ -10,7 +10,7 @@ export class ProcessManager {
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
     const envString = env ? Object.entries(env).map(([k, v]) => `${k}=${v}`).join(' ') : '';
-    const command = `${envString} npm run start`;
+    const command = `${envString} node ./bin/napoleon.js start`;
     
     const { stdout } = await execAsync(`desktop-commander start_process "${command}"`);
     const pid = parseInt(stdout.trim(), 10);
