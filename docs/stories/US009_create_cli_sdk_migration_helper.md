@@ -64,11 +64,14 @@ So that I can migrate my sessions and configuration without manual steps.
 - [ ] Cross-platform file operations tested
 - [ ] No dependencies on Napoleon code
 
-## Status: ✅ Done
+## Status: ❌ Closed - Won't Do
 
 **Priority**: MEDIUM  
 **Approved by**: Scrum Master Bob  
 **Date**: 2025-07-18
+**Closed Date**: 2025-07-20
+**Closed by**: Scrum Master Bob
+**Reason**: Migration helper no longer needed for project scope
 
 ## Dev Agent Record
 
