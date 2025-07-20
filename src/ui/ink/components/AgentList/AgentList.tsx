@@ -73,7 +73,7 @@ const AgentList: React.FC<AgentListProps> = ({
         
         {/* Separator line */}
         <Box width="100%" paddingX={1}>
-          <Text>{'─'.repeat(80)}</Text>
+          <Text>{'─'.repeat(78)}</Text>
         </Box>
 
         {/* Empty state message */}
@@ -110,7 +110,7 @@ const AgentList: React.FC<AgentListProps> = ({
       
       {/* Separator line */}
       <Box width="100%" paddingX={1}>
-        <Text>{'─'.repeat(80)}</Text>
+        <Text>{'─'.repeat(78)}</Text>
       </Box>
 
       {/* Scroll indicator - top */}
