@@ -1,9 +1,10 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
+// Import package.json at module level for better performance and type safety
+const { version } = require('../../../../../package.json');
+
 export const Header: React.FC = () => {
-  const packageJson = require('../../../../../package.json');
-  const version = packageJson.version;
   
   return (
     <Box 

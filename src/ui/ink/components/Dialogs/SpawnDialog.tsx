@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput } from 'ink';
+import React, { useState, useEffect, useRef } from 'react';
+import { Box, Text, useInput, useFocus } from 'ink';
 import TextInput from 'ink-text-input';
 
 interface SpawnDialogProps {
@@ -13,16 +13,15 @@ export const SpawnDialog: React.FC<SpawnDialogProps> = ({
   onClose,
   onSubmit
 }) => {
-  const [lines, setLines] = useState<string[]>(['']);
-  const [currentLineIndex, setCurrentLineIndex] = useState(0);
+  const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { isFocused } = useFocus({ autoFocus: isOpen });
 
   // Reset state when dialog opens
   useEffect(() => {
     if (isOpen) {
-      setLines(['']);
-      setCurrentLineIndex(0);
+      setText('');
       setError('');
       setIsLoading(false);
     }
@@ -43,26 +42,10 @@ export const SpawnDialog: React.FC<SpawnDialogProps> = ({
       handleSubmit();
       return;
     }
-
-    // Handle Enter for new line
-    if (key.return && !key.ctrl) {
-      const newLines = [...lines];
-      newLines.splice(currentLineIndex + 1, 0, '');
-      setLines(newLines);
-      setCurrentLineIndex(currentLineIndex + 1);
-      return;
-    }
-
-    // Handle arrow keys for navigation
-    if (key.upArrow && currentLineIndex > 0) {
-      setCurrentLineIndex(currentLineIndex - 1);
-    } else if (key.downArrow && currentLineIndex < lines.length - 1) {
-      setCurrentLineIndex(currentLineIndex + 1);
-    }
   });
 
   const handleSubmit = async () => {
-    const prompt = lines.join('\n').trim();
+    const prompt = text.trim();
     
     if (!prompt) {
       setError('Please enter instructions for the agent');
@@ -81,95 +64,97 @@ export const SpawnDialog: React.FC<SpawnDialogProps> = ({
     }
   };
 
-  const handleLineChange = (value: string) => {
-    const newLines = [...lines];
-    newLines[currentLineIndex] = value;
-    setLines(newLines);
-  };
-
   if (!isOpen) return null;
 
+  // Calculate dimensions
+  const lines = text.split('\n');
+  const lineCount = lines.length;
+  const charCount = text.length;
+
   return (
-    <Box
-      position="absolute"
-      width="80%"
-      height="60%"
-      left="10%"
-      top="20%"
-      borderStyle="single"
-      borderColor="blue"
-      flexDirection="column"
-      paddingX={1}
-    >
-      {/* Modal overlay background */}
+    <>
+      {/* Modal backdrop */}
       <Box
         position="absolute"
         width="100%"
         height="100%"
-        left={0}
-        top={0}
-      />
-
-      {/* Header */}
-      <Box borderStyle="single" borderColor="green" marginBottom={1}>
-        <Text color="white" bold> Spawn New Agent </Text>
-      </Box>
-
-      {/* Instructions */}
-      <Box marginBottom={1}>
-        <Text color="cyan">Enter instructions for the Claude agent:</Text>
-        <Text color="gray" dimColor>{'\n'}• Be specific about the task you want the agent to perform</Text>
-        <Text color="gray" dimColor>• Include any relevant context or constraints</Text>
-        <Text color="gray" dimColor>• Agent will work in isolated git worktree</Text>
-      </Box>
-
-      {/* Multi-line text input area */}
-      <Box 
-        borderStyle="single" 
-        borderColor={error ? 'red' : 'gray'}
-        flexGrow={1}
-        flexDirection="column"
-        paddingX={1}
+        display={isOpen ? 'flex' : 'none'}
       >
-        <Text color="gray" dimColor> Agent Instructions </Text>
-        {lines.map((line, index) => (
-          <Box key={index}>
-            <Text color={index === currentLineIndex ? 'green' : 'white'}>
-              {index === currentLineIndex ? '>' : ' '}
-            </Text>
-            {index === currentLineIndex ? (
-              <TextInput
-                value={line}
-                onChange={handleLineChange}
-                placeholder="Type your instructions here..."
-              />
-            ) : (
-              <Text>{line || ' '}</Text>
-            )}
+        {/* Modal container */}
+        <Box
+          width={70}
+          height={18}
+          borderStyle="single"
+          borderColor="green"
+          flexDirection="column"
+          paddingX={1}
+          marginLeft="auto"
+          marginRight="auto"
+          marginTop="auto"
+          marginBottom="auto"
+        >
+          {/* Header */}
+          <Box marginBottom={1}>
+            <Text color="white" bold> Spawn New Agent </Text>
           </Box>
-        ))}
-      </Box>
 
-      {/* Error display */}
-      {error && (
-        <Box marginTop={1}>
-          <Text color="red">Error: {error}</Text>
+          {/* Instructions */}
+          <Box marginBottom={1} flexDirection="column">
+            <Text color="cyan">Enter instructions for the Claude agent:</Text>
+            <Text> </Text>
+            <Text color="gray">• Be specific about the task you want the agent to perform</Text>
+            <Text color="gray">• Include any relevant context or constraints</Text>
+            <Text color="gray">• Agent will work in isolated git worktree</Text>
+          </Box>
+
+          {/* Text input area */}
+          <Box 
+            borderStyle="single" 
+            borderColor={error ? 'red' : (isFocused ? 'green' : 'gray')}
+            flexGrow={1}
+            paddingX={1}
+            marginBottom={1}
+          >
+            <Box flexDirection="column" width="100%">
+              <Box marginBottom={1}>
+                <Text color="gray"> Agent Instructions </Text>
+              </Box>
+              <TextInput
+                value={text}
+                onChange={setText}
+                placeholder="Type your instructions here..."
+                focus={isFocused}
+              />
+              <Box marginTop={1}>
+                <Text color="gray" dimColor>
+                  {lineCount} line{lineCount !== 1 ? 's' : ''}, {charCount} character{charCount !== 1 ? 's' : ''}
+                </Text>
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Error display */}
+          {error && (
+            <Box>
+              <Text color="red">Error: {error}</Text>
+            </Box>
+          )}
+
+          {/* Loading state */}
+          {isLoading && (
+            <Box>
+              <Text color="yellow">Creating agent...</Text>
+            </Box>
+          )}
+
+          {/* Footer with shortcuts */}
+          <Box justifyContent="center">
+            <Text color="yellow" bold>
+              Ctrl+Enter to spawn | Enter for new line | Escape to cancel
+            </Text>
+          </Box>
         </Box>
-      )}
-
-      {/* Loading state */}
-      {isLoading && (
-        <Box marginTop={1}>
-          <Text color="yellow">Creating agent...</Text>
-        </Box>
-      )}
-
-      {/* Footer with shortcuts */}
-      <Box marginTop={1} justifyContent="center">
-        <Text color="yellow" bold>
-          Ctrl+Enter to spawn | Enter for new line | Escape to cancel
-        </Text>
       </Box>
-    </Box>
+    </>
   );
 };

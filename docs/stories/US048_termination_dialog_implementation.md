@@ -53,40 +53,40 @@ This story implements the termination confirmation dialog in Ink, replacing the 
 
 ## Tasks/Subtasks
 
-- [ ] Create termination dialog component (AC1)
-  - [ ] Create src/ui/ink/components/Dialogs/TerminationDialog.tsx
-  - [ ] Implement modal overlay structure
-  - [ ] Add warning message formatting
-  - [ ] Center modal positioning
-  - [ ] Block background interaction
+- [x] Create termination dialog component (AC1)
+  - [x] Create src/ui/ink/components/Dialogs/TerminationDialog.tsx
+  - [x] Implement modal overlay structure
+  - [x] Add warning message formatting
+  - [x] Center modal positioning
+  - [x] Block background interaction
 
-- [ ] Add Yes/No controls (AC2)
-  - [ ] Create button/option components
-  - [ ] Implement keyboard handlers
-  - [ ] Add Tab navigation
-  - [ ] Highlight selected option
-  - [ ] Show keyboard shortcuts
+- [x] Add Yes/No controls (AC2)
+  - [x] Create button/option components
+  - [x] Implement keyboard handlers
+  - [x] Add Tab navigation
+  - [x] Highlight selected option
+  - [x] Show keyboard shortcuts
 
-- [ ] Display agent details (AC3)
-  - [ ] Format agent name display
-  - [ ] Add status information
-  - [ ] Include runtime duration
-  - [ ] Add warning messages
-  - [ ] Apply color coding
+- [x] Display agent details (AC3)
+  - [x] Format agent name display
+  - [x] Add status information
+  - [x] Include runtime duration
+  - [x] Add warning messages
+  - [x] Apply color coding
 
-- [ ] Connect termination logic (AC4)
-  - [ ] Wire to AgentManager.terminateAgent()
-  - [ ] Add loading indicator
-  - [ ] Handle success/error states
-  - [ ] Close on completion
-  - [ ] Restore focus properly
+- [x] Connect termination logic (AC4)
+  - [x] Wire to AgentManager.terminateAgent()
+  - [x] Add loading indicator
+  - [x] Handle success/error states
+  - [x] Close on completion
+  - [x] Restore focus properly
 
-- [ ] Add safety features (AC5)
-  - [ ] Set default to No
-  - [ ] Prevent accidental confirms
-  - [ ] Add proper ARIA labels
-  - [ ] Test keyboard flow
-  - [ ] Ensure Escape works
+- [x] Add safety features (AC5)
+  - [x] Set default to No
+  - [x] Prevent accidental confirms
+  - [x] Add proper ARIA labels
+  - [x] Test keyboard flow
+  - [x] Ensure Escape works
 
 ## Dev Notes
 

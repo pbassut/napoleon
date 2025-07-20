@@ -103,6 +103,14 @@ These stories migrate the terminal UI from Blessed to Ink for a modern React-bas
 | US048 | Termination Dialog Implementation | Confirmation dialog for agent termination | HIGH | ✅ **Approved** |
 | US049 | Detail View Implementation | Real-time log viewer with search functionality | HIGH | ✅ **Approved** |
 
+### Technical Debt Stories
+
+| Story | Title | Description | Priority | Status |
+|-------|-------|-------------|----------|---------|
+| US050 | TypeScript ESLint Configuration | Configure ESLint to properly parse TypeScript and React files | MEDIUM | 📝 **Draft** |
+| US051 | TypeScript Build Configuration | Fix TypeScript module resolution and build configuration | MEDIUM | 📝 **Draft** |
+| US052 | Test Suite Component Relocation | Update test imports for relocated UI components | LOW | 📝 **Draft** |
+
 ## Development Notes
 
 1. **Phase 1 Must Complete First**: The Napoleon SDK integration stories (US001-US010) must be completed before Phase 2, as they establish the new foundation.
@@ -125,10 +133,12 @@ These stories migrate the terminal UI from Blessed to Ink for a modern React-bas
 ## Approval Status Summary
 
 - **✅ 46 stories approved**: US001-US028, US032-US049 approved by Scrum Master Bob
+- **📝 3 technical debt stories created**: US050-US052 address technical debt from US043 implementation
 - **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues  
 - **7 stories already completed**: US007, US008, US013, US032-US035
 - **4 epic stories integrated**: US032-US035 represent completed Napoleon SDK Migration Epic (formerly 1.1-1.4)
 - **39 stories ready for implementation**: US001-US006, US009-US012, US014-US028, US036-US049
+- **3 technical debt stories ready**: US050-US052 improve TypeScript/ESLint configuration and test suite
 - **2 critical bug fixes needed**: US029-US030 address modal close and input duplication bugs
 - **New Epic 6 (Logging)**: US036-US042 provide comprehensive agent logging infrastructure
 - **New Epic 7 (Blessed to Ink)**: US043-US049 migrate UI to modern React architecture

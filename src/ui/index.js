@@ -10,10 +10,21 @@ if (uiMode === 'ink') {
   try {
     // For Ink, we need to create a wrapper class that matches the expected interface
     class InkUIWrapper {
+      constructor() {
+        this.agentManager = null;
+      }
+
       async initialize() {
         logger.info('Initializing Ink UI');
-        // Use dynamic import for ESM module
-        await import('./ink/index.js');
+
+        // Initialize AgentManager
+        const AgentManager = require('../core/agent-manager');
+        this.agentManager = new AgentManager();
+        await this.agentManager.initialize();
+
+        // Start Ink UI with AgentManager
+        const startInkWithManager = require('./ink/startWithManager');
+        await startInkWithManager(this.agentManager);
       }
     }
     TerminalUI = InkUIWrapper;
