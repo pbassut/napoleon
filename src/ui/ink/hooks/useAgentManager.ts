@@ -44,20 +44,24 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     try {
       const activeAgents = agentManager.getActiveAgents();
       const convertedAgents = activeAgents.map(convertAgent);
+      
       setAgents(convertedAgents);
       setError(null);
 
-      // Preserve selection if agent still exists
-      if (selectedAgentId && !convertedAgents.find((a) => a.id === selectedAgentId)) {
-        setSelectedAgentId(null);
-      }
+      // Check if selected agent still exists without adding selectedAgentId to dependencies
+      setSelectedAgentId((currentSelectedId) => {
+        if (currentSelectedId && !convertedAgents.find((a) => a.id === currentSelectedId)) {
+          return null;
+        }
+        return currentSelectedId;
+      });
     } catch (err) {
       setError(err as Error);
       console.error('Failed to fetch agents:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [agentManager, convertAgent, selectedAgentId]);
+  }, [agentManager, convertAgent]);
 
   // Set up polling for agent updates
   // Note: In the future, this should be replaced with event-based updates
@@ -98,13 +102,17 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         workingDirectory: workingDirectory || process.cwd(),
       });
 
-      // Immediately fetch to show pending agent
-      fetchAgents();
+      // Trigger a manual refresh without depending on fetchAgents
+      if (agentManager) {
+        const activeAgents = agentManager.getActiveAgents();
+        const convertedAgents = activeAgents.map(convertAgent);
+        setAgents(convertedAgents);
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
     }
-  }, [agentManager, fetchAgents]);
+  }, [agentManager, convertAgent]);
 
   // Terminate agent
   const terminateAgent = useCallback(async (agentId: string) => {
@@ -116,17 +124,21 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       await agentManager.terminateAgent(agentId);
 
       // Clear selection if terminated agent was selected
-      if (selectedAgentId === agentId) {
-        setSelectedAgentId(null);
-      }
+      setSelectedAgentId((currentSelectedId) => {
+        return currentSelectedId === agentId ? null : currentSelectedId;
+      });
 
-      // Immediately fetch to update list
-      fetchAgents();
+      // Trigger a manual refresh without depending on fetchAgents
+      if (agentManager) {
+        const activeAgents = agentManager.getActiveAgents();
+        const convertedAgents = activeAgents.map(convertAgent);
+        setAgents(convertedAgents);
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
     }
-  }, [agentManager, selectedAgentId, fetchAgents]);
+  }, [agentManager, convertAgent]);
 
   return {
     agents,
