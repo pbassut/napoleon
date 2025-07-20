@@ -81,9 +81,14 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     setIsLoading(true);
     
     try {
+      console.log('SpawnDialog: Submitting prompt:', prompt);
       await onSubmit(prompt);
+      console.log('SpawnDialog: onSubmit completed successfully');
+      setIsLoading(false);
+      setText(''); // Clear text after successful submission
       // Don't close here - let the parent handle closing after successful spawn
     } catch (err: any) {
+      console.error('SpawnDialog: Error in onSubmit:', err);
       setError(err instanceof Error ? err.message : 'Failed to spawn agent');
       setIsLoading(false);
     }
