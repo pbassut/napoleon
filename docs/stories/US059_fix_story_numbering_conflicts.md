@@ -162,13 +162,15 @@ fi
 ```
 
 ## Status
-**Draft**
+**Approved**
 
 ## Change Log
 
 | Date | Version | Description | Author |
 |------|---------|-------------|---------|
 | 2025-07-20 | 1.0 | Initial story creation | Scrum Master Bob |
+| 2025-07-20 | 1.1 | Corrected to recognize DOD files as tracking documents | Scrum Master Bob |
+| 2025-07-20 | 1.2 | Story approved | Scrum Master Bob |
 
 ## Dev Agent Record
 

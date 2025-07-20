@@ -5,6 +5,15 @@ const logger = require('../../utils/logger');
  * Check if the current environment supports Ink UI
  */
 function isInkSupported() {
+  // Allow override for testing/development
+  if (process.env.NAPOLEON_FORCE_INK === 'true') {
+    return true;
+  }
+
+  if (process.env.NAPOLEON_DISABLE_INK === 'true') {
+    return false;
+  }
+
   // Check if we have a TTY
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     return false;

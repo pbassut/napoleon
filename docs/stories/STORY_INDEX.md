@@ -130,6 +130,7 @@ These stories complete the migration with parallel testing and final cutover to 
 | US050 | TypeScript ESLint Configuration | Configure ESLint to properly parse TypeScript and React files | MEDIUM | 📝 **Draft** |
 | US051 | TypeScript Build Configuration | Fix TypeScript module resolution and build configuration | MEDIUM | 📝 **Draft** |
 | US052 | Test Suite Component Relocation | Update test imports for relocated UI components | LOW | 📝 **Draft** |
+| US059 | Fix Story Numbering Conflicts | Resolve US051 duplication and document DOD file purpose | HIGH | ✅ **Approved** |
 
 ## Development Notes
 
@@ -152,12 +153,12 @@ These stories complete the migration with parallel testing and final cutover to 
 
 ## Approval Status Summary
 
-- **✅ 50 stories approved**: US001-US028, US032-US049, US054-US057 approved by Scrum Master Bob
+- **✅ 51 stories approved**: US001-US028, US032-US049, US054-US057, US059 approved by Scrum Master Bob
 - **📝 3 stories in draft**: US050-US052 (technical debt)
 - **🐛 2 critical bug reports**: US029-US030 created on 2025-07-18 for agent spawn dialog issues  
 - **7 stories already completed**: US007, US008, US013, US032-US035
 - **4 epic stories integrated**: US032-US035 represent completed Napoleon SDK Migration Epic (formerly 1.1-1.4)
-- **43 stories ready for implementation**: US001-US006, US009-US012, US014-US028, US036-US049, US054-US057
+- **44 stories ready for implementation**: US001-US006, US009-US012, US014-US028, US036-US049, US054-US057, US059
 - **3 draft stories ready for review**: US050-US052 (technical debt)
 - **2 critical bug fixes closed**: US029-US030 resolved by Ink migration
 - **New Epic 6 (Logging)**: US036-US042 provide comprehensive agent logging infrastructure
