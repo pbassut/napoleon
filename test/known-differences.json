@@ -1,0 +1,32 @@
+{
+  "animation-timing": {
+    "description": "Ink uses React render cycles which may have different timing than Blessed's immediate updates",
+    "severity": "low",
+    "accepted": true,
+    "notes": "This is expected due to the different rendering architectures"
+  },
+  "scroll-physics": {
+    "description": "Scroll acceleration and smoothing may differ between implementations",
+    "severity": "medium",
+    "accepted": false,
+    "notes": "Should be fixed to ensure consistent user experience"
+  },
+  "focus-indicators": {
+    "description": "Focus styling might render slightly differently",
+    "severity": "low",
+    "accepted": true,
+    "notes": "Minor visual differences in focus indicators are acceptable"
+  },
+  "color-rendering": {
+    "description": "Terminal color interpretation may vary slightly",
+    "severity": "low", 
+    "accepted": true,
+    "notes": "Due to terminal emulator differences"
+  },
+  "cursor-positioning": {
+    "description": "Cursor position tracking may have minor differences",
+    "severity": "low",
+    "accepted": true,
+    "notes": "As long as input handling works correctly"
+  }
+}
