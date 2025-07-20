@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -7,34 +7,65 @@ export class ProcessManager {
   private processCleanupQueue: Set<number> = new Set();
   private outputBuffers: Map<number, string[]> = new Map();
   private bufferIntervals: Map<number, NodeJS.Timeout> = new Map();
+  private processes: Map<number, any> = new Map();
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
-    const envString = env
-      ? Object.entries(env)
-          .map(([k, v]) => `${k}=${v}`)
-          .join(' ')
-      : '';
-    const command = `${envString} node ./bin/napoleon.js start`;
+    return new Promise((resolve, reject) => {
+      // Spawn Napoleon as a child process
+      const napoleonProcess = spawn('node', ['./bin/napoleon.js', 'start'], {
+        env: { ...process.env, ...env },
+        cwd: process.cwd(),
+        detached: false,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
 
-    const { stdout } = await execAsync(`desktop-commander start_process "${command}"`);
-    const pid = parseInt(stdout.trim(), 10);
+      if (!napoleonProcess.pid) {
+        reject(new Error('Failed to spawn Napoleon process'));
+        return;
+      }
 
-    if (isNaN(pid)) {
-      throw new Error(`Failed to parse PID from output: ${stdout}`);
-    }
+      const pid = napoleonProcess.pid;
+      this.processes.set(pid, napoleonProcess);
+      this.processCleanupQueue.add(pid);
+      this.outputBuffers.set(pid, []);
 
-    this.processCleanupQueue.add(pid);
-    this.outputBuffers.set(pid, []);
+      // Capture stdout
+      napoleonProcess.stdout?.on('data', (data) => {
+        const buffer = this.outputBuffers.get(pid) || [];
+        buffer.push(data.toString());
+        if (buffer.length > 1000) {
+          buffer.splice(0, buffer.length - 1000);
+        }
+        this.outputBuffers.set(pid, buffer);
+      });
 
-    // Start continuous output buffering
-    this.startOutputBuffering(pid);
+      // Capture stderr
+      napoleonProcess.stderr?.on('data', (data) => {
+        console.error(`Napoleon stderr: ${data}`);
+      });
 
-    return pid;
+      napoleonProcess.on('error', (error) => {
+        reject(error);
+      });
+
+      // Give the process time to start
+      setTimeout(() => {
+        resolve(pid);
+      }, 1000);
+    });
   }
 
   async terminateProcess(pid: number): Promise<void> {
     try {
-      await execAsync(`desktop-commander terminate_process ${pid}`);
+      const process = this.processes.get(pid);
+      if (process) {
+        process.kill('SIGTERM');
+        this.processes.delete(pid);
+      } else {
+        // Fallback to system kill
+        await execAsync(`kill ${pid}`);
+      }
+      
       this.processCleanupQueue.delete(pid);
       this.outputBuffers.delete(pid);
 
@@ -54,16 +85,18 @@ export class ProcessManager {
     pid: number,
     duration: number = 1000
   ): Promise<string> {
-    const { stdout } = await execAsync(
-      `desktop-commander read_process_output ${pid} ${duration}`
-    );
-    return stdout;
+    // Since we're managing the process directly, return buffered output
+    const buffer = this.outputBuffers.get(pid) || [];
+    return buffer.join('');
   }
 
   async sendInput(pid: number, input: string): Promise<void> {
-    await execAsync(
-      `desktop-commander interact_with_process ${pid} "${input}"`
-    );
+    const process = this.processes.get(pid);
+    if (process && process.stdin) {
+      process.stdin.write(input);
+    } else {
+      throw new Error(`No process found with PID ${pid}`);
+    }
   }
 
   async waitForOutput(
@@ -99,31 +132,7 @@ export class ProcessManager {
     await Promise.all(cleanupPromises);
   }
 
-  private async startOutputBuffering(pid: number): Promise<void> {
-    const bufferInterval = setInterval(async () => {
-      try {
-        const output = await this.readProcessOutput(pid, 100);
-        if (output) {
-          const buffer = this.outputBuffers.get(pid) || [];
-          buffer.push(output);
-
-          // Keep buffer size manageable
-          if (buffer.length > 1000) {
-            buffer.splice(0, buffer.length - 1000);
-          }
-
-          this.outputBuffers.set(pid, buffer);
-        }
-      } catch (error) {
-        // Process might be terminated
-        clearInterval(bufferInterval);
-        this.bufferIntervals.delete(pid);
-      }
-    }, 100);
-
-    // Store interval for cleanup
-    this.bufferIntervals.set(pid, bufferInterval);
-  }
+  // No longer needed - we capture output directly from the spawned process
 
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
