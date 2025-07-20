@@ -22,6 +22,7 @@ export interface AgentManagerHookReturn {
 }
 
 export interface AgentManager {
+  initialize: () => Promise<void>;
   getActiveAgents: () => any[];
   canSpawnAgent: () => boolean;
   spawnAgent: (options: { instructions: string; workingDirectory: string }) => Promise<void>;

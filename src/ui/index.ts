@@ -1,5 +1,6 @@
-const chalk = require('chalk');
-const logger = require('../utils/logger');
+import chalk from 'chalk';
+import logger from '../utils/logger';
+import { AgentManager } from './ink/types';
 
 /**
  * Napoleon UI Entry Point
@@ -7,25 +8,23 @@ const logger = require('../utils/logger');
  */
 
 class InkUIWrapper {
-  constructor() {
-    this.agentManager = null;
-  }
+  private agentManager: AgentManager | null = null;
 
-  async initialize() {
+  async initialize(): Promise<void> {
     logger.info('Initializing Napoleon Ink UI');
 
     try {
       // Initialize AgentManager
-      const AgentManager = require('../core/agent-manager');
-      this.agentManager = new AgentManager();
-      await this.agentManager.initialize();
+      const AgentManagerClass = require('../core/agent-manager');
+      this.agentManager = new AgentManagerClass();
+      await this.agentManager!.initialize();
 
       // Start Ink UI with AgentManager
       const startInkWithManager = require('./ink/startWithManager');
       await startInkWithManager(this.agentManager);
 
       logger.info('Ink UI initialized successfully');
-    } catch (error) {
+    } catch (error: any) {
       logger.error('Failed to initialize Ink UI', { error: error.message });
 
       // Show user-friendly error message
@@ -43,7 +42,4 @@ class InkUIWrapper {
 }
 
 // Export the UI class directly
-module.exports = InkUIWrapper;
-
-// For backward compatibility
-module.exports.default = InkUIWrapper;
+export default InkUIWrapper;

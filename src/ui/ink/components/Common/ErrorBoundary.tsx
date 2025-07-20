@@ -1,16 +1,15 @@
-import React, { Component, ReactNode } from 'react';
-const { Box, Text } = require('ink');
-
-interface ErrorBoundaryProps {
-  children: ReactNode;
-}
+import React, { Component, ReactNode, ErrorInfo } from 'react';
+import { Box, Text } from 'ink';
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
 }
 
-// ErrorBoundary that works with Ink components
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
 class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
@@ -21,23 +20,17 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
-  render() {
+  render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <Box flexDirection="column" padding={2} borderStyle="single" borderColor="red">
-          <Text color="red" bold>
-            ⚠️  An error occurred in the UI
-          </Text>
-          <Text color="red">
-            {this.state.error?.message || 'Unknown error'}
-          </Text>
-          <Text color="gray" marginTop={1}>
-            Press Ctrl+C to exit or 'q' to return
-          </Text>
+        <Box borderStyle="round" borderColor="red" padding={1} flexDirection="column">
+          <Text color="red" bold>❌ An error occurred:</Text>
+          <Text color="red">{this.state.error?.message || 'Unknown error'}</Text>
+          <Text color="gray">Press 'q' to quit</Text>
         </Box>
       );
     }
