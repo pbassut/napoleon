@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import { Agent } from '../../types';
 import { getStatusInfo } from '../../constants/agentStatus';
+import { ActivityIndicator } from '../Common/ActivityIndicator';
 
 const { memo, useState, useEffect } = React;
 
@@ -86,8 +87,23 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 
       {/* Status column */}
       <Box width={18} marginLeft={2}>
-        <Text>{statusInfo.emoji} </Text>
-        <Text color={statusInfo.color}>{statusInfo.text}</Text>
+        {agent.status === 'running' ? (
+          <>
+            <ActivityIndicator 
+              isActive={true} 
+              color="green" 
+              symbol="●"
+            />
+            <Box marginLeft={1}>
+              <Text color={statusInfo.color}>{statusInfo.text}</Text>
+            </Box>
+          </>
+        ) : (
+          <>
+            <Text>{statusInfo.emoji} </Text>
+            <Text color={statusInfo.color}>{statusInfo.text}</Text>
+          </>
+        )}
       </Box>
     </Box>
   );

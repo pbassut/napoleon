@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
 import { Agent } from '../../types';
 import { useAgentLogs } from '../../hooks/useAgentLogs';
+import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator';
 
 interface DetailViewProps {
   agent: Agent;
@@ -138,12 +139,25 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
         flexDirection="column"
       >
         <Box justifyContent="space-between">
-          <Text bold color="green">
-            {`Agent Detail: ${agent.name}`}
-          </Text>
-          <Text color="yellow">
-            {`Status: ${agent.status}`}
-          </Text>
+          <Box>
+            <Text bold color="green">
+              {`Agent Detail: ${agent.name}`}
+            </Text>
+          </Box>
+          <Box>
+            {agent.status === 'running' && (
+              <ActivityIndicator 
+                isActive={true} 
+                color="green" 
+                label="Claude is working"
+              />
+            )}
+            <Box marginLeft={1}>
+              <Text color="yellow">
+                {`Status: ${agent.status}`}
+              </Text>
+            </Box>
+          </Box>
         </Box>
         {searchQuery && (
           <Text color="cyan">
