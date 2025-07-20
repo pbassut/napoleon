@@ -1,4 +1,4 @@
-# US051: TypeScript Build Configuration
+# US060: TypeScript Build Configuration
 
 ## Epic
 **Epic 6: Blessed to Ink Migration**
