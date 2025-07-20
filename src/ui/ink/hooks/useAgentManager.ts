@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
+import logger from '../../../utils/logger';
 
 // Agent status types from AgentManager
 const AgentStatus = {
@@ -104,6 +105,14 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
                 prevAgent.status !== newAgent.status ||
                 prevAgent.name !== newAgent.name;
             });
+          
+          if (hasChanged) {
+            logger.debug('useAgentManager: Agents changed', { 
+              prevCount: prevAgents.length, 
+              newCount: convertedAgents.length,
+              agents: convertedAgents.map(a => ({ id: a.id, name: a.name, status: a.status }))
+            });
+          }
           
           return hasChanged ? convertedAgents : prevAgents;
         });

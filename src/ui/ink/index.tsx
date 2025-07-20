@@ -16,7 +16,7 @@ async function startInkUI() {
       getActiveAgents: () => [...mockAgents],
       canSpawnAgent: () => mockAgents.length < 3,
       spawnAgent: async ({ instructions, workingDirectory }) => {
-        console.log('MockAgentManager: spawnAgent called', { instructions, workingDirectory });
+        logger.debug('MockAgentManager: spawnAgent called', { instructions, workingDirectory });
         logger.info('Mock spawn agent', { instructions, workingDirectory });
         const newAgent = { 
           id: `agent-${Date.now()}`, 
@@ -26,8 +26,8 @@ async function startInkUI() {
           startTime: new Date()
         };
         mockAgents.push(newAgent);
-        console.log('MockAgentManager: Created agent:', newAgent);
-        console.log('MockAgentManager: Total agents now:', mockAgents.length);
+        logger.debug('MockAgentManager: Created agent', { agent: newAgent });
+        logger.debug('MockAgentManager: Total agents now', { count: mockAgents.length });
         return newAgent;
       },
       terminateAgent: async (agentId) => {

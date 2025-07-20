@@ -10,6 +10,7 @@ import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentListDefault from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
+import logger from '../../utils/logger';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
@@ -82,15 +83,15 @@ const App = ({ agentManager }) => {
 
   const handleSpawnAgent = async (prompt) => {
     try {
-      console.log('App: Starting agent spawn with prompt:', prompt);
+      logger.debug('App: Starting agent spawn', { prompt, cwd: process.cwd() });
       await spawnAgent({ 
         instructions: prompt, 
         workingDirectory: process.cwd() 
       });
-      console.log('App: Agent spawned successfully, closing dialog');
+      logger.debug('App: Agent spawned successfully, closing dialog');
       setIsSpawnDialogOpen(false);
     } catch (error) {
-      console.error('App: Error spawning agent:', error);
+      logger.error('App: Error spawning agent:', { error });
       // Re-throw to let dialog handle the error
       throw error;
     }
@@ -103,7 +104,7 @@ const App = ({ agentManager }) => {
       await terminateAgent(selectedAgent.id);
       setIsTerminationDialogOpen(false);
     } catch (error) {
-      console.error('Failed to terminate agent:', error);
+      logger.error('Failed to terminate agent:', { error });
       // Let the dialog show the error
     }
   };

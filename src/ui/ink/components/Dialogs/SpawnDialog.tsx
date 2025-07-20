@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
+import logger from '../../../../utils/logger';
 
 // We'll use a simple text input for now instead of ink-text-input
 const SimpleTextInput = ({ value, onChange, placeholder, focus }) => {
@@ -81,14 +82,14 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     setIsLoading(true);
     
     try {
-      console.log('SpawnDialog: Submitting prompt:', prompt);
+      logger.debug('SpawnDialog: Submitting prompt:', { prompt });
       await onSubmit(prompt);
-      console.log('SpawnDialog: onSubmit completed successfully');
+      logger.debug('SpawnDialog: onSubmit completed successfully');
       setIsLoading(false);
       setText(''); // Clear text after successful submission
       // Don't close here - let the parent handle closing after successful spawn
     } catch (err: any) {
-      console.error('SpawnDialog: Error in onSubmit:', err);
+      logger.error('SpawnDialog: Error in onSubmit:', { error: err });
       setError(err instanceof Error ? err.message : 'Failed to spawn agent');
       setIsLoading(false);
     }
