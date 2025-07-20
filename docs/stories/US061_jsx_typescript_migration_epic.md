@@ -67,12 +67,12 @@ The Napoleon project currently uses React.createElement() syntax throughout all 
   - [x] Update all layout imports and references
   - [x] Test layout rendering with JSX components
 
-- [ ] Phase 3: Convert Agent List Components to JSX (AC1)
-  - [ ] Convert AgentList.js → AgentList.tsx with JSX syntax
-  - [ ] Convert AgentItem.js → AgentItem.tsx with JSX syntax
-  - [ ] Convert AgentListCompat.js → AgentListCompat.tsx with JSX syntax
-  - [ ] Update complex state and event handling in JSX format
-  - [ ] Test agent list functionality thoroughly
+- [x] Phase 3: Convert Agent List Components to JSX (AC1)
+  - [x] Convert AgentList.js → AgentList.tsx with JSX syntax
+  - [x] Convert AgentItem.js → AgentItem.tsx with JSX syntax
+  - [x] Convert AgentListCompat.js → AgentListCompat.tsx with JSX syntax
+  - [x] Update complex state and event handling in JSX format
+  - [x] Test agent list functionality thoroughly
 
 - [ ] Phase 4: Convert Dialog Components to JSX (AC1)
   - [ ] Convert SpawnDialog.js → SpawnDialog.tsx with JSX syntax
@@ -274,6 +274,10 @@ _TBD_
   - src/ui/ink/components/Layout/Header.tsx (converted from Header.js)
   - src/ui/ink/components/Layout/Footer.tsx (converted from Footer.js)
   - src/ui/ink/components/Layout/MainContent.tsx (converted from MainContent.js)
+  - src/ui/ink/components/AgentList/AgentList.tsx (converted from AgentList.js)
+  - src/ui/ink/components/AgentList/AgentItem.tsx (converted from AgentItem.js)
+  - src/ui/ink/components/AgentList/AgentListCompat.tsx (converted from AgentListCompat.js)
+  - src/ui/ink/components/AgentList/index.tsx (converted from index.js)
   - src/ui/ink/types.ts (new shared type definitions)
 
 - **Deferred:**

@@ -90,7 +90,7 @@ const App = ({ agentManager }) => {
   const { Footer } = require('./components/Layout/Footer.tsx');
   const { SpawnDialog } = require('./components/Dialogs/SpawnDialog');
   const { TerminationDialog } = require('./components/Dialogs/TerminationDialog');
-  const { AgentList } = require('./components/AgentList');
+  const AgentList = require('./components/AgentList/AgentList.tsx').default;
   const { DetailView } = require('./components/DetailView');
 
   // If detail view is open, show only the detail view
