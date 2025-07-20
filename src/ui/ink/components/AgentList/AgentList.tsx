@@ -20,16 +20,12 @@ const AgentList: React.FC<AgentListProps> = ({
 }) => {
   const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [, forceUpdate] = useState({});
 
-  // Force re-render every second to update runtime counters
-  useEffect(() => {
-    const interval = setInterval(() => {
-      forceUpdate({});
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Memoize separator line to avoid recalculation
+  const separatorLine = useMemo(() => {
+    const width = process.stdout.columns || 80;
+    return '─'.repeat(Math.max(1, width - 8));
+  }, []); // Empty deps - only calculate once
 
   // Reserve lines for header and potential scroll indicators
   const visibleItems = Math.max(1, height - 3);
@@ -83,7 +79,7 @@ const AgentList: React.FC<AgentListProps> = ({
         
         {/* Separator line */}
         <Box width="100%">
-          <Text>{'─'.repeat(process.stdout.columns - 8)}</Text>
+          <Text>{separatorLine}</Text>
         </Box>
 
         {/* Empty state message */}

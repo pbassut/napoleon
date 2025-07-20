@@ -94,7 +94,19 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
           progress: agentData.progress,
         }));
         
-        setAgents(convertedAgents);
+        // Only update if agents actually changed
+        setAgents(prevAgents => {
+          const hasChanged = prevAgents.length !== convertedAgents.length ||
+            prevAgents.some((prevAgent, i) => {
+              const newAgent = convertedAgents[i];
+              return !newAgent || 
+                prevAgent.id !== newAgent.id ||
+                prevAgent.status !== newAgent.status ||
+                prevAgent.name !== newAgent.name;
+            });
+          
+          return hasChanged ? convertedAgents : prevAgents;
+        });
         setError(null);
 
         // Check if selected agent still exists
@@ -115,8 +127,8 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     // Initial fetch
     stableFetchAgents();
 
-    // Poll for updates every 1.5 seconds (matching Blessed UI)
-    pollIntervalRef.current = setInterval(stableFetchAgents, 1500);
+    // Poll for updates every 500ms per spec
+    pollIntervalRef.current = setInterval(stableFetchAgents, 500);
 
     return () => {
       if (pollIntervalRef.current) {

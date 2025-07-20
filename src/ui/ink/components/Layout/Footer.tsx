@@ -1,11 +1,13 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
+const { memo } = React;
+
 interface FooterProps {
   agentCount: number;
 }
 
-export const Footer: React.FC<FooterProps> = () => (
+export const Footer: React.FC<FooterProps> = memo(() => (
   <Box width="100%" paddingX={1}>
     <Box>
       <Text color="yellow">[n]</Text>
@@ -21,4 +23,6 @@ export const Footer: React.FC<FooterProps> = () => (
       <Text color="gray">[f] follow</Text>
     </Box>
   </Box>
-);
+));
+
+Footer.displayName = 'Footer';
