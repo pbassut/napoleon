@@ -921,25 +921,40 @@ class AgentManager {
       // Update session status to indicate processing
       this.updateAgentStatus(agentId, AgentStatus.RUNNING);
 
-      // Execute query using SDK manager
-      const messages = await this.sdkManager.executeQuery(session.sessionId || session.id, instructions, {
+      // Execute query using SDK manager in the background
+      // Don't await - let the agent run asynchronously
+      this.sdkManager.executeQuery(session.sessionId || session.id, instructions, {
         maxTurns: 10,
         workingDirectory: session.workingDirectory,
+      }).then(messages => {
+        // Process each message from SDK
+        for (const message of messages) {
+          // Handle real-time output from SDK
+          this.handleSDKMessage(agentId, message);
+        }
+        
+        // Update status when SDK query completes
+        const currentSession = this.agents.get(agentId);
+        if (currentSession && currentSession.status === AgentStatus.RUNNING) {
+          this.updateAgentStatus(agentId, AgentStatus.IDLE);
+        }
+      }).catch(error => {
+        logger.error('SDK query failed for agent', { 
+          agentId, 
+          error: error.message 
+        });
+        
+        // Update agent status to error
+        const currentSession = this.agents.get(agentId);
+        if (currentSession) {
+          currentSession.error = error.message;
+          this.updateAgentStatus(agentId, AgentStatus.ERROR);
+        }
       });
 
-      // Process each message from SDK
-      for (const message of messages) {
-        // Handle real-time output from SDK
-        this.handleSDKMessage(agentId, message);
-      }
-
-      logger.info('SDK query completed', {
+      logger.info('SDK query started in background', {
         agentId,
-        messageCount: messages.length,
       });
-
-      // Mark session as idle after completion
-      this.updateAgentStatus(agentId, AgentStatus.IDLE);
     } catch (error) {
       logger.error('Failed to send instructions to agent via SDK', {
         agentId,
