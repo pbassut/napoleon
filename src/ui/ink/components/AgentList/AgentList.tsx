@@ -3,7 +3,7 @@ import { Box, Text, useInput, useFocus } from 'ink';
 import AgentItem from './AgentItem';
 import { Agent } from '../../types';
 
-const { useState, useEffect, useMemo } = React;
+const { useState, useEffect, useMemo, useCallback } = React;
 
 interface AgentListProps {
   agents: Agent[];
@@ -25,19 +25,19 @@ const AgentList: React.FC<AgentListProps> = ({
 
   const visibleAgents = useMemo(() => agents.slice(scrollOffset, scrollOffset + visibleItems), [agents, scrollOffset, visibleItems]);
 
-  const adjustScrollOffset = (newSelectedIndex: number) => {
+  const adjustScrollOffset = useCallback((newSelectedIndex: number) => {
     if (newSelectedIndex < scrollOffset) {
       setScrollOffset(newSelectedIndex);
     } else if (newSelectedIndex >= scrollOffset + visibleItems) {
       setScrollOffset(newSelectedIndex - visibleItems + 1);
     }
-  };
+  }, [scrollOffset, visibleItems]);
 
   useEffect(() => {
     adjustScrollOffset(selectedIndex);
-  }, [selectedIndex, visibleItems]);
+  }, [selectedIndex, adjustScrollOffset]);
 
-  useInput((input: string, key: any) => {
+  useInput(useCallback((input: string, key: any) => {
     if (!isFocused) return;
 
     if (key.upArrow || input === 'k') {
@@ -49,7 +49,7 @@ const AgentList: React.FC<AgentListProps> = ({
       onSelectionChange(newIndex);
       adjustScrollOffset(newIndex);
     }
-  }, { isActive: isFocused });
+  }, [isFocused, selectedIndex, agents.length, onSelectionChange, adjustScrollOffset]), { isActive: isFocused });
 
   if (agents.length === 0) {
     return (

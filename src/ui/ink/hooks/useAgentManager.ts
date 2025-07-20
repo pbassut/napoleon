@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
 
 // Agent status types from AgentManager
@@ -68,18 +68,58 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   useEffect(() => {
     if (!agentManager) return;
 
+    // Create a stable reference to fetchAgents to avoid recreating interval
+    const stableFetchAgents = () => {
+      if (!agentManager) {
+        setAgents([]);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const activeAgents = agentManager.getActiveAgents();
+        const convertedAgents = activeAgents.map((agentData: any) => ({
+          id: agentData.id,
+          name: agentData.id,
+          status: agentData.status || 'unknown',
+          startTime: agentData.createdAt ? new Date(agentData.createdAt) : new Date(),
+          instructions: agentData.instructions,
+          workingDirectory: agentData.workingDirectory,
+          error: agentData.error,
+          progress: agentData.progress,
+        }));
+        
+        setAgents(convertedAgents);
+        setError(null);
+
+        // Check if selected agent still exists
+        setSelectedAgentId((currentSelectedId) => {
+          if (currentSelectedId && !convertedAgents.find((a) => a.id === currentSelectedId)) {
+            return null;
+          }
+          return currentSelectedId;
+        });
+      } catch (err) {
+        setError(err as Error);
+        console.error('Failed to fetch agents:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     // Initial fetch
-    fetchAgents();
+    stableFetchAgents();
 
     // Poll for updates every 1.5 seconds (matching Blessed UI)
-    pollIntervalRef.current = setInterval(fetchAgents, 1500);
+    pollIntervalRef.current = setInterval(stableFetchAgents, 1500);
 
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
       }
     };
-  }, [agentManager, fetchAgents]);
+  }, [agentManager]); // Remove fetchAgents from dependencies
 
   // Select agent
   const selectAgent = useCallback((agentId: string) => {
@@ -140,14 +180,24 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
   }, [agentManager, convertAgent]);
 
+  // Memoize canSpawnAgent to prevent re-evaluation on every render
+  const canSpawnAgent = useMemo(() => {
+    return agentManager?.canSpawnAgent() ?? false;
+  }, [agentManager, agents.length]); // Re-evaluate when agent count changes
+
+  // Memoize maxAgents
+  const maxAgents = useMemo(() => {
+    return agentManager?.maxAgents ?? 3;
+  }, [agentManager]);
+
   return {
     agents,
     selectedAgentId,
     selectAgent,
     spawnAgent,
     terminateAgent,
-    canSpawnAgent: agentManager?.canSpawnAgent() ?? false,
-    maxAgents: agentManager?.maxAgents ?? 3,
+    canSpawnAgent,
+    maxAgents,
     isLoading,
     error,
   };

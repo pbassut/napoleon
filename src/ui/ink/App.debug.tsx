@@ -1,5 +1,5 @@
 import React from 'react';
-const { useState } = React;
+const { useState, useMemo, useCallback } = React;
 import { Box, useApp, Text, useInput } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
 import ErrorBoundaryDefault from './components/Common/ErrorBoundary.tsx';
@@ -22,10 +22,7 @@ const App = ({ agentManager }) => {
   const { exit } = useApp();
   const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);
   const [isTerminationDialogOpen, setIsTerminationDialogOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
-
-  console.log(`🎯 [App] State: selectedIndex=${selectedIndex}, dialogs=${isSpawnDialogOpen}/${isTerminationDialogOpen}`);
 
   // Use the AgentManager hook
   const {
@@ -40,24 +37,34 @@ const App = ({ agentManager }) => {
     error,
   } = useAgentManager(agentManager);
 
-  console.log(`🎯 [App] Hook state: agents=${agents.length}, selectedAgentId=${selectedAgentId}, isLoading=${isLoading}`);
+  // Derive selectedIndex from selectedAgentId to maintain single source of truth
+  const selectedIndex = useMemo(() => {
+    if (!selectedAgentId || agents.length === 0) return 0;
+    const index = agents.findIndex((a) => a.id === selectedAgentId);
+    console.log(`🎯 [App] Computed selectedIndex: ${index} for selectedAgentId: ${selectedAgentId}`);
+    return index >= 0 ? index : 0;
+  }, [selectedAgentId, agents]);
+
+  console.log(`🎯 [App] State: selectedIndex=${selectedIndex}, selectedAgentId=${selectedAgentId}, dialogs=${isSpawnDialogOpen}/${isTerminationDialogOpen}`);
+  console.log(`🎯 [App] Hook state: agents=${agents.length}, isLoading=${isLoading}`);
 
   // Get selected agent from the list
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[selectedIndex] || null;
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
   console.log(`🎯 [App] selectedAgent: ${selectedAgent?.id || 'none'}`);
 
   // Handle agent selection changes from AgentList
-  const handleSelectionChange = (index) => {
+  const handleSelectionChange = useCallback((index) => {
     handleSelectionChangeCount++;
     console.log(`🎯 [handleSelectionChange] Call #${handleSelectionChangeCount}, index=${index}`);
     
-    setSelectedIndex(index);
     const agent = agents[index];
-    if (agent) {
-      console.log(`🎯 [handleSelectionChange] Selecting agent: ${agent.id}`);
+    if (agent && agent.id !== selectedAgentId) {
+      console.log(`🎯 [handleSelectionChange] Selecting agent: ${agent.id} (was: ${selectedAgentId})`);
       selectAgent(agent.id);
+    } else {
+      console.log(`🎯 [handleSelectionChange] Skipping - already selected or no agent`);
     }
-  };
+  }, [agents, selectedAgentId, selectAgent]);
 
   // Handle keyboard shortcuts
   useInput((input, key) => {

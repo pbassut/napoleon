@@ -1,5 +1,5 @@
 import React from 'react';
-const { useState } = React;
+const { useState, useEffect, useMemo, useCallback } = React;
 import { Box, useApp, Text, useInput } from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
 import ErrorBoundaryDefault from './components/Common/ErrorBoundary.tsx';
@@ -15,7 +15,6 @@ const App = ({ agentManager }) => {
   const { exit } = useApp();
   const [isSpawnDialogOpen, setIsSpawnDialogOpen] = useState(false);
   const [isTerminationDialogOpen, setIsTerminationDialogOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
 
   // Use the AgentManager hook
@@ -31,17 +30,23 @@ const App = ({ agentManager }) => {
     error,
   } = useAgentManager(agentManager);
 
+  // Derive selectedIndex from selectedAgentId to maintain single source of truth
+  const selectedIndex = useMemo(() => {
+    if (!selectedAgentId || agents.length === 0) return 0;
+    const index = agents.findIndex((a) => a.id === selectedAgentId);
+    return index >= 0 ? index : 0;
+  }, [selectedAgentId, agents]);
+
   // Get selected agent from the list
-  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[selectedIndex] || null;
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
 
   // Handle agent selection changes from AgentList
-  const handleSelectionChange = (index) => {
-    setSelectedIndex(index);
+  const handleSelectionChange = useCallback((index) => {
     const agent = agents[index];
-    if (agent) {
+    if (agent && agent.id !== selectedAgentId) {
       selectAgent(agent.id);
     }
-  };
+  }, [agents, selectedAgentId, selectAgent]);
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
