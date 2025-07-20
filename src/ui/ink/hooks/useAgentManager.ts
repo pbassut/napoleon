@@ -33,7 +33,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     progress: agentData.progress,
   }), []);
 
-  // Fetch agents from AgentManager - BUGGY VERSION FOR DEMO
+  // Fetch agents from AgentManager
   const fetchAgents = useCallback(() => {
     if (!agentManager) {
       setAgents([]);
@@ -44,20 +44,24 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     try {
       const activeAgents = agentManager.getActiveAgents();
       const convertedAgents = activeAgents.map(convertAgent);
+      
       setAgents(convertedAgents);
       setError(null);
 
-      // BUGGY: This causes infinite loop by adding selectedAgentId to dependency array
-      if (selectedAgentId && !convertedAgents.find((a) => a.id === selectedAgentId)) {
-        setSelectedAgentId(null);
-      }
+      // Check if selected agent still exists without adding selectedAgentId to dependencies
+      setSelectedAgentId((currentSelectedId) => {
+        if (currentSelectedId && !convertedAgents.find((a) => a.id === currentSelectedId)) {
+          return null;
+        }
+        return currentSelectedId;
+      });
     } catch (err) {
       setError(err as Error);
       console.error('Failed to fetch agents:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [agentManager, convertAgent, selectedAgentId]); // BUGGY: selectedAgentId dependency causes infinite loop
+  }, [agentManager, convertAgent]);
 
   // Set up polling for agent updates
   // Note: In the future, this should be replaced with event-based updates
@@ -82,7 +86,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     setSelectedAgentId(agentId);
   }, []);
 
-  // Spawn new agent - BUGGY VERSION FOR DEMO
+  // Spawn new agent
   const spawnAgent = useCallback(async (instructions: string, workingDirectory: string) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
@@ -98,13 +102,17 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         workingDirectory: workingDirectory || process.cwd(),
       });
 
-      // BUGGY: This adds fetchAgents to dependency array, causing more infinite loops
-      fetchAgents();
+      // Trigger a manual refresh without depending on fetchAgents
+      if (agentManager) {
+        const activeAgents = agentManager.getActiveAgents();
+        const convertedAgents = activeAgents.map(convertAgent);
+        setAgents(convertedAgents);
+      }
     } catch (err) {
       setError(err as Error);
       throw err;
     }
-  }, [agentManager, fetchAgents]); // BUGGY: fetchAgents dependency causes more loops
+  }, [agentManager, convertAgent]);
 
   // Terminate agent
   const terminateAgent = useCallback(async (agentId: string) => {
