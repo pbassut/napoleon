@@ -6,6 +6,8 @@ import logger from '../../../../utils/logger.js';
 
 const { useState, useEffect, useMemo, useCallback } = React;
 
+console.log('AgentList.tsx: Module loaded - CONSOLE LOG');
+
 interface AgentListProps {
   agents: Agent[];
   selectedIndex: number;
@@ -26,6 +28,12 @@ const AgentList: React.FC<AgentListProps> = ({
   
   // Log component lifecycle
   useEffect(() => {
+    console.log('AgentList: Component mounted - CONSOLE LOG', { 
+      agentsCount: agents.length,
+      selectedIndex,
+      isModalOpen,
+      isFocused 
+    });
     logger.debug('AgentList: Component mounted', { 
       agentsCount: agents.length,
       selectedIndex,
@@ -77,6 +85,7 @@ const AgentList: React.FC<AgentListProps> = ({
   // Handle keyboard input for future features
   useInput(useCallback((input: string, key: any) => {
     // Log all input events
+    console.log('AgentList: Input received - CONSOLE LOG', { input, key });
     logger.debug('AgentList: Input received', {
       input,
       key: {
