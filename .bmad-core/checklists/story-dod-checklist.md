@@ -84,6 +84,14 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] User-facing documentation updated, if changes impact users.
    - [ ] Technical documentation (e.g., READMEs, system diagrams) updated if significant architectural changes were made.
 
+8. **Commit:**
+
+   [[LLM: This is required to deploy share your work]]
+
+   - [ ] Commit each change in separate commits with short but descriptive messages.
+   - [ ] Push your changes to the git remote
+   - [ ] Create a Pull request targeting the main branch
+
 ## Final Confirmation
 
 [[LLM: FINAL DOD SUMMARY
