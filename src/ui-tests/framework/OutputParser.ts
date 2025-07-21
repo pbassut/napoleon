@@ -31,8 +31,8 @@ export class OutputParser {
     const lines = this.extractLines(output);
     const agents: Array<{id: string, prompt: string, status: string}> = [];
     
-    // Look for agent entries in the format: "[id] prompt (status)"
-    const agentRegex = /^\[(\d+)\]\s+(.+?)\s*\((\w+)\)$/;
+    // Look for agent entries in the format: "[id] prompt (status)" with optional prefix
+    const agentRegex = /(?:▶\s+|  )?\[(\d+)\]\s+(.+?)\s*\((\w+)\)$/;
     
     for (const line of lines) {
       const match = line.match(agentRegex);
@@ -58,13 +58,17 @@ export class OutputParser {
     for (const line of lines) {
       if (line.includes('┌─') || line.includes('╭─')) {
         inDialog = true;
+        dialogContent.push(line);
         continue;
       }
       if (line.includes('└─') || line.includes('╰─')) {
+        if (inDialog) {
+          dialogContent.push(line);
+        }
         inDialog = false;
         break;
       }
-      if (inDialog && !line.startsWith('│') && !line.startsWith('├')) {
+      if (inDialog) {
         dialogContent.push(line);
       }
     }
@@ -77,8 +81,8 @@ export class OutputParser {
     
     // Look for lines with selection indicators like ▶, >, or highlighted
     for (const line of lines) {
-      if (line.includes('▶') || line.includes('>') || line.includes('•')) {
-        return line.replace(/[▶>•]\s*/, '').trim();
+      if (line.startsWith('▶')) {
+        return line.trim();
       }
     }
     
