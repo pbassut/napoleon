@@ -31,7 +31,14 @@
     "migration:prepare": "node scripts/prepare-migration.js",
     "migration:test": "npm run test:ui",
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "publish:prepare": "scripts/publish.sh",
+    "publish:dry-run": "DRY_RUN=true scripts/publish.sh",
+    "version:patch": "scripts/version.sh patch",
+    "version:minor": "scripts/version.sh minor", 
+    "version:major": "scripts/version.sh major",
+    "version:prerelease": "scripts/version.sh prerelease",
+    "prepublishOnly": "npm run lint && npm test"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.53",
