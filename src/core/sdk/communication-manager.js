@@ -157,26 +157,69 @@ class SDKCommunicationManager {
         promptPreview: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
       });
 
+      this.logger.debug('SDK: Starting query execution with detailed monitoring', {
+        agentId,
+        sessionActive: session.isActive,
+        hasAbortController: !!session.abortController,
+        abortSignal: session.abortController?.signal?.aborted || 'no-signal',
+        workingDirectory: queryOptions.workingDirectory,
+      });
+
       const messages = [];
       let tokenUsage = { input: 0, output: 0, total: 0 };
 
       // Execute query using Claude Code SDK
+      this.logger.debug('SDK: Executing query with Claude Code SDK', {
+        agentId,
+        promptLength: prompt.length,
+        options: queryOptions,
+      });
+
       const queryResponse = query({
         prompt,
         ...queryOptions,
       });
 
+      this.logger.debug('SDK: Query response object created, starting message iteration', {
+        agentId,
+        responseType: typeof queryResponse,
+        hasAsyncIterator: Symbol.asyncIterator in queryResponse,
+      });
+
       // Process streaming response
       const messageIterator = queryResponse[Symbol.asyncIterator]();
+      this.logger.debug('SDK: Message iterator created, getting first message', { agentId });
+      
       let iteratorResult = await messageIterator.next();
+      this.logger.debug('SDK: First iterator result received', {
+        agentId,
+        done: iteratorResult.done,
+        hasValue: !!iteratorResult.value,
+        valueType: typeof iteratorResult.value,
+      });
 
+      let messageCount = 0;
       while (!iteratorResult.done) {
         const message = iteratorResult.value;
+        messageCount++;
         messages.push(message);
+
+        this.logger.debug('SDK: Processing message', {
+          agentId,
+          messageIndex: messageCount,
+          messageType: message.type,
+          messageId: message.id,
+          hasContent: !!message.content,
+          contentLength: message.content?.length || 0,
+        });
 
         // Update token usage if available
         if (message.usage) {
           tokenUsage = message.usage;
+          this.logger.debug('SDK: Token usage updated', {
+            agentId,
+            tokenUsage,
+          });
         }
 
         // Log each response message (AC2) - non-blocking
@@ -193,9 +236,28 @@ class SDKCommunicationManager {
         });
 
         // Get next message
+        this.logger.debug('SDK: Requesting next message from iterator', {
+          agentId,
+          currentMessageCount: messageCount,
+          currentMessageType: message.type,
+        });
+        
         // eslint-disable-next-line no-await-in-loop
         iteratorResult = await messageIterator.next();
+        
+        this.logger.debug('SDK: Next iterator result received', {
+          agentId,
+          done: iteratorResult.done,
+          hasValue: !!iteratorResult.value,
+          messageCount: messageCount + 1,
+        });
       }
+
+      this.logger.debug('SDK: Message iteration completed', {
+        agentId,
+        totalMessages: messageCount,
+        finalTokenUsage: tokenUsage,
+      });
 
       // Keep message history manageable
       if (session.messageHistory.length > 100) {
@@ -252,6 +314,18 @@ class SDKCommunicationManager {
 
       return messages;
     } catch (error) {
+      this.logger.error('SDK: Query execution failed with error', {
+        agentId,
+        error: error.message,
+        errorName: error.name,
+        errorCode: error.code,
+        errorStack: error.stack?.substring(0, 500) + '...',
+        duration: Date.now() - startTime,
+        promptLength: prompt.length,
+        abortSignal: session.abortController?.signal?.aborted || 'no-signal',
+        errorType: SDKCommunicationManager.classifySDKError(error),
+      });
+
       // Log SDK errors with complete context (AC3)
       if (this.agentLogManager) {
         try {
