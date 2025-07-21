@@ -115,9 +115,9 @@ export class OutputParser {
     const lines = this.extractLines(output);
     
     if (position === 'top') {
-      return lines.some(line => line.includes('↑') || line.includes('▲'));
+      return lines.some(line => line === '↑' || line.includes('▲'));
     } else {
-      return lines.some(line => line.includes('↓') || line.includes('▼'));
+      return lines.some(line => line === '↓' || line.includes('▼'));
     }
   }
 

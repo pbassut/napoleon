@@ -29,7 +29,7 @@ export const uiStateTestSuite: UITestSuite = {
         
         // Open spawn dialog
         await inputSimulator.pressKey(pid, 'n');
-        await waitForUIStable(context);
+        await waitForUIStable(context, 500);
         
         // Verify dialog is displayed
         await assertions.assertDialogOpen(pid);
@@ -44,6 +44,7 @@ export const uiStateTestSuite: UITestSuite = {
         
         // Close dialog
         await inputSimulator.cancelDialog(pid);
+        await waitForUIStable(context, 500);
         await assertions.assertDialogClosed(pid);
       }
     },
@@ -128,14 +129,14 @@ export const uiStateTestSuite: UITestSuite = {
         
         // Start spawning an agent
         await inputSimulator.pressKey(pid, 'n');
+        await waitForUIStable(context, 300); // Wait for dialog to open
         await inputSimulator.typeText(pid, 'Progress Test Agent');
         await inputSimulator.confirmDialog(pid);
         
-        // Check for progress indicator during spawn
-        // Note: This might be timing-sensitive
-        await waitForUIStable(context, 100);
+        // Wait for agent to be created
+        await waitForUIStable(context, 1000);
         
-        // Eventually agent should appear
+        // Agent should appear
         await assertions.assertAgentExists(pid, 'Progress Test Agent');
       }
     },

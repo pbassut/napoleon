@@ -59,7 +59,7 @@ export class UIAssertions {
   }
 
   async assertSelectedItem(pid: number, expectedItem: string): Promise<void> {
-    const output = await this.processManager.readProcessOutput(pid, 500);
+    const output = await this.processManager.readProcessOutput(pid, 100);
     const selectedItem = this.outputParser.findSelectedItem(output);
     
     if (!selectedItem) {

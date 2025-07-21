@@ -7,6 +7,8 @@ let selectedIndex = 0;
 let inDialog = false;
 let dialogType = null;
 let dialogBuffer = '';
+let activityFrame = 0;
+const activityFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 // ANSI escape codes
 const ESC = '\u001b';
@@ -20,8 +22,10 @@ const GRAY = '\u001b[90m';
 function render() {
   process.stdout.write(CLEAR);
   
-  // Header
-  console.log(`${BOLD}Napoleon${RESET} › Ready`);
+  // Header with activity indicator
+  const hasRunningAgents = agents.some(a => a.status === 'running');
+  const activity = hasRunningAgents ? ` ${activityFrames[activityFrame]}` : '';
+  console.log(`${BOLD}Napoleon${RESET} › Ready${activity}`);
   console.log('');
   
   // Agent list or empty state
@@ -37,8 +41,14 @@ function render() {
   }
   
   // Scroll indicators
-  if (agents.length > 10) {
-    console.log('↓ More below');
+  if (agents.length > 5) {
+    // Show indicators based on selected position
+    if (selectedIndex > 0) {
+      console.log('↑'); // Top indicator when not at first item
+    }
+    if (selectedIndex < agents.length - 1) {
+      console.log('↓'); // Bottom indicator when not at last item
+    }
   }
   
   console.log('');
@@ -60,6 +70,11 @@ function render() {
     // Footer with shortcuts
     console.log(`${GRAY}n${RESET} new agent  ${GRAY}t${RESET} terminate  ${GRAY}q${RESET} quit`);
   }
+  
+  // Force flush output
+  if (process.stdout.isTTY) {
+    process.stdout.write('');
+  }
 }
 
 // Input handling
@@ -77,7 +92,7 @@ process.stdin.on('data', (key) => {
   
   if (inDialog) {
     if (dialogType === 'spawn') {
-      if (key === '\r') { // Enter
+      if (key === '\r') { // Enter key
         if (dialogBuffer.trim()) {
           const newAgent = {
             id: agents.length + 1,
@@ -85,7 +100,7 @@ process.stdin.on('data', (key) => {
             status: 'running'
           };
           agents.push(newAgent);
-          selectedIndex = agents.length - 1;
+          selectedIndex = agents.length - 1; // Select the newly spawned agent
         }
         dialogBuffer = '';
         inDialog = false;
@@ -145,3 +160,11 @@ process.stdin.on('data', (key) => {
 
 // Initial render
 render();
+
+// Update activity indicator - disabled for tests to avoid interference
+// const activityInterval = setInterval(() => {
+//   if (agents.some(a => a.status === 'running')) {
+//     activityFrame = (activityFrame + 1) % activityFrames.length;
+//     render();
+//   }
+// }, 100);

@@ -58,7 +58,7 @@ export class ProcessManager {
       // Give the process time to start and render initial UI
       setTimeout(() => {
         resolve(pid);
-      }, 2000);
+      }, 2500);
     });
   }
 
@@ -94,7 +94,18 @@ export class ProcessManager {
   ): Promise<string> {
     // Since we're managing the process directly, return buffered output
     const buffer = this.outputBuffers.get(pid) || [];
-    return buffer.join('');
+    
+    // Return only the most recent screen of output (after last clear)
+    // The mock clears the screen with \u001bc before each render
+    const fullOutput = buffer.join('');
+    const clearChar = '\u001bc';
+    const lastClearIndex = fullOutput.lastIndexOf(clearChar);
+    
+    if (lastClearIndex >= 0) {
+      return fullOutput.substring(lastClearIndex + clearChar.length);
+    }
+    
+    return fullOutput;
   }
 
   async sendInput(pid: number, input: string): Promise<void> {

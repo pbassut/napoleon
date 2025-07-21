@@ -4,7 +4,7 @@ export async function delay(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-export async function waitForUIStable(context: UITestContext, delayMs: number = 500): Promise<void> {
+export async function waitForUIStable(context: UITestContext, delayMs: number = 300): Promise<void> {
   // Wait for UI to stabilize after an action
   await delay(delayMs);
 }
@@ -17,15 +17,15 @@ export async function spawnAgent(
   
   // Press 'n' to open spawn dialog
   await inputSimulator.pressKey(pid, 'n');
-  await waitForUIStable(context);
+  await waitForUIStable(context, 500); // Increased wait for dialog
   
   // Type the prompt
   await inputSimulator.typeText(pid, prompt);
-  await waitForUIStable(context);
+  await waitForUIStable(context, 300);
   
   // Press Enter to spawn
   await inputSimulator.confirmDialog(pid);
-  await waitForUIStable(context, 1000); // Extra time for agent to spawn
+  await waitForUIStable(context, 1500); // Extra time for agent to spawn and UI to update
 }
 
 export async function terminateAgent(
@@ -58,10 +58,10 @@ export async function navigateToAgent(
   
   for (let i = 0; i < count; i++) {
     await inputSimulator.pressKey(pid, direction);
-    await delay(100); // Small delay between navigation
+    await delay(200); // Increased delay between navigation
   }
   
-  await waitForUIStable(context);
+  await waitForUIStable(context, 500); // More time for UI to update
 }
 
 export async function clearAllAgents(context: UITestContext): Promise<void> {

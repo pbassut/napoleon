@@ -14,6 +14,7 @@ export const agentManagementTestSuite: UITestSuite = {
         
         // Press 'n' to open spawn dialog
         await inputSimulator.pressKey(pid, 'n');
+        await waitForUIStable(context, 500); // Give dialog time to render
         await assertions.assertDialogOpen(pid);
         
         // Type prompt and spawn
@@ -36,6 +37,7 @@ export const agentManagementTestSuite: UITestSuite = {
         
         // Open spawn dialog
         await inputSimulator.pressKey(pid, 'n');
+        await waitForUIStable(context, 300);
         await assertions.assertDialogOpen(pid);
         
         // Type something and cancel
@@ -43,7 +45,7 @@ export const agentManagementTestSuite: UITestSuite = {
         await inputSimulator.cancelDialog(pid);
         
         // Verify dialog closed and no agent created
-        await waitForUIStable(context);
+        await waitForUIStable(context, 500);
         await assertions.assertDialogClosed(pid);
         await assertions.assertAgentCount(pid, 0);
       }

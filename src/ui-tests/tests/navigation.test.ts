@@ -16,12 +16,19 @@ export const navigationTestSuite: UITestSuite = {
         await spawnAgent(context, 'Second Agent');
         await spawnAgent(context, 'Third Agent');
         
+        // Wait a bit more after spawning
+        await waitForUIStable(context, 1000);
+        
+        // Verify all agents were created
+        await assertions.assertAgentCount(context.pid, 3);
+        
         // Navigate up
         await navigateToAgent(context, 'up', 1);
         await assertions.assertSelectedItem(context.pid, 'Second Agent');
         
         // Navigate down
         await navigateToAgent(context, 'down', 2);
+        await waitForUIStable(context, 500); // Extra wait after navigation
         await assertions.assertSelectedItem(context.pid, 'Third Agent');
       }
     },

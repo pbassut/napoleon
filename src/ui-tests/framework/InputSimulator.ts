@@ -27,7 +27,7 @@ export class InputSimulator {
     await this.processManager.sendInput(pid, input);
   }
 
-  async typeText(pid: number, text: string, delayBetweenChars: number = 50): Promise<void> {
+  async typeText(pid: number, text: string, delayBetweenChars: number = 10): Promise<void> {
     for (const char of text) {
       await this.processManager.sendInput(pid, char);
       if (delayBetweenChars > 0) {
