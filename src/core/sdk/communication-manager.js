@@ -20,15 +20,7 @@ class SDKCommunicationManager {
    * @returns {Promise<Object>} Session object with SDK configuration
    */
   async initializeSDKSession(agentId, workingDirectory) {
-    const startTime = Date.now();
-    
     try {
-      this.logger.info('Starting SDK session initialization', {
-        agentId,
-        workingDirectory,
-        timestamp: new Date().toISOString(),
-      });
-
       if (this.sessions.has(agentId)) {
         throw new ConfigurationError(
           `SDK session already exists for agent ${agentId}`,
@@ -43,27 +35,6 @@ class SDKCommunicationManager {
           'Working directory must be a valid string path',
           'INVALID_WORKING_DIRECTORY',
           'Provide a valid working directory path',
-        );
-      }
-
-      // Validate working directory exists and is accessible
-      const fs = require('fs');
-      const workingDirExists = fs.existsSync(workingDirectory);
-      const isDirectory = workingDirExists && fs.statSync(workingDirectory).isDirectory();
-      
-      this.logger.info('Working directory validation', {
-        agentId,
-        workingDirectory,
-        workingDirExists,
-        isDirectory,
-        timestamp: new Date().toISOString(),
-      });
-
-      if (!workingDirExists || !isDirectory) {
-        throw new EnvironmentValidationError(
-          `Working directory does not exist or is not accessible: ${workingDirectory}`,
-          'WORKING_DIRECTORY_NOT_FOUND',
-          'Ensure worktree was created successfully before SDK initialization',
         );
       }
 
@@ -87,27 +58,18 @@ class SDKCommunicationManager {
       // Store session
       this.sessions.set(agentId, session);
 
-      const duration = Date.now() - startTime;
-      
-      this.logger.info('SDK session initialized successfully', {
+      this.logger.info('SDK session initialized', {
         agentId,
         workingDirectory,
         sessionId: agentId,
-        duration: `${duration}ms`,
-        workingDirValidated: true,
-        timestamp: new Date().toISOString(),
       });
 
       return session;
     } catch (error) {
-      const duration = Date.now() - startTime;
-      
       this.logger.error('Failed to initialize SDK session', {
         agentId,
         workingDirectory,
         error: error.message,
-        duration: `${duration}ms`,
-        timestamp: new Date().toISOString(),
       });
       throw error;
     }
