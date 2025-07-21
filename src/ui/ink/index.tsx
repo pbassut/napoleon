@@ -3,8 +3,8 @@ import './wdyr'; // Must be first import
 import React from 'react';
 import { render } from 'ink';
 import App from './App';
-import logger from '../../utils/logger';
-import AgentManagerClass from '../../core/agent-manager';
+import logger from '../../utils/logger.js';
+import AgentManagerClass from '../../core/agent-manager.js';
 
 async function startInkUI() {
   try {

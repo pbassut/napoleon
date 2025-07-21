@@ -1,7 +1,7 @@
 import chalk from 'chalk';
-import logger from '../utils/logger';
+import logger from '../utils/logger.js';
 import { AgentManager } from './ink/types';
-import AgentManagerClass from '../core/agent-manager';
+import AgentManagerClass from '../core/agent-manager.js';
 import startInkWithManager from './ink/startWithManager';
 
 /**

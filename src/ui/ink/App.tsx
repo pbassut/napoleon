@@ -10,7 +10,7 @@ import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentListDefault from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
-import logger from '../../utils/logger';
+import logger from '../../utils/logger.js';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();

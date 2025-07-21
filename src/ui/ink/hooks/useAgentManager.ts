@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
-import logger from '../../../utils/logger';
+import logger from '../../../utils/logger.js';
 
 // Agent status types from AgentManager
 const AgentStatus = {
