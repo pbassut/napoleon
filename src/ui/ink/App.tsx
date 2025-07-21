@@ -1,16 +1,16 @@
 import React from 'react';
 const { useState, useEffect, useMemo, useCallback } = React;
 import { Box, useApp, Text, useInput, useStdout } from 'ink';
-import { useAgentManager } from './hooks/useAgentManager.js';
-import ErrorBoundaryDefault from './components/Common/ErrorBoundary.js';
-import { Header } from './components/Layout/Header.js';
-import { MainContent } from './components/Layout/MainContent.js';
-import { Footer } from './components/Layout/Footer.js';
-import { SpawnDialog } from './components/Dialogs/SpawnDialog.js';
-import { TerminationDialog } from './components/Dialogs/TerminationDialog.js';
-import AgentListDefault from './components/AgentList/AgentList.js';
-import { DetailView } from './components/DetailView/DetailView.js';
-import logger from '../../utils/logger.js';
+import { useAgentManager } from './hooks/useAgentManager';
+import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
+import { Header } from './components/Layout/Header';
+import { MainContent } from './components/Layout/MainContent';
+import { Footer } from './components/Layout/Footer';
+import { SpawnDialog } from './components/Dialogs/SpawnDialog';
+import { TerminationDialog } from './components/Dialogs/TerminationDialog';
+import AgentListDefault from './components/AgentList/AgentList';
+import { DetailView } from './components/DetailView/DetailView';
+import logger from '../../utils/logger';
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();

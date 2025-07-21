@@ -4,7 +4,7 @@
  */
 
 import * as os from 'os';
-import { isWindowsTerminal, isMacTerminal, isITerm2 } from './terminal-capabilities.js';
+import { isWindowsTerminal, isMacTerminal, isITerm2 } from './terminal-capabilities';
 
 interface KeyObject {
   [key: string]: any;

@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import logger from '../utils/logger.js';
-import { AgentManager } from './ink/types.js';
-import AgentManagerClass from '../core/agent-manager.js';
-import startInkWithManager from './ink/startWithManager.js';
+import logger from '../utils/logger';
+import { AgentManager } from './ink/types';
+import AgentManagerClass from '../core/agent-manager';
+import startInkWithManager from './ink/startWithManager';
 
 /**
  * Napoleon UI Entry Point

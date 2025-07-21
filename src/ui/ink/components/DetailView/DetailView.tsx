@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
-import { Agent } from '../../types.js';
-import { useAgentLogs } from '../../hooks/useAgentLogs.js';
-import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator.js';
+import { Agent } from '../../types';
+import { useAgentLogs } from '../../hooks/useAgentLogs';
+import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator';
 
 interface DetailViewProps {
   agent: Agent;

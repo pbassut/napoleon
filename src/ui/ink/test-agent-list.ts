@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import React, { useState } from 'react';
-import { Agent } from './types.js';
+import { Agent } from './types';
 import { render, Box, Text } from 'ink';
-import AgentListDefault from './components/AgentList/AgentList.js';
+import AgentListDefault from './components/AgentList/AgentList';
 
 // Mock agent data generator
 function generateMockAgents(count: number): Agent[] {

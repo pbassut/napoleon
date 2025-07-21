@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
-import { ModalOverlay } from '../Common/ModalOverlay.js';
-import logger from '../../../../utils/logger.js';
+import { ModalOverlay } from '../Common/ModalOverlay';
+import logger from '../../../../utils/logger';
 
 // We'll use a simple text input for now instead of ink-text-input
 const SimpleTextInput = ({ value, onChange, placeholder, focus }) => {

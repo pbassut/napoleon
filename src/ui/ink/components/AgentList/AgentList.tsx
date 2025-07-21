@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text, useInput, useFocus } from 'ink';
-import AgentItem from './AgentItem.js';
-import { Agent } from '../../types.js';
+import AgentItem from './AgentItem';
+import { Agent } from '../../types';
 
 const { useState, useEffect, useMemo, useCallback } = React;
 

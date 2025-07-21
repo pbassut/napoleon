@@ -6,7 +6,7 @@
  */
 
 import chalk from 'chalk';
-import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities.js';
+import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities';
 
 console.log('Napoleon Terminal Compatibility Test\n');
 

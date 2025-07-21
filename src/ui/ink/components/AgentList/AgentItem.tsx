@@ -1,8 +1,8 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { Agent } from '../../types.js';
-import { getStatusInfo } from '../../constants/agentStatus.js';
-import { ActivityIndicator } from '../Common/ActivityIndicator.js';
+import { Agent } from '../../types';
+import { getStatusInfo } from '../../constants/agentStatus';
+import { ActivityIndicator } from '../Common/ActivityIndicator';
 
 const { memo, useState, useEffect } = React;
 
