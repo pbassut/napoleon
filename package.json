@@ -41,8 +41,7 @@
     "version:patch": "scripts/version.sh patch",
     "version:minor": "scripts/version.sh minor",
     "version:major": "scripts/version.sh major",
-    "version:prerelease": "scripts/version.sh prerelease",
-    "prepublishOnly": "true || npm run lint && npm test"
+    "version:prerelease": "scripts/version.sh prerelease"
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "^1.0.53",
