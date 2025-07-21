@@ -578,7 +578,7 @@ class AgentManager {
           `git worktree add "${worktreePath}"`,
           {
             cwd: process.cwd(),
-            timeout: 30000, // 30 second timeout
+            timeout: 120000, // 2 minute timeout for large repos
           },
           (error, stdout, stderr) => {
             if (error) {
