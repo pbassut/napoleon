@@ -547,6 +547,8 @@ class AgentManager {
   async createWorktree(agentId) {
     return new Promise((resolve, reject) => {
       try {
+        const startTime = Date.now();
+
         // Validate git state
         const gitValidation = this.validateGitForWorktree();
         if (!gitValidation.isValid) {
@@ -571,6 +573,7 @@ class AgentManager {
           agentId,
           worktreeName,
           worktreePath,
+          timestamp: new Date().toISOString(),
         });
 
         // Create the worktree
@@ -581,12 +584,16 @@ class AgentManager {
             timeout: 120000, // 2 minute timeout for large repos
           },
           (error, stdout, stderr) => {
+            const duration = Date.now() - startTime;
+            
             if (error) {
               logger.error('Git worktree creation failed', {
                 agentId,
                 worktreePath,
                 error: error.message,
                 stderr,
+                duration: `${duration}ms`,
+                timestamp: new Date().toISOString(),
               });
 
               // Clean up any partial directory creation
@@ -600,22 +607,57 @@ class AgentManager {
                 )
               );
             } else {
+              // Validate that worktree directory actually exists
+              const worktreeExists = fs.existsSync(worktreePath);
+              const isDirectory = worktreeExists && fs.statSync(worktreePath).isDirectory();
+              
               logger.info('Git worktree created successfully', {
                 agentId,
                 worktreeName,
                 worktreePath,
                 stdout: stdout.trim(),
+                duration: `${duration}ms`,
+                worktreeExists,
+                isDirectory,
+                timestamp: new Date().toISOString(),
               });
+
+              if (!worktreeExists || !isDirectory) {
+                const validationError = new EnvironmentValidationError(
+                  `Worktree creation succeeded but directory validation failed. Expected: ${worktreePath}`,
+                  'WORKTREE_VALIDATION_FAILED',
+                  'Worktree directory not found after creation'
+                );
+                
+                logger.error('Worktree validation failed after creation', {
+                  agentId,
+                  worktreePath,
+                  worktreeExists,
+                  isDirectory,
+                  duration: `${duration}ms`,
+                });
+                
+                this.cleanupFailedWorktree(worktreePath);
+                reject(validationError);
+                return;
+              }
 
               resolve({
                 worktreeName,
                 worktreePath,
                 agentId,
+                duration,
+                validated: true,
               });
             }
           }
         );
       } catch (error) {
+        logger.error('Worktree creation caught exception', {
+          agentId,
+          error: error.message,
+          timestamp: new Date().toISOString(),
+        });
         reject(error);
       }
     });
@@ -785,11 +827,18 @@ class AgentManager {
    * Spawn a new agent with instructions
    */
   async spawnAgent(instructions, options = {}) {
+    const spawnStartTime = Date.now();
+    let agentId;
+    
     try {
-      // Validate and sanitize input
+      // Checkpoint 1: Input validation
+      const validationStartTime = Date.now();
+      
       const sanitizedInstructions = this.validateInstructions(instructions);
       const validatedOptions = this.validateOptions(options);
 
+      const validationDuration = Date.now() - validationStartTime;
+      
       // Check agent limit
       if (this.agents.size >= this.maxAgents) {
         throw new EnvironmentValidationError(
@@ -810,11 +859,14 @@ class AgentManager {
       }
 
       // Generate agent session (or use provided one for pending agent replacement)
-      const agentId = options.agentId || this.generateAgentId();
+      agentId = options.agentId || this.generateAgentId();
 
-      logger.info('Spawning new agent', {
+      logger.info('SPAWN_FLOW: Starting agent spawn process', {
         agentId,
         instructionsLength: instructions.length,
+        validationDuration: `${validationDuration}ms`,
+        checkpoint: 'validation_complete',
+        timestamp: new Date().toISOString(),
       });
 
       // Update status to forking before creating worktree
@@ -824,16 +876,35 @@ class AgentManager {
         this.agents.set(agentId, agent);
       }
 
-      // Create git worktree for agent isolation
-      logger.info('DEBUG: About to create worktree', { agentId });
+      // Checkpoint 2: Worktree creation
+      const worktreeStartTime = Date.now();
+      
+      logger.info('SPAWN_FLOW: About to create worktree', { 
+        agentId,
+        checkpoint: 'worktree_creation_start',
+        timestamp: new Date().toISOString(),
+      });
+      
       const worktreeInfo = await this.createWorktree(agentId);
-      logger.info('DEBUG: Worktree created successfully', { agentId, worktreeInfo });
+      const worktreeDuration = Date.now() - worktreeStartTime;
+      
+      logger.info('SPAWN_FLOW: Worktree created successfully', { 
+        agentId, 
+        worktreeInfo,
+        worktreeDuration: `${worktreeDuration}ms`,
+        checkpoint: 'worktree_creation_complete',
+        timestamp: new Date().toISOString(),
+      });
+      
       const workingDirectory = worktreeInfo.worktreePath;
 
-      logger.info('Agent worktree created', {
+      // Checkpoint 3: Session creation
+      const sessionStartTime = Date.now();
+      
+      logger.info('SPAWN_FLOW: Creating agent session', {
         agentId,
-        worktreeName: worktreeInfo.worktreeName,
-        workingDirectory,
+        checkpoint: 'session_creation_start',
+        timestamp: new Date().toISOString(),
       });
 
       // Create agent session data
@@ -867,15 +938,43 @@ class AgentManager {
         type: 'info',
       });
 
+      const sessionDuration = Date.now() - sessionStartTime;
+
+      logger.info('SPAWN_FLOW: Agent session created', {
+        agentId,
+        sessionDuration: `${sessionDuration}ms`,
+        checkpoint: 'session_creation_complete',
+        timestamp: new Date().toISOString(),
+      });
+
       // Update status to starting before SDK initialization
       session.status = AgentStatus.STARTING;
       this.agents.set(agentId, session);
+
+      // Checkpoint 4: SDK initialization
+      const sdkStartTime = Date.now();
+      
+      logger.info('SPAWN_FLOW: About to initialize SDK session', {
+        agentId,
+        workingDirectory,
+        checkpoint: 'sdk_initialization_start',
+        timestamp: new Date().toISOString(),
+      });
 
       // Initialize SDK session
       const sdkSession = await this.initializeSDKSession(
         agentId,
         workingDirectory
       );
+      
+      const sdkDuration = Date.now() - sdkStartTime;
+      
+      logger.info('SPAWN_FLOW: SDK session initialized successfully', {
+        agentId,
+        sdkDuration: `${sdkDuration}ms`,
+        checkpoint: 'sdk_initialization_complete',
+        timestamp: new Date().toISOString(),
+      });
 
       // Add SDK initialization log
       session.logs.push({
@@ -921,18 +1020,46 @@ class AgentManager {
         });
       }
 
+      // Checkpoint 5: Final completion
+      const totalSpawnDuration = Date.now() - spawnStartTime;
+      
+      logger.info('SPAWN_FLOW: About to send instructions to agent', {
+        agentId,
+        checkpoint: 'instructions_sending_start',
+        timestamp: new Date().toISOString(),
+      });
+
       // Send initial instructions to agent
       this.sendInstructions(agentId, instructions);
 
-      logger.info('Agent spawned successfully', {
+      logger.info('SPAWN_FLOW: Agent spawn process completed successfully', {
         agentId,
         sessionId: session.sessionId,
         status: session.status,
+        totalSpawnDuration: `${totalSpawnDuration}ms`,
+        checkpoint: 'spawn_complete',
+        timestamp: new Date().toISOString(),
+        worktreeValidated: worktreeInfo.validated,
+        performanceBreakdown: {
+          validation: `${validationDuration}ms`,
+          worktreeCreation: `${worktreeDuration}ms`, 
+          sessionCreation: `${sessionDuration}ms`,
+          sdkInitialization: `${sdkDuration}ms`,
+          total: `${totalSpawnDuration}ms`
+        }
       });
 
       return session;
     } catch (error) {
-      logger.error('Failed to spawn agent', { error: error.message });
+      const totalSpawnDuration = Date.now() - spawnStartTime;
+      
+      logger.error('SPAWN_FLOW: Agent spawn process failed', { 
+        agentId: agentId || 'unknown',
+        error: error.message,
+        totalSpawnDuration: `${totalSpawnDuration}ms`,
+        checkpoint: 'spawn_failed',
+        timestamp: new Date().toISOString(),
+      });
       throw error;
     }
   }
