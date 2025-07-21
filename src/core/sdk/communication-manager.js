@@ -106,12 +106,13 @@ class SDKCommunicationManager {
         throw new EnvironmentValidationError(
           'Prompt must be a non-empty string',
           'INVALID_PROMPT',
-          'Provide a valid prompt string',
+          'Provide a valid prompt string'
         );
       }
 
       // Merge options with session defaults
       const queryOptions = {
+        permissionMode: 'bypassPermissions',
         ...session.options,
         ...options,
         abortController: session.abortController,
