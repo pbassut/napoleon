@@ -1,6 +1,6 @@
 {
   "name": "napoleon-cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Napoleon - Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions",
   "main": "src/cli/index.js",
   "bin": {
