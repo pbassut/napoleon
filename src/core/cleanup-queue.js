@@ -3,6 +3,7 @@ const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const logger = require('../utils/logger');
+const { loadConfig } = require('./config');
 
 const execAsync = promisify(exec);
 
@@ -195,6 +196,13 @@ class WorktreeCleanupQueue {
    */
   async cleanupWorktree(item) {
     const { worktreePath, force, preserveBranch } = item;
+
+    // Check if auto cleanup is enabled
+    const config = loadConfig();
+    if (!config.features.autoCleanup) {
+      logger.debug('Worktree cleanup disabled by configuration', { worktreePath });
+      return;
+    }
 
     // Validate worktree exists
     const exists = await fs.access(worktreePath).then(() => true).catch(() => false);

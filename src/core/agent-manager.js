@@ -1302,6 +1302,12 @@ class AgentManager {
 
       // Clean up worktree immediately (for test compatibility and immediate cleanup)
       if (session.worktreePath) {
+        if (!config.features.autoCleanup) {
+          logger.debug('Worktree cleanup disabled by configuration', {
+            agentId,
+            worktreePath: session.worktreePath
+          });
+        } else {
         try {
           // Direct git worktree removal for immediate cleanup
           await new Promise((resolve, reject) => {
@@ -1371,6 +1377,7 @@ class AgentManager {
             worktreePath: session.worktreePath,
             error: error.message,
           });
+        }
         }
       }
 

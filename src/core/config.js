@@ -15,7 +15,7 @@ const DEFAULT_CONFIG = {
   logLevel: 'info',
   napoleonDir: path.join(os.homedir(), '.napoleon'),
   features: {
-    autoCleanup: true,
+    autoCleanup: false,
     notifications: true,
   },
   logging: {

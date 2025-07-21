@@ -2,6 +2,7 @@ const path = require('path');
 const WorktreeDiscovery = require('./worktree-discovery');
 const WorktreeCleanupQueue = require('./cleanup-queue');
 const logger = require('../utils/logger');
+const { loadConfig } = require('./config');
 
 /**
  * Worktree Lifecycle Manager
@@ -220,6 +221,11 @@ class WorktreeLifecycleManager {
    * Force cleanup of a specific worktree
    */
   async forceCleanupWorktree(worktreePath, options = {}) {
+    const config = loadConfig();
+    if (!config.features.autoCleanup) {
+      logger.debug('Worktree force cleanup disabled by configuration', { worktreePath });
+      return;
+    }
     return this.cleanupQueue.forceCleanup(worktreePath, options);
   }
 
@@ -241,6 +247,12 @@ class WorktreeLifecycleManager {
    * Scan for newly orphaned worktrees (for background monitoring)
    */
   async scanForOrphans() {
+    const config = loadConfig();
+    if (!config.features.autoCleanup) {
+      logger.debug('Orphan scanning disabled by configuration');
+      return { found: 0, queued: 0, scanned: 0 };
+    }
+    
     try {
       logger.debug('Scanning for newly orphaned worktrees');
 
