@@ -155,6 +155,48 @@ export const uiStateTestSuite: UITestSuite = {
         // Should either show error or handle gracefully
         await assertions.assertNoErrors(pid);
       }
+    },
+    
+    {
+      name: 'should not flicker or re-render excessively',
+      test: async (context) => {
+        const { processManager, pid } = context;
+        
+        // Spawn an agent to have some UI content
+        await spawnAgent(context, 'Flicker Test Agent');
+        
+        // Collect multiple snapshots over a short period
+        const snapshots: string[] = [];
+        const snapshotCount = 10;
+        const delayBetween = 100; // 100ms between snapshots
+        
+        for (let i = 0; i < snapshotCount; i++) {
+          const output = await processManager.readProcessOutput(pid, 50);
+          snapshots.push(output);
+          await waitForUIStable(context, delayBetween);
+        }
+        
+        // Count unique snapshots (excluding empty ones)
+        const uniqueSnapshots = new Set(snapshots.filter(s => s.trim().length > 0));
+        
+        // In a stable UI, we should see very few unique snapshots
+        // Allow for some variation due to activity indicators
+        const maxExpectedUniqueSnapshots = 3; // Base state + maybe 1-2 activity indicator frames
+        
+        if (uniqueSnapshots.size > maxExpectedUniqueSnapshots) {
+          // Log the unique snapshots for debugging
+          console.log(`Found ${uniqueSnapshots.size} unique UI states (expected <= ${maxExpectedUniqueSnapshots}):`);
+          Array.from(uniqueSnapshots).forEach((snapshot, index) => {
+            console.log(`\n=== Snapshot ${index + 1} ===`);
+            console.log(snapshot);
+          });
+          
+          throw new Error(
+            `UI is flickering: found ${uniqueSnapshots.size} different states in ${snapshotCount * delayBetween}ms. ` +
+            `This suggests excessive re-rendering that could interfere with user input.`
+          );
+        }
+      }
     }
   ]
 };

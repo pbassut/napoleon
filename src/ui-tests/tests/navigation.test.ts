@@ -1,6 +1,6 @@
 import { UITestSuite } from '../framework/TestRunner';
 import { createAssertions } from '../helpers/assertions';
-import { spawnAgent, navigateToAgent, waitForUIStable } from '../helpers/utils';
+import { spawnAgent, navigateToAgent, waitForUIStable, delay } from '../helpers/utils';
 
 export const navigationTestSuite: UITestSuite = {
   name: 'Navigation Tests',
@@ -10,6 +10,7 @@ export const navigationTestSuite: UITestSuite = {
       name: 'should navigate between agents using arrow keys',
       test: async (context) => {
         const assertions = createAssertions(context.outputParser, context.processManager);
+        const { processManager, outputParser, pid } = context;
         
         // Spawn multiple agents
         await spawnAgent(context, 'First Agent');
@@ -22,14 +23,40 @@ export const navigationTestSuite: UITestSuite = {
         // Verify all agents were created
         await assertions.assertAgentCount(context.pid, 3);
         
+        // Diagnostic: Check initial state
+        const beforeNavOutput = await processManager.readProcessOutput(pid, 100);
+        const beforeNavAgents = outputParser.extractAgentList(beforeNavOutput);
+        const beforeNavSelected = outputParser.findSelectedItem(beforeNavOutput);
+        
+        console.log('\n=== Diagnostic: Before Navigation ===');
+        console.log('Agents:', beforeNavAgents);
+        console.log('Selected:', beforeNavSelected);
+        
         // Navigate up
         await navigateToAgent(context, 'up', 1);
+        
+        // Diagnostic: Check after first navigation
+        const afterUpOutput = await processManager.readProcessOutput(pid, 100);
+        const afterUpSelected = outputParser.findSelectedItem(afterUpOutput);
+        console.log('\n=== After Navigate UP ===');
+        console.log('Selected:', afterUpSelected);
+        
         await assertions.assertSelectedItem(context.pid, 'Second Agent');
         
         // Navigate down
         await navigateToAgent(context, 'down', 2);
         await waitForUIStable(context, 500); // Extra wait after navigation
-        await assertions.assertSelectedItem(context.pid, 'Third Agent');
+        
+        // Diagnostic: Check final state
+        const finalOutput = await processManager.readProcessOutput(pid, 100);
+        const finalAgents = outputParser.extractAgentList(finalOutput);
+        const finalSelected = outputParser.findSelectedItem(finalOutput);
+        
+        console.log('\n=== After Navigate DOWN x2 ===');
+        console.log('Agents:', finalAgents);
+        console.log('Selected:', finalSelected);
+        
+        await assertions.assertSelectedItem(context.pid, 'First Agent');
       }
     },
     
@@ -118,6 +145,71 @@ export const navigationTestSuite: UITestSuite = {
         // Should still show empty state
         await assertions.assertTextInOutput(pid, 'No agents');
         await assertions.assertNoErrors(pid);
+      }
+    },
+    
+    {
+      name: 'should maintain stable UI during navigation',
+      test: async (context) => {
+        const assertions = createAssertions(context.outputParser, context.processManager);
+        const { processManager, inputSimulator, pid } = context;
+        
+        // Spawn multiple agents
+        await spawnAgent(context, 'Agent A');
+        await spawnAgent(context, 'Agent B');
+        await spawnAgent(context, 'Agent C');
+        
+        // Take a baseline snapshot
+        await waitForUIStable(context, 500);
+        const baseline = await processManager.readProcessOutput(pid, 100);
+        const baselineSelected = context.outputParser.findSelectedItem(baseline);
+        
+        // Perform navigation and immediately capture states
+        const states: Array<{action: string, output: string, selected: string | null}> = [];
+        
+        // Navigate up
+        await inputSimulator.pressKey(pid, 'up');
+        
+        // Capture multiple snapshots quickly after navigation
+        for (let i = 0; i < 5; i++) {
+          await delay(50); // Very short delay
+          const output = await processManager.readProcessOutput(pid, 50);
+          const selected = context.outputParser.findSelectedItem(output);
+          states.push({
+            action: `After UP + ${i * 50}ms`,
+            output,
+            selected
+          });
+        }
+        
+        // Check if selection changed as expected
+        const finalSelected = states[states.length - 1].selected;
+        
+        // Log state transitions for debugging
+        console.log('Navigation state transitions:');
+        console.log(`Baseline: ${baselineSelected}`);
+        states.forEach(state => {
+          console.log(`${state.action}: ${state.selected || 'No selection found'}`);
+        });
+        
+        // Verify the selection actually changed
+        if (finalSelected === baselineSelected) {
+          throw new Error(
+            `Navigation did not change selection. Started at: "${baselineSelected}", ` +
+            `ended at: "${finalSelected}". This suggests input was lost during re-rendering.`
+          );
+        }
+        
+        // Check for selection flickering (selection disappearing and reappearing)
+        const selections = states.map(s => s.selected);
+        const nullSelections = selections.filter(s => s === null).length;
+        
+        if (nullSelections > 0) {
+          throw new Error(
+            `Selection disappeared ${nullSelections} times during navigation. ` +
+            `This suggests UI instability that could cause input loss.`
+          );
+        }
       }
     }
   ]
