@@ -185,6 +185,17 @@ class WorktreeLifecycleManager {
 
     const { session } = agentInfo;
     if (session && session.worktreePath) {
+      // Check autoCleanup configuration before queuing cleanup
+      const config = loadConfig();
+      if (!config.features.autoCleanup && !options.force) {
+        logger.debug('Agent worktree cleanup disabled by configuration', {
+          agentId,
+          worktreePath: session.worktreePath,
+        });
+        logger.debug('Agent unregistered', { agentId });
+        return;
+      }
+
       // Queue worktree for cleanup
       const cleanupOptions = {
         agentId,

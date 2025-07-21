@@ -1512,6 +1512,24 @@ class AgentManager {
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
 
+      // Unregister agent from worktree lifecycle manager
+      if (this.worktreeLifecycle) {
+        try {
+          await this.worktreeLifecycle.unregisterAgent(agentId, {
+            force: options.force || false,
+            preserveBranch: options.preserveBranch || false,
+          });
+          logger.debug('Agent unregistered from worktree lifecycle manager', {
+            agentId,
+          });
+        } catch (error) {
+          logger.warn('Failed to unregister agent from lifecycle manager', {
+            agentId,
+            error: error.message,
+          });
+        }
+      }
+
       // Remove agent from active list and mark as terminated
       this.agents.delete(agentId);
       await this.saveSessions();
