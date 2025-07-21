@@ -137,7 +137,7 @@ if npm view "$PACKAGE_NAME@$NEW_VERSION" version >/dev/null 2>&1; then
 fi
 print_success "Version $NEW_VERSION is available for publishing"
 
-# Update version in package.json
+# Update version in package.json and commit immediately
 print_step "Updating version in package.json..."
 if [[ "$DRY_RUN" != "true" ]]; then
     if [[ "$VERSION_TYPE" == "prerelease" && -n "$PRERELEASE_ID" ]]; then
@@ -146,13 +146,8 @@ if [[ "$DRY_RUN" != "true" ]]; then
         npm version "$VERSION_TYPE" --no-git-tag-version
     fi
     print_success "Version updated to $NEW_VERSION"
-else
-    echo "Would update package.json version to: $NEW_VERSION"
-fi
-
-# Create git commit and tag
-print_step "Creating git commit and tag..."
-if [[ "$DRY_RUN" != "true" ]]; then
+    
+    # Immediately commit the version change to keep working tree clean
     git add package.json
     git commit -m "chore: bump version to $NEW_VERSION
 
@@ -162,6 +157,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
     git tag "v$NEW_VERSION"
     print_success "Created commit and tag v$NEW_VERSION"
 else
+    echo "Would update package.json version to: $NEW_VERSION"
     echo "Would create commit: 'chore: bump version to $NEW_VERSION'"
     echo "Would create tag: v$NEW_VERSION"
 fi
