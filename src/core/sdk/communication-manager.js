@@ -174,11 +174,12 @@ class SDKCommunicationManager {
         agentId,
         promptLength: prompt.length,
         options: queryOptions,
+        permissionMode: queryOptions.permissionMode,
       });
 
       const queryResponse = query({
         prompt,
-        ...queryOptions,
+        options: queryOptions,
       });
 
       this.logger.debug('SDK: Query response object created, starting message iteration', {

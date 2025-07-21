@@ -920,7 +920,7 @@ class AgentManager {
       }
 
       // Send initial instructions to agent
-      await this.sendInstructions(agentId, instructions);
+      this.sendInstructions(agentId, instructions);
 
       logger.info('Agent spawned successfully', {
         agentId,
