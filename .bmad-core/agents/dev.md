@@ -55,6 +55,7 @@ core_principles:
 commands:  
   - help: Show numbered list of the following commands to allow selection
   - run-tests: Execute linting and tests
+  - worktree: create a new branch before doing the work. After you're done, commit your work.
   - explain: teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer.
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-story:
