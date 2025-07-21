@@ -171,8 +171,9 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       });
       
       // Call with correct signature: spawnAgent(instructions, options)
+      // Let agent manager create isolated worktree - don't override workingDirectory
       await agentManager.spawnAgent(instructions, {
-        workingDirectory: workingDirectory || process.cwd(),
+        // Remove workingDirectory override to allow worktree creation
       });
 
       // Trigger a manual refresh without depending on fetchAgents

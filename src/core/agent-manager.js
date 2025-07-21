@@ -825,7 +825,9 @@ class AgentManager {
       }
 
       // Create git worktree for agent isolation
+      logger.info('DEBUG: About to create worktree', { agentId });
       const worktreeInfo = await this.createWorktree(agentId);
+      logger.info('DEBUG: Worktree created successfully', { agentId, worktreeInfo });
       const workingDirectory = worktreeInfo.worktreePath;
 
       logger.info('Agent worktree created', {
