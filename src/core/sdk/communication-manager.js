@@ -51,6 +51,7 @@ class SDKCommunicationManager {
         options: {
           maxTurns: 10,
           workingDirectory,
+          cwd: workingDirectory,  // Also pass as cwd in case SDK expects this parameter
         },
       };
 

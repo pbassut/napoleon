@@ -986,7 +986,7 @@ class AgentManager {
       this.sdkManager
         .executeQuery(session.sessionId || session.id, instructions, {
           maxTurns: 10,
-          workingDirectory: session.workingDirectory,
+          cwd: session.workingDirectory,
         })
         .then((messages) => {
           logger.info('SDK query completed for agent', { agentId });
