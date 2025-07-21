@@ -1,12 +1,10 @@
 import React from 'react';
-import { Box, Text, useInput, useFocus } from 'ink';
+import { Box, Text } from 'ink';
 import AgentItem from './AgentItem';
 import { Agent } from '../../types';
 import logger from '../../../../utils/logger.js';
 
 const { useState, useEffect, useMemo, useCallback } = React;
-
-console.log('AgentList.tsx: Module loaded - CONSOLE LOG');
 
 interface AgentListProps {
   agents: Agent[];
@@ -23,33 +21,20 @@ const AgentList: React.FC<AgentListProps> = ({
   height = 10,
   isModalOpen = false,
 }) => {
-  const { isFocused } = useFocus();
   const [scrollOffset, setScrollOffset] = useState(0);
   
   // Log component lifecycle
   useEffect(() => {
-    console.log('AgentList: Component mounted - CONSOLE LOG', { 
-      agentsCount: agents.length,
-      selectedIndex,
-      isModalOpen,
-      isFocused 
-    });
     logger.debug('AgentList: Component mounted', { 
       agentsCount: agents.length,
       selectedIndex,
-      isModalOpen,
-      isFocused 
+      isModalOpen
     });
     
     return () => {
       logger.debug('AgentList: Component unmounting');
     };
   }, []);
-  
-  // Log focus changes
-  useEffect(() => {
-    logger.debug('AgentList: Focus state changed', { isFocused });
-  }, [isFocused]);
   
   // Log selection changes
   useEffect(() => {
@@ -82,70 +67,8 @@ const AgentList: React.FC<AgentListProps> = ({
     adjustScrollOffset(selectedIndex);
   }, [selectedIndex, adjustScrollOffset]);
 
-  // Handle keyboard input for future features
-  useInput(useCallback((input: string, key: any) => {
-    // Log all input events
-    console.log('AgentList: Input received - CONSOLE LOG', { input, key });
-    logger.debug('AgentList: Input received', {
-      input,
-      key: {
-        upArrow: key.upArrow,
-        downArrow: key.downArrow,
-        leftArrow: key.leftArrow,
-        rightArrow: key.rightArrow,
-        return: key.return,
-        escape: key.escape,
-        ctrl: key.ctrl,
-        shift: key.shift,
-        meta: key.meta
-      },
-      isFocused,
-      isModalOpen,
-      selectedIndex,
-      agentsLength: agents.length
-    });
-
-    if (!isFocused) {
-      logger.debug('AgentList: Input ignored - component not focused');
-      return;
-    }
-
-    if (key.upArrow || input === 'k') {
-      const newIndex = Math.max(0, selectedIndex - 1);
-      logger.debug('AgentList: Up arrow pressed', {
-        currentIndex: selectedIndex,
-        newIndex,
-        wouldChange: newIndex !== selectedIndex
-      });
-      if (newIndex !== selectedIndex) {
-        logger.debug('AgentList: Calling onSelectionChange', { newIndex });
-        onSelectionChange(newIndex);
-        adjustScrollOffset(newIndex);
-      } else {
-        logger.debug('AgentList: Already at top, not changing selection');
-      }
-    } else if (key.downArrow || input === 'j') {
-      const newIndex = Math.min(agents.length - 1, selectedIndex + 1);
-      logger.debug('AgentList: Down arrow pressed', {
-        currentIndex: selectedIndex,
-        newIndex,
-        wouldChange: newIndex !== selectedIndex
-      });
-      if (newIndex !== selectedIndex) {
-        logger.debug('AgentList: Calling onSelectionChange', { newIndex });
-        onSelectionChange(newIndex);
-        adjustScrollOffset(newIndex);
-      } else {
-        logger.debug('AgentList: Already at bottom, not changing selection');
-      }
-    } else if (input === '/') {
-      // Future: Search functionality
-      logger.debug('AgentList: Search key pressed (not implemented)');
-    } else if (input === 'f') {
-      // Future: Follow mode
-      logger.debug('AgentList: Follow key pressed (not implemented)');
-    }
-  }, [isFocused, selectedIndex, agents.length, onSelectionChange, adjustScrollOffset, isModalOpen]), { isActive: isFocused });
+  // Navigation is now handled at the App level
+  // This component just displays the list and responds to selection changes
 
   // Empty state
   if (agents.length === 0) {
@@ -217,7 +140,7 @@ const AgentList: React.FC<AgentListProps> = ({
             key={agent.id}
             agent={agent}
             isSelected={scrollOffset + index === selectedIndex}
-            isFocused={isFocused}
+            isFocused={true} // Always focused now since App handles input
             index={scrollOffset + index}
           />
         ))}

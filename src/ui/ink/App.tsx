@@ -56,9 +56,19 @@ const App = ({ agentManager }) => {
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
+    logger.debug('App: Input received', { 
+      input, 
+      key,
+      isSpawnDialogOpen,
+      isTerminationDialogOpen,
+      isDetailViewOpen 
+    });
+    
     // Don't process global shortcuts when dialog or detail view is open
-    if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen)
+    if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen) {
+      logger.debug('App: Input ignored - dialog or detail view is open');
       return;
+    }
 
     // Quit with 'q'
     if (input === 'q') {
@@ -79,6 +89,39 @@ const App = ({ agentManager }) => {
     // View agent details with 'enter' or 'i'
     if ((key.return || input === 'i') && selectedAgent) {
       setIsDetailViewOpen(true);
+    }
+
+    // Handle arrow key navigation
+    if (key.upArrow || input === 'k') {
+      logger.debug('App: Up arrow/k pressed', { 
+        currentSelectedIndex: selectedIndex,
+        agentsLength: agents.length 
+      });
+      if (agents.length > 0) {
+        const newIndex = Math.max(0, selectedIndex - 1);
+        if (newIndex !== selectedIndex) {
+          logger.debug('App: Navigating up', { from: selectedIndex, to: newIndex });
+          handleSelectionChange(newIndex);
+        } else {
+          logger.debug('App: Already at top, not navigating');
+        }
+      }
+    }
+
+    if (key.downArrow || input === 'j') {
+      logger.debug('App: Down arrow/j pressed', { 
+        currentSelectedIndex: selectedIndex,
+        agentsLength: agents.length 
+      });
+      if (agents.length > 0) {
+        const newIndex = Math.min(agents.length - 1, selectedIndex + 1);
+        if (newIndex !== selectedIndex) {
+          logger.debug('App: Navigating down', { from: selectedIndex, to: newIndex });
+          handleSelectionChange(newIndex);
+        } else {
+          logger.debug('App: Already at bottom, not navigating');
+        }
+      }
     }
   });
 
