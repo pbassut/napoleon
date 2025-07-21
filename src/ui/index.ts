@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import logger from '../utils/logger.js';
-import { AgentManager } from './ink/types';
+import { AgentManager } from './ink/types.js';
 import AgentManagerClass from '../core/agent-manager.js';
-import startInkWithManager from './ink/startWithManager';
+import startInkWithManager from './ink/startWithManager.js';
 
 /**
  * Napoleon UI Entry Point
@@ -25,7 +25,7 @@ class InkUIWrapper {
 
       logger.info('Ink UI initialized successfully');
     } catch (error: any) {
-      logger.error('Failed to initialize Ink UI', { error: error.message });
+      logger.error('Failed to initialize Ink UI', { error: error.message, stack: error.stack });
 
       // Show user-friendly error message
       console.error(chalk.red('\n❌ Failed to start Napoleon UI\n'));

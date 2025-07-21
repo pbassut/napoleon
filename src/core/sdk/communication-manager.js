@@ -1,6 +1,7 @@
 const { query } = require('@anthropic-ai/claude-code');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
+const fs = require('fs');
 
 /**
  * SDK Communication Manager
@@ -47,7 +48,6 @@ class SDKCommunicationManager {
       }
 
       // Validate working directory exists and is accessible
-      const fs = require('fs');
       const workingDirExists = fs.existsSync(workingDirectory);
       const isDirectory = workingDirExists && fs.statSync(workingDirectory).isDirectory();
       

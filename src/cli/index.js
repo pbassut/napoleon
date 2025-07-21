@@ -36,7 +36,7 @@ async function initializeApplication(program) {
           await ui.initialize();
           logger.info('Terminal UI started successfully');
         } catch (error) {
-          logger.error('Failed to start terminal UI', { error: error.message });
+          logger.error('Failed to start terminal UI', { error: error.message, stack: error.stack });
           process.stderr.write(`Failed to start terminal interface: ${error.message}\n`);
           process.exit(1);
         }

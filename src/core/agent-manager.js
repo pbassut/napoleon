@@ -1431,7 +1431,7 @@ class AgentManager {
 
       // Clean up worktree immediately (for test compatibility and immediate cleanup)
       if (session.worktreePath) {
-        if (!config.features.autoCleanup) {
+        if (!this.config.features?.autoCleanup) {
           logger.debug('Worktree cleanup disabled by configuration', {
             agentId,
             worktreePath: session.worktreePath
