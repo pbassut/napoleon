@@ -1507,7 +1507,6 @@ class AgentManager {
             error: error.message,
           });
         }
-        }
       }
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
