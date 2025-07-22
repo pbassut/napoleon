@@ -19,7 +19,6 @@ const DEFAULT_CONFIG = {
     notifications: true,
   },
   sdk: {
-    maxTurns: 999999, // Very large number so agent never exits due to turn limit
   },
   logging: {
     agents: {

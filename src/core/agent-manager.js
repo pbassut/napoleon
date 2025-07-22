@@ -1144,7 +1144,6 @@ class AgentManager {
       // Don't await - let the agent run asynchronously
       this.sdkManager
         .executeQuery(session.sessionId || session.id, instructions, {
-          maxTurns: this.config.sdk?.maxTurns || 25,
           cwd: session.workingDirectory,
         })
         .then((messages) => {

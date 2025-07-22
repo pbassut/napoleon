@@ -65,7 +65,6 @@ describe('SDKCommunicationManager', () => {
         abortController: expect.any(AbortController),
         messageHistory: [],
         options: {
-          maxTurns: 10,
           workingDirectory,
         },
       });
@@ -126,7 +125,6 @@ describe('SDKCommunicationManager', () => {
       expect(result).toEqual(mockMessages);
       expect(mockQuery).toHaveBeenCalledWith({
         prompt,
-        maxTurns: 10,
         workingDirectory: '/test/path',
         abortController: expect.any(AbortController),
       });

@@ -80,7 +80,6 @@ class SDKCommunicationManager {
         abortController: new AbortController(),
         messageHistory: [],
         options: {
-          maxTurns: config.sdk?.maxTurns || 25,
           workingDirectory,
           cwd: workingDirectory,  // Also pass as cwd in case SDK expects this parameter
         },
@@ -172,7 +171,6 @@ class SDKCommunicationManager {
                 model: queryOptions.model,
                 maxTokens: queryOptions.maxTokens,
                 temperature: queryOptions.temperature,
-                maxTurns: queryOptions.maxTurns,
               },
             }, null, 2),
             metadata: {
