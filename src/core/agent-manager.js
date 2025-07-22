@@ -80,7 +80,8 @@ class AgentManager {
       await this.loadSessions();
 
       // Start background orphan scanning
-      this.startBackgroundOrphanScanning();
+      // DISABLED: Commenting out background orphan scanning to prevent worktree removal
+      // this.startBackgroundOrphanScanning();
 
       logger.info('Agent manager initialized successfully', {
         maxAgents: this.maxAgents,
@@ -1142,9 +1143,13 @@ class AgentManager {
 
       // Execute query using SDK manager in the background
       // Don't await - let the agent run asynchronously
+      // Capture session data to prevent race conditions
+      const sessionId = session.sessionId || session.id;
+      const workingDirectory = session.workingDirectory;
+      
       this.sdkManager
-        .executeQuery(session.sessionId || session.id, instructions, {
-          cwd: session.workingDirectory,
+        .executeQuery(sessionId, instructions, {
+          cwd: workingDirectory,
         })
         .then((messages) => {
           logger.info('SDK query completed for agent', { agentId });
@@ -1165,6 +1170,7 @@ class AgentManager {
           logger.error('SDK query failed for agent', {
             agentId,
             error: error.message,
+            stack: error.stack,
           });
 
           // Update agent status to error
@@ -1172,6 +1178,11 @@ class AgentManager {
           if (currentSession) {
             currentSession.error = error.message;
             this.updateAgentStatus(agentId, AgentStatus.ERROR);
+          } else {
+            logger.warn('Agent session was deleted during SDK query execution', {
+              agentId,
+              error: error.message,
+            });
           }
         });
 
@@ -1661,36 +1672,33 @@ class AgentManager {
     }
     
     // Scan every 5 minutes for orphaned worktrees
-    // DISABLED: Commenting out background orphan scanning to prevent worktree removal
-    // const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
+    const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
 
-    // this.orphanScanInterval = setInterval(async () => {
-    //   try {
-    //     if (this.worktreeLifecycle) {
-    //       const result = await this.worktreeLifecycle.scanForOrphans();
+    this.orphanScanInterval = setInterval(async () => {
+      try {
+        if (this.worktreeLifecycle) {
+          const result = await this.worktreeLifecycle.scanForOrphans();
 
-    //       if (result.newOrphans > 0) {
-    //         logger.info('Background orphan scan found new orphaned worktrees', {
-    //           scanned: result.scanned,
-    //           newOrphans: result.newOrphans,
-    //         });
-    //       } else {
-    //         logger.debug('Background orphan scan completed', {
-    //           scanned: result.scanned,
-    //           newOrphans: result.newOrphans,
-    //         });
-    //       }
-    //     }
-    //   } catch (error) {
-    //     logger.error('Background orphan scan failed', { error: error.message });
-    //   }
-    // }, scanIntervalMs);
+          if (result.newOrphans > 0) {
+            logger.info('Background orphan scan found new orphaned worktrees', {
+              scanned: result.scanned,
+              newOrphans: result.newOrphans,
+            });
+          } else {
+            logger.debug('Background orphan scan completed', {
+              scanned: result.scanned,
+              newOrphans: result.newOrphans,
+            });
+          }
+        }
+      } catch (error) {
+        logger.error('Background orphan scan failed', { error: error.message });
+      }
+    }, scanIntervalMs);
 
-    // logger.info('Background orphan scanning started', {
-    //   intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
-    // });
-    
-    logger.info('Background orphan scanning DISABLED');
+    logger.info('Background orphan scanning started', {
+      intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
+    });
   }
 
   /**
