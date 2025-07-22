@@ -93,6 +93,15 @@ class WorktreeLifecycleManager {
   async handleOrphanedWorktrees(orphanedWorktrees) {
     logger.info('Processing orphaned worktrees', { count: orphanedWorktrees.length });
 
+    // Check if autoCleanup is enabled before processing orphaned worktrees
+    const config = loadConfig();
+    if (!config.features.autoCleanup) {
+      logger.debug('Orphaned worktree cleanup disabled by configuration', { 
+        count: orphanedWorktrees.length 
+      });
+      return;
+    }
+
     for (const worktree of orphanedWorktrees) {
       try {
         // Calculate age and size for priority
