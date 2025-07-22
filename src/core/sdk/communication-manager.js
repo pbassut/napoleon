@@ -402,12 +402,12 @@ class SDKCommunicationManager {
       });
 
       // Update session status on error
-      const session = this.sessions.get(agentId);
-      if (session) {
-        session.lastActivity = new Date().toISOString();
-        session.messageHistory.push({
+      const errorSession = this.sessions.get(agentId);
+      if (errorSession) {
+        errorSession.lastActivity = new Date().toISOString();
+        errorSession.messageHistory.push({
           id: Date.now().toString(),
-          timestamp: session.lastActivity,
+          timestamp: errorSession.lastActivity,
           type: 'error',
           content: error.message,
         });
