@@ -258,12 +258,6 @@ class WorktreeLifecycleManager {
    * Scan for newly orphaned worktrees (for background monitoring)
    */
   async scanForOrphans() {
-    const config = loadConfig();
-    if (!config.features.autoCleanup) {
-      logger.debug('Orphan scanning disabled by configuration');
-      return { found: 0, queued: 0, scanned: 0 };
-    }
-    
     try {
       logger.debug('Scanning for newly orphaned worktrees');
 

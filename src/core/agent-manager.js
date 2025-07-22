@@ -1215,29 +1215,48 @@ class AgentManager {
     }
 
     // Auto-terminate agent when it reaches a result state (waiting for input)
+    // Only if autoCleanup is enabled
     if (message.type === 'result') {
-      logger.info('Agent reached result state, auto-terminating', {
-        agentId,
-        resultContent: message.content,
-      });
+      if (this.config.features?.autoCleanup) {
+        logger.info('Agent reached result state, auto-terminating', {
+          agentId,
+          resultContent: message.content,
+        });
 
-      // Add termination log entry
-      session.logs.push({
-        timestamp: new Date(),
-        content:
-          'Agent completed task and is waiting for input - auto-terminating',
-        type: 'system',
-      });
+        // Add termination log entry
+        session.logs.push({
+          timestamp: new Date(),
+          content:
+            'Agent completed task and is waiting for input - auto-terminating',
+          type: 'system',
+        });
 
-      // Terminate the agent asynchronously to avoid blocking message processing
-      setImmediate(() => {
-        this.terminateAgent(agentId).catch((error) => {
-          logger.error('Failed to auto-terminate agent', {
-            agentId,
-            error: error.message,
+        // Terminate the agent asynchronously to avoid blocking message processing
+        setImmediate(() => {
+          this.terminateAgent(agentId).catch((error) => {
+            logger.error('Failed to auto-terminate agent', {
+              agentId,
+              error: error.message,
+            });
           });
         });
-      });
+      } else {
+        logger.info('Agent reached result state, keeping alive (autoCleanup disabled)', {
+          agentId,
+          resultContent: message.content,
+        });
+
+        // Add completion log entry but don't terminate
+        session.logs.push({
+          timestamp: new Date(),
+          content:
+            'Agent completed task and is waiting for input - staying active (autoCleanup disabled)',
+          type: 'system',
+        });
+
+        // Update status to IDLE instead of terminating
+        this.updateAgentStatus(agentId, AgentStatus.IDLE);
+      }
     }
 
     // Update last activity
@@ -1665,6 +1684,12 @@ class AgentManager {
    * Start background orphan scanning for unexpected agent deaths
    */
   startBackgroundOrphanScanning() {
+    const config = loadConfig();
+    if (!config.features.autoCleanup) {
+      logger.debug('Orphan scanning disabled by configuration');
+      return { found: 0, queued: 0, scanned: 0 };
+    }
+    
     // Scan every 5 minutes for orphaned worktrees
     const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
 
