@@ -1661,33 +1661,36 @@ class AgentManager {
     }
     
     // Scan every 5 minutes for orphaned worktrees
-    const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
+    // DISABLED: Commenting out background orphan scanning to prevent worktree removal
+    // const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
 
-    this.orphanScanInterval = setInterval(async () => {
-      try {
-        if (this.worktreeLifecycle) {
-          const result = await this.worktreeLifecycle.scanForOrphans();
+    // this.orphanScanInterval = setInterval(async () => {
+    //   try {
+    //     if (this.worktreeLifecycle) {
+    //       const result = await this.worktreeLifecycle.scanForOrphans();
 
-          if (result.newOrphans > 0) {
-            logger.info('Background orphan scan found new orphaned worktrees', {
-              scanned: result.scanned,
-              newOrphans: result.newOrphans,
-            });
-          } else {
-            logger.debug('Background orphan scan completed', {
-              scanned: result.scanned,
-              newOrphans: result.newOrphans,
-            });
-          }
-        }
-      } catch (error) {
-        logger.error('Background orphan scan failed', { error: error.message });
-      }
-    }, scanIntervalMs);
+    //       if (result.newOrphans > 0) {
+    //         logger.info('Background orphan scan found new orphaned worktrees', {
+    //           scanned: result.scanned,
+    //           newOrphans: result.newOrphans,
+    //         });
+    //       } else {
+    //         logger.debug('Background orphan scan completed', {
+    //           scanned: result.scanned,
+    //           newOrphans: result.newOrphans,
+    //         });
+    //       }
+    //     }
+    //   } catch (error) {
+    //     logger.error('Background orphan scan failed', { error: error.message });
+    //   }
+    // }, scanIntervalMs);
 
-    logger.info('Background orphan scanning started', {
-      intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
-    });
+    // logger.info('Background orphan scanning started', {
+    //   intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
+    // });
+    
+    logger.info('Background orphan scanning DISABLED');
   }
 
   /**
