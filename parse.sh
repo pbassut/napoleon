@@ -1,24 +1,31 @@
 #!/usr/bin/env fish
 
-# Usage: pretty_json_log.fish path/to/logfile.log [output_file]
+# Reads JSON log lines from stdin and pretty prints them smartly
 
-set logfile $argv[1]
-set outputfile $argv[2]
+function parse_line --argument line
+    set content_type (echo $line | jq -r 'try .content | fromjson | type' 2>/dev/null)
 
-if not test -f $logfile
-    echo "Error: '$logfile' does not exist."
-    exit 1
+    if test "$status" -eq 0 -a "$content_type" = "object"
+        echo $line | jq -r '
+            {
+                timestamp,
+                type,
+                source,
+                parsed_content: (.content | fromjson)
+            }
+        ' | jq .
+    else
+        echo $line | jq -r '
+            {
+                timestamp,
+                type,
+                source,
+                content
+            }
+        ' | jq .
+    end
 end
 
-# If an output file was specified, redirect output
-if test -n "$outputfile"
-    echo "" > $outputfile  # Clear output file
-    for line in (cat $logfile)
-        echo $line | jq . >> $outputfile
-    end
-    echo "Pretty-printed JSON saved to $outputfile"
-else
-    for line in (cat $logfile)
-        echo $line | jq .
-    end
+while read -l line
+    parse_line "$line"
 end
