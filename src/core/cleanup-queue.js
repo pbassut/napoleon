@@ -197,6 +197,13 @@ class WorktreeCleanupQueue {
   async cleanupWorktree(item) {
     const { worktreePath, force, preserveBranch } = item;
 
+    logger.debug('CLEANUP_PATH: cleanupWorktree executing', {
+      worktreePath,
+      force,
+      preserveBranch,
+      itemId: item.id,
+    });
+
     // Check if auto cleanup is enabled
     const config = loadConfig();
     if (!config.features.autoCleanup) {

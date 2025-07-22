@@ -668,6 +668,19 @@ class AgentManager {
    */
   cleanupFailedWorktree(worktreePath) {
     try {
+      logger.debug('CLEANUP_PATH: cleanupFailedWorktree called', {
+        worktreePath,
+        autoCleanup: this.config.features?.autoCleanup,
+      });
+
+      // Check autoCleanup configuration before cleaning up failed worktree
+      if (!this.config.features?.autoCleanup) {
+        logger.debug('Failed worktree cleanup disabled by configuration', {
+          worktreePath,
+        });
+        return;
+      }
+
       if (fs.existsSync(worktreePath)) {
         fs.rmSync(worktreePath, { recursive: true, force: true });
         logger.info('Cleaned up failed worktree directory', { worktreePath });
@@ -690,6 +703,10 @@ class AgentManager {
         return;
       }
 
+      logger.debug('CLEANUP_PATH: removeWorktree called', {
+        worktreePath,
+        autoCleanup: this.config.features?.autoCleanup,
+      });
       logger.info('Removing git worktree', { worktreePath });
 
       exec(
@@ -709,8 +726,17 @@ class AgentManager {
               }
             );
 
-            // Fallback: manual directory removal
+            // Fallback: manual directory removal (respect autoCleanup)
             try {
+              // Check autoCleanup configuration before manual cleanup
+              if (!this.config.features?.autoCleanup) {
+                logger.debug('Manual worktree cleanup disabled by configuration', {
+                  worktreePath,
+                });
+                resolve(); // Consider it handled even though not cleaned
+                return;
+              }
+
               fs.rmSync(worktreePath, { recursive: true, force: true });
               logger.info('Manually cleaned up worktree directory', {
                 worktreePath,
@@ -1454,85 +1480,36 @@ class AgentManager {
         }
       }
 
-      // Clean up worktree immediately (for test compatibility and immediate cleanup)
-      if (session.worktreePath) {
-        if (!this.config.features?.autoCleanup) {
-          logger.debug('Worktree cleanup disabled by configuration', {
-            agentId,
-            worktreePath: session.worktreePath
-          });
-        } else {
+      // Clean up worktree through lifecycle manager for consistent behavior
+      if (session.worktreePath && this.worktreeLifecycle) {
         try {
-          // Direct git worktree removal for immediate cleanup
-          await new Promise((resolve, reject) => {
-            exec(
-              `git worktree remove "${session.worktreePath}" --force`,
-              {
-                cwd: process.cwd(),
-                timeout: 30000, // 30 second timeout
-              },
-              (error, stdout, stderr) => {
-                if (error) {
-                  logger.warn(
-                    'Direct git worktree removal failed, trying lifecycle manager',
-                    {
-                      agentId,
-                      worktreePath: session.worktreePath,
-                      error: error.message,
-                      stderr,
-                    }
-                  );
+          logger.debug('CLEANUP_PATH: terminateAgent routing through lifecycle manager', {
+            agentId,
+            worktreePath: session.worktreePath,
+            autoCleanup: this.config.features?.autoCleanup,
+          });
 
-                  // Fallback to lifecycle manager
-                  if (this.worktreeLifecycle) {
-                    this.worktreeLifecycle
-                      .forceCleanupWorktree(session.worktreePath, {
-                        force: true,
-                        preserveBranch: options.preserveBranch || false,
-                      })
-                      .then(() => {
-                        logger.info(
-                          'Agent worktree queued for cleanup via lifecycle manager',
-                          {
-                            agentId,
-                            worktreePath: session.worktreePath,
-                          }
-                        );
-                        resolve();
-                      })
-                      .catch((lifecycleError) => {
-                        logger.error(
-                          'Failed to cleanup worktree via lifecycle manager',
-                          {
-                            agentId,
-                            worktreePath: session.worktreePath,
-                            error: lifecycleError.message,
-                          }
-                        );
-                        reject(lifecycleError);
-                      });
-                  } else {
-                    reject(error);
-                  }
-                } else {
-                  logger.info('Agent worktree removed directly', {
-                    agentId,
-                    worktreePath: session.worktreePath,
-                    stdout: stdout.trim(),
-                  });
-                  resolve();
-                }
-              }
-            );
+          await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
+            force: options.force || false,
+            preserveBranch: options.preserveBranch || false,
+          });
+
+          logger.info('Agent worktree cleanup handled by lifecycle manager', {
+            agentId,
+            worktreePath: session.worktreePath,
           });
         } catch (error) {
-          logger.error('Failed to cleanup worktree', {
+          logger.error('Failed to cleanup worktree via lifecycle manager', {
             agentId,
             worktreePath: session.worktreePath,
             error: error.message,
           });
         }
-        }
+      } else if (session.worktreePath && !this.worktreeLifecycle) {
+        logger.warn('No lifecycle manager available for worktree cleanup', {
+          agentId,
+          worktreePath: session.worktreePath,
+        });
       }
 
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);

@@ -194,6 +194,12 @@ class WorktreeLifecycleManager {
 
     const { session } = agentInfo;
     if (session && session.worktreePath) {
+      logger.debug('CLEANUP_PATH: unregisterAgent called', {
+        agentId,
+        worktreePath: session.worktreePath,
+        force: options.force,
+      });
+
       // Check autoCleanup configuration before queuing cleanup
       const config = loadConfig();
       if (!config.features.autoCleanup && !options.force) {
@@ -241,6 +247,11 @@ class WorktreeLifecycleManager {
    * Force cleanup of a specific worktree
    */
   async forceCleanupWorktree(worktreePath, options = {}) {
+    logger.debug('CLEANUP_PATH: forceCleanupWorktree called', {
+      worktreePath,
+      options,
+    });
+
     const config = loadConfig();
     if (!config.features.autoCleanup) {
       logger.debug('Worktree force cleanup disabled by configuration', { worktreePath });
