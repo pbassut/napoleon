@@ -22,6 +22,21 @@ jest.mock('../src/core/logging/agent-log-manager', () => {
   }));
 });
 
+// Mock fs module
+jest.mock('fs', () => ({
+  existsSync: jest.fn().mockReturnValue(true),
+  statSync: jest.fn().mockReturnValue({ isDirectory: () => true }),
+}));
+
+// Mock config module
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn().mockReturnValue({
+    napoleonDir: '/test/.napoleon',
+    sessionStorage: '/test/.napoleon/sessions',
+    maxPromptLength: 50
+  }),
+}));
+
 describe('SDKCommunicationManager', () => {
   let manager;
   let mockQuery;

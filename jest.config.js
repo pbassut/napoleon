@@ -49,6 +49,10 @@ module.exports = {
   testTimeout: 10000,
   // Enable open handle detection to help Jest clean up properly
   detectOpenHandles: true,
+  // Transform ES modules in node_modules for testing
+  transformIgnorePatterns: [
+    'node_modules/(?!(ink)/)'
+  ],
   // Mock Claude Code SDK to avoid ES module import issues
   moduleNameMapper: {
     '^@anthropic-ai/claude-code$': '<rootDir>/__tests__/__mocks__/@anthropic-ai/claude-code.js'

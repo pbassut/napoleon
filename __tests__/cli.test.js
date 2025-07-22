@@ -1,10 +1,22 @@
 const { program } = require('commander');
 const { initializeApplication } = require('../src/cli/index');
-const { initializeSessionStorage } = require('../src/core/config');
-const { validateEnvironment } = require('../src/cli/validators/environment');
 
-jest.mock('../src/core/config');
-jest.mock('../src/cli/validators/environment');
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn(),
+  initializeSessionStorage: jest.fn(),
+}));
+// Mock dependencies of validators
+jest.mock('../src/core/api-key-validator', () => {
+  return jest.fn().mockImplementation(() => ({
+    validateApiKey: jest.fn().mockResolvedValue(),
+  }));
+});
+
+jest.mock('../src/cli/validators/environment', () => ({
+  validateEnvironment: jest.fn(),
+  validateApiKey: jest.fn(),
+  validateGitWorkingTree: jest.fn(),
+}));
 
 const { loadConfig } = require('../src/core/config');
 
@@ -16,23 +28,46 @@ loadConfig.mockReturnValue({
 });
 
 describe('CLI Application', () => {
+  let originalEnv;
+  
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Save and mock environment variables
+    originalEnv = process.env.ANTHROPIC_API_KEY;
+    process.env.ANTHROPIC_API_KEY = 'sk-ant-1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
+    
+    // Get mocked functions
+    const { loadConfig } = require('../src/core/config');
+    const { validateEnvironment } = require('../src/cli/validators/environment');
+    
     // Re-apply config mock after clearAllMocks
     loadConfig.mockReturnValue({
       napoleonDir: '/test/.napoleon',
       sessionStorage: '/test/.napoleon/sessions',
       maxPromptLength: 50
     });
+    
     // Reset commander program
     program.commands = [];
     program._name = undefined;
+    
     // Mock environment validation to succeed
     validateEnvironment.mockResolvedValue();
+  });
+  
+  afterEach(() => {
+    // Restore environment variables
+    if (originalEnv) {
+      process.env.ANTHROPIC_API_KEY = originalEnv;
+    } else {
+      delete process.env.ANTHROPIC_API_KEY;
+    }
   });
 
   describe('initializeApplication', () => {
     it('should initialize CLI application with correct name and version', async () => {
+      const { initializeSessionStorage } = require('../src/core/config');
       initializeSessionStorage.mockResolvedValue();
 
       await initializeApplication(program);
@@ -42,6 +77,7 @@ describe('CLI Application', () => {
     });
 
     it('should register start command', async () => {
+      const { initializeSessionStorage } = require('../src/core/config');
       initializeSessionStorage.mockResolvedValue();
 
       await initializeApplication(program);
@@ -52,6 +88,7 @@ describe('CLI Application', () => {
     });
 
     it('should register status command', async () => {
+      const { initializeSessionStorage } = require('../src/core/config');
       initializeSessionStorage.mockResolvedValue();
 
       await initializeApplication(program);
@@ -62,6 +99,7 @@ describe('CLI Application', () => {
     });
 
     it('should initialize session storage', async () => {
+      const { initializeSessionStorage } = require('../src/core/config');
       initializeSessionStorage.mockResolvedValue();
 
       await initializeApplication(program);
@@ -70,6 +108,7 @@ describe('CLI Application', () => {
     });
 
     it('should throw error if session storage initialization fails', async () => {
+      const { initializeSessionStorage } = require('../src/core/config');
       const error = new Error('Storage initialization failed');
       initializeSessionStorage.mockRejectedValue(error);
 
