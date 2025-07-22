@@ -2,6 +2,7 @@ const { query } = require('@anthropic-ai/claude-code');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
 const fs = require('fs');
+const { loadConfig } = require('../config');
 
 /**
  * SDK Communication Manager
@@ -68,6 +69,7 @@ class SDKCommunicationManager {
       }
 
       // Create session object with SDK configuration
+      const config = loadConfig();
       const session = {
         agentId,
         workingDirectory,
@@ -78,7 +80,7 @@ class SDKCommunicationManager {
         abortController: new AbortController(),
         messageHistory: [],
         options: {
-          maxTurns: 10,
+          maxTurns: config.sdk?.maxTurns || 25,
           workingDirectory,
           cwd: workingDirectory,  // Also pass as cwd in case SDK expects this parameter
         },

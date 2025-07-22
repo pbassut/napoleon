@@ -962,13 +962,7 @@ class AgentManager {
       });
 
       // DEBUG: Wait 10 seconds before SDK initialization to check worktree state
-      logger.info('SPAWN_FLOW: Waiting 10 seconds before SDK initialization for debugging', {
-        agentId,
-        timestamp: new Date().toISOString(),
-      });
-      await new Promise(resolve => setTimeout(resolve, 10000));
-      
-      logger.info('SPAWN_FLOW: 10-second wait completed, proceeding with SDK initialization', {
+      logger.info('SPAWN_FLOW: Proceeding with SDK initialization', {
         agentId,
         timestamp: new Date().toISOString(),
       });
@@ -1124,7 +1118,7 @@ class AgentManager {
       // Don't await - let the agent run asynchronously
       this.sdkManager
         .executeQuery(session.sessionId || session.id, instructions, {
-          maxTurns: 10,
+          maxTurns: this.config.sdk?.maxTurns || 25,
           cwd: session.workingDirectory,
         })
         .then((messages) => {

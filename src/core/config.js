@@ -18,6 +18,9 @@ const DEFAULT_CONFIG = {
     autoCleanup: false,
     notifications: true,
   },
+  sdk: {
+    maxTurns: 25, // Maximum number of turns for complex tasks
+  },
   logging: {
     agents: {
       enabled: true,
