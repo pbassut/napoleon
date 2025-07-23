@@ -84,13 +84,22 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] User-facing documentation updated, if changes impact users.
    - [ ] Technical documentation (e.g., READMEs, system diagrams) updated if significant architectural changes were made.
 
-8. **Commit:**
+8. **Repository hygiene:**
 
-   [[LLM: This is required to deploy share your work]]
+   [[LLM: We need to keep a clean git repository. Remember, after this others will work on this code.]]
 
-   - [ ] Commit each change in separate commits with short but descriptive messages.
-   - [ ] Push your changes to the git remote
-   - [ ] Create a Pull request targeting the main branch
+   - [ ] Come up with a descriptive git branch name that relates to the work being done. Unless you're working on a existing branch
+   - [ ] Commit the work you have done in small commits with short but descriptive messages
+
+9.  **Push your work to the remote:**
+
+   [[LLM: To make this visible to other users]]
+
+   - [ ] Push your code to the remote if not already pushed
+   - [ ] Create a Pull request in Github against the `main` branch.
+
+10. **Filling the Pull Request description:**
+   - [ ] The content of the PR description should resemble what you did on the code
 
 ## Final Confirmation
 
