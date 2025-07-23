@@ -27,7 +27,8 @@ describe('CLI Integration with Terminal UI', () => {
     mockTerminalUI = {
       initialize: jest.fn().mockResolvedValue(),
     };
-    TerminalUI.mockImplementation(() => mockTerminalUI);
+    // TerminalUI is a module, not a constructor, so we mock its methods directly
+    Object.assign(TerminalUI, mockTerminalUI);
     
     // Mock session storage
     initializeSessionStorage.mockResolvedValue();

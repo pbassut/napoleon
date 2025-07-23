@@ -24,8 +24,24 @@ jest.mock('../src/core/logging/agent-log-manager', () => {
 
 // Mock fs module
 jest.mock('fs', () => ({
-  existsSync: jest.fn().mockReturnValue(true),
-  statSync: jest.fn().mockReturnValue({ isDirectory: () => true }),
+  existsSync: jest.fn((path) => {
+    // Mock specific test paths as existing
+    if (path === '/test/path' || path.includes('/test/')) {
+      return true;
+    }
+    return true; // Default to true for all paths in tests
+  }),
+  statSync: jest.fn((path) => {
+    return { 
+      isDirectory: () => {
+        // Mock specific test paths as directories
+        if (path === '/test/path' || path.includes('/test/')) {
+          return true;
+        }
+        return true; // Default to true for all paths in tests
+      }
+    };
+  }),
 }));
 
 // Mock config module

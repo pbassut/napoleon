@@ -17,7 +17,8 @@ module.exports = {
     '/__tests__/archived-blessed-tests/',
     '/__tests__/ui.test.js',
     '/__tests__/agent-detail-view.test.js',
-    '/__tests__/agent-detail-view-logging.test.js'
+    '/__tests__/agent-detail-view-logging.test.js',
+    '/__tests__/__mocks__/'
   ],
   collectCoverageFrom: [
     'src/**/*.js',
@@ -51,10 +52,12 @@ module.exports = {
   detectOpenHandles: true,
   // Transform ES modules in node_modules for testing
   transformIgnorePatterns: [
-    'node_modules/(?!(ink)/)'
+    'node_modules/(?!(ink|ansi-escapes|cli-cursor|is-ci|signal-exit)/)'
   ],
   // Mock Claude Code SDK to avoid ES module import issues
   moduleNameMapper: {
-    '^@anthropic-ai/claude-code$': '<rootDir>/__tests__/__mocks__/@anthropic-ai/claude-code.js'
+    '^@anthropic-ai/claude-code$': '<rootDir>/__tests__/__mocks__/@anthropic-ai/claude-code.js',
+    '^ink$': '<rootDir>/__tests__/__mocks__/ink.js',
+    '^ink-testing-library$': '<rootDir>/__tests__/__mocks__/ink-testing-library.js'
   }
 };
