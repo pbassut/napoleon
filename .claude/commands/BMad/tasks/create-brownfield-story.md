@@ -239,13 +239,14 @@ Before finalizing:
    - [ ] Remaining unknowns documented for dev agent
    - [ ] Exploration tasks added where needed
 
-### 7. Story Output Format
+### 7. Issue Format
 
 Save the story with appropriate naming:
 
-- If from epic: `docs/stories/epic-{n}-story-{m}.md`
-- If standalone: `docs/stories/brownfield-{feature-name}.md`
+- If from a milestone: place it in the correct milestone. If a milestone doesn't exist, create one.
+- If standalone: create a github issue
 - If sequential: Follow existing story numbering
+- If a blocker: Add a comment saying `Depends on #IssueNumber`.
 
 Include header noting documentation context:
 
