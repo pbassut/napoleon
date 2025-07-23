@@ -3,8 +3,8 @@ template:
   name: Story Document
   version: 2.0
   output:
-    format: markdown
-    filename: docs/stories/{{epic_num}}.{{story_num}}.{{story_title_short}}.md
+    format: Github Issues
+    url: https://github.com/pbassut/napoleon/issues
     title: "Story {{epic_num}}.{{story_num}}: {{story_title_short}}"
 
 workflow:
