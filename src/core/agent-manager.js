@@ -32,7 +32,6 @@ const DANGEROUS_PATTERNS = [
   /[;&|`$]/, // Shell metacharacters (dangerous ones)
   /\.\.[/\\]/, // Directory traversal
   /^-/, // Options starting with dash
-  /[<>]/, // Redirection operators
   /\0/, // Null bytes
   /\x00-\x08/, // Control characters (excluding tab, newline, carriage return)
   /\x0B\x0C/, // Vertical tab, form feed

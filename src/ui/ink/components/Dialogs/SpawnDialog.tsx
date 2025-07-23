@@ -79,7 +79,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     }
 
     // Handle text input
-    if (!key.ctrl && !key.meta && !key.return && input && input.length === 1) {
+    if (!key.ctrl && !key.meta && !key.return && input) {
       setText(prev => prev + input);
       return;
     }

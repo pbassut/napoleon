@@ -62,8 +62,6 @@ describe('AgentManager Input Validation', () => {
         'ls | grep something',
         'echo `whoami`',
         'test && rm file',
-        'cat file > output',
-        'cat file < input',
         'test $ variable',
       ];
 
@@ -109,6 +107,10 @@ describe('AgentManager Input Validation', () => {
         'Implement this: console.log Hello World',
         'Use the path /usr/local/bin for installation',
         'Check the URL https://example.com/api',
+        'cat file > output',
+        'cat file < input',
+        'Show me values where x < 5',
+        'Display results where y > 10',
       ];
 
       validInputs.forEach(input => {
