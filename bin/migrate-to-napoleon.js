@@ -236,7 +236,6 @@ function transformConfigData(addManagerConfig) {
   if (!addManagerConfig) {
     return {
       version: '2.0.0',
-      maxAgents: 3,
       sessionTimeout: 3600000,
       logLevel: 'info',
       features: {

@@ -50,7 +50,6 @@ class AgentManager {
   constructor() {
     this.agents = new Map();
     this.config = null;
-    this.maxAgents = 3;
     this.worktreeLifecycle = null;
     this.orphanScanInterval = null;
     this.sdkManager = new SDKCommunicationManager();
@@ -63,7 +62,6 @@ class AgentManager {
   async initialize() {
     try {
       this.config = loadConfig();
-      this.maxAgents = this.config.maxAgents || 3;
 
       // Initialize worktree lifecycle management
       this.worktreeLifecycle = new WorktreeLifecycleManager({
@@ -85,7 +83,6 @@ class AgentManager {
       // this.startBackgroundOrphanScanning();
 
       logger.info('Agent manager initialized successfully', {
-        maxAgents: this.maxAgents,
         activeSessions: this.agents.size,
         worktreeMetrics: this.worktreeLifecycle.getMetrics(),
         persistentLogging: this.agentLogManager ? 'enabled' : 'disabled',
@@ -931,14 +928,7 @@ class AgentManager {
 
       const validationDuration = Date.now() - validationStartTime;
       
-      // Check agent limit
-      if (this.agents.size >= this.maxAgents) {
-        throw new EnvironmentValidationError(
-          `Maximum ${this.maxAgents} agents already running`,
-          'MAX_AGENTS_REACHED',
-          'Please terminate an existing agent before spawning a new one'
-        );
-      }
+      // No agent limit - allow unlimited agents
 
       // Validate git repository
       const gitValidation = this.validateGitRepository();
@@ -1632,7 +1622,7 @@ class AgentManager {
    * Check if can spawn more agents
    */
   canSpawnAgent() {
-    return this.agents.size < this.maxAgents;
+    return true; // No limit - always allow spawning
   }
 
   /**

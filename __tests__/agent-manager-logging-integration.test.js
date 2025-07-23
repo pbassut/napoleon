@@ -25,7 +25,6 @@ describe('AgentManager - Persistent Logging Integration', () => {
     // Mock configuration with logging enabled
     loadConfig.mockReturnValue({
       napoleonDir: '/test/.napoleon/logs',
-      maxAgents: 3,
       logLevel: 'info',
       maxPromptLength: 50,
       logging: {
@@ -86,7 +85,6 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     it('should disable persistent logging when config disabled', async () => {
       loadConfig.mockReturnValue({
-        maxAgents: 3,
         logging: {
           agents: {
             enabled: false,
@@ -108,7 +106,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
       expect(agentManager.agentLogManager).toBeNull();
       // Agent manager should still initialize successfully
-      expect(agentManager.maxAgents).toBe(3);
+      expect(agentManager.canSpawnAgent()).toBe(true);
     });
 
     it('should log appropriate status messages for logging initialization', async () => {
@@ -374,7 +372,6 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     it('should work with persistent logging disabled via configuration', async () => {
       loadConfig.mockReturnValue({
-        maxAgents: 3,
         logging: {
           agents: {
             enabled: false,
@@ -434,7 +431,6 @@ describe('AgentManager - Persistent Logging Integration', () => {
       // Test disabled case
       loggerInfoSpy.mockClear();
       loadConfig.mockReturnValue({
-        maxAgents: 3,
         logging: { agents: { enabled: false } },
       });
 

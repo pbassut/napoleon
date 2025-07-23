@@ -195,7 +195,6 @@ describe('Migration Helper Tests', () => {
       
       expect(result).toEqual({
         version: '2.0.0',
-        maxAgents: 3,
         sessionTimeout: 3600000,
         logLevel: 'info',
         features: {
@@ -279,8 +278,7 @@ describe('Migration Helper Tests', () => {
         }
         if (filePath.includes('config.json')) {
           return JSON.stringify({
-            version: '1.0.0',
-            maxAgents: 3
+            version: '1.0.0'
           });
         }
         return '{}';
@@ -316,8 +314,7 @@ describe('Migration Helper Tests', () => {
         }
         if (filePath.includes('config.json')) {
           return JSON.stringify({
-            version: '1.0.0',
-            maxAgents: 3
+            version: '1.0.0'
           });
         }
         return '{}';

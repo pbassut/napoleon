@@ -101,7 +101,6 @@ describe('Configuration Management', () => {
 
       expect(config).toEqual(expect.objectContaining({
         version: '1.0.0',
-        maxAgents: 3,
       }));
     });
 

@@ -10,7 +10,6 @@ const LOGS_DIR = path.join(CONFIG_DIR, 'logs');
 
 const DEFAULT_CONFIG = {
   version: '1.0.0',
-  maxAgents: 3,
   sessionTimeout: 3600000, // 1 hour in milliseconds
   logLevel: 'info',
   napoleonDir: path.join(os.homedir(), '.napoleon'),

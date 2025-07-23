@@ -1,13 +1,25 @@
+const { EnvironmentValidationError } = require('../src/utils/errors');
+
+jest.mock('child_process');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  statSync: jest.fn(),
+  rmSync: jest.fn(),
+}));
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn(),
+  SESSIONS_FILE: '/test/.napoleon/sessions.json',
+  initializeSessionStorage: jest.fn(),
+}));
+
 const { spawn, execSync, exec } = require('child_process');
 const fs = require('fs');
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
 const { loadConfig, SESSIONS_FILE } = require('../src/core/config');
-const { EnvironmentValidationError } = require('../src/utils/errors');
-
-jest.mock('child_process');
-jest.mock('fs');
-jest.mock('../src/core/config');
 
 describe('AgentManager', () => {
   let agentManager;
@@ -15,16 +27,16 @@ describe('AgentManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    
+    // Re-apply config mock after clearAllMocks
+    loadConfig.mockReturnValue({
+      logLevel: 'info',
+    });
+    
     jest.useFakeTimers();
     
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
-    
-    // Mock configuration
-    loadConfig.mockReturnValue({
-      maxAgents: 3,
-      logLevel: 'info',
-    });
 
     // Mock file system
     fs.existsSync.mockReturnValue(false);
@@ -68,7 +80,7 @@ describe('AgentManager', () => {
       await agentManager.initialize();
 
       expect(loadConfig).toHaveBeenCalled();
-      expect(agentManager.maxAgents).toBe(3);
+      expect(agentManager.canSpawnAgent()).toBe(true);
       expect(agentManager.agents.size).toBe(0);
     });
 
@@ -183,14 +195,20 @@ describe('AgentManager', () => {
       expect(agent.status).toBe('idle');
     });
 
-    it('should reject spawning when maximum agents reached', async () => {
-      // Fill up to max agents
-      for (let i = 0; i < 3; i++) {
-        await agentManager.spawnAgent('Valid instructions for agent');
+    it('should allow unlimited agents (no limit check)', async () => {
+      await agentManager.initialize();
+      
+      // Test that canSpawnAgent always returns true (no limit)
+      expect(agentManager.canSpawnAgent()).toBe(true);
+      
+      // Add some mock agents to the internal map to simulate existing agents
+      for (let i = 0; i < 10; i++) {
+        agentManager.agents.set(`agent-${i}`, { id: `agent-${i}`, status: 'running' });
       }
-
-      await expect(agentManager.spawnAgent('Another agent')).rejects.toThrow(EnvironmentValidationError);
-      await expect(agentManager.spawnAgent('Another agent')).rejects.toThrow('Maximum 3 agents');
+      
+      // Even with 10 agents, canSpawnAgent should still return true
+      expect(agentManager.canSpawnAgent()).toBe(true);
+      expect(agentManager.getAgentCount()).toBe(10);
     });
 
     it('should reject spawning when not in git repository', async () => {

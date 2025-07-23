@@ -159,7 +159,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
 
     if (!agentManager.canSpawnAgent()) {
-      throw new Error(`Maximum number of agents (${agentManager.maxAgents}) reached`);
+      throw new Error('Unable to spawn agent');
     }
 
     try {
@@ -220,9 +220,9 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     return agentManager?.canSpawnAgent() ?? false;
   }, [agentManager, agents.length]); // Re-evaluate when agent count changes
 
-  // Memoize maxAgents
+  // No maximum limit
   const maxAgents = useMemo(() => {
-    return agentManager?.maxAgents ?? 3;
+    return Number.MAX_SAFE_INTEGER; // Effectively unlimited
   }, [agentManager]);
 
   return {
