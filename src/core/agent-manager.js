@@ -579,7 +579,7 @@ class AgentManager {
 
         // Create the worktree
         exec(
-          `git worktree add "${worktreePath}"`,
+          `git worktree add "${worktreePath}" --lock`,
           {
             cwd: process.cwd(),
             timeout: 120000, // 2 minute timeout for large repos
@@ -643,38 +643,13 @@ class AgentManager {
                 return;
               }
 
-              // Lock the worktree to prevent Git's automatic cleanup
-              exec(
-                `git worktree lock "${worktreePath}" "Napoleon agent in use"`,
-                {
-                  cwd: process.cwd(),
-                  timeout: 10000,
-                },
-                (lockError, lockStdout, lockStderr) => {
-                  if (lockError) {
-                    logger.warn('Failed to lock worktree, but continuing', {
-                      agentId,
-                      worktreePath,
-                      error: lockError.message,
-                      stderr: lockStderr,
-                    });
-                  } else {
-                    logger.debug('Worktree locked successfully', {
-                      agentId,
-                      worktreePath,
-                      stdout: lockStdout.trim(),
-                    });
-                  }
-
-                  resolve({
-                    worktreeName,
-                    worktreePath,
-                    agentId,
-                    duration,
-                    validated: true,
-                  });
-                }
-              );
+              resolve({
+                worktreeName,
+                worktreePath,
+                agentId,
+                duration,
+                validated: true,
+              });
             }
           }
         );
@@ -754,7 +729,7 @@ class AgentManager {
 
           // Now remove the worktree
           exec(
-            `git worktree remove "${worktreePath}" --force`,
+            `git worktree remove "${worktreePath}"`,
             {
               cwd: process.cwd(),
               timeout: 15000, // 15 second timeout
