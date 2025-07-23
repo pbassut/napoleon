@@ -356,6 +356,8 @@ class SDKCommunicationManager {
 
       return messages;
     } catch (error) {
+      const errorSession = this.sessions.get(agentId);
+
       this.logger.error('SDK: Query execution failed with error', {
         agentId,
         error: error.message,
@@ -364,7 +366,7 @@ class SDKCommunicationManager {
         errorStack: error.stack?.substring(0, 500) + '...',
         duration: Date.now() - startTime,
         promptLength: prompt.length,
-        abortSignal: session.abortController?.signal?.aborted || 'no-signal',
+        abortSignal: errorSession.abortController?.signal?.aborted || 'no-signal',
         errorType: SDKCommunicationManager.classifySDKError(error),
       });
 
@@ -401,8 +403,6 @@ class SDKCommunicationManager {
         duration: Date.now() - startTime,
       });
 
-      // Update session status on error
-      const errorSession = this.sessions.get(agentId);
       if (errorSession) {
         errorSession.lastActivity = new Date().toISOString();
         errorSession.messageHistory.push({
