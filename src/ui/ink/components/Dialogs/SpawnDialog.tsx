@@ -175,7 +175,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         
         <Box justifyContent="center">
           <Text color="yellow" bold>
-            Enter to spawn | Shift+Enter for new line | Escape to cancel
+            [Enter] Spawn [Shift+Enter] New line [Esc] Cancel
           </Text>
         </Box>
       </Box>
