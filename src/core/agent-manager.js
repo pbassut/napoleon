@@ -666,7 +666,7 @@ class AgentManager {
                       stderr: npmStderr,
                     });
 
-                    // Clean up the failed worktree
+                    // Clean up the failed worktree (respects autoCleanup setting)
                     this.cleanupFailedWorktree(worktreePath);
 
                     reject(
