@@ -27,12 +27,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   useEffect(() => {
     if (isOpen) {
       logger.debug('SpawnDialog: Dialog opened, resetting state');
-      // Only set testing placeholder in development builds
-      if (process.env.NODE_ENV !== 'production') {
-        setText('/BMad:agents:dev run npm test and fix issues until the tests are passing 100%. No less than 100% should be accepted');
-      } else {
-        setText('');
-      }
+      setText('');
       setError('');
       setIsLoading(false);
     }
