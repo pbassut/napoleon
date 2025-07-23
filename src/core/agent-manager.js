@@ -659,19 +659,31 @@ class AgentManager {
                 },
                 (npmError, npmStdout, npmStderr) => {
                   if (npmError) {
-                    logger.warn('npm ci failed in worktree, but continuing', {
+                    logger.error('npm ci failed in worktree - aborting agent creation', {
                       agentId,
                       worktreePath,
                       error: npmError.message,
                       stderr: npmStderr,
                     });
-                  } else {
-                    logger.debug('Dependencies installed successfully in worktree', {
-                      agentId,
-                      worktreePath,
-                      stdout: npmStdout.trim(),
-                    });
+
+                    // Clean up the failed worktree
+                    this.cleanupFailedWorktree(worktreePath);
+
+                    reject(
+                      new EnvironmentValidationError(
+                        `Failed to install dependencies in worktree: ${npmError.message}`,
+                        'DEPENDENCY_INSTALLATION_FAILED',
+                        'Ensure npm is available and package-lock.json is valid'
+                      )
+                    );
+                    return;
                   }
+
+                  logger.debug('Dependencies installed successfully in worktree', {
+                    agentId,
+                    worktreePath,
+                    stdout: npmStdout.trim(),
+                  });
 
                   resolve({
                     worktreeName,
@@ -679,7 +691,7 @@ class AgentManager {
                     agentId,
                     duration,
                     validated: true,
-                    dependenciesInstalled: !npmError,
+                    dependenciesInstalled: true,
                   });
                 }
               );
