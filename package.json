@@ -1,6 +1,6 @@
 {
   "name": "napoleon-cli",
-  "version": "1.0.3",
+  "version": "1.0.7",
   "description": "Napoleon - Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions",
   "main": "src/cli/index.js",
   "bin": {
@@ -12,7 +12,8 @@
     "bin/",
     "src/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "bunfig.toml"
   ],
   "engines": {
     "node": ">=18.0.0"

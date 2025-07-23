@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 
 const { program } = require('commander');
 const { validateEnvironment } = require('../src/cli/validators/environment');

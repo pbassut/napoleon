@@ -8,7 +8,9 @@
       "Bash(npm test:*)",
       "Bash(npm run lint)",
       "Bash(npx eslint:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(git worktree remove:*)",
+      "Bash(git worktree:*)"
     ],
     "deny": []
   }

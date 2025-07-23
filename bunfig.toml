@@ -1,0 +1,7 @@
+[build]
+# Exclude node_modules from TypeScript processing
+exclude = ["node_modules/**/*"]
+
+[run]
+# Skip TypeScript stripping for node_modules
+skipNodeModules = true
