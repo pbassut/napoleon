@@ -1,5 +1,6 @@
 const fs = require('fs').promises;
 const path = require('path');
+const os = require('os');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const logger = require('../utils/logger');
@@ -12,7 +13,7 @@ const execAsync = promisify(exec);
  */
 class WorktreeDiscovery {
   constructor(worktreesDir) {
-    this.worktreesDir = worktreesDir || path.join(process.cwd(), '.napoleon-worktrees');
+    this.worktreesDir = worktreesDir || path.join(os.homedir(), '.napoleon', 'worktrees');
     this.gitWorktreeCache = null;
     this.cacheTimestamp = null;
     this.cacheValidityMs = 30000; // 30 seconds cache
@@ -325,7 +326,7 @@ class WorktreeDiscovery {
 
     // Check for git worktrees without filesystem directories
     for (const gitWorktree of gitWorktrees) {
-      if (gitWorktree.path.includes('.napoleon-worktrees')) {
+      if (gitWorktree.path.includes('.napoleon') && gitWorktree.path.includes('worktrees')) {
         const hasFilesystem = filesystemWorktrees.some((fs) => fs.path === gitWorktree.path);
         if (!hasFilesystem) {
           inconsistencies.push({

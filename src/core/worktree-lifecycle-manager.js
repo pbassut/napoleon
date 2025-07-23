@@ -1,4 +1,5 @@
 const path = require('path');
+const os = require('os');
 const WorktreeDiscovery = require('./worktree-discovery');
 const WorktreeCleanupQueue = require('./cleanup-queue');
 const logger = require('../utils/logger');
@@ -10,7 +11,7 @@ const { loadConfig } = require('./config');
  */
 class WorktreeLifecycleManager {
   constructor(options = {}) {
-    this.worktreesDir = options.worktreesDir || path.join(process.cwd(), '.napoleon-worktrees');
+    this.worktreesDir = options.worktreesDir || path.join(os.homedir(), '.napoleon', 'worktrees');
     this.discovery = new WorktreeDiscovery(this.worktreesDir);
     this.cleanupQueue = new WorktreeCleanupQueue({
       maxConcurrent: options.maxConcurrentCleanups || 2,

@@ -1,6 +1,7 @@
 const { execSync, exec } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const { loadConfig, SESSIONS_FILE } = require('./config');
 const {
   EnvironmentValidationError,
@@ -460,7 +461,8 @@ class AgentManager {
    * Ensure worktree directory structure exists
    */
   ensureWorktreeDirectory() {
-    const worktreesDir = path.join(process.cwd(), '.napoleon-worktrees');
+    // Use system temp directory or user home to avoid git clean issues
+    const worktreesDir = path.join(os.homedir(), '.napoleon', 'worktrees');
 
     if (!fs.existsSync(worktreesDir)) {
       try {
