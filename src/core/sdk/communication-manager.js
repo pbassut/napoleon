@@ -153,7 +153,6 @@ class SDKCommunicationManager {
       // Merge options with session defaults
       const queryOptions = {
         permissionMode: 'bypassPermissions',
-        executable: 'bun',
         ...session.options,
         ...options,
         abortController: session.abortController,
