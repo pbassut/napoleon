@@ -461,7 +461,7 @@ class AgentManager {
    * Ensure worktree directory structure exists
    */
   ensureWorktreeDirectory() {
-    // Use system temp directory or user home to avoid git clean issues
+    // Use ~/.napoleon/worktrees/ to avoid git clean issues
     const worktreesDir = path.join(os.homedir(), '.napoleon', 'worktrees');
 
     if (!fs.existsSync(worktreesDir)) {
