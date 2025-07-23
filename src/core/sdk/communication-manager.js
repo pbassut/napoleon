@@ -151,9 +151,12 @@ class SDKCommunicationManager {
       }
 
       // Merge options with session defaults
+      // Use the claude executable from the worktree's node_modules
+      const claudeExecutable = require('path').join(session.workingDirectory, 'node_modules', '.bin', 'claude');
+      
       const queryOptions = {
         permissionMode: 'bypassPermissions',
-        executable: 'npx claude',
+        executable: claudeExecutable,
         ...session.options,
         ...options,
         abortController: session.abortController,
@@ -215,6 +218,9 @@ class SDKCommunicationManager {
         promptLength: prompt.length,
         options: queryOptions,
         permissionMode: queryOptions.permissionMode,
+        workingDirectory: queryOptions.workingDirectory,
+        cwd: queryOptions.cwd,
+        executable: queryOptions.executable,
       });
 
       const queryResponse = query({
