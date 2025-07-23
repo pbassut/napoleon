@@ -645,13 +645,44 @@ class AgentManager {
                 return;
               }
 
-              resolve({
-                worktreeName,
-                worktreePath,
-                agentId,
-                duration,
-                validated: true,
+              // Install dependencies in the worktree using npm ci for speed
+              logger.info('Installing dependencies in worktree', { 
+                agentId, 
+                worktreePath 
               });
+              
+              exec(
+                'npm ci',
+                {
+                  cwd: worktreePath,
+                  timeout: 180000, // 3 minute timeout for npm ci
+                },
+                (npmError, npmStdout, npmStderr) => {
+                  if (npmError) {
+                    logger.warn('npm ci failed in worktree, but continuing', {
+                      agentId,
+                      worktreePath,
+                      error: npmError.message,
+                      stderr: npmStderr,
+                    });
+                  } else {
+                    logger.debug('Dependencies installed successfully in worktree', {
+                      agentId,
+                      worktreePath,
+                      stdout: npmStdout.trim(),
+                    });
+                  }
+
+                  resolve({
+                    worktreeName,
+                    worktreePath,
+                    agentId,
+                    duration,
+                    validated: true,
+                    dependenciesInstalled: !npmError,
+                  });
+                }
+              );
             }
           }
         );
