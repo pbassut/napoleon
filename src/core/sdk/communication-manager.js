@@ -2,7 +2,6 @@ const { query } = require('@anthropic-ai/claude-code');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
 const fs = require('fs');
-const path = require('path');
 const { loadConfig } = require('../config');
 
 /**
@@ -154,7 +153,7 @@ class SDKCommunicationManager {
       // Merge options with session defaults
       const queryOptions = {
         permissionMode: 'bypassPermissions',
-        executable: path.join(session.workingDirectory, 'node_modules', '.bin', 'claude'),
+        executable: 'npx claude',
         ...session.options,
         ...options,
         abortController: session.abortController,
