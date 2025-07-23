@@ -88,6 +88,7 @@ The goal is quality delivery, not just checking boxes.]]
 
    [[LLM: We need to keep a clean git repository. Remember, after this others will work on this code.]]
 
+   - [ ] Make sure your current branch is rebased with `origin/main` before proceeding.
    - [ ] Come up with a descriptive git branch name that relates to the work being done. Unless you're working on a existing branch
    - [ ] Commit the work you have done in small commits with short but descriptive messages
 
