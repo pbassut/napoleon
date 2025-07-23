@@ -643,13 +643,38 @@ class AgentManager {
                 return;
               }
 
-              resolve({
-                worktreeName,
-                worktreePath,
-                agentId,
-                duration,
-                validated: true,
-              });
+              // Lock the worktree to prevent Git's automatic cleanup
+              exec(
+                `git worktree lock "${worktreePath}" "Napoleon agent in use"`,
+                {
+                  cwd: process.cwd(),
+                  timeout: 10000,
+                },
+                (lockError, lockStdout, lockStderr) => {
+                  if (lockError) {
+                    logger.warn('Failed to lock worktree, but continuing', {
+                      agentId,
+                      worktreePath,
+                      error: lockError.message,
+                      stderr: lockStderr,
+                    });
+                  } else {
+                    logger.debug('Worktree locked successfully', {
+                      agentId,
+                      worktreePath,
+                      stdout: lockStdout.trim(),
+                    });
+                  }
+
+                  resolve({
+                    worktreeName,
+                    worktreePath,
+                    agentId,
+                    duration,
+                    validated: true,
+                  });
+                }
+              );
             }
           }
         );
@@ -710,12 +735,30 @@ class AgentManager {
       });
       logger.info('Removing git worktree', { worktreePath });
 
+      // First unlock the worktree if it's locked
       exec(
-        `git worktree remove "${worktreePath}" --force`,
+        `git worktree unlock "${worktreePath}"`,
         {
           cwd: process.cwd(),
-          timeout: 15000, // 15 second timeout
+          timeout: 10000,
         },
+        (unlockError, unlockStdout, unlockStderr) => {
+          if (unlockError) {
+            logger.debug('Worktree unlock failed (this is normal if not locked)', {
+              worktreePath,
+              error: unlockError.message,
+            });
+          } else {
+            logger.debug('Worktree unlocked before removal', { worktreePath });
+          }
+
+          // Now remove the worktree
+          exec(
+            `git worktree remove "${worktreePath}" --force`,
+            {
+              cwd: process.cwd(),
+              timeout: 15000, // 15 second timeout
+            },
         (error, stdout, stderr) => {
           if (error) {
             logger.warn(
@@ -757,6 +800,8 @@ class AgentManager {
             });
             resolve();
           }
+        }
+          );
         }
       );
     });

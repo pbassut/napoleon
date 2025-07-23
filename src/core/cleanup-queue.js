@@ -233,6 +233,21 @@ class WorktreeCleanupQueue {
 
     // Remove git worktree
     try {
+      // First unlock the worktree if it's locked
+      try {
+        await execAsync(`git worktree unlock "${worktreePath}"`, {
+          cwd: process.cwd(),
+          timeout: 10000,
+        });
+        logger.debug('Worktree unlocked before removal', { worktreePath });
+      } catch (unlockError) {
+        // Ignore unlock errors - worktree might not be locked or might not exist
+        logger.debug('Worktree unlock failed (this is normal if not locked)', {
+          worktreePath,
+          error: unlockError.message,
+        });
+      }
+
       const command = force
         ? `git worktree remove "${worktreePath}" --force`
         : `git worktree remove "${worktreePath}"`;
