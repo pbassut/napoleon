@@ -223,89 +223,110 @@ class SDKCommunicationManager {
         executable: queryOptions.executable,
       });
 
-      const queryResponse = query({
-        prompt,
-        options: queryOptions,
-      });
-
-      this.logger.debug('SDK: Query response object created, starting message iteration', {
-        agentId,
-        responseType: typeof queryResponse,
-        hasAsyncIterator: Symbol.asyncIterator in queryResponse,
-      });
-
-      // Process streaming response
-      const messageIterator = queryResponse[Symbol.asyncIterator]();
-      this.logger.debug('SDK: Message iterator created, getting first message', { agentId });
+      // Store current working directory and change to worktree for SDK execution
+      const originalCwd = process.cwd();
       
-      let iteratorResult = await messageIterator.next();
-      this.logger.debug('SDK: First iterator result received', {
-        agentId,
-        done: iteratorResult.done,
-        hasValue: !!iteratorResult.value,
-        valueType: typeof iteratorResult.value,
-      });
-
-      let messageCount = 0;
-      while (!iteratorResult.done) {
-        const message = iteratorResult.value;
-        messageCount++;
-        messages.push(message);
-
-        this.logger.debug('SDK: Processing message', {
+      try {
+        // Change to worktree directory for SDK execution
+        process.chdir(session.workingDirectory);
+        
+        this.logger.debug('SDK: Changed working directory for execution', {
           agentId,
-          messageIndex: messageCount,
-          messageType: message.type,
-          messageId: message.id,
-          hasContent: !!message.content,
-          contentLength: message.content?.length || 0,
-        });
-
-        // Update token usage if available
-        if (message.usage) {
-          tokenUsage = message.usage;
-          this.logger.debug('SDK: Token usage updated', {
-            agentId,
-            tokenUsage,
-          });
-        }
-
-        // Log each response message (AC2) - non-blocking
-        this.logSDKResponse(agentId, message, startTime, messages.length - 1, messages.length);
-
-        // Update session with message info
-        session.lastMessageId = message.id || Date.now().toString();
-        session.lastActivity = new Date().toISOString();
-        session.messageHistory.push({
-          id: session.lastMessageId,
-          timestamp: session.lastActivity,
-          type: 'response',
-          content: message.content || JSON.stringify(message),
-        });
-
-        // Get next message
-        this.logger.debug('SDK: Requesting next message from iterator', {
-          agentId,
-          currentMessageCount: messageCount,
-          currentMessageType: message.type,
+          originalCwd,
+          newCwd: session.workingDirectory,
         });
         
-        // eslint-disable-next-line no-await-in-loop
-        iteratorResult = await messageIterator.next();
+        const queryResponse = query({
+          prompt,
+          options: queryOptions,
+        });
+
+        this.logger.debug('SDK: Query response object created, starting message iteration', {
+          agentId,
+          responseType: typeof queryResponse,
+          hasAsyncIterator: Symbol.asyncIterator in queryResponse,
+        });
+
+        // Process streaming response
+        const messageIterator = queryResponse[Symbol.asyncIterator]();
+        this.logger.debug('SDK: Message iterator created, getting first message', { agentId });
         
-        this.logger.debug('SDK: Next iterator result received', {
+        let iteratorResult = await messageIterator.next();
+        this.logger.debug('SDK: First iterator result received', {
           agentId,
           done: iteratorResult.done,
           hasValue: !!iteratorResult.value,
-          messageCount: messageCount + 1,
+          valueType: typeof iteratorResult.value,
+        });
+
+        let messageCount = 0;
+        while (!iteratorResult.done) {
+          const message = iteratorResult.value;
+          messageCount++;
+          messages.push(message);
+
+          this.logger.debug('SDK: Processing message', {
+            agentId,
+            messageIndex: messageCount,
+            messageType: message.type,
+            messageId: message.id,
+            hasContent: !!message.content,
+            contentLength: message.content?.length || 0,
+          });
+
+          // Update token usage if available
+          if (message.usage) {
+            tokenUsage = message.usage;
+            this.logger.debug('SDK: Token usage updated', {
+              agentId,
+              tokenUsage,
+            });
+          }
+
+          // Log each response message (AC2) - non-blocking
+          this.logSDKResponse(agentId, message, startTime, messages.length - 1, messages.length);
+
+          // Update session with message info
+          session.lastMessageId = message.id || Date.now().toString();
+          session.lastActivity = new Date().toISOString();
+          session.messageHistory.push({
+            id: session.lastMessageId,
+            timestamp: session.lastActivity,
+            type: 'response',
+            content: message.content || JSON.stringify(message),
+          });
+
+          // Get next message
+          this.logger.debug('SDK: Requesting next message from iterator', {
+            agentId,
+            currentMessageCount: messageCount,
+            currentMessageType: message.type,
+          });
+          
+          // eslint-disable-next-line no-await-in-loop
+          iteratorResult = await messageIterator.next();
+          
+          this.logger.debug('SDK: Next iterator result received', {
+            agentId,
+            done: iteratorResult.done,
+            hasValue: !!iteratorResult.value,
+            messageCount: messageCount + 1,
+          });
+        }
+
+        this.logger.debug('SDK: Message iteration completed', {
+          agentId,
+          totalMessages: messageCount,
+          finalTokenUsage: tokenUsage,
+        });
+      } finally {
+        // Always restore original working directory
+        process.chdir(originalCwd);
+        this.logger.debug('SDK: Restored original working directory', {
+          agentId,
+          restoredCwd: originalCwd,
         });
       }
-
-      this.logger.debug('SDK: Message iteration completed', {
-        agentId,
-        totalMessages: messageCount,
-        finalTokenUsage: tokenUsage,
-      });
 
       // Keep message history manageable
       if (session.messageHistory.length > 100) {
