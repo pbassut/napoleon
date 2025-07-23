@@ -121,10 +121,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     }
   };
 
-  // Calculate dimensions
-  const lines = text.split('\n');
-  const lineCount = lines.length;
-  const charCount = text.length;
 
   return (
     <ModalOverlay isOpen={isOpen}>
@@ -167,11 +163,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
               placeholder="Type your instructions here..."
               focus={isFocused}
             />
-            <Box marginTop={1}>
-              <Text color="gray" dimColor>
-                {`${lineCount} line${lineCount !== 1 ? 's' : ''}, ${charCount} character${charCount !== 1 ? 's' : ''}`}
-              </Text>
-            </Box>
           </Box>
         </Box>
         
