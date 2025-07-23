@@ -170,7 +170,7 @@ class SDKCommunicationManager {
             type: 'sdk_request',
             source: 'claude_sdk',
             content: JSON.stringify({
-              prompt: prompt.substring(0, 200) + (prompt.length > 200 ? '...' : ''),
+              prompt,
               options: {
                 model: queryOptions.model,
                 maxTokens: queryOptions.maxTokens,
@@ -199,7 +199,7 @@ class SDKCommunicationManager {
         agentId,
         promptLength: prompt.length,
         options: queryOptions,
-        promptPreview: prompt.substring(0, 100) + (prompt.length > 100 ? '...' : ''),
+        promptPreview: prompt,
       });
 
       this.logger.debug('SDK: Starting query execution with detailed monitoring', {
