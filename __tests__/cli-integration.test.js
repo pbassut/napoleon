@@ -1,14 +1,46 @@
 const { program } = require('commander');
 const { initializeApplication } = require('../src/cli/index');
-const { initializeSessionStorage } = require('../src/core/config');
-const { validateEnvironment } = require('../src/cli/validators/environment');
 const TerminalUI = require('../src/ui/index');
 
-jest.mock('../src/core/config');
-jest.mock('../src/cli/validators/environment');
-jest.mock('../src/ui/index');
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn(),
+  initializeSessionStorage: jest.fn(),
+}));
+jest.mock('../src/core/api-key-validator', () => {
+  return jest.fn().mockImplementation(() => ({
+    validateApiKey: jest.fn().mockResolvedValue({ isValid: true })
+  }));
+});
+jest.mock('../src/core/api-key-setup-guide', () => {
+  return jest.fn().mockImplementation(() => ({
+    displayFormatError: jest.fn(),
+    displayMissingApiKeyMessage: jest.fn(),
+    displaySetupInstructions: jest.fn()
+  }));
+});
+jest.mock('../src/core/git-status-checker', () => {
+  return jest.fn().mockImplementation(() => ({
+    validateGitRepository: jest.fn().mockResolvedValue({ isValid: true })
+  }));
+});
+jest.mock('../src/core/startup-warning-display', () => {
+  return jest.fn().mockImplementation(() => ({
+    displayWarnings: jest.fn()
+  }));
+});
+jest.mock('../src/cli/validators/environment', () => ({
+  validateEnvironment: jest.fn().mockResolvedValue(),
+  validateApiKey: jest.fn().mockResolvedValue(),
+  validateGitWorkingTree: jest.fn().mockResolvedValue()
+}));
+jest.mock('../src/ui/index', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+  }));
+});
 
-const { loadConfig } = require('../src/core/config');
+const { loadConfig, initializeSessionStorage } = require('../src/core/config');
+const { validateEnvironment } = require('../src/cli/validators/environment');
 
 describe('CLI Integration with Terminal UI', () => {
   let mockTerminalUI;
@@ -23,18 +55,8 @@ describe('CLI Integration with Terminal UI', () => {
     });
     jest.useFakeTimers();
     
-    // Mock TerminalUI
-    mockTerminalUI = {
-      initialize: jest.fn().mockResolvedValue(),
-    };
-    // TerminalUI is a module, not a constructor, so we mock its methods directly
-    Object.assign(TerminalUI, mockTerminalUI);
-    
     // Mock session storage
     initializeSessionStorage.mockResolvedValue();
-    
-    // Mock environment validation to succeed
-    validateEnvironment.mockResolvedValue();
     
     // Reset commander program
     program.commands = [];

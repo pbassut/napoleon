@@ -1,3 +1,14 @@
+// Mock fs module BEFORE importing the communication manager
+jest.mock('fs', () => ({
+  existsSync: jest.fn().mockReturnValue(true),
+  statSync: jest.fn().mockReturnValue({
+    isDirectory: jest.fn().mockReturnValue(true)
+  }),
+  mkdirSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  readFileSync: jest.fn().mockReturnValue('{}'),
+}));
+
 const SDKCommunicationManager = require('../src/core/sdk/communication-manager');
 const { EnvironmentValidationError, ConfigurationError } = require('../src/utils/errors');
 const logger = require('../src/utils/logger');
@@ -22,27 +33,6 @@ jest.mock('../src/core/logging/agent-log-manager', () => {
   }));
 });
 
-// Mock fs module
-jest.mock('fs', () => ({
-  existsSync: jest.fn((path) => {
-    // Mock specific test paths as existing
-    if (path === '/test/path' || path.includes('/test/')) {
-      return true;
-    }
-    return true; // Default to true for all paths in tests
-  }),
-  statSync: jest.fn((path) => {
-    return { 
-      isDirectory: () => {
-        // Mock specific test paths as directories
-        if (path === '/test/path' || path.includes('/test/')) {
-          return true;
-        }
-        return true; // Default to true for all paths in tests
-      }
-    };
-  }),
-}));
 
 // Mock config module
 jest.mock('../src/core/config', () => ({
@@ -97,14 +87,18 @@ describe('SDKCommunicationManager', () => {
         messageHistory: [],
         options: {
           workingDirectory,
+          cwd: workingDirectory,
         },
       });
 
       expect(manager.sessions.has(agentId)).toBe(true);
-      expect(logger.info).toHaveBeenCalledWith('SDK session initialized', {
+      expect(logger.info).toHaveBeenCalledWith('SDK session initialized successfully', {
         agentId,
         workingDirectory,
         sessionId: agentId,
+        duration: expect.any(String),
+        workingDirValidated: true,
+        timestamp: expect.any(String),
       });
     });
 
