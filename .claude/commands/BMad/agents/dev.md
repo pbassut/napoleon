@@ -63,6 +63,7 @@ commands:
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-issue:
   order-of-execution: "Read (first or next) task→Implement Task and its subtasks→Write tests→Execute validations→Only if ALL pass, then update the task checkbox with [x]→Update story section File List to ensure it lists and new or modified or deleted source file→repeat order-of-execution until complete→commit working tree in small but descriptive commits"
+  branch-naming: "Unless you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do. If you're working on a existing branch, make sure to make commits and pushes to that branch and NOT the branch you initially started"
   github-issue-updates-ONLY:
     - CRITICAL: ONLY UPDATE THE ISSUE WITH UPDATES TO SECTIONS INDICATED BELOW. DO NOT MODIFY ANY OTHER SECTIONS.
     - CRITICAL: You are ONLY authorized to edit these attributes of the issues - Tasks / Subtasks Checkboxes, Status, Agent Model Label used
