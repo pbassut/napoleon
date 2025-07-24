@@ -24,11 +24,18 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const terminalHeight = process.stdout.rows || 24;
   const contentHeight = terminalHeight - 6; // Header + footer + borders
 
-  // Use real logs if agentManager is provided
-  const { logs: realLogs, isLoading } = useAgentLogs({
+  // Use real logs with streaming if agentManager is provided
+  const { 
+    logs: realLogs, 
+    isLoading, 
+    error: logsError,
+    isStreaming,
+    streamingError 
+  } = useAgentLogs({
     agentId: agent.id,
     agentManager,
-    refreshInterval: 500, // Faster refresh for detail view
+    refreshInterval: 500, // Fallback refresh for detail view
+    enableStreaming: true, // Enable real-time streaming
   });
 
   // Generate mock logs for testing when no real logs available
@@ -169,6 +176,19 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
                 {`Status: ${agent.status}`}
               </Text>
             </Box>
+            {/* Streaming status indicator */}
+            <Box marginLeft={1}>
+              {isStreaming ? (
+                <Text color="green">🔴 Live</Text>
+              ) : (
+                <Text color="yellow">⏸ Polling</Text>
+              )}
+              {streamingError && (
+                <Text color="red" marginLeft={1}>
+                  (Error - using fallback)
+                </Text>
+              )}
+            </Box>
           </Box>
         </Box>
         {searchQuery && (
@@ -197,6 +217,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
           onAutoScrollChange={setAutoScroll}
           isFocused={isFocused}
           onFilterChange={setFilterInfo}
+          isStreaming={isStreaming}
         />
       </Box>
 

@@ -1,21 +1,25 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const { EventEmitter } = require('events');
 const logger = require('../../utils/logger');
 
 /**
- * Agent Log Manager - Core service for persistent agent logging
+ * Agent Log Manager - Core service for persistent agent logging with real-time streaming
  *
  * Creates persistent log files with descriptive filenames containing initial prompts.
  * Enables debugging of agent behavior and access to historical execution data.
+ * Supports real-time event streaming for immediate UI updates.
  */
-class AgentLogManager {
+class AgentLogManager extends EventEmitter {
   constructor(config = {}) {
+    super();
     this.napoleonDir = config.napoleonDir || path.join(os.homedir(), '.napoleon');
     this.logsDir = path.join(this.napoleonDir, 'logs', 'agents');
     this.streams = new Map(); // agentId -> { stream, logPath, instructions, startTime }
     this.maxPromptLength = 50;
     this.initialized = false;
+    this.activeSubscriptions = new Set(); // Track agents with active UI subscriptions
   }
 
   /**
@@ -172,7 +176,7 @@ class AgentLogManager {
   }
 
   /**
-   * Write a structured log entry to the agent's log file
+   * Write a structured log entry to the agent's log file and emit streaming event
    * @param {string} agentId - Agent identifier
    * @param {Object} entry - Log entry object
    * @returns {Promise<void>}
@@ -207,6 +211,21 @@ class AgentLogManager {
       // Flush immediately for real-time monitoring
       if (typeof streamInfo.stream.flush === 'function') {
         streamInfo.stream.flush();
+      }
+
+      // Broadcast real-time event if agent has active subscriptions
+      if (this.activeSubscriptions.has(agentId)) {
+        this.emit('log-entry', {
+          agentId,
+          entry: {
+            id: `${agentId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: logEntry.timestamp,
+            content: logEntry.content,
+            type: logEntry.type,
+            source: logEntry.source,
+            metadata: logEntry.metadata,
+          },
+        });
       }
     } catch (error) {
       logger.error('Failed to write log entry', {
@@ -267,6 +286,8 @@ class AgentLogManager {
           } else {
             const { logPath } = streamInfo;
             this.streams.delete(agentId);
+            // Clean up streaming subscription
+            this.activeSubscriptions.delete(agentId);
             logger.info('Agent log terminated successfully', { agentId, logPath });
             resolve(logPath);
           }
@@ -277,6 +298,8 @@ class AgentLogManager {
       try {
         streamInfo.stream.destroy();
         this.streams.delete(agentId);
+        // Clean up streaming subscription
+        this.activeSubscriptions.delete(agentId);
       } catch (cleanupError) {
         logger.error('Error during stream cleanup', {
           agentId,
@@ -369,6 +392,51 @@ class AgentLogManager {
    */
   isInitialized() {
     return this.initialized;
+  }
+
+  /**
+   * Subscribe to real-time log events for a specific agent
+   * @param {string} agentId - Agent identifier
+   */
+  subscribeToAgent(agentId) {
+    if (!agentId) {
+      logger.error('Cannot subscribe: Agent ID is required');
+      return;
+    }
+
+    this.activeSubscriptions.add(agentId);
+    logger.debug('Subscribed to real-time logs for agent', { agentId });
+  }
+
+  /**
+   * Unsubscribe from real-time log events for a specific agent
+   * @param {string} agentId - Agent identifier
+   */
+  unsubscribeFromAgent(agentId) {
+    if (!agentId) {
+      logger.error('Cannot unsubscribe: Agent ID is required');
+      return;
+    }
+
+    this.activeSubscriptions.delete(agentId);
+    logger.debug('Unsubscribed from real-time logs for agent', { agentId });
+  }
+
+  /**
+   * Get list of agents with active streaming subscriptions
+   * @returns {Array<string>} - Array of agent IDs with active subscriptions
+   */
+  getActiveSubscriptions() {
+    return Array.from(this.activeSubscriptions);
+  }
+
+  /**
+   * Check if an agent has active streaming subscription
+   * @param {string} agentId - Agent identifier
+   * @returns {boolean} - True if agent has active subscription
+   */
+  hasActiveSubscription(agentId) {
+    return this.activeSubscriptions.has(agentId);
   }
 }
 

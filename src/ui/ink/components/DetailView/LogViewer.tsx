@@ -16,6 +16,7 @@ interface LogViewerProps {
   onAutoScrollChange: (autoScroll: boolean) => void;
   isFocused: boolean;
   onFilterChange?: (filterInfo: { visible: number; total: number; isShowingAll: boolean }) => void;
+  isStreaming?: boolean;
 }
 
 export const LogViewer: React.FC<LogViewerProps> = ({
@@ -28,6 +29,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   onAutoScrollChange,
   isFocused,
   onFilterChange,
+  isStreaming = false,
 }) => {
   const [filterOptions, setFilterOptions] = useState<LogParserOptions>({
     showAllSources: false,
@@ -42,12 +44,13 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   const visibleLogs = useMemo(() => parsedLogs.filter((entry) => LogParser.shouldShowLog(entry, filterOptions)), [parsedLogs, filterOptions]);
 
-  // Auto-scroll to bottom when new logs arrive
+  // Auto-scroll to bottom when new logs arrive, with special handling for streaming
   useEffect(() => {
     if (autoScroll && visibleLogs.length > contentHeight) {
-      onScrollOffsetChange(Math.max(0, visibleLogs.length - contentHeight));
+      const newOffset = Math.max(0, visibleLogs.length - contentHeight);
+      onScrollOffsetChange(newOffset);
     }
-  }, [visibleLogs.length, autoScroll, contentHeight, onScrollOffsetChange]);
+  }, [visibleLogs.length, autoScroll, contentHeight, onScrollOffsetChange, isStreaming]);
 
   // Get visible log entries based on scroll offset
   const displayedLogs = useMemo(() => {

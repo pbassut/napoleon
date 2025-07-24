@@ -381,4 +381,168 @@ describe('AgentLogManager', () => {
       expect(lines).toHaveLength(6); // Initial + 5 messages
     });
   });
+
+  describe('streaming functionality', () => {
+    beforeEach(async () => {
+      await manager.initialize();
+    });
+
+    describe('EventEmitter inheritance', () => {
+      it('should extend EventEmitter', () => {
+        expect(manager.on).toBeDefined();
+        expect(manager.emit).toBeDefined();
+        expect(manager.off).toBeDefined();
+        expect(typeof manager.on).toBe('function');
+        expect(typeof manager.emit).toBe('function');
+        expect(typeof manager.off).toBe('function');
+      });
+    });
+
+    describe('subscription management', () => {
+      it('should allow subscribing to agent logs', () => {
+        const agentId = 'test-agent';
+        manager.subscribeToAgent(agentId);
+        expect(manager.hasActiveSubscription(agentId)).toBe(true);
+        expect(manager.getActiveSubscriptions()).toContain(agentId);
+      });
+
+      it('should allow unsubscribing from agent logs', () => {
+        const agentId = 'test-agent';
+        manager.subscribeToAgent(agentId);
+        expect(manager.hasActiveSubscription(agentId)).toBe(true);
+        
+        manager.unsubscribeFromAgent(agentId);
+        expect(manager.hasActiveSubscription(agentId)).toBe(false);
+        expect(manager.getActiveSubscriptions()).not.toContain(agentId);
+      });
+
+      it('should handle subscription with invalid agent ID', () => {
+        manager.subscribeToAgent(null);
+        manager.subscribeToAgent(undefined);
+        manager.subscribeToAgent('');
+        expect(manager.getActiveSubscriptions()).toHaveLength(0);
+      });
+
+      it('should clean up subscriptions on agent termination', async () => {
+        const agentId = 'cleanup-test-agent';
+        await manager.createAgentLog(agentId, 'Test instructions');
+        
+        manager.subscribeToAgent(agentId);
+        expect(manager.hasActiveSubscription(agentId)).toBe(true);
+        
+        await manager.terminateAgentLog(agentId);
+        expect(manager.hasActiveSubscription(agentId)).toBe(false);
+      });
+    });
+
+    describe('event emission', () => {
+      it('should emit log-entry events when agent has active subscription', async () => {
+        const agentId = 'streaming-agent';
+        await manager.createAgentLog(agentId, 'Test instructions');
+        
+        // Subscribe to agent and listen for events
+        manager.subscribeToAgent(agentId);
+        
+        const eventPromise = new Promise((resolve) => {
+          manager.once('log-entry', resolve);
+        });
+        
+        const testEntry = {
+          content: 'Test streaming message',
+          type: 'info',
+          source: 'test',
+        };
+        
+        await manager.writeLogEntry(agentId, testEntry);
+        
+        const emittedEvent = await eventPromise;
+        expect(emittedEvent).toBeDefined();
+        expect(emittedEvent.agentId).toBe(agentId);
+        expect(emittedEvent.entry).toBeDefined();
+        expect(emittedEvent.entry.content).toBe(testEntry.content);
+        expect(emittedEvent.entry.type).toBe(testEntry.type);
+        expect(emittedEvent.entry.source).toBe(testEntry.source);
+        expect(emittedEvent.entry.id).toBeDefined();
+        expect(emittedEvent.entry.timestamp).toBeDefined();
+      });
+
+      it('should not emit events when agent has no active subscription', async () => {
+        const agentId = 'no-subscription-agent';
+        await manager.createAgentLog(agentId, 'Test instructions');
+        
+        let eventEmitted = false;
+        manager.once('log-entry', () => {
+          eventEmitted = true;
+        });
+        
+        const testEntry = {
+          content: 'Test message without subscription',
+          type: 'info',
+          source: 'test',
+        };
+        
+        await manager.writeLogEntry(agentId, testEntry);
+        
+        // Wait a bit to ensure no event is emitted
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(eventEmitted).toBe(false);
+      });
+
+      it('should emit events for multiple subscribed agents', async () => {
+        const agentId1 = 'multi-agent-1';
+        const agentId2 = 'multi-agent-2';
+        
+        await manager.createAgentLog(agentId1, 'Agent 1 instructions');
+        await manager.createAgentLog(agentId2, 'Agent 2 instructions');
+        
+        manager.subscribeToAgent(agentId1);
+        manager.subscribeToAgent(agentId2);
+        
+        const events = [];
+        manager.on('log-entry', (event) => events.push(event));
+        
+        await manager.writeLogEntry(agentId1, { content: 'Message from agent 1' });
+        await manager.writeLogEntry(agentId2, { content: 'Message from agent 2' });
+        
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        expect(events).toHaveLength(2);
+        expect(events[0].agentId).toBe(agentId1);
+        expect(events[1].agentId).toBe(agentId2);
+        expect(events[0].entry.content).toBe('Message from agent 1');
+        expect(events[1].entry.content).toBe('Message from agent 2');
+      });
+    });
+
+    describe('performance and memory management', () => {
+      it('should handle rapid log writes with streaming', async () => {
+        const agentId = 'performance-agent';
+        await manager.createAgentLog(agentId, 'Performance test');
+        
+        manager.subscribeToAgent(agentId);
+        
+        const events = [];
+        manager.on('log-entry', (event) => events.push(event));
+        
+        // Write many log entries rapidly
+        const promises = [];
+        for (let i = 0; i < 100; i++) {
+          promises.push(manager.writeLogEntry(agentId, {
+            content: `Performance message ${i}`,
+            type: 'info',
+            source: 'performance-test',
+          }));
+        }
+        
+        await Promise.all(promises);
+        
+        // Wait for all events to be processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        expect(events).toHaveLength(100);
+        expect(events[0].entry.content).toBe('Performance message 0');
+        expect(events[99].entry.content).toBe('Performance message 99');
+      });
+    });
+  });
 });
