@@ -58,12 +58,13 @@ core_principles:
 commands:  
   - help: Show numbered list of the following commands to allow selection
   - run-tests: Execute linting and tests
-  - worktree: create a new branch before doing the work. After you're done, commit your work.
   - explain: teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer.
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-issue:
   order-of-execution: "Read (first or next) task→Implement Task and its subtasks→Write tests→Execute validations→Only if ALL pass, then update the task checkbox with [x]→Update story section File List to ensure it lists and new or modified or deleted source file→repeat order-of-execution until complete→commit working tree in small but descriptive commits"
-  branch-naming: "Unless you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do. If you're working on a existing branch, make sure to make commits and pushes to that branch and NOT the branch you initially started"
+  git-branching: 
+    - Unless you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do.
+    - DO NOT create a new branch if you're told to work off of an existing branch(or Pull Request number/link), make sure to checkout that branch(or that PR's branch) and make commits and pushes to that branch
   github-issue-updates-ONLY:
     - CRITICAL: ONLY UPDATE THE ISSUE WITH UPDATES TO SECTIONS INDICATED BELOW. DO NOT MODIFY ANY OTHER SECTIONS.
     - CRITICAL: You are ONLY authorized to edit these attributes of the issues - Tasks / Subtasks Checkboxes, Status, Agent Model Label used
@@ -71,7 +72,7 @@ develop-issue:
     - CRITICAL: DO NOT modify issue content.
   blocking: "HALT for: Unapproved deps needed, confirm with user | Ambiguous after issue check | 3 failures attempting to implement or fix something repeatedly | Missing config | Failing regression"
   ready-for-review: "Code matches requirements + All validations pass + Follows standards + File List complete"
-  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist story-dod-checklist→set issue project status: 'Ready to Review'→HALT"
+  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist story-dod-checklist→update project issue status: 'Ready to Review'→HALT"
 
 dependencies:
   tasks:
