@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { promises as fs } from 'fs';
 
-interface LogEntry {
+export interface LogEntry {
   id: string;
   timestamp: string;
   content: string;

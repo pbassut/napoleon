@@ -3,8 +3,9 @@ import {
   Box, Text, useInput, useFocus,
 } from 'ink';
 import { Agent } from '../../types';
-import { useAgentLogs } from '../../hooks/useAgentLogs';
+import { useAgentLogs, LogEntry } from '../../hooks/useAgentLogs';
 import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator';
+import { LogViewer } from './LogViewer';
 
 interface DetailViewProps {
   agent: Agent;
@@ -12,16 +13,12 @@ interface DetailViewProps {
   agentManager: any;
 }
 
-interface LogEntry {
-  timestamp: string;
-  content: string;
-  type: 'system' | 'output' | 'command' | 'error';
-}
 
 const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
+  const [filterInfo, setFilterInfo] = useState({ visible: 0, total: 0, isShowingAll: false });
   const { isFocused } = useFocus({ autoFocus: true });
 
   // Terminal dimensions
@@ -40,20 +37,65 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   useEffect(() => {
     if (!agentManager || realLogs.length === 0) {
       const mocks: LogEntry[] = [
-        { timestamp: new Date().toISOString(), content: 'Agent started', type: 'system' },
-        { timestamp: new Date().toISOString(), content: `Instructions: ${agent.instructions || 'No instructions provided'}`, type: 'system' },
-        { timestamp: new Date().toISOString(), content: 'Initializing workspace...', type: 'output' },
-        { timestamp: new Date().toISOString(), content: 'Running command: git status', type: 'command' },
-        { timestamp: new Date().toISOString(), content: 'On branch main', type: 'output' },
-        { timestamp: new Date().toISOString(), content: 'Your branch is up to date', type: 'output' },
+        { 
+          id: '1', 
+          timestamp: new Date().toISOString(), 
+          content: 'Agent started', 
+          type: 'system', 
+          source: 'napoleon',
+          metadata: {}
+        },
+        { 
+          id: '2', 
+          timestamp: new Date().toISOString(), 
+          content: `Instructions: ${agent.instructions || 'No instructions provided'}`, 
+          type: 'system', 
+          source: 'napoleon',
+          metadata: {}
+        },
+        { 
+          id: '3', 
+          timestamp: new Date().toISOString(), 
+          content: 'Initializing workspace...', 
+          type: 'info', 
+          source: 'napoleon',
+          metadata: {}
+        },
+        { 
+          id: '4', 
+          timestamp: new Date().toISOString(), 
+          content: 'Running command: git status', 
+          type: 'info', 
+          source: 'napoleon',
+          metadata: {}
+        },
+        { 
+          id: '5', 
+          timestamp: new Date().toISOString(), 
+          content: 'On branch main', 
+          type: 'info', 
+          source: 'napoleon',
+          metadata: {}
+        },
+        { 
+          id: '6', 
+          timestamp: new Date().toISOString(), 
+          content: 'Your branch is up to date', 
+          type: 'info', 
+          source: 'napoleon',
+          metadata: {}
+        },
       ];
 
       // Add more mock logs
       for (let i = 0; i < 20; i++) {
         mocks.push({
+          id: `mock-${i + 7}`,
           timestamp: new Date(Date.now() + i * 1000).toISOString(),
           content: `Log entry ${i + 1}: Processing task...`,
-          type: i % 10 === 0 ? 'error' : 'output',
+          type: i % 10 === 0 ? 'error' : 'info',
+          source: 'napoleon',
+          metadata: {}
         });
       }
 
@@ -63,21 +105,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
 
   const logs = agentManager && realLogs.length > 0 ? realLogs : mockLogs;
 
-  // Auto-scroll to bottom when new logs arrive
-  useEffect(() => {
-    if (autoScroll && logs.length > contentHeight) {
-      setScrollOffset(Math.max(0, logs.length - contentHeight));
-    }
-  }, [logs.length, autoScroll, contentHeight]);
-
-  // Visible logs based on scroll offset
-  const visibleLogs = useMemo(() => {
-    const startIndex = Math.max(0, scrollOffset);
-    const endIndex = Math.min(logs.length, startIndex + contentHeight);
-    return logs.slice(startIndex, endIndex);
-  }, [logs, scrollOffset, contentHeight]);
-
-  // Handle keyboard input
+  // Handle keyboard input for close
   useInput((input: string, key: any) => {
     if (!isFocused) return;
 
@@ -114,22 +142,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
     }
   }, { isActive: isFocused });
 
-  const getLogColor = (type: string) => {
-    switch (type) {
-      case 'error': return 'red';
-      case 'command': return 'blue';
-      case 'system': return 'cyan';
-      default: return 'white';
-    }
-  };
-
-  const formatTimestamp = (timestamp: string) => {
-    try {
-      return new Date(timestamp).toLocaleTimeString();
-    } catch {
-      return timestamp;
-    }
-  };
 
   return (
     <Box flexDirection="column" height="100%">
@@ -177,30 +189,17 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
         paddingX={1}
         flexDirection="column"
       >
-        {isLoading && logs.length === 0 ? (
-          <Text color="yellow">Loading logs...</Text>
-        ) : visibleLogs.length === 0 ? (
-          <Text color="gray">No logs available</Text>
-        ) : (
-          visibleLogs.map((log, index) => {
-            const globalIndex = scrollOffset + index;
-            const lineNumber = String(globalIndex + 1).padStart(4, ' ');
-
-            return (
-              <Box key={globalIndex}>
-                <Text color="gray" dimColor>
-                  {`${lineNumber} `}
-                </Text>
-                <Text color="gray" dimColor>
-                  {`[${formatTimestamp(log.timestamp)}] `}
-                </Text>
-                <Text color={getLogColor(log.type)}>
-                  {log.content}
-                </Text>
-              </Box>
-            );
-          })
-        )}
+        <LogViewer
+          logs={logs}
+          isLoading={isLoading}
+          scrollOffset={scrollOffset}
+          onScrollOffsetChange={setScrollOffset}
+          contentHeight={contentHeight}
+          autoScroll={autoScroll}
+          onAutoScrollChange={setAutoScroll}
+          isFocused={isFocused}
+          onFilterChange={setFilterInfo}
+        />
       </Box>
 
       {/* Footer */}
@@ -211,10 +210,12 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
         justifyContent="space-between"
       >
         <Text color="gray">
-          {`Lines: ${scrollOffset + 1}-${Math.min(scrollOffset + contentHeight, logs.length)} of ${logs.length}`}
+          {autoScroll ? '[Auto-scroll ON]' : '[Auto-scroll OFF]'} | 
+          Filter: {filterInfo.isShowingAll ? 'All logs' : 'Claude SDK only'} |
+          {` ${filterInfo.visible}/${filterInfo.total} entries`}
         </Text>
         <Text color="gray">
-          {autoScroll ? '[Auto-scroll ON]' : '[Auto-scroll OFF]'} | q/Esc: Exit | ↑↓/jk: Scroll | g/G: Top/Bottom
+          q/Esc: Exit | ↑↓/jk: Scroll | g/G: Top/Bottom | a: Toggle Filter
         </Text>
       </Box>
     </Box>
