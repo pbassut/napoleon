@@ -75,7 +75,7 @@ files:
   - path: .bmad-core/tasks/shard-doc.md
     hash: ed55fdb819d630ca
     modified: false
-  - path: .bmad-core/tasks/review-story.md
+  - path: .bmad-core/tasks/review-issue.md
     hash: 3227ccb80046a22a
     modified: false
   - path: .bmad-core/tasks/kb-mode-interaction.md

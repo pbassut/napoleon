@@ -1,16 +1,20 @@
-# review-story
+# /review-story Task
 
-When a developer agent marks a story as "Ready for Review", perform a comprehensive senior developer code review with the ability to refactor and improve code directly.
+When this command is used, execute the following task:
+
+# review-issue
+
+When a developer agent moves the issue to the "Ready to Review" column, perform a comprehensive senior developer code review with the ability to refactor and improve code directly.
 
 ## Prerequisites
 
-- Story status must be "Review"
+- Issue status must be "Ready to Review"
 - Developer has completed all tasks and updated the File List
 - All automated tests are passing
 
 ## Review Process
 
-1. **Read the Complete Story**
+1. **Read the Complete Issue**
    - Review all acceptance criteria
    - Understand the dev notes and requirements
    - Note any completion notes from the developer
@@ -52,7 +56,7 @@ When a developer agent marks a story as "Ready for Review", perform a comprehens
    - Verify adherence to `docs/coding-standards.md`
    - Check compliance with `docs/unified-project-structure.md`
    - Validate testing approach against `docs/testing-strategy.md`
-   - Ensure all guidelines mentioned in the story are followed
+   - Ensure all guidelines mentioned in the issue are followed
 
 7. **Acceptance Criteria Validation**
    - Verify each AC is fully implemented
@@ -71,11 +75,11 @@ When a developer agent marks a story as "Ready for Review", perform a comprehens
    - Add comments for complex logic if missing
    - Ensure any API changes are documented
 
-## Update Story File - QA Results Section ONLY
+## Add a comment to the Issue - QA Results Section ONLY
 
-**CRITICAL**: You are ONLY authorized to update the "QA Results" section of the story file. DO NOT modify any other sections.
+**CRITICAL**: You are ONLY authorized to add a comment about the "QA Results". DO NOT change anything else in the issue
 
-After review and any refactoring, append your results to the story file in the QA Results section:
+After review and any refactoring, add a comment with your results to the issue:
 
 ```markdown
 ## QA Results
@@ -130,16 +134,16 @@ After review and any refactoring, append your results to the story file in the Q
 
 Stop the review and request clarification if:
 
-- Story file is incomplete or missing critical sections
+- Issue is incomplete or missing critical sections in the description
 - File List is empty or clearly incomplete
 - No tests exist when they were required
-- Code changes don't align with story requirements
+- Code changes don't align with issue requirements
 - Critical architectural issues that require discussion
 
 ## Completion
 
 After review:
 
-1. If all items are checked and approved: Update story status to "Done"
-2. If unchecked items remain: Keep status as "Review" for dev to address
+1. If all items are checked and approved: Update issue status to "Done"
+2. If unchecked items remain: Change status to "Todo" for dev to address
 3. Always provide constructive feedback and explanations for learning

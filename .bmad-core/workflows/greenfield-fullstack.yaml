@@ -122,11 +122,11 @@ workflow:
       requires: implementation_files
       optional: true
       notes: |
-        OPTIONAL: QA Agent (New Chat): @qa → review-story
+        OPTIONAL: QA Agent (New Chat): @qa → review-issue
         - Senior dev review with refactoring ability
         - Fixes small issues directly
         - Leaves checklist for remaining items
-        - Updates story status (Review → Done or stays Review)
+        - Updates issue status (Ready to Review → Done or stays Ready to Review)
 
     - agent: dev
       action: address_qa_feedback

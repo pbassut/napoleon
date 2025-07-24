@@ -517,7 +517,7 @@ Resulting Folder Structure:
    - Dev marks story as "Review" when complete with all tests passing
 
    **Step 3 - Senior QA Review**:
-   - **NEW CLEAN CHAT** → `@qa` → execute review-story task
+   - **NEW CLEAN CHAT** → `@qa` → execute review-issue task
    - QA performs senior developer code review
    - QA can refactor and improve code directly
    - QA appends results to story's QA Results section
