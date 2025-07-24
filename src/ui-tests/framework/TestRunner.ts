@@ -28,8 +28,11 @@ export interface UITestSuite {
 
 export class TestRunner {
   private processManager: ProcessManager;
+
   private inputSimulator: InputSimulator;
+
   private outputParser: OutputParser;
+
   private currentPid: number | null = null;
 
   constructor() {
@@ -40,7 +43,7 @@ export class TestRunner {
 
   async runSuite(suite: UITestSuite): Promise<void> {
     console.log(`\n🧪 Running UI Test Suite: ${suite.name}\n`);
-    
+
     let passedCount = 0;
     let failedCount = 0;
     const startTime = Date.now();
@@ -58,7 +61,7 @@ export class TestRunner {
 
           // Spawn new Napoleon instance for each test
           this.currentPid = await this.processManager.spawnNapoleon();
-          
+
           // Wait for UI to initialize
           await this.processManager.waitForOutput(this.currentPid, /Napoleon|Ready|›/, 5000);
 
@@ -66,16 +69,15 @@ export class TestRunner {
             processManager: this.processManager,
             inputSimulator: this.inputSimulator,
             outputParser: this.outputParser,
-            pid: this.currentPid
+            pid: this.currentPid,
           };
 
           // Run the test with timeout
           const timeout = test.timeout || 30000;
           await this.runWithTimeout(test.test(context), timeout, test.name);
-          
+
           console.log(`  ✅ ${test.name}`);
           passedCount++;
-
         } catch (error) {
           console.log(`  ❌ ${test.name}`);
           console.error(`     ${error instanceof Error ? error.message : error}`);
@@ -96,14 +98,13 @@ export class TestRunner {
       if (suite.afterAll) {
         await suite.afterAll();
       }
-
     } finally {
       // Ensure all processes are cleaned up
       await this.processManager.cleanupAll();
     }
 
     const duration = Date.now() - startTime;
-    console.log(`\n📊 Test Results:`);
+    console.log('\n📊 Test Results:');
     console.log(`   Passed: ${passedCount}`);
     console.log(`   Failed: ${failedCount}`);
     console.log(`   Duration: ${(duration / 1000).toFixed(2)}s\n`);
@@ -116,17 +117,17 @@ export class TestRunner {
   async runTest(test: UITest): Promise<void> {
     await this.runSuite({
       name: 'Single Test',
-      tests: [test]
+      tests: [test],
     });
   }
 
   private async runWithTimeout<T>(
-    promise: Promise<T>, 
-    timeout: number, 
-    testName: string
+    promise: Promise<T>,
+    timeout: number,
+    testName: string,
   ): Promise<T> {
     let timeoutId: NodeJS.Timeout;
-    
+
     const timeoutPromise = new Promise<never>((_, reject) => {
       timeoutId = setTimeout(() => {
         reject(new Error(`Test "${testName}" timed out after ${timeout}ms`));

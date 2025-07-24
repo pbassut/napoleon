@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Text, useInput, useFocus } from 'ink';
+import {
+  Box, Text, useInput, useFocus,
+} from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
 import logger from '../../../../utils/logger.js';
 
 // We'll use a simple text input for now instead of ink-text-input
-const SimpleTextInput = ({ value, onChange, placeholder, focus }) => {
-  return <Text>{value || placeholder}</Text>;
-};
+const SimpleTextInput = ({
+  value, onChange, placeholder, focus,
+}) => <Text>{value || placeholder}</Text>;
 
 interface SpawnDialogProps {
   isOpen: boolean;
@@ -18,7 +20,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Memoize useFocus options to prevent infinite re-renders
   const focusOptions = useMemo(() => ({ autoFocus: isOpen }), [isOpen]);
   const { isFocused } = useFocus(focusOptions);
@@ -35,21 +37,21 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
   // Memoize useInput options to prevent infinite re-renders
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
-  
+
   // Handle keyboard input
   useInput((input: string, key: any) => {
     if (!isOpen || isLoading) return;
 
     // Log all inputs for debugging
-    logger.debug('SpawnDialog: Input received', { 
-      input, 
+    logger.debug('SpawnDialog: Input received', {
+      input,
       inputLength: input?.length,
       key: {
         return: key.return,
         shift: key.shift,
         ctrl: key.ctrl,
-        escape: key.escape
-      }
+        escape: key.escape,
+      },
     });
 
     // Handle Escape to close
@@ -61,11 +63,11 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
     // Handle Enter to submit (check this BEFORE text input)
     if (key.return && !key.shift) {
-      logger.debug('SpawnDialog: Enter pressed, submitting', { 
-        text: text.trim(), 
+      logger.debug('SpawnDialog: Enter pressed, submitting', {
+        text: text.trim(),
         textLength: text.length,
         isLoading,
-        isOpen
+        isOpen,
       });
       handleSubmit();
       return;
@@ -74,26 +76,25 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     // Handle Shift+Enter for new line
     if (key.shift && key.return) {
       logger.debug('SpawnDialog: Shift+Enter pressed, adding new line');
-      setText(prev => prev + '\n');
+      setText((prev) => `${prev}\n`);
       return;
     }
 
     // Handle text input
     if (!key.ctrl && !key.meta && !key.return && input) {
-      setText(prev => prev + input);
+      setText((prev) => prev + input);
       return;
     }
 
     // Handle backspace
     if (key.backspace || key.delete) {
-      setText(prev => prev.slice(0, -1));
-      return;
+      setText((prev) => prev.slice(0, -1));
     }
   }, inputOptions);
 
   const handleSubmit = async () => {
     const prompt = text.trim();
-    
+
     if (!prompt) {
       setError('Please enter instructions for the agent');
       return;
@@ -101,7 +102,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
     setError('');
     setIsLoading(true);
-    
+
     try {
       logger.debug('SpawnDialog: Submitting prompt:', { prompt });
       await onSubmit(prompt);
@@ -116,7 +117,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     }
   };
 
-
   return (
     <ModalOverlay isOpen={isOpen}>
       <Box
@@ -129,18 +129,18 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       >
         <Box marginBottom={1}>
           <Text color="white" bold>
-            {" Spawn New Agent "}
+            {' Spawn New Agent '}
           </Text>
         </Box>
-        
+
         <Box marginBottom={1} flexDirection="column">
           <Text color="cyan">Enter instructions for the Claude agent:</Text>
-          <Text>{" "}</Text>
+          <Text>{' '}</Text>
           <Text color="gray">• Be specific about the task you want the agent to perform</Text>
           <Text color="gray">• Include any relevant context or constraints</Text>
           <Text color="gray">• Agent will work in isolated git worktree</Text>
         </Box>
-        
+
         <Box
           borderStyle="single"
           borderColor={error ? 'red' : (isFocused ? 'green' : 'gray')}
@@ -150,7 +150,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         >
           <Box flexDirection="column" width="100%">
             <Box marginBottom={1}>
-              <Text color="gray">{" Agent Instructions "}</Text>
+              <Text color="gray">{' Agent Instructions '}</Text>
             </Box>
             <SimpleTextInput
               value={text}
@@ -160,19 +160,19 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
             />
           </Box>
         </Box>
-        
+
         {error && (
           <Box>
             <Text color="red">{`Error: ${error}`}</Text>
           </Box>
         )}
-        
+
         {isLoading && (
           <Box>
             <Text color="yellow">Creating agent...</Text>
           </Box>
         )}
-        
+
         <Box justifyContent="center">
           <Text color="yellow" bold>
             [Enter] Spawn [Shift+Enter] New line [Esc] Cancel

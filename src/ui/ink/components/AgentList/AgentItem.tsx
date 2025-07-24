@@ -14,39 +14,38 @@ interface AgentItemProps {
 }
 
 // Format runtime duration from seconds to human-readable format
-const formatRuntime = (startTime: Date | undefined): string => {
+const formatRuntime = (startTime: Date | undefined, endTime?: Date | undefined): string => {
   if (!startTime) return '0s';
-  
-  const now = new Date();
+
   const start = new Date(startTime);
-  const diffMs = now.getTime() - start.getTime();
+  const end = endTime || new Date();
+  const diffMs = end.getTime() - start.getTime();
   const diffSecs = Math.floor(diffMs / 1000);
-  
+
   if (diffSecs < 60) {
     return `${diffSecs}s`;
-  } else if (diffSecs < 3600) {
+  } if (diffSecs < 3600) {
     const minutes = Math.floor(diffSecs / 60);
     const seconds = diffSecs % 60;
     return `${minutes}m ${seconds}s`;
-  } else {
-    const hours = Math.floor(diffSecs / 3600);
-    const minutes = Math.floor((diffSecs % 3600) / 60);
-    return `${hours}h ${minutes}m`;
   }
+  const hours = Math.floor(diffSecs / 3600);
+  const minutes = Math.floor((diffSecs % 3600) / 60);
+  return `${hours}h ${minutes}m`;
 };
 
 const AgentItem: React.FC<AgentItemProps> = memo(({
   agent, isSelected, isFocused, index,
 }) => {
   const [currentTime, setCurrentTime] = useState(Date.now());
-  
+
   // Update time every second only for running agents
   useEffect(() => {
     if (agent.status === 'running' || agent.status === 'spawning' || agent.status === 'starting') {
       const interval = setInterval(() => {
         setCurrentTime(Date.now());
       }, 1000);
-      
+
       return () => clearInterval(interval);
     }
   }, [agent.status]);
@@ -61,7 +60,7 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
   };
 
   return (
-    <Box 
+    <Box
       width="100%"
     >
       {/* Selection indicator */}
@@ -81,7 +80,7 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       {/* Runtime column - right aligned */}
       <Box width={10} justifyContent="flex-end">
         <Text color={textColor}>
-          {formatRuntime(agent.startTime)}
+          {formatRuntime(agent.startTime, agent.status === 'idle' ? agent.lastActivity : undefined)}
         </Text>
       </Box>
 
@@ -89,9 +88,9 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       <Box width={18} marginLeft={2}>
         {agent.status === 'running' ? (
           <>
-            <ActivityIndicator 
-              isActive={true} 
-              color="green" 
+            <ActivityIndicator
+              isActive={true}
+              color="green"
               symbol="●"
             />
             <Box marginLeft={1}>
@@ -107,14 +106,14 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       </Box>
     </Box>
   );
-}, (prevProps, nextProps) => {
+}, (prevProps, nextProps) =>
   // Re-render only when these properties change
-  return prevProps.agent.id === nextProps.agent.id
+  prevProps.agent.id === nextProps.agent.id
     && prevProps.agent.status === nextProps.agent.status
     && prevProps.agent.name === nextProps.agent.name
+    && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime()
     && prevProps.isSelected === nextProps.isSelected
-    && prevProps.isFocused === nextProps.isFocused;
-});
+    && prevProps.isFocused === nextProps.isFocused);
 
 AgentItem.displayName = 'AgentItem';
 AgentItem.whyDidYouRender = true;

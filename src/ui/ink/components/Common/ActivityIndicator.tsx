@@ -23,7 +23,7 @@ export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
   symbol = '●',
   color = 'green',
   interval = 500,
-  label = ''
+  label = '',
 }) => {
   const [visible, setVisible] = useState(true);
 
@@ -34,7 +34,7 @@ export const ActivityIndicator: React.FC<ActivityIndicatorProps> = ({
     }
 
     const timer = setInterval(() => {
-      setVisible(prev => !prev);
+      setVisible((prev) => !prev);
     }, interval);
 
     return () => clearInterval(timer);
@@ -56,7 +56,7 @@ export const SpinnerIndicator: React.FC<ActivityIndicatorProps> = ({
   isActive,
   color = 'green',
   interval = 100,
-  label = ''
+  label = '',
 }) => {
   const [frame, setFrame] = useState(0);
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -65,7 +65,7 @@ export const SpinnerIndicator: React.FC<ActivityIndicatorProps> = ({
     if (!isActive) return;
 
     const timer = setInterval(() => {
-      setFrame(prev => (prev + 1) % frames.length);
+      setFrame((prev) => (prev + 1) % frames.length);
     }, interval);
 
     return () => clearInterval(timer);

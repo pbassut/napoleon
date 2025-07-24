@@ -5,17 +5,15 @@ import { Agent } from '../../types';
 
 // Mock all dependencies to avoid rendering issues
 jest.mock('../Common/ActivityIndicator', () => ({
-  ActivityIndicator: ({ isActive, symbol = '●' }: any) => 
-    isActive ? <span>{symbol}</span> : null,
-  SpinnerIndicator: ({ isActive, label }: any) => 
-    isActive ? <span>⠋{label && ` ${label}`}</span> : null,
+  ActivityIndicator: ({ isActive, symbol = '●' }: any) => (isActive ? <span>{symbol}</span> : null),
+  SpinnerIndicator: ({ isActive, label }: any) => (isActive ? <span>⠋{label && ` ${label}`}</span> : null),
 }));
 
 jest.mock('../../constants/agentStatus', () => ({
   getStatusInfo: jest.fn().mockReturnValue({
     emoji: '🟢',
     text: 'Running',
-    color: 'green'
+    color: 'green',
   }),
 }));
 
@@ -38,16 +36,16 @@ describe('AgentItem', () => {
   it('renders agent with correct selection indicator', () => {
     // For now, just test that the component can be imported and instantiated
     expect(AgentItem).toBeDefined();
-    
+
     // Test component renders without crashing
     expect(() => {
       render(
-        <AgentItem 
-          agent={baseAgent} 
-          isSelected={true} 
-          isFocused={true} 
-          index={0} 
-        />
+        <AgentItem
+          agent={baseAgent}
+          isSelected={true}
+          isFocused={true}
+          index={0}
+        />,
       );
     }).not.toThrow();
   });

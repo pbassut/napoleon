@@ -6,7 +6,7 @@ describe('Framework Validation', () => {
       processManager: {},
       inputSimulator: {},
       outputParser: {},
-      pid: 12345
+      pid: 12345,
     };
 
     // Verify all components are available
@@ -14,7 +14,7 @@ describe('Framework Validation', () => {
     expect(mockContext.inputSimulator).toBeDefined();
     expect(mockContext.outputParser).toBeDefined();
     expect(mockContext.pid).toBeDefined();
-    
+
     // Framework is properly initialized
     console.log('✓ Framework components validated');
   });

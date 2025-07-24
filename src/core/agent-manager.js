@@ -122,7 +122,7 @@ class AgentManager {
         'Persistent agent logging disabled due to initialization failure',
         {
           error: error.message,
-        }
+        },
       );
       this.agentLogManager = null; // Disable feature on failure
     }
@@ -143,7 +143,7 @@ class AgentManager {
         for (let i = 0; i < sessions.length; i += 1) {
           // Migrate legacy sessions to SDK format
           const migratedSession = AgentManager.migrateLegacySession(
-            sessions[i]
+            sessions[i],
           );
 
           // Check SDK session status
@@ -200,7 +200,7 @@ class AgentManager {
       // Only add diagnostic info if logs are truly empty (no actual output was captured)
       // and avoid duplicates by checking for restore message
       const alreadyHasRestoreMessage = session.logs.some(
-        (log) => log.content && log.content.includes('Session restored - PID')
+        (log) => log.content && log.content.includes('Session restored - PID'),
       );
 
       if (!alreadyHasRestoreMessage && session.logs.length === 0) {
@@ -302,7 +302,7 @@ class AgentManager {
       throw new FileSystemError(
         `Failed to save sessions: ${error.message}`,
         'SESSION_SAVE_FAILED',
-        'Please check file permissions for ~/.napoleon/'
+        'Please check file permissions for ~/.napoleon/',
       );
     }
   }
@@ -407,7 +407,7 @@ class AgentManager {
 
       const sdkSession = await this.sdkManager.initializeSDKSession(
         agentId,
-        workingDirectory
+        workingDirectory,
       );
 
       logger.info('SDK session initialized successfully', {
@@ -432,7 +432,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         `Failed to initialize SDK session: ${error.message}`,
         'SDK_INITIALIZATION_FAILED',
-        'Check SDK configuration and dependencies'
+        'Check SDK configuration and dependencies',
       );
     }
   }
@@ -468,7 +468,7 @@ class AgentManager {
         throw new FileSystemError(
           `Failed to create worktrees directory: ${error.message}`,
           'WORKTREE_DIR_CREATION_FAILED',
-          'Please check write permissions for the project directory'
+          'Please check write permissions for the project directory',
         );
       }
     }
@@ -510,7 +510,7 @@ class AgentManager {
           {
             encoding: 'utf8',
             cwd: process.cwd(),
-          }
+          },
         ).trim();
 
         if (untrackedFiles.length > 0) {
@@ -555,8 +555,8 @@ class AgentManager {
             new EnvironmentValidationError(
               gitValidation.error,
               'GIT_WORKTREE_VALIDATION_FAILED',
-              gitValidation.suggestion
-            )
+              gitValidation.suggestion,
+            ),
           );
           return;
         }
@@ -584,7 +584,7 @@ class AgentManager {
           },
           (error, stdout, stderr) => {
             const duration = Date.now() - startTime;
-            
+
             if (error) {
               logger.error('Git worktree creation failed', {
                 agentId,
@@ -602,14 +602,14 @@ class AgentManager {
                 new EnvironmentValidationError(
                   `Worktree creation failed: ${stderr || error.message}`,
                   'WORKTREE_CREATION_FAILED',
-                  'Please check git repository state and try again'
-                )
+                  'Please check git repository state and try again',
+                ),
               );
             } else {
               // Validate that worktree directory actually exists
               const worktreeExists = fs.existsSync(worktreePath);
               const isDirectory = worktreeExists && fs.statSync(worktreePath).isDirectory();
-              
+
               logger.info('Git worktree created successfully', {
                 agentId,
                 worktreeName,
@@ -625,9 +625,9 @@ class AgentManager {
                 const validationError = new EnvironmentValidationError(
                   `Worktree creation succeeded but directory validation failed. Expected: ${worktreePath}`,
                   'WORKTREE_VALIDATION_FAILED',
-                  'Worktree directory not found after creation'
+                  'Worktree directory not found after creation',
                 );
-                
+
                 logger.error('Worktree validation failed after creation', {
                   agentId,
                   worktreePath,
@@ -635,18 +635,18 @@ class AgentManager {
                   isDirectory,
                   duration: `${duration}ms`,
                 });
-                
+
                 this.cleanupFailedWorktree(worktreePath);
                 reject(validationError);
                 return;
               }
 
               // Install dependencies in the worktree using npm ci for speed
-              logger.info('Installing dependencies in worktree', { 
-                agentId, 
-                worktreePath 
+              logger.info('Installing dependencies in worktree', {
+                agentId,
+                worktreePath,
               });
-              
+
               exec(
                 'npm ci',
                 {
@@ -669,8 +669,8 @@ class AgentManager {
                       new EnvironmentValidationError(
                         `Failed to install dependencies in worktree: ${npmError.message}`,
                         'DEPENDENCY_INSTALLATION_FAILED',
-                        'Ensure npm is available and package-lock.json is valid'
-                      )
+                        'Ensure npm is available and package-lock.json is valid',
+                      ),
                     );
                     return;
                   }
@@ -689,10 +689,10 @@ class AgentManager {
                     validated: true,
                     dependenciesInstalled: true,
                   });
-                }
+                },
               );
             }
-          }
+          },
         );
       } catch (error) {
         logger.error('Worktree creation caught exception', {
@@ -775,50 +775,50 @@ class AgentManager {
               cwd: process.cwd(),
               timeout: 15000, // 15 second timeout
             },
-        (error, stdout, stderr) => {
-          if (error) {
-            logger.warn(
-              'Git worktree removal failed, attempting manual cleanup',
-              {
-                worktreePath,
-                error: error.message,
-                stderr,
-              }
-            );
+            (error, stdout, stderr) => {
+              if (error) {
+                logger.warn(
+                  'Git worktree removal failed, attempting manual cleanup',
+                  {
+                    worktreePath,
+                    error: error.message,
+                    stderr,
+                  },
+                );
 
-            // Fallback: manual directory removal (respect autoCleanup)
-            try {
-              // Check autoCleanup configuration before manual cleanup
-              if (!this.config.features?.autoCleanup) {
-                logger.debug('Manual worktree cleanup disabled by configuration', {
+                // Fallback: manual directory removal (respect autoCleanup)
+                try {
+                  // Check autoCleanup configuration before manual cleanup
+                  if (!this.config.features?.autoCleanup) {
+                    logger.debug('Manual worktree cleanup disabled by configuration', {
+                      worktreePath,
+                    });
+                    resolve(); // Consider it handled even though not cleaned
+                    return;
+                  }
+
+                  fs.rmSync(worktreePath, { recursive: true, force: true });
+                  logger.info('Manually cleaned up worktree directory', {
+                    worktreePath,
+                  });
+                  resolve();
+                } catch (cleanupError) {
+                  logger.error('Failed to manually clean up worktree', {
+                    worktreePath,
+                    error: cleanupError.message,
+                  });
+                  reject(cleanupError);
+                }
+              } else {
+                logger.info('Git worktree removed successfully', {
                   worktreePath,
+                  stdout: stdout.trim(),
                 });
-                resolve(); // Consider it handled even though not cleaned
-                return;
+                resolve();
               }
-
-              fs.rmSync(worktreePath, { recursive: true, force: true });
-              logger.info('Manually cleaned up worktree directory', {
-                worktreePath,
-              });
-              resolve();
-            } catch (cleanupError) {
-              logger.error('Failed to manually clean up worktree', {
-                worktreePath,
-                error: cleanupError.message,
-              });
-              reject(cleanupError);
-            }
-          } else {
-            logger.info('Git worktree removed successfully', {
-              worktreePath,
-              stdout: stdout.trim(),
-            });
-            resolve();
-          }
-        }
+            },
           );
-        }
+        },
       );
     });
   }
@@ -831,7 +831,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Instructions must be a non-empty string',
         'INVALID_INSTRUCTIONS_TYPE',
-        'Please provide valid text instructions for the agent'
+        'Please provide valid text instructions for the agent',
       );
     }
 
@@ -844,7 +844,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Agent instructions must be less than 5000 characters',
         'INSTRUCTIONS_TOO_LONG',
-        'Please provide more concise instructions for the agent'
+        'Please provide more concise instructions for the agent',
       );
     }
 
@@ -854,7 +854,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           'Instructions contain potentially dangerous characters',
           'DANGEROUS_INPUT_DETECTED',
-          'Please remove special characters and shell metacharacters from your instructions'
+          'Please remove special characters and shell metacharacters from your instructions',
         );
       }
     }
@@ -864,7 +864,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'Instructions contain invalid characters',
         'INVALID_CHARACTERS',
-        'Please use only standard alphanumeric characters and basic punctuation'
+        'Please use only standard alphanumeric characters and basic punctuation',
       );
     }
 
@@ -892,7 +892,7 @@ class AgentManager {
           throw new EnvironmentValidationError(
             'Working directory is not a valid directory',
             'INVALID_WORKING_DIRECTORY',
-            'Please provide a valid directory path'
+            'Please provide a valid directory path',
           );
         }
         validatedOptions.workingDirectory = workingDir;
@@ -903,7 +903,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           'Working directory is not accessible',
           'WORKING_DIRECTORY_NOT_ACCESSIBLE',
-          'Please ensure the directory exists and is readable'
+          'Please ensure the directory exists and is readable',
         );
       }
     }
@@ -917,16 +917,16 @@ class AgentManager {
   async spawnAgent(instructions, options = {}) {
     const spawnStartTime = Date.now();
     let agentId;
-    
+
     try {
       // Checkpoint 1: Input validation
       const validationStartTime = Date.now();
-      
+
       const sanitizedInstructions = this.validateInstructions(instructions);
       const validatedOptions = this.validateOptions(options);
 
       const validationDuration = Date.now() - validationStartTime;
-      
+
       // No agent limit - allow unlimited agents
 
       // Validate git repository
@@ -935,7 +935,7 @@ class AgentManager {
         throw new EnvironmentValidationError(
           gitValidation.error,
           'GIT_REPO_INVALID',
-          gitValidation.suggestion
+          gitValidation.suggestion,
         );
       }
 
@@ -959,29 +959,29 @@ class AgentManager {
 
       // Checkpoint 2: Worktree creation
       const worktreeStartTime = Date.now();
-      
-      logger.info('SPAWN_FLOW: About to create worktree', { 
+
+      logger.info('SPAWN_FLOW: About to create worktree', {
         agentId,
         checkpoint: 'worktree_creation_start',
         timestamp: new Date().toISOString(),
       });
-      
+
       const worktreeInfo = await this.createWorktree(agentId);
       const worktreeDuration = Date.now() - worktreeStartTime;
-      
-      logger.info('SPAWN_FLOW: Worktree created successfully', { 
-        agentId, 
+
+      logger.info('SPAWN_FLOW: Worktree created successfully', {
+        agentId,
         worktreeInfo,
         worktreeDuration: `${worktreeDuration}ms`,
         checkpoint: 'worktree_creation_complete',
         timestamp: new Date().toISOString(),
       });
-      
+
       const workingDirectory = worktreeInfo.worktreePath;
 
       // Checkpoint 3: Session creation
       const sessionStartTime = Date.now();
-      
+
       logger.info('SPAWN_FLOW: Creating agent session', {
         agentId,
         checkpoint: 'session_creation_start',
@@ -1034,7 +1034,7 @@ class AgentManager {
 
       // Checkpoint 4: SDK initialization
       const sdkStartTime = Date.now();
-      
+
       logger.info('SPAWN_FLOW: About to initialize SDK session', {
         agentId,
         workingDirectory,
@@ -1051,11 +1051,11 @@ class AgentManager {
       // Initialize SDK session
       const sdkSession = await this.initializeSDKSession(
         agentId,
-        workingDirectory
+        workingDirectory,
       );
-      
+
       const sdkDuration = Date.now() - sdkStartTime;
-      
+
       logger.info('SPAWN_FLOW: SDK session initialized successfully', {
         agentId,
         sdkDuration: `${sdkDuration}ms`,
@@ -1085,7 +1085,7 @@ class AgentManager {
         try {
           const logPath = await this.agentLogManager.createAgentLog(
             agentId,
-            sanitizedInstructions
+            sanitizedInstructions,
           );
           logger.debug('Persistent log created for agent', {
             agentId,
@@ -1109,7 +1109,7 @@ class AgentManager {
 
       // Checkpoint 5: Final completion
       const totalSpawnDuration = Date.now() - spawnStartTime;
-      
+
       logger.info('SPAWN_FLOW: About to send instructions to agent', {
         agentId,
         checkpoint: 'instructions_sending_start',
@@ -1129,18 +1129,18 @@ class AgentManager {
         worktreeValidated: worktreeInfo.validated,
         performanceBreakdown: {
           validation: `${validationDuration}ms`,
-          worktreeCreation: `${worktreeDuration}ms`, 
+          worktreeCreation: `${worktreeDuration}ms`,
           sessionCreation: `${sessionDuration}ms`,
           sdkInitialization: `${sdkDuration}ms`,
-          total: `${totalSpawnDuration}ms`
-        }
+          total: `${totalSpawnDuration}ms`,
+        },
       });
 
       return session;
     } catch (error) {
       const totalSpawnDuration = Date.now() - spawnStartTime;
-      
-      logger.error('SPAWN_FLOW: Agent spawn process failed', { 
+
+      logger.error('SPAWN_FLOW: Agent spawn process failed', {
         agentId: agentId || 'unknown',
         error: error.message,
         totalSpawnDuration: `${totalSpawnDuration}ms`,
@@ -1160,7 +1160,7 @@ class AgentManager {
       throw new EnvironmentValidationError(
         'ANTHROPIC_API_KEY environment variable is not set',
         'CLAUDE_API_KEY_NOT_FOUND',
-        'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here'
+        'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here',
       );
     }
   }
@@ -1199,8 +1199,8 @@ class AgentManager {
       // Don't await - let the agent run asynchronously
       // Capture session data to prevent race conditions
       const sessionId = session.sessionId || session.id;
-      const workingDirectory = session.workingDirectory;
-      
+      const { workingDirectory } = session;
+
       this.sdkManager
         .executeQuery(sessionId, instructions, {
           cwd: workingDirectory,
@@ -1519,8 +1519,7 @@ class AgentManager {
       // Terminate persistent log before session cleanup
       if (this.agentLogManager) {
         try {
-          const finalLogPath =
-            await this.agentLogManager.terminateAgentLog(agentId);
+          const finalLogPath = await this.agentLogManager.terminateAgentLog(agentId);
           logger.debug('Persistent log terminated', { agentId, finalLogPath });
         } catch (error) {
           logger.warn('Failed to terminate persistent log', {
@@ -1533,7 +1532,7 @@ class AgentManager {
       // Terminate SDK session gracefully
       if (session.sessionId || session.id) {
         const terminationSuccess = await this.sdkManager.terminateSession(
-          session.sessionId || session.id
+          session.sessionId || session.id,
         );
         if (terminationSuccess) {
           session.sdkStatus = SDKStatus.INACTIVE;
@@ -1698,9 +1697,9 @@ class AgentManager {
 
     // If logs are empty and this is a restored session (not newly spawned), add diagnostic info
     if (
-      (!session.logs || session.logs.length === 0) &&
-      session.pid &&
-      session.wasRestored
+      (!session.logs || session.logs.length === 0)
+      && session.pid
+      && session.wasRestored
     ) {
       this.reattachToProcess(session);
     }
@@ -1724,7 +1723,7 @@ class AgentManager {
       logger.debug('Orphan scanning disabled by configuration');
       return { found: 0, queued: 0, scanned: 0 };
     }
-    
+
     // Scan every 5 minutes for orphaned worktrees
     const scanIntervalMs = this.config.orphanScanIntervalMs || 5 * 60 * 1000;
 
@@ -1814,9 +1813,7 @@ class AgentManager {
         });
 
         await Promise.allSettled(
-          activeAgents.map((agentId) =>
-            this.terminateAgent(agentId, { force: true })
-          )
+          activeAgents.map((agentId) => this.terminateAgent(agentId, { force: true })),
         );
       }
 

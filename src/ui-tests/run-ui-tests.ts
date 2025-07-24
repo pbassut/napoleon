@@ -10,11 +10,11 @@ async function runAllUITests() {
     frameworkValidationTestSuite,
     navigationTestSuite,
     agentManagementTestSuite,
-    uiStateTestSuite
+    uiStateTestSuite,
   ];
 
   console.log('🚀 Starting Napoleon UI Tests\n');
-  
+
   let totalPassed = 0;
   let totalFailed = 0;
   const startTime = Date.now();
@@ -36,7 +36,7 @@ async function runAllUITests() {
   }
 
   const totalTime = (Date.now() - startTime) / 1000;
-  
+
   console.log('\n📈 Overall Summary:');
   console.log(`   Total Tests: ${totalPassed + totalFailed}`);
   console.log(`   Passed: ${totalPassed}`);
@@ -50,7 +50,7 @@ async function runAllUITests() {
 
 // Run tests if this file is executed directly
 if (require.main === module) {
-  runAllUITests().catch(error => {
+  runAllUITests().catch((error) => {
     console.error('\n❌ UI Tests failed:', error);
     process.exit(1);
   });

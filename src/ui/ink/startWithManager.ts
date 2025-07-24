@@ -1,9 +1,9 @@
 // Start Ink UI with AgentManager integration
+import { render } from 'ink';
+import React from 'react';
 import { AgentManager } from './types';
 import logger from '../../utils/logger.js';
 import createAppDefault from './createApp';
-import { render } from 'ink';
-import React from 'react';
 
 /**
  * Check if the current environment supports Ink UI
@@ -17,7 +17,6 @@ function isInkSupported(): boolean {
   if (process.env.NAPOLEON_DISABLE_INK === 'true') {
     return false;
   }
-
 
   // Check if we have a TTY
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
@@ -47,7 +46,7 @@ function isInkSupported(): boolean {
  */
 async function startFallbackUI(agentManager: AgentManager): Promise<void> {
   logger.info('Starting console interface (Ink not supported in this environment)');
-  
+
   // Simple console interface
   console.log('\n🖥️  Napoleon Agent Manager');
   console.log('==============================');
@@ -59,7 +58,7 @@ async function startFallbackUI(agentManager: AgentManager): Promise<void> {
   console.log(`  • Raw Mode: ${typeof process.stdin.setRawMode === 'function'}`);
   console.log(`  • Node Env: ${process.env.NODE_ENV || 'not set'}`);
   console.log('');
-  
+
   // List current agents
   try {
     const agents = agentManager.getActiveAgents();
@@ -74,7 +73,7 @@ async function startFallbackUI(agentManager: AgentManager): Promise<void> {
   } catch (error: any) {
     console.log('Could not list agents:', error.message);
   }
-  
+
   console.log('');
   console.log('Available commands:');
   console.log('  napoleon agent spawn "<instructions>" - Create a new agent');
@@ -101,9 +100,9 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     const appElement = React.createElement(App, { agentManager });
 
     // Enable debug mode when performance debugging is active
-    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true' || 
-                     process.env.NODE_ENV === 'development';
-    
+    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true'
+                     || process.env.NODE_ENV === 'development';
+
     // Render the app with error handling for raw mode
     let result: any;
     try {
@@ -130,7 +129,7 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     logger.info('Ink UI closed');
   } catch (error: any) {
     logger.error('Failed to start Ink UI with AgentManager', { error: error.message });
-    
+
     // Try fallback UI if Ink fails
     if (error.message.includes('Raw mode is not supported')) {
       logger.info('Attempting fallback UI due to raw mode issue');

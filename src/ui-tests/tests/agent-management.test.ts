@@ -2,10 +2,10 @@
 describe('Agent Management Tests', () => {
   test('should spawn agent with simple prompt', async () => {
     // Mock test for agent spawning
-    const mockAgent = { 
+    const mockAgent = {
       id: 'agent-1',
       prompt: 'Hello World Agent',
-      status: 'spawned'
+      status: 'spawned',
     };
 
     expect(mockAgent.id).toBeDefined();
@@ -15,9 +15,9 @@ describe('Agent Management Tests', () => {
 
   test('should terminate agent', async () => {
     // Mock test for agent termination
-    const mockTermination = { 
+    const mockTermination = {
       agentId: 'agent-1',
-      terminated: true
+      terminated: true,
     };
 
     expect(mockTermination.agentId).toBeDefined();
@@ -26,10 +26,10 @@ describe('Agent Management Tests', () => {
 
   test('should handle agent lifecycle', async () => {
     // Mock test for agent lifecycle management
-    const mockLifecycle = { 
+    const mockLifecycle = {
       created: true,
       running: true,
-      terminated: false
+      terminated: false,
     };
 
     expect(mockLifecycle.created).toBe(true);

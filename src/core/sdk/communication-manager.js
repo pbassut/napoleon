@@ -1,7 +1,7 @@
 const { query } = require('@anthropic-ai/claude-code');
+const fs = require('fs');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
-const fs = require('fs');
 const { loadConfig } = require('../config');
 
 /**
@@ -23,7 +23,7 @@ class SDKCommunicationManager {
    */
   async initializeSDKSession(agentId, workingDirectory) {
     const startTime = Date.now();
-    
+
     try {
       this.logger.info('Starting SDK session initialization', {
         agentId,
@@ -51,7 +51,7 @@ class SDKCommunicationManager {
       // Validate working directory exists and is accessible
       const workingDirExists = fs.existsSync(workingDirectory);
       const isDirectory = workingDirExists && fs.statSync(workingDirectory).isDirectory();
-      
+
       this.logger.info('Working directory validation', {
         agentId,
         workingDirectory,
@@ -81,7 +81,7 @@ class SDKCommunicationManager {
         messageHistory: [],
         options: {
           workingDirectory,
-          cwd: workingDirectory,  // Also pass as cwd in case SDK expects this parameter
+          cwd: workingDirectory, // Also pass as cwd in case SDK expects this parameter
         },
       };
 
@@ -89,7 +89,7 @@ class SDKCommunicationManager {
       this.sessions.set(agentId, session);
 
       const duration = Date.now() - startTime;
-      
+
       this.logger.info('SDK session initialized successfully', {
         agentId,
         workingDirectory,
@@ -102,7 +102,7 @@ class SDKCommunicationManager {
       return session;
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       this.logger.error('Failed to initialize SDK session', {
         agentId,
         workingDirectory,
@@ -146,14 +146,14 @@ class SDKCommunicationManager {
         throw new EnvironmentValidationError(
           'Prompt must be a non-empty string',
           'INVALID_PROMPT',
-          'Provide a valid prompt string'
+          'Provide a valid prompt string',
         );
       }
 
       // Merge options with session defaults
       // Use the claude executable from the worktree's node_modules
       const claudeExecutable = require('path').join(session.workingDirectory, 'node_modules', '.bin', 'claude');
-      
+
       const queryOptions = {
         permissionMode: 'bypassPermissions',
         pathToClaudeCodeExecutable: claudeExecutable,
@@ -238,7 +238,7 @@ class SDKCommunicationManager {
       // Process streaming response
       const messageIterator = queryResponse[Symbol.asyncIterator]();
       this.logger.debug('SDK: Message iterator created, getting first message', { agentId });
-      
+
       let iteratorResult = await messageIterator.next();
       this.logger.debug('SDK: First iterator result received', {
         agentId,
@@ -290,10 +290,10 @@ class SDKCommunicationManager {
           currentMessageCount: messageCount,
           currentMessageType: message.type,
         });
-        
+
         // eslint-disable-next-line no-await-in-loop
         iteratorResult = await messageIterator.next();
-        
+
         this.logger.debug('SDK: Next iterator result received', {
           agentId,
           done: iteratorResult.done,
@@ -370,7 +370,7 @@ class SDKCommunicationManager {
         error: error.message,
         errorName: error.name,
         errorCode: error.code,
-        errorStack: error.stack?.substring(0, 500) + '...',
+        errorStack: `${error.stack?.substring(0, 500)}...`,
         duration: Date.now() - startTime,
         promptLength: prompt.length,
         abortSignal: errorSession.abortController?.signal?.aborted || 'no-signal',

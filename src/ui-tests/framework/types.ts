@@ -30,7 +30,7 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
   napoleonStartTimeout: 5000,
   defaultActionDelay: 100,
   outputBufferSize: 1000,
-  processCleanupTimeout: 2000
+  processCleanupTimeout: 2000,
 };
 
 export type AssertionResult = {

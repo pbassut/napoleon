@@ -14,11 +14,11 @@ async function startInkUI() {
     logger.info('Real AgentManager initialized for testing');
 
     // Enable debug mode when performance debugging is active
-    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true' || 
-                     process.env.NODE_ENV === 'development';
-    
+    const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true'
+                     || process.env.NODE_ENV === 'development';
+
     const { clear } = render(<App agentManager={agentManager} />, {
-      debug: debugMode
+      debug: debugMode,
     });
 
     process.on('exit', () => {

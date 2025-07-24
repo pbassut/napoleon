@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import React, { useState } from 'react';
-import { Agent } from './types';
 import { render, Box, Text } from 'ink';
+import { Agent } from './types';
 import AgentListDefault from './components/AgentList/AgentList';
 
 // Mock agent data generator

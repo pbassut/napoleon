@@ -13,14 +13,14 @@ interface ModalOverlayProps {
  * Reusable modal overlay component that provides consistent centering
  * and prevents flickering by always staying in the DOM
  */
-export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({ 
-  isOpen, 
+export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
+  isOpen,
   children,
-  zIndex = 1000 
-}) => {
+  zIndex = 1000,
+}) =>
   // Always render the structure to prevent flickering
   // Keep in DOM but control visibility and interactivity
-  return (
+  (
     <Box
       position="absolute"
       width="100%"
@@ -35,7 +35,7 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
         width="100%"
         height="100%"
       />
-      
+
       {/* Modal content - only render when open to prevent unnecessary renders */}
       {isOpen && (
         <Box position="relative">
@@ -43,8 +43,7 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
         </Box>
       )}
     </Box>
-  );
-});
+  ));
 
 ModalOverlay.displayName = 'ModalOverlay';
 ModalOverlay.whyDidYouRender = true;

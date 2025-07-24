@@ -20,34 +20,34 @@ if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'tr
       diffPathColor: 'blue',
       notifier: (updateInfo) => {
         // Custom notifier for terminal output
-        console.log('\n' + '='.repeat(60));
+        console.log(`\n${'='.repeat(60)}`);
         console.log('🔍 Napoleon Re-render Detected:');
         console.log(`Component: ${updateInfo.displayName}`);
         console.log(`Reason: ${updateInfo.reason?.propsDifferences?.length ? 'Props changed' : 'State/hooks changed'}`);
-        
+
         if (updateInfo.reason?.propsDifferences?.length) {
           console.log('Changed props:');
           updateInfo.reason.propsDifferences.forEach((diff) => {
             console.log(`  - ${diff.pathString}: ${diff.prevValue} → ${diff.nextValue}`);
           });
         }
-        
+
         if (updateInfo.reason?.stateDifferences?.length) {
           console.log('Changed state:');
           updateInfo.reason.stateDifferences.forEach((diff) => {
             console.log(`  - ${diff.pathString}: ${diff.prevValue} → ${diff.nextValue}`);
           });
         }
-        
+
         if (updateInfo.reason?.hookDifferences?.length) {
           console.log('Changed hooks:');
           updateInfo.reason.hookDifferences.forEach((diff) => {
             console.log(`  - Hook ${diff.hookIndex}: ${diff.prevValue} → ${diff.nextValue}`);
           });
         }
-        
-        console.log('='.repeat(60) + '\n');
-      }
+
+        console.log(`${'='.repeat(60)}\n`);
+      },
     });
   } else {
     // For Node.js/Ink environment
@@ -64,16 +64,16 @@ if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'tr
         notifier: (updateInfo) => {
           // Only log if we have actual differences
           if (!updateInfo.reason) return;
-          
+
           const hasPropChanges = updateInfo.reason.propsDifferences?.length > 0;
           const hasStateChanges = updateInfo.reason.stateDifferences?.length > 0;
           const hasHookChanges = updateInfo.reason.hookDifferences?.length > 0;
-          
+
           if (!hasPropChanges && !hasStateChanges && !hasHookChanges) return;
-          
-          console.log('\n' + '─'.repeat(60));
+
+          console.log(`\n${'─'.repeat(60)}`);
           console.log(`🔍 Re-render: ${updateInfo.displayName || 'Unknown Component'}`);
-          
+
           if (hasPropChanges) {
             console.log('📦 Props changed:');
             updateInfo.reason.propsDifferences.forEach((diff) => {
@@ -82,7 +82,7 @@ if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'tr
               console.log(`   ${diff.pathString}: ${prevStr} → ${nextStr}`);
             });
           }
-          
+
           if (hasStateChanges) {
             console.log('📊 State changed:');
             updateInfo.reason.stateDifferences.forEach((diff) => {
@@ -91,19 +91,19 @@ if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'tr
               console.log(`   ${diff.pathString}: ${prevStr} → ${nextStr}`);
             });
           }
-          
+
           if (hasHookChanges) {
             console.log('🪝 Hooks changed:');
             updateInfo.reason.hookDifferences.forEach((diff) => {
               console.log(`   Hook[${diff.hookIndex}] changed`);
             });
           }
-          
+
           console.log('─'.repeat(60));
-        }
+        },
       });
-      
-      console.log('✅ why-did-you-render is loaded (NODE_ENV=' + process.env.NODE_ENV + ')');
+
+      console.log(`✅ why-did-you-render is loaded (NODE_ENV=${process.env.NODE_ENV})`);
     } catch (error) {
       console.warn('⚠️ Failed to load why-did-you-render:', error.message);
     }

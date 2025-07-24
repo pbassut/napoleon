@@ -12,10 +12,10 @@ describe('Agent Status Constants', () => {
         'IDLE',
         'ERROR',
         'FAILED',
-        'TERMINATED'
+        'TERMINATED',
       ];
 
-      expectedStatuses.forEach(status => {
+      expectedStatuses.forEach((status) => {
         expect(AGENT_STATUS).toHaveProperty(status);
       });
     });
@@ -63,7 +63,7 @@ describe('Agent Status Constants', () => {
       expect(statusInfo).toEqual({
         emoji: '🟢',
         text: 'Running',
-        color: 'green'
+        color: 'green',
       });
     });
 
@@ -72,7 +72,7 @@ describe('Agent Status Constants', () => {
       expect(statusInfo).toEqual({
         emoji: '🔴',
         text: 'Error',
-        color: 'red'
+        color: 'red',
       });
     });
 
@@ -81,7 +81,7 @@ describe('Agent Status Constants', () => {
       expect(statusInfo).toEqual({
         emoji: '🟡',
         text: 'Spawning...',
-        color: 'yellow'
+        color: 'yellow',
       });
     });
 
@@ -90,7 +90,7 @@ describe('Agent Status Constants', () => {
       expect(statusInfo).toEqual({
         emoji: '⚪',
         text: 'unknown-status',
-        color: 'gray'
+        color: 'gray',
       });
     });
 
@@ -99,12 +99,12 @@ describe('Agent Status Constants', () => {
       expect(statusInfo).toEqual({
         emoji: '⚪',
         text: '',
-        color: 'gray'
+        color: 'gray',
       });
     });
 
     it('should handle all defined statuses correctly', () => {
-      Object.keys(AGENT_STATUS).forEach(statusKey => {
+      Object.keys(AGENT_STATUS).forEach((statusKey) => {
         const statusInfo = getStatusInfo(statusKey.toLowerCase());
         expect(statusInfo).toEqual(AGENT_STATUS[statusKey]);
       });

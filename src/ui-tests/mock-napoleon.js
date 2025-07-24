@@ -2,12 +2,12 @@
 
 // Mock Napoleon for UI tests - simulates the real Napoleon UI behavior
 
-let agents = [];
+const agents = [];
 let selectedIndex = 0;
 let inDialog = false;
 let dialogType = null;
 let dialogBuffer = '';
-let activityFrame = 0;
+const activityFrame = 0;
 const activityFrames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
 
 // ANSI escape codes
@@ -21,13 +21,13 @@ const GRAY = '\u001b[90m';
 
 function render() {
   process.stdout.write(CLEAR);
-  
+
   // Header with activity indicator
-  const hasRunningAgents = agents.some(a => a.status === 'running');
+  const hasRunningAgents = agents.some((a) => a.status === 'running');
   const activity = hasRunningAgents ? ` ${activityFrames[activityFrame]}` : '';
   console.log(`${BOLD}Napoleon${RESET} › Ready${activity}`);
   console.log('');
-  
+
   // Agent list or empty state
   if (agents.length === 0) {
     console.log(`${GRAY}No agents${RESET}`);
@@ -39,7 +39,7 @@ function render() {
       console.log(`${prefix}[${agent.id}] ${agent.prompt} (${status})`);
     });
   }
-  
+
   // Scroll indicators
   if (agents.length > 5) {
     // Show indicators based on selected position
@@ -50,9 +50,9 @@ function render() {
       console.log('↓'); // Bottom indicator when not at last item
     }
   }
-  
+
   console.log('');
-  
+
   // Dialog
   if (inDialog) {
     console.log('┌─────────────────────────────────┐');
@@ -70,7 +70,7 @@ function render() {
     // Footer with shortcuts
     console.log(`${GRAY}n${RESET} new agent  ${GRAY}t${RESET} terminate  ${GRAY}q${RESET} quit`);
   }
-  
+
   // Force flush output
   if (process.stdout.isTTY) {
     process.stdout.write('');
@@ -89,7 +89,7 @@ process.stdin.on('data', (key) => {
   if (key === '\u0003' || (!inDialog && key === 'q')) {
     process.exit();
   }
-  
+
   if (inDialog) {
     if (dialogType === 'spawn') {
       if (key === '\r') { // Enter key
@@ -97,7 +97,7 @@ process.stdin.on('data', (key) => {
           const newAgent = {
             id: agents.length + 1,
             prompt: dialogBuffer.trim(),
-            status: 'running'
+            status: 'running',
           };
           agents.push(newAgent);
           selectedIndex = agents.length - 1; // Select the newly spawned agent

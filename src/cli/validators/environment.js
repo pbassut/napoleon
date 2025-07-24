@@ -23,7 +23,7 @@ async function validateGitWorkingTree() {
       throw new EnvironmentValidationError(
         repositoryValidation.message,
         repositoryValidation.error,
-        'Please ensure you are in a git repository with proper access'
+        'Please ensure you are in a git repository with proper access',
       );
     }
 
@@ -73,7 +73,7 @@ async function validateApiKey() {
       setupGuide.displayFormatError(error.message);
     } else {
       console.error(
-        chalk.red(`❌ API key validation failed: ${error.message}`)
+        chalk.red(`❌ API key validation failed: ${error.message}`),
       );
     }
 
@@ -91,7 +91,7 @@ async function validateEnvironment() {
     throw new EnvironmentValidationError(
       `Node.js version ${nodeVersion} is not supported. Required: >=18.0.0`,
       'NODE_VERSION_UNSUPPORTED',
-      'Please upgrade Node.js to version 18.0.0 or higher'
+      'Please upgrade Node.js to version 18.0.0 or higher',
     );
   }
 
@@ -103,7 +103,7 @@ async function validateEnvironment() {
       throw new EnvironmentValidationError(
         `Git version ${version} is not supported. Required: >=2.20.0`,
         'GIT_VERSION_UNSUPPORTED',
-        'Please upgrade git to version 2.20.0 or higher'
+        'Please upgrade git to version 2.20.0 or higher',
       );
     }
   } catch (error) {
@@ -113,7 +113,7 @@ async function validateEnvironment() {
     throw new EnvironmentValidationError(
       'Git is not available in system PATH',
       'GIT_NOT_FOUND',
-      'Please install git and ensure it is available in your PATH'
+      'Please install git and ensure it is available in your PATH',
     );
   }
 
@@ -124,7 +124,7 @@ async function validateEnvironment() {
     // Claude Code SDK is not required for basic functionality
     // This is just a warning for now
     console.warn(
-      'Warning: Claude Code SDK not found. Some features may be limited.'
+      'Warning: Claude Code SDK not found. Some features may be limited.',
     );
   }
 

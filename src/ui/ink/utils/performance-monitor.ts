@@ -31,8 +31,11 @@ interface PerformanceStats {
  */
 class PerformanceMetrics {
   private renderTimes: RenderTime[] = [];
+
   private componentRenders = new Map<string, number[]>();
+
   private slowRenders: RenderTime[] = [];
+
   private startTime = Date.now();
 
   addRenderTime(componentName: string, duration: number): void {
@@ -171,20 +174,20 @@ export function clearPerformanceData(): void {
  */
 export function logPerformanceSummary(): void {
   const stats = globalMetrics.getStats();
-  
+
   console.log('\n=== Performance Summary ===');
   console.log(`Total renders: ${stats.totalRenders}`);
   console.log(`Average render time: ${stats.avgRenderTime}ms`);
   console.log(`Slow renders: ${stats.slowRenders}`);
   console.log(`Uptime: ${Math.round(stats.uptime / 1000)}s`);
-  
+
   if (Object.keys(stats.componentStats).length > 0) {
     console.log('\n--- Component Stats ---');
     Object.entries(stats.componentStats).forEach(([name, stats]) => {
       console.log(`${name}: ${stats.count} renders, avg: ${stats.avg}ms, max: ${stats.max}ms`);
     });
   }
-  
+
   const slowest = globalMetrics.getSlowestRenders(3);
   if (slowest.length > 0) {
     console.log('\n--- Slowest Renders ---');
@@ -192,6 +195,6 @@ export function logPerformanceSummary(): void {
       console.log(`${i + 1}. ${render.componentName}: ${render.duration}ms`);
     });
   }
-  
+
   console.log('==========================\n');
 }

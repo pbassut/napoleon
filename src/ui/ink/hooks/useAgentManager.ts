@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import {
+  useState, useEffect, useCallback, useRef, useMemo,
+} from 'react';
 import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
 import logger from '../../../utils/logger.js';
 
@@ -32,7 +34,8 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     id: agentData.id,
     name: agentData.id, // Use ID as name for now
     status: agentData.status || 'unknown',
-    startTime: agentData.createdAt ? new Date(agentData.createdAt) : new Date(),
+    startTime: agentData.spawnTime ? new Date(agentData.spawnTime) : new Date(),
+    lastActivity: agentData.lastActivity ? new Date(agentData.lastActivity) : undefined,
     instructions: agentData.instructions,
     workingDirectory: agentData.workingDirectory,
     error: agentData.error,
@@ -50,7 +53,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     try {
       const activeAgents = agentManager.getActiveAgents();
       const convertedAgents = activeAgents.map(convertAgent);
-      
+
       setAgents(convertedAgents);
       setError(null);
 
@@ -88,32 +91,33 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
           id: agentData.id,
           name: agentData.id,
           status: agentData.status || 'unknown',
-          startTime: agentData.createdAt ? new Date(agentData.createdAt) : new Date(),
+          startTime: agentData.spawnTime ? new Date(agentData.spawnTime) : new Date(),
+          lastActivity: agentData.lastActivity ? new Date(agentData.lastActivity) : undefined,
           instructions: agentData.instructions,
           workingDirectory: agentData.workingDirectory,
           error: agentData.error,
           progress: agentData.progress,
         }));
-        
+
         // Only update if agents actually changed
-        setAgents(prevAgents => {
-          const hasChanged = prevAgents.length !== convertedAgents.length ||
-            prevAgents.some((prevAgent, i) => {
+        setAgents((prevAgents) => {
+          const hasChanged = prevAgents.length !== convertedAgents.length
+            || prevAgents.some((prevAgent, i) => {
               const newAgent = convertedAgents[i];
-              return !newAgent || 
-                prevAgent.id !== newAgent.id ||
-                prevAgent.status !== newAgent.status ||
-                prevAgent.name !== newAgent.name;
+              return !newAgent
+                || prevAgent.id !== newAgent.id
+                || prevAgent.status !== newAgent.status
+                || prevAgent.name !== newAgent.name;
             });
-          
+
           if (hasChanged) {
-            logger.debug('useAgentManager: Agents changed', { 
-              prevCount: prevAgents.length, 
+            logger.debug('useAgentManager: Agents changed', {
+              prevCount: prevAgents.length,
               newCount: convertedAgents.length,
-              agents: convertedAgents.map(a => ({ id: a.id, name: a.name, status: a.status }))
+              agents: convertedAgents.map((a) => ({ id: a.id, name: a.name, status: a.status })),
             });
           }
-          
+
           return hasChanged ? convertedAgents : prevAgents;
         });
         setError(null);
@@ -163,13 +167,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
 
     try {
-      logger.debug('useAgentManager: Calling agentManager.spawnAgent', { 
-        instructions, 
+      logger.debug('useAgentManager: Calling agentManager.spawnAgent', {
+        instructions,
         workingDirectory,
         instructionsType: typeof instructions,
-        instructionsEmpty: !instructions || instructions.trim() === ''
+        instructionsEmpty: !instructions || instructions.trim() === '',
       });
-      
+
       // Call with correct signature: spawnAgent(instructions, options)
       // Let agent manager create isolated worktree - don't override workingDirectory
       await agentManager.spawnAgent(instructions, {
@@ -199,9 +203,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       await agentManager.terminateAgent(agentId);
 
       // Clear selection if terminated agent was selected
-      setSelectedAgentId((currentSelectedId) => {
-        return currentSelectedId === agentId ? null : currentSelectedId;
-      });
+      setSelectedAgentId((currentSelectedId) => (currentSelectedId === agentId ? null : currentSelectedId));
 
       // Trigger a manual refresh without depending on fetchAgents
       if (agentManager) {
@@ -216,14 +218,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }, [agentManager, convertAgent]);
 
   // Memoize canSpawnAgent to prevent re-evaluation on every render
-  const canSpawnAgent = useMemo(() => {
-    return agentManager?.canSpawnAgent() ?? false;
-  }, [agentManager, agents.length]); // Re-evaluate when agent count changes
+  const canSpawnAgent = useMemo(() => agentManager?.canSpawnAgent() ?? false, [agentManager, agents.length]); // Re-evaluate when agent count changes
 
   // No maximum limit
-  const maxAgents = useMemo(() => {
-    return Number.MAX_SAFE_INTEGER; // Effectively unlimited
-  }, [agentManager]);
+  const maxAgents = useMemo(
+    () => Number.MAX_SAFE_INTEGER, // Effectively unlimited
+    [agentManager],
+  );
 
   return {
     agents,

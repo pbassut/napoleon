@@ -3,6 +3,7 @@ export interface Agent {
   name: string;
   status: string;
   startTime: Date;
+  lastActivity?: Date;
   instructions?: string;
   workingDirectory?: string;
   error?: any;

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Text, useInput, useFocus } from 'ink';
+import {
+  Box, Text, useInput, useFocus,
+} from 'ink';
 import { Agent } from '../../types';
 import { useAgentLogs } from '../../hooks/useAgentLogs';
 import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator';
@@ -87,21 +89,21 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
 
     // Scroll navigation
     if (key.upArrow || input === 'k') {
-      setScrollOffset(prev => Math.max(0, prev - 1));
+      setScrollOffset((prev) => Math.max(0, prev - 1));
       setAutoScroll(false);
     } else if (key.downArrow || input === 'j') {
       const maxOffset = Math.max(0, logs.length - contentHeight);
-      setScrollOffset(prev => Math.min(maxOffset, prev + 1));
+      setScrollOffset((prev) => Math.min(maxOffset, prev + 1));
       // Re-enable auto-scroll if we're at the bottom
       if (scrollOffset >= maxOffset - 1) {
         setAutoScroll(true);
       }
     } else if (key.pageUp) {
-      setScrollOffset(prev => Math.max(0, prev - contentHeight));
+      setScrollOffset((prev) => Math.max(0, prev - contentHeight));
       setAutoScroll(false);
     } else if (key.pageDown) {
       const maxOffset = Math.max(0, logs.length - contentHeight);
-      setScrollOffset(prev => Math.min(maxOffset, prev + contentHeight));
+      setScrollOffset((prev) => Math.min(maxOffset, prev + contentHeight));
     } else if (input === 'g') {
       setScrollOffset(0);
       setAutoScroll(false);
@@ -146,9 +148,9 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
           </Box>
           <Box>
             {agent.status === 'running' && (
-              <ActivityIndicator 
-                isActive={true} 
-                color="green" 
+              <ActivityIndicator
+                isActive={true}
+                color="green"
                 label="Claude is working"
               />
             )}

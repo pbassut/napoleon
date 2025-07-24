@@ -48,12 +48,12 @@ console.log('');
 // Test status symbols
 console.log('Status Symbol Test:');
 const statuses = ['running', 'pending', 'error', 'success', 'terminated'];
-statuses.forEach(status => {
+statuses.forEach((status) => {
   const symbol = getStatusSymbol(status, capabilities);
-  const color = status === 'running' ? 'green' : 
-               status === 'pending' ? 'yellow' :
-               status === 'error' ? 'red' :
-               status === 'success' ? 'green' : 'gray';
+  const color = status === 'running' ? 'green'
+    : status === 'pending' ? 'yellow'
+      : status === 'error' ? 'red'
+        : status === 'success' ? 'green' : 'gray';
   console.log(`  ${chalk[color](symbol)} ${status}`);
 });
 console.log('');

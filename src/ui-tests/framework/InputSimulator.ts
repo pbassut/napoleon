@@ -5,22 +5,22 @@ export class InputSimulator {
 
   async pressKey(pid: number, key: string): Promise<void> {
     const keyMapping: Record<string, string> = {
-      'enter': '\r',
-      'return': '\r',
-      'tab': '\t',
-      'space': ' ',
-      'escape': '\x1b',
-      'esc': '\x1b',
-      'up': '\x1b[A',
-      'down': '\x1b[B',
-      'right': '\x1b[C',
-      'left': '\x1b[D',
-      'backspace': '\x7f',
-      'delete': '\x1b[3~',
-      'home': '\x1b[H',
-      'end': '\x1b[F',
-      'pageup': '\x1b[5~',
-      'pagedown': '\x1b[6~',
+      enter: '\r',
+      return: '\r',
+      tab: '\t',
+      space: ' ',
+      escape: '\x1b',
+      esc: '\x1b',
+      up: '\x1b[A',
+      down: '\x1b[B',
+      right: '\x1b[C',
+      left: '\x1b[D',
+      backspace: '\x7f',
+      delete: '\x1b[3~',
+      home: '\x1b[H',
+      end: '\x1b[F',
+      pageup: '\x1b[5~',
+      pagedown: '\x1b[6~',
     };
 
     const input = keyMapping[key.toLowerCase()] || key;
@@ -75,6 +75,6 @@ export class InputSimulator {
   }
 
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 }

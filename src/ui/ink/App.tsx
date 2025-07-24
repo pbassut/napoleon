@@ -1,6 +1,7 @@
 import React from 'react';
-const { useState, useEffect, useMemo, useCallback } = React;
-import { Box, useApp, Text, useInput, useStdout } from 'ink';
+import {
+  Box, useApp, Text, useInput, useStdout,
+} from 'ink';
 import { useAgentManager } from './hooks/useAgentManager';
 import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
 import { Header } from './components/Layout/Header';
@@ -11,6 +12,10 @@ import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentListDefault from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
 import logger from '../../utils/logger.js';
+
+const {
+  useState, useEffect, useMemo, useCallback,
+} = React;
 
 const App = ({ agentManager }) => {
   const { exit } = useApp();
@@ -40,8 +45,7 @@ const App = ({ agentManager }) => {
   }, [selectedAgentId, agents]);
 
   // Get selected agent from the list
-  const selectedAgent =
-    agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId) || agents[0] || null;
 
   // Handle agent selection changes from AgentList
   const handleSelectionChange = useCallback(
@@ -51,19 +55,19 @@ const App = ({ agentManager }) => {
         selectAgent(agent.id);
       }
     },
-    [agents, selectedAgentId, selectAgent]
+    [agents, selectedAgentId, selectAgent],
   );
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
-    logger.debug('App: Input received', { 
-      input, 
+    logger.debug('App: Input received', {
+      input,
       key,
       isSpawnDialogOpen,
       isTerminationDialogOpen,
-      isDetailViewOpen 
+      isDetailViewOpen,
     });
-    
+
     // Don't process global shortcuts when dialog or detail view is open
     if (isSpawnDialogOpen || isTerminationDialogOpen || isDetailViewOpen) {
       logger.debug('App: Input ignored - dialog or detail view is open');
@@ -93,9 +97,9 @@ const App = ({ agentManager }) => {
 
     // Handle arrow key navigation
     if (key.upArrow || input === 'k') {
-      logger.debug('App: Up arrow/k pressed', { 
+      logger.debug('App: Up arrow/k pressed', {
         currentSelectedIndex: selectedIndex,
-        agentsLength: agents.length 
+        agentsLength: agents.length,
       });
       if (agents.length > 0) {
         const newIndex = Math.max(0, selectedIndex - 1);
@@ -109,9 +113,9 @@ const App = ({ agentManager }) => {
     }
 
     if (key.downArrow || input === 'j') {
-      logger.debug('App: Down arrow/j pressed', { 
+      logger.debug('App: Down arrow/j pressed', {
         currentSelectedIndex: selectedIndex,
-        agentsLength: agents.length 
+        agentsLength: agents.length,
       });
       if (agents.length > 0) {
         const newIndex = Math.min(agents.length - 1, selectedIndex + 1);
@@ -128,9 +132,9 @@ const App = ({ agentManager }) => {
   const handleSpawnAgent = async (prompt) => {
     try {
       logger.debug('App: Starting agent spawn', { prompt, cwd: process.cwd() });
-      await spawnAgent({ 
-        instructions: prompt, 
-        workingDirectory: process.cwd() 
+      await spawnAgent({
+        instructions: prompt,
+        workingDirectory: process.cwd(),
       });
       logger.debug('App: Agent spawned successfully, closing dialog');
       setIsSpawnDialogOpen(false);

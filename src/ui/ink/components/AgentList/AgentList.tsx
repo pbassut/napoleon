@@ -4,7 +4,9 @@ import AgentItem from './AgentItem';
 import { Agent } from '../../types';
 import logger from '../../../../utils/logger.js';
 
-const { useState, useEffect, useMemo, useCallback } = React;
+const {
+  useState, useEffect, useMemo, useCallback,
+} = React;
 
 interface AgentListProps {
   agents: Agent[];
@@ -22,25 +24,25 @@ const AgentList: React.FC<AgentListProps> = ({
   isModalOpen = false,
 }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
-  
+
   // Log component lifecycle
   useEffect(() => {
-    logger.debug('AgentList: Component mounted', { 
+    logger.debug('AgentList: Component mounted', {
       agentsCount: agents.length,
       selectedIndex,
-      isModalOpen
+      isModalOpen,
     });
-    
+
     return () => {
       logger.debug('AgentList: Component unmounting');
     };
   }, []);
-  
+
   // Log selection changes
   useEffect(() => {
-    logger.debug('AgentList: Selected index changed', { 
+    logger.debug('AgentList: Selected index changed', {
       selectedIndex,
-      agentsCount: agents.length 
+      agentsCount: agents.length,
     });
   }, [selectedIndex, agents.length]);
 
@@ -81,7 +83,7 @@ const AgentList: React.FC<AgentListProps> = ({
           <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
           <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
         </Box>
-        
+
         {/* Separator line */}
         <Box width="100%">
           <Text>{separatorLine}</Text>
@@ -120,7 +122,7 @@ const AgentList: React.FC<AgentListProps> = ({
         <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
         <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
       </Box>
-      
+
       {/* Separator line */}
       <Box width="100%">
         <Text>{'─'.repeat(process.stdout.columns - 8)}</Text>

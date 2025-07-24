@@ -72,7 +72,7 @@ export function detectCapabilities(): TerminalCapabilities {
   // Color support detection
   const colorTerm = process.env.COLORTERM;
   const term = process.env.TERM || '';
-  
+
   if (colorTerm === 'truecolor' || colorTerm === '24bit') {
     capabilities.colors = 16777216; // 24-bit color
   } else if (term.includes('256') || colorTerm === '256') {
@@ -130,7 +130,7 @@ export function detectCapabilities(): TerminalCapabilities {
  */
 export function getBoxChar(type: string, capabilities?: TerminalCapabilities): string {
   const caps = capabilities || detectCapabilities();
-  
+
   if (!caps.boxDrawing) {
     // ASCII fallbacks
     const asciiFallbacks: { [key: string]: string } = {
@@ -168,7 +168,7 @@ export function getBoxChar(type: string, capabilities?: TerminalCapabilities): s
  */
 export function getStatusSymbol(status: string, capabilities?: TerminalCapabilities): string {
   const caps = capabilities || detectCapabilities();
-  
+
   if (!caps.unicode) {
     // ASCII fallbacks
     const asciiFallbacks: { [key: string]: string } = {

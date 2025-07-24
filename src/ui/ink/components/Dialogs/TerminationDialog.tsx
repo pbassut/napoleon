@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Text, useInput, useFocus } from 'ink';
+import {
+  Box, Text, useInput, useFocus,
+} from 'ink';
 import { Agent } from '../../types';
 import { ModalOverlay } from '../Common/ModalOverlay';
 

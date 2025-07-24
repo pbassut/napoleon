@@ -2,9 +2,9 @@
 describe('Navigation Tests', () => {
   test('should handle keyboard navigation', async () => {
     // Mock test for keyboard navigation
-    const mockNavigation = { 
+    const mockNavigation = {
       currentIndex: 0,
-      navigate: jest.fn()
+      navigate: jest.fn(),
     };
 
     expect(mockNavigation.currentIndex).toBeDefined();

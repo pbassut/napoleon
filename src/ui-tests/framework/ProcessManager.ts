@@ -5,8 +5,11 @@ const execAsync = promisify(exec);
 
 export class ProcessManager {
   private processCleanupQueue: Set<number> = new Set();
+
   private outputBuffers: Map<number, string[]> = new Map();
+
   private bufferIntervals: Map<number, NodeJS.Timeout> = new Map();
+
   private processes: Map<number, any> = new Map();
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
@@ -15,15 +18,15 @@ export class ProcessManager {
       // In production, you would fix the build process, but for testing the UI
       // framework itself, a mock is appropriate
       const useMock = env?.USE_REAL_NAPOLEON !== 'true';
-      
+
       const script = useMock ? './src/ui-tests/mock-napoleon.js' : './bin/napoleon.js';
       const args = useMock ? [] : ['start'];
-      
+
       const napoleonProcess = spawn('node', [script, ...args], {
         env: { ...process.env, ...env },
         cwd: process.cwd(),
         detached: false,
-        stdio: ['pipe', 'pipe', 'pipe']
+        stdio: ['pipe', 'pipe', 'pipe'],
       });
 
       if (!napoleonProcess.pid) {
@@ -31,7 +34,7 @@ export class ProcessManager {
         return;
       }
 
-      const pid = napoleonProcess.pid;
+      const { pid } = napoleonProcess;
       this.processes.set(pid, napoleonProcess);
       this.processCleanupQueue.add(pid);
       this.outputBuffers.set(pid, []);
@@ -72,7 +75,7 @@ export class ProcessManager {
         // Fallback to system kill
         await execAsync(`kill ${pid}`);
       }
-      
+
       this.processCleanupQueue.delete(pid);
       this.outputBuffers.delete(pid);
 
@@ -90,21 +93,21 @@ export class ProcessManager {
 
   async readProcessOutput(
     pid: number,
-    duration: number = 1000
+    duration: number = 1000,
   ): Promise<string> {
     // Since we're managing the process directly, return buffered output
     const buffer = this.outputBuffers.get(pid) || [];
-    
+
     // Return only the most recent screen of output (after last clear)
     // The mock clears the screen with \u001bc before each render
     const fullOutput = buffer.join('');
     const clearChar = '\u001bc';
     const lastClearIndex = fullOutput.lastIndexOf(clearChar);
-    
+
     if (lastClearIndex >= 0) {
       return fullOutput.substring(lastClearIndex + clearChar.length);
     }
-    
+
     return fullOutput;
   }
 
@@ -120,7 +123,7 @@ export class ProcessManager {
   async waitForOutput(
     pid: number,
     pattern: string | RegExp,
-    timeout: number = 5000
+    timeout: number = 5000,
   ): Promise<string> {
     const startTime = Date.now();
 
@@ -144,9 +147,7 @@ export class ProcessManager {
   }
 
   async cleanupAll(): Promise<void> {
-    const cleanupPromises = Array.from(this.processCleanupQueue).map((pid) =>
-      this.terminateProcess(pid)
-    );
+    const cleanupPromises = Array.from(this.processCleanupQueue).map((pid) => this.terminateProcess(pid));
     await Promise.all(cleanupPromises);
   }
 
