@@ -96,7 +96,7 @@ files:
   - path: .bmad-core/tasks/document-project.md
     hash: 62495d0979bb6924
     modified: false
-  - path: .bmad-core/tasks/create-next-story.md
+  - path: .bmad-core/tasks/create-next-issue.md
     hash: fa18ad2a04b6a93f
     modified: false
   - path: .bmad-core/tasks/create-doc.md

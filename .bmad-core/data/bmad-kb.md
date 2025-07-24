@@ -315,7 +315,7 @@ You are the "Vibe CEO" - thinking like a CEO with unlimited resources and a sing
 - `*exit` - Exit the agent mode
 - `*shard-doc docs/prd.md prd` - Shard PRD into manageable pieces
 - `*shard-doc docs/architecture.md architecture` - Shard architecture document
-- `*create` - Run create-next-story task (SM agent)
+- `*create` - Run create-next-issue task (SM agent)
 
 **In Web UI**:
 
@@ -379,7 +379,7 @@ The BMad-Method is built around a modular architecture centered on the `bmad-cor
 #### 4. Reusable Resources
 
 - **Templates** (`bmad-core/templates/`): Markdown templates for PRDs, architecture specs, user stories
-- **Tasks** (`bmad-core/tasks/`): Instructions for specific repeatable actions like "shard-doc" or "create-next-story"
+- **Tasks** (`bmad-core/tasks/`): Instructions for specific repeatable actions like "shard-doc" or "create-next-issue"
 - **Checklists** (`bmad-core/checklists/`): Quality assurance checklists for validation and review
 - **Data** (`bmad-core/data/`): Core knowledge base and technical preferences
 
@@ -504,7 +504,7 @@ Resulting Folder Structure:
 
    **Step 1 - Story Creation**:
    - **NEW CLEAN CHAT** → Select powerful model → `@sm` → `*create`
-   - SM executes create-next-story task
+   - SM executes create-next-issue task
    - Review generated story in Github Issues
    - Update status from "Draft" to "Approved"
 
