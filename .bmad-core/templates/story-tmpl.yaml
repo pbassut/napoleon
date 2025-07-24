@@ -12,20 +12,18 @@ workflow:
   elicitation: advanced-elicitation
 
 agent_config:
-  editable_sections: 
+  editable_attributes: 
     - Status
-    - Story
-    - Acceptance Criteria
+    - Description
+    - Milestone
     - Tasks / Subtasks
-    - Dev Notes
-    - Testing
-    - Change Log
+    - Comments
 
-sections:
+attributes:
   - id: status
     title: Status
     type: choice
-    choices: [Draft, Approved, InProgress, Review, Done]
+    choices: [Draft, Approved, InProgress, Ready to Review, Done]
     instruction: Select the current status of the story
     owner: scrum-master
     editors: [scrum-master, dev-agent]
