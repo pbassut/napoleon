@@ -1,4 +1,4 @@
-# /create-next-story Task
+# /create-next-issue Task
 
 When this command is used, execute the following task:
 

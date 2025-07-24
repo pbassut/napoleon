@@ -18,7 +18,7 @@ Create detailed, implementation-ready stories for brownfield projects where trad
 - Existing project documentation doesn't follow BMad v4+ structure
 - Need to gather additional context from user during story creation
 
-**Use create-next-story when:**
+**Use create-next-issue when:**
 
 - Working with properly sharded PRD and v4 architecture documents
 - Following standard greenfield or well-documented brownfield workflow
@@ -31,7 +31,7 @@ Create detailed, implementation-ready stories for brownfield projects where trad
 Check for available resources in this order:
 
 1. **Sharded PRD/Architecture** (files in docs/prd/, docs/architecture/)
-   - If found, recommend using create-next-story task instead
+   - If found, recommend using create-next-issue task instead
 
 2. **Brownfield Architecture Document** (file docs/brownfield-architecture.md or similar)
    - Created by document-project task
