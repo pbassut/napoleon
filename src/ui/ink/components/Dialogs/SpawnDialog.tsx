@@ -4,7 +4,6 @@ import {
 } from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
 import logger from '../../../../utils/logger.js';
-import { protectBackticks, isInputSafe } from '../../../../utils/backtick-protection.js';
 
 // We'll use a simple text input for now instead of ink-text-input
 const SimpleTextInput = ({
@@ -94,30 +93,19 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   }, inputOptions);
 
   const handleSubmit = async () => {
-    if (!rawPrompt) {
+    const prompt = text.trim();
+
+    if (!prompt) {
       setError('Please enter instructions for the agent');
       return;
     }
-
-    // Validate input safety
-    if (!isInputSafe(rawPrompt)) {
-      setError('Invalid input provided');
-      return;
-    }
-
-    // Protect backticks from command substitution while preserving formatting
-    const safePrompt = protectBackticks(rawPrompt);
 
     setError('');
     setIsLoading(true);
 
     try {
-      logger.debug('SpawnDialog: Submitting prompt:', { 
-        originalPrompt: rawPrompt,
-        safePrompt,
-        hasBackticks: rawPrompt.includes('`')
-      });
-      await onSubmit(safePrompt);
+      logger.debug('SpawnDialog: Submitting prompt:', { prompt });
+      await onSubmit(prompt);
       logger.debug('SpawnDialog: onSubmit completed successfully');
       setIsLoading(false);
       setText(''); // Clear text after successful submission
