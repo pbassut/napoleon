@@ -78,7 +78,7 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] References to external documents point to specific relevant sections
 - [ ] Critical information from previous stories is summarized (not just referenced)
 - [ ] Context is provided for why references are relevant
-- [ ] References use consistent format (e.g., `docs/filename.md#section`)
+- [ ] References to other issues use consistent format (e.g., `#123)
 
 ## 4. SELF-CONTAINMENT ASSESSMENT
 

@@ -28,19 +28,19 @@ Create detailed, implementation-ready stories for brownfield projects where trad
 
 ### 0. Documentation Context
 
-Check for available documentation in this order:
+Check for available resources in this order:
 
-1. **Sharded PRD/Architecture** (docs/prd/, docs/architecture/)
+1. **Sharded PRD/Architecture** (files in docs/prd/, docs/architecture/)
    - If found, recommend using create-next-story task instead
 
-2. **Brownfield Architecture Document** (docs/brownfield-architecture.md or similar)
+2. **Brownfield Architecture Document** (file docs/brownfield-architecture.md or similar)
    - Created by document-project task
    - Contains actual system state, technical debt, workarounds
 
-3. **Brownfield PRD** (docs/prd.md)
+3. **Brownfield PRD** (file docs/prd.md)
    - May contain embedded technical details
 
-4. **Epic Files** (docs/epics/ or similar)
+4. **Epic Files** (Github Milestones)
    - Created by brownfield-create-epic task
 
 5. **User-Provided Documentation**

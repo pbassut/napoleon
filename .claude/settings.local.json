@@ -13,7 +13,8 @@
       "Bash(git worktree:*)",
       "mcp__Github__list_issues",
       "mcp__Github__get_me",
-      "mcp__Github__search_issues"
+      "mcp__Github__search_issues",
+      "Bash(find:*)"
     ],
     "deny": []
   }
