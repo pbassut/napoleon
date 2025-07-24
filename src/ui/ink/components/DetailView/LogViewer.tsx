@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, {
+  useState, useEffect, useMemo, useCallback,
+} from 'react';
 import { Box, Text, useInput } from 'ink';
 import { LogEntry as RawLogEntry } from '../../hooks/useAgentLogs';
 import { LogParser, ParsedLogEntry, LogParserOptions } from '../../utils/log-parser';
@@ -34,17 +36,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   });
 
   // Parse and filter logs
-  const parsedLogs = useMemo(() => {
-    return logs
-      .map(log => LogParser.parseLogEntry(log))
-      .filter((entry): entry is ParsedLogEntry => entry !== null);
-  }, [logs]);
+  const parsedLogs = useMemo(() => logs
+    .map((log) => LogParser.parseLogEntry(log))
+    .filter((entry): entry is ParsedLogEntry => entry !== null), [logs]);
 
-  const visibleLogs = useMemo(() => {
-    return parsedLogs.filter(entry => 
-      LogParser.shouldShowLog(entry, filterOptions)
-    );
-  }, [parsedLogs, filterOptions]);
+  const visibleLogs = useMemo(() => parsedLogs.filter((entry) => LogParser.shouldShowLog(entry, filterOptions)), [parsedLogs, filterOptions]);
 
   // Auto-scroll to bottom when new logs arrive
   useEffect(() => {
@@ -73,7 +69,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   // Toggle filtering
   const toggleAllLogs = useCallback(() => {
-    setFilterOptions(prev => ({
+    setFilterOptions((prev) => ({
       showAllSources: !prev.showAllSources,
       showAllTypes: !prev.showAllTypes,
       includeSystemLogs: !prev.showAllSources, // Include system logs when showing all
@@ -83,7 +79,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   // Handle keyboard input for filtering
   useInput((input: string) => {
     if (!isFocused) return;
-    
+
     if (input === 'a') {
       toggleAllLogs();
     }

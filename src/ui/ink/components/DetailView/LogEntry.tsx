@@ -9,11 +9,11 @@ interface LogEntryProps {
   lineNumber?: number;
 }
 
-export const LogEntry: React.FC<LogEntryProps> = ({ 
-  entry, 
-  isHighlighted = false, 
-  compact = false, 
-  lineNumber 
+export const LogEntry: React.FC<LogEntryProps> = ({
+  entry,
+  isHighlighted = false,
+  compact = false,
+  lineNumber,
 }) => {
   const getEntryColor = () => {
     switch (entry.displayFormat) {
@@ -45,11 +45,11 @@ export const LogEntry: React.FC<LogEntryProps> = ({
     <Box>
       {lineNumber && (
         <Text color="gray" dimColor>
-          {String(lineNumber).padStart(4, ' ')} 
+          {String(lineNumber).padStart(4, ' ')}
         </Text>
       )}
       <Text color="gray" dimColor>
-        [{timestamp}] 
+        [{timestamp}]
       </Text>
       <Text color={textColor} backgroundColor={backgroundColor}>
         {getPrefix()}

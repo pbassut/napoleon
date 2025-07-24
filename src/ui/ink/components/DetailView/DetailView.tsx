@@ -13,7 +13,6 @@ interface DetailViewProps {
   agentManager: any;
 }
 
-
 const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -37,53 +36,53 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   useEffect(() => {
     if (!agentManager || realLogs.length === 0) {
       const mocks: LogEntry[] = [
-        { 
-          id: '1', 
-          timestamp: new Date().toISOString(), 
-          content: 'Agent started', 
-          type: 'system', 
+        {
+          id: '1',
+          timestamp: new Date().toISOString(),
+          content: 'Agent started',
+          type: 'system',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
-        { 
-          id: '2', 
-          timestamp: new Date().toISOString(), 
-          content: `Instructions: ${agent.instructions || 'No instructions provided'}`, 
-          type: 'system', 
+        {
+          id: '2',
+          timestamp: new Date().toISOString(),
+          content: `Instructions: ${agent.instructions || 'No instructions provided'}`,
+          type: 'system',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
-        { 
-          id: '3', 
-          timestamp: new Date().toISOString(), 
-          content: 'Initializing workspace...', 
-          type: 'info', 
+        {
+          id: '3',
+          timestamp: new Date().toISOString(),
+          content: 'Initializing workspace...',
+          type: 'info',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
-        { 
-          id: '4', 
-          timestamp: new Date().toISOString(), 
-          content: 'Running command: git status', 
-          type: 'info', 
+        {
+          id: '4',
+          timestamp: new Date().toISOString(),
+          content: 'Running command: git status',
+          type: 'info',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
-        { 
-          id: '5', 
-          timestamp: new Date().toISOString(), 
-          content: 'On branch main', 
-          type: 'info', 
+        {
+          id: '5',
+          timestamp: new Date().toISOString(),
+          content: 'On branch main',
+          type: 'info',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
-        { 
-          id: '6', 
-          timestamp: new Date().toISOString(), 
-          content: 'Your branch is up to date', 
-          type: 'info', 
+        {
+          id: '6',
+          timestamp: new Date().toISOString(),
+          content: 'Your branch is up to date',
+          type: 'info',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         },
       ];
 
@@ -95,7 +94,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
           content: `Log entry ${i + 1}: Processing task...`,
           type: i % 10 === 0 ? 'error' : 'info',
           source: 'napoleon',
-          metadata: {}
+          metadata: {},
         });
       }
 
@@ -141,7 +140,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
       setAutoScroll(true);
     }
   }, { isActive: isFocused });
-
 
   return (
     <Box flexDirection="column" height="100%">
@@ -210,7 +208,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
         justifyContent="space-between"
       >
         <Text color="gray">
-          {autoScroll ? '[Auto-scroll ON]' : '[Auto-scroll OFF]'} | 
+          {autoScroll ? '[Auto-scroll ON]' : '[Auto-scroll OFF]'} |
           Filter: {filterInfo.isShowingAll ? 'All logs' : 'Claude SDK only'} |
           {` ${filterInfo.visible}/${filterInfo.total} entries`}
         </Text>

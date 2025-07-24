@@ -40,19 +40,19 @@ export class LogParser {
       if (rawLog.source === 'claude_sdk' && (rawLog.type === 'assistant' || rawLog.type === 'user')) {
         try {
           const sdkMessage = JSON.parse(rawLog.content);
-          
+
           if (rawLog.type === 'assistant') {
             parsedEntry.displayFormat = 'assistant';
-            
+
             if (sdkMessage.message?.content) {
-              const content = sdkMessage.message.content;
-              
+              const { content } = sdkMessage.message;
+
               // Handle text content
               const textContent = content
                 .filter((item: any) => item.type === 'text')
                 .map((item: any) => item.text)
                 .join(' ');
-              
+
               // Handle tool use
               const toolUse = content.find((item: any) => item.type === 'tool_use');
               if (toolUse) {
@@ -60,19 +60,19 @@ export class LogParser {
                   name: toolUse.name,
                   input: toolUse.input,
                 };
-                parsedEntry.parsedContent = textContent ? 
-                  `${textContent}\n[Tool: ${toolUse.name}]` : 
-                  `[Tool: ${toolUse.name}]`;
+                parsedEntry.parsedContent = textContent
+                  ? `${textContent}\n[Tool: ${toolUse.name}]`
+                  : `[Tool: ${toolUse.name}]`;
               } else {
                 parsedEntry.parsedContent = textContent;
               }
             }
           } else if (rawLog.type === 'user') {
             parsedEntry.displayFormat = 'user';
-            
+
             if (sdkMessage.message?.content) {
-              const content = sdkMessage.message.content;
-              
+              const { content } = sdkMessage.message;
+
               // Handle tool results
               const toolResult = content.find((item: any) => item.type === 'tool_result');
               if (toolResult) {
