@@ -1,4 +1,4 @@
-# Create Brownfield Story Task
+# Create Brownfield Issue Task
 
 ## Purpose
 
@@ -12,7 +12,7 @@ Create detailed, implementation-ready stories for brownfield projects where trad
 - Stories need to be created from document-project output
 - Working from brownfield epics without full PRD/architecture
 - Existing project documentation doesn't follow BMad v4+ structure
-- Need to gather additional context from user during story creation
+- Need to gather additional context from user during issue creation
 
 **Use create-next-story when:**
 
@@ -97,18 +97,16 @@ Ask the user to help identify:
 - Integration requirements
 - Testing approaches used in the project
 
-### 3. Story Creation with Progressive Detail Gathering
+### 3. Issue Creation with Progressive Detail Gathering
 
-#### 3.1 Create Initial Story Structure
+#### 3.1 Create Initial Issue Structure
 
-Start with the story template, filling in what's known:
+Start with the issue template, filling in what's known:
 
 ```markdown
-# Story {{Enhancement Title}}
+# Issue {{Enhancement Title}}
 
-## Status: Draft
-
-## Story
+## Issue
 
 As a {{user_type}},
 I want {{enhancement_capability}},
@@ -138,6 +136,10 @@ Standard structure:
 Critical: This is where you'll need to be interactive with the user if information is missing
 
 Create Dev Technical Guidance section with available information:
+
+#### 3.4 Set Issue Status to Draft
+
+Make sure the issue status is set to Draft on Github
 
 ```markdown
 ## Dev Technical Guidance
@@ -237,24 +239,21 @@ Before finalizing:
 
 ### 7. Issue Format
 
-Save the story with appropriate naming:
+Save the issue with appropriate naming:
 
 - If from a milestone: place it in the correct milestone. If a milestone doesn't exist, create one.
 - If standalone: create a github issue
-- If sequential: Follow existing story numbering
+- If sequential: Follow existing issue numbering
 - If a blocker: Add a comment saying `Depends on #IssueNumber`.
 
 Include header noting documentation context:
 
 ```markdown
-# Story: {{Title}}
+# Issue: {{Title}}
 
 <!-- Source: {{documentation type used}} -->
 <!-- Context: Brownfield enhancement to {{existing system}} -->
 
-## Status: Draft
-[Rest of story content...]
-```
 
 ### 8. Handoff Communication
 
@@ -264,7 +263,7 @@ Provide clear handoff to the user:
 Brownfield story created: {{story title}}
 
 Source Documentation: {{what was used}}
-Story Location: {{file path}}
+Story Location: {{url}}
 
 Key Integration Points Identified:
 - {{integration point 1}}

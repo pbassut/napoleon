@@ -1,8 +1,8 @@
-# Story Draft Checklist
+# Issue Draft Checklist
 
-The Scrum Master should use this checklist to validate that each story contains sufficient context for a developer agent to implement it successfully, while assuming the dev agent has reasonable capabilities to figure things out.
+The Scrum Master should use this checklist to validate that each issue contains sufficient context for a developer agent to implement it successfully, while assuming the dev agent has reasonable capabilities to figure things out.
 
-[[LLM: INITIALIZATION INSTRUCTIONS - STORY DRAFT VALIDATION
+[[LLM: INITIALIZATION INSTRUCTIONS - ISSUE DRAFT VALIDATION
 
 Before proceeding with this checklist, ensure you have access to:
 
@@ -19,7 +19,7 @@ VALIDATION PRINCIPLES:
 2. Context - WHY this is being built and how it fits
 3. Guidance - Key technical decisions and patterns to follow
 4. Testability - How to verify the implementation works
-5. Self-Contained - Most info needed is in the story itself
+5. Self-Contained - Most info needed is in the issue itself
 
 REMEMBER: We assume competent developer agents who can:
 
@@ -34,15 +34,15 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 
 [[LLM: Without clear goals, developers build the wrong thing. Verify:
 
-1. The story states WHAT functionality to implement
+1. The issue states WHAT functionality to implement
 2. The business value or user benefit is clear
 3. How this fits into the larger epic/product is explained
-4. Dependencies are explicit ("requires Story X to be complete")
+4. Dependencies are explicit ("requires issue #X to be complete")
 5. Success looks like something specific, not vague]]
 
-- [ ] Story goal/purpose is clearly stated
+- [ ] Issue goal/purpose is clearly stated
 - [ ] Relationship to epic goals is evident
-- [ ] How the story fits into overall system flow is explained
+- [ ] How the issue fits into overall system flow is explained
 - [ ] Dependencies on previous stories are identified (if applicable)
 - [ ] Business context and value are clear
 
@@ -59,7 +59,7 @@ We're checking for SUFFICIENT guidance, not exhaustive detail.]]
 Note: We don't need every file listed - just the important ones.]]
 
 - [ ] Key files to create/modify are identified (not necessarily exhaustive)
-- [ ] Technologies specifically needed for this story are mentioned
+- [ ] Technologies specifically needed for this issue are mentioned
 - [ ] Critical APIs or interfaces are sufficiently described
 - [ ] Necessary data models or structures are referenced
 - [ ] Required environment variables are listed (if applicable)
@@ -71,9 +71,9 @@ Note: We don't need every file listed - just the important ones.]]
 
 1. References point to specific sections, not whole documents
 2. The relevance of each reference is explained
-3. Critical information is summarized in the story
+3. Critical information is summarized in the issue
 4. References are accessible (not broken links)
-5. Previous story context is summarized if needed]]
+5. Previous issue context is summarized if needed]]
 
 - [ ] References to external documents point to specific relevant sections
 - [ ] Critical information from previous stories is summarized (not just referenced)
@@ -84,11 +84,11 @@ Note: We don't need every file listed - just the important ones.]]
 
 [[LLM: Stories should be mostly self-contained to avoid context switching. Verify:
 
-1. Core requirements are in the story, not just in references
+1. Core requirements are in the issue, not just in references
 2. Domain terms are explained or obvious from context
 3. Assumptions are stated explicitly
 4. Edge cases are mentioned (even if deferred)
-5. The story could be understood without reading 10 other documents]]
+5. The issue could be understood without reading 10 other documents]]
 
 - [ ] Core information needed is included (not overly reliant on external docs)
 - [ ] Implicit assumptions are made explicit
@@ -103,7 +103,7 @@ Note: We don't need every file listed - just the important ones.]]
 2. Key test scenarios are listed
 3. Success criteria are measurable
 4. Special test considerations are noted
-5. Acceptance criteria in the story are testable]]
+5. Acceptance criteria in the issue are testable]]
 
 - [ ] Required testing approach is outlined
 - [ ] Key test scenarios are identified
@@ -112,13 +112,13 @@ Note: We don't need every file listed - just the important ones.]]
 
 ## VALIDATION RESULT
 
-[[LLM: FINAL STORY VALIDATION REPORT
+[[LLM: FINAL ISSUE VALIDATION REPORT
 
 Generate a concise validation report:
 
 1. Quick Summary
 
-   - Story readiness: READY / NEEDS REVISION / BLOCKED
+   - Issue readiness: READY / NEEDS REVISION / BLOCKED
    - Clarity score (1-10)
    - Major gaps identified
 
@@ -135,7 +135,7 @@ Generate a concise validation report:
    - Identify any blocking dependencies
 
 4. Developer Perspective
-   - Could YOU implement this story as written?
+   - Could YOU implement this issue as written?
    - What questions would you have?
    - What might cause delays or rework?
 

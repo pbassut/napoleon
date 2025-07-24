@@ -1,14 +1,14 @@
-# Create Brownfield Story Task
+# Create Brownfield Issue Task
 
 ## Purpose
 
-Create a single user story for very small brownfield enhancements that can be completed in one focused development session. This task is for minimal additions or bug fixes that require existing system integration awareness.
+Create a single user issue for very small brownfield enhancements that can be completed in one focused development session. This task is for minimal additions or bug fixes that require existing system integration awareness.
 
 ## When to Use This Task
 
 **Use this task when:**
 
-- The enhancement can be completed in a single story
+- The enhancement can be completed in a single issue
 - No new architecture or significant design is required
 - The change follows existing patterns exactly
 - Integration is straightforward with minimal risk
@@ -16,13 +16,13 @@ Create a single user story for very small brownfield enhancements that can be co
 
 **Use brownfield-create-epic when:**
 
-- The enhancement requires 2-3 coordinated stories
+- The enhancement requires 2-3 coordinated issues
 - Some design work is needed
 - Multiple integration points are involved
 
 **Use the full brownfield PRD/Architecture process when:**
 
-- The enhancement requires multiple coordinated stories
+- The enhancement requires multiple coordinated issues
 - Architectural planning is needed
 - Significant integration work is required
 
@@ -45,11 +45,11 @@ Gather minimal but essential context about the existing project:
 - [ ] Impact boundaries identified
 - [ ] Success criteria established
 
-### 2. Story Creation
+### 2. Issue Creation
 
-Create a single focused story following this structure:
+Create a single focused issue following this structure:
 
-#### Story Title
+#### Issue Title
 
 {{Specific Enhancement}} - Brownfield Addition
 
@@ -112,25 +112,25 @@ So that {{clear benefit/value}}.
 
 ### 4. Validation Checklist
 
-Before finalizing the story, confirm:
+Before finalizing the issue, confirm:
 
 **Scope Validation:**
 
-- [ ] Story can be completed in one development session
+- [ ] Issue can be completed in one development session
 - [ ] Integration approach is straightforward
 - [ ] Follows existing patterns exactly
 - [ ] No design or architecture work required
 
 **Clarity Check:**
 
-- [ ] Story requirements are unambiguous
+- [ ] Issue requirements are unambiguous
 - [ ] Integration points are clearly specified
 - [ ] Success criteria are testable
 - [ ] Rollback approach is simple
 
 ## Success Criteria
 
-The story creation is successful when:
+The issue creation is successful when:
 
 1. Enhancement is clearly defined and appropriately scoped for single session
 2. Integration approach is straightforward and low-risk
