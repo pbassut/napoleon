@@ -62,10 +62,10 @@ commands:
   - shard-doc {document} {destination}: run the task shard-doc against the optionally provided document to the specified destination
   - correct-course: execute the correct-course task
   - create-epic: Create epic for brownfield projects (task brownfield-create-epic)
-  - create-story: Create user story from requirements (task brownfield-create-story)
+  - create-issue: Create user issue from requirements (task brownfield-create-issue)
   - yolo: Toggle Yolo Mode off on - on will skip doc section confirmations
   - doc-out: Output full document to current destination file
-  - validate-story-draft {story}: run the task validate-next-issue against the provided story file
+  - validate-issue-draft {issue}: run the task validate-next-issue against the provided issue file
   - exit: Exit (confirm)
 dependencies:
   tasks:
@@ -73,10 +73,10 @@ dependencies:
     - shard-doc.md
     - correct-course.md
     - brownfield-create-epic.md
-    - brownfield-create-story.md
+    - brownfield-create-issue.md
     - validate-next-issue.md
   templates:
-    - story-tmpl.yaml
+    - issue-tmpl.yaml
   checklists:
     - po-master-checklist.md
     - change-checklist.md

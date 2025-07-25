@@ -58,5 +58,5 @@ dependencies:
   templates:
     - story-tmpl.yaml
   checklists:
-    - story-draft-checklist.md
+    - issue-draft-checklist.md
 ```

@@ -106,6 +106,6 @@ dependencies:
     - change-checklist.md
     - pm-checklist.md
     - po-master-checklist.md
-    - story-dod-checklist.md
-    - story-draft-checklist.md
+    - issue-dod-checklist.md
+    - issue-draft-checklist.md
 ```

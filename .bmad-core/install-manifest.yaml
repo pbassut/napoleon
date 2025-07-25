@@ -132,10 +132,10 @@ files:
   - path: .bmad-core/data/bmad-kb.md
     hash: fd0d443bd30753c5
     modified: false
-  - path: .bmad-core/checklists/story-draft-checklist.md
+  - path: .bmad-core/checklists/issue-draft-checklist.md
     hash: d3a5783fcd5bf5e9
     modified: false
-  - path: .bmad-core/checklists/story-dod-checklist.md
+  - path: .bmad-core/checklists/issue-dod-checklist.md
     hash: 06ab7e73a69f930a
     modified: false
   - path: .bmad-core/checklists/po-master-checklist.md

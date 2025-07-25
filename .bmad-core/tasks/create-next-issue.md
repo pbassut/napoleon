@@ -1,4 +1,4 @@
-# Create Next Story Task
+# Create Next Issue Task
 
 ## Purpose
 
@@ -96,13 +96,13 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
   - Link tasks to ACs where applicable (e.g., `Task 1 (AC: 1, 3)`)
 - Add notes on project structure alignment or discrepancies found in Step 4
 
-### 6. Story Draft Completion and Review
+### 6. Issue Draft Completion and Review
 
 - Review all sections for completeness and accuracy
 - Verify all source references are included for technical details
 - Ensure tasks align with both epic requirements and architecture constraints
-- Update status to "Draft" and save the story file
-- Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/story-draft-checklist`
+- Update status to "Draft" on Github
+- Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/issue-draft-checklist`
 - Provide summary to user including:
   - Story created: `{devStoryLocation}/{epicNum}.{storyNum}.story.md`
   - Status: Draft

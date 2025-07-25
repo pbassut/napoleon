@@ -1,4 +1,4 @@
-# /review-story Task
+# /review-issue Task
 
 When this command is used, execute the following task:
 

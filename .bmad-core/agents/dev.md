@@ -28,7 +28,7 @@ activation-instructions:
   - STAY IN CHARACTER!
   - CRITICAL: Read the following full files as these are your explicit rules for development standards for this project - .bmad-core/core-config.yaml devLoadAlwaysFiles list
   - CRITICAL: Do NOT load any other files during startup aside from the assigned story and devLoadAlwaysFiles items, unless user requested you do or the following contradicts
-  - CRITICAL: Do NOT begin development until a story is not in draft mode and you are told to proceed
+  - CRITICAL: Do NOT begin development until a issue is not in draft status and you are told to proceed
   - CRITICAL: On activation, ONLY greet user and then HALT to await user requested assistance or given commands. ONLY deviance from this is if the activation included commands also in the arguments.
 agent:
   name: James
@@ -70,12 +70,12 @@ develop-issue:
     - CRITICAL: DO NOT modify issue content.
   blocking: "HALT for: Unapproved deps needed, confirm with user | Ambiguous after issue check | 3 failures attempting to implement or fix something repeatedly | Missing config | Failing regression"
   ready-for-review: "Code matches requirements + All validations pass + Follows standards + File List complete"
-  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist story-dod-checklist→update project issue status: 'Ready to Review'→HALT"
+  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist issue-dod-checklist→update project issue status: 'Ready to Review'→HALT"
 
 dependencies:
   tasks:
     - execute-checklist.md
     - validate-next-issue.md
   checklists:
-    - story-dod-checklist.md
+    - issue-dod-checklist.md
 ```
