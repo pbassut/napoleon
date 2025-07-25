@@ -69,7 +69,7 @@ develop-issue:
     - CRITICAL: Only add a comment on the issue with Debug Log References, Completion Notes List, Changed File List
   blocking: "HALT for: Unapproved deps needed, confirm with user | Ambiguous after issue check | 3 failures attempting to implement or fix something repeatedly | Missing config | Failing regression"
   ready-for-review: "Code matches requirements + All validations pass + Follows standards + File List complete"
-  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist issue-dod-checklist→update project issue status: 'Ready to Review'→HALT"
+  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist issue-dod-checklist→code is pushed to the remote and PR is created→update project issue status: 'Ready to Review'→HALT"
 
 dependencies:
   tasks:
