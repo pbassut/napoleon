@@ -18,6 +18,13 @@ jest.mock('../src/cli/validators/environment', () => ({
   validateGitWorkingTree: jest.fn(),
 }));
 
+// Mock the terminal UI
+jest.mock('../src/ui/index.ts', () => ({
+  default: jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+  })),
+}));
+
 const { loadConfig } = require('../src/core/config');
 
 // Mock loadConfig to return a valid config object
@@ -38,7 +45,7 @@ describe('CLI Application', () => {
     process.env.ANTHROPIC_API_KEY = 'sk-ant-1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
     
     // Get mocked functions
-    const { loadConfig } = require('../src/core/config');
+    const { loadConfig, initializeSessionStorage } = require('../src/core/config');
     const { validateEnvironment } = require('../src/cli/validators/environment');
     
     // Re-apply config mock after clearAllMocks
@@ -47,6 +54,9 @@ describe('CLI Application', () => {
       sessionStorage: '/test/.napoleon/sessions',
       maxPromptLength: 50
     });
+    
+    // Re-apply initializeSessionStorage mock after clearAllMocks
+    initializeSessionStorage.mockResolvedValue();
     
     // Reset commander program
     program.commands = [];

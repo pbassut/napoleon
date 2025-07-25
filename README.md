@@ -27,6 +27,11 @@ npx napoleon
 
 ### Start the terminal interface
 ```bash
+napoleon
+```
+
+The terminal interface will launch by default. You can also explicitly use:
+```bash
 napoleon start
 ```
 

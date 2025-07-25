@@ -3,6 +3,27 @@ const { validateEnvironment } = require('./validators/environment');
 const logger = require('../utils/logger');
 
 /**
+ * Starts the terminal UI (shared logic)
+ */
+async function startTerminalUI() {
+  // Set environment variable to indicate we're running in terminal UI mode
+  process.env.TERMINAL_UI_MODE = 'true';
+
+  try {
+    // Use dynamic import for ES module
+    const { default: TerminalUI } = await import('../ui/index.ts');
+    const ui = new TerminalUI();
+
+    await ui.initialize();
+    logger.info('Terminal UI started successfully');
+  } catch (error) {
+    logger.error('Failed to start terminal UI', { error: error.message, stack: error.stack });
+    process.stderr.write(`Failed to start terminal interface: ${error.message}\n`);
+    process.exit(1);
+  }
+}
+
+/**
  * Initializes the CLI application (optimized for fast startup)
  */
 async function initializeApplication(program) {
@@ -23,23 +44,7 @@ async function initializeApplication(program) {
     program
       .command('start')
       .description('Start the Napoleon terminal interface')
-      .action(async () => {
-        // Set environment variable to indicate we're running in terminal UI mode
-        process.env.TERMINAL_UI_MODE = 'true';
-
-        try {
-          // Use dynamic import for ES module
-          const { default: TerminalUI } = await import('../ui/index.ts');
-          const ui = new TerminalUI();
-
-          await ui.initialize();
-          logger.info('Terminal UI started successfully');
-        } catch (error) {
-          logger.error('Failed to start terminal UI', { error: error.message, stack: error.stack });
-          process.stderr.write(`Failed to start terminal interface: ${error.message}\n`);
-          process.exit(1);
-        }
-      });
+      .action(startTerminalUI);
 
     // Status command
     program
@@ -129,12 +134,9 @@ async function initializeApplication(program) {
         }
       });
 
-    // Default action (no command specified)
+    // Default action (no command specified) - launch terminal UI
     program
-      .action(() => {
-        // If no command is specified, show help
-        program.help();
-      });
+      .action(startTerminalUI);
 
     logger.info('CLI application initialized successfully');
   } catch (error) {
