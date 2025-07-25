@@ -69,7 +69,7 @@ files:
   - path: .bmad-core/templates/architecture-tmpl.yaml
     hash: df1b0cec27c7e861
     modified: false
-  - path: .bmad-core/tasks/validate-next-story.md
+  - path: .bmad-core/tasks/validate-next-issue.md
     hash: e38e62f4fc2c1da2
     modified: false
   - path: .bmad-core/tasks/shard-doc.md

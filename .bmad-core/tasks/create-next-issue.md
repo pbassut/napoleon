@@ -1,8 +1,8 @@
-# Create Next Issue Task
+# Create Next Story Task
 
 ## Purpose
 
-To identify the next logical issue based on project progress and epic definitions, and then to prepare a comprehensive, self-contained, and actionable issue file using the `Story Template`. This task ensures the issue is enriched with all necessary technical context, requirements, and acceptance criteria, making it ready for efficient implementation by a Developer Agent with minimal need for additional research or finding its own context.
+To identify the next logical issue based on project progress and epic definitions, and then to prepare a comprehensive, self-contained, and actionable issue file using the `Issue Template`. This task ensures the issue is enriched with all necessary technical context, requirements, and acceptance criteria, making it ready for efficient implementation by a Developer Agent with minimal need for additional research or finding its own context.
 
 ## SEQUENTIAL Task Execution (Do not proceed until current Task is complete)
 
@@ -109,4 +109,4 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
   - Key technical components included from architecture docs
   - Any deviations or conflicts noted between epic and architecture
   - Checklist Results
-  - Next steps: For Complex stories, suggest the user carefully review the story draft and also optionally have the PO run the task `.bmad-core/tasks/validate-next-story`
+  - Next steps: For Complex stories, suggest the user carefully review the story draft and also optionally have the PO run the task `.bmad-core/tasks/validate-next-issue`

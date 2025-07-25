@@ -1,4 +1,4 @@
-# /validate-next-story Task
+# /validate-next-issue Task
 
 When this command is used, execute the following task:
 
