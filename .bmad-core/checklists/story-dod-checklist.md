@@ -113,6 +113,8 @@ After completing the checklist:
 3. Identify any technical debt or follow-up work needed
 4. Note any challenges or learnings for future stories
 5. Confirm whether the story is truly ready for review
+6. Confirm the branch has been pushed
+7. Confirm the Pull Request is available to be viewed on Github
 
 Be honest - it's better to flag issues now than have them discovered later.]]
 
