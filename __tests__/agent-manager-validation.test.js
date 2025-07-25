@@ -56,18 +56,17 @@ describe('AgentManager Input Validation', () => {
       expect(() => agentManager.validateInstructions(longInstructions)).toThrow('Agent instructions must be less than 5000 characters');
     });
 
-    it('should reject instructions with dangerous shell metacharacters', () => {
+    it('should reject instructions with dangerous command substitution patterns', () => {
       const dangerousInputs = [
-        'rm -rf /; echo "dangerous"',
-        'ls | grep something',
-        'echo `whoami`',
-        'test && rm file',
-        'test $ variable',
+        'Execute this: $(rm -rf /)',
+        'Run command: $(whoami)',
+        'Process data: $(cat /etc/passwd)',
+        'Test command: $(ls -la)',
       ];
 
       dangerousInputs.forEach(input => {
         expect(() => agentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
-        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous characters');
+        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
       });
     });
 
@@ -80,23 +79,42 @@ describe('AgentManager Input Validation', () => {
 
       traversalInputs.forEach(input => {
         expect(() => agentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
-        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous characters');
+        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
       });
     });
 
     it('should reject instructions starting with dash (option-like)', () => {
       expect(() => agentManager.validateInstructions('-help with this task')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('-help with this task')).toThrow('Instructions contain potentially dangerous characters');
+      expect(() => agentManager.validateInstructions('-help with this task')).toThrow('Instructions contain potentially dangerous patterns');
     });
 
     it('should reject instructions with null bytes', () => {
       expect(() => agentManager.validateInstructions('test\0injection')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('test\0injection')).toThrow('Instructions contain potentially dangerous characters');
+      expect(() => agentManager.validateInstructions('test\0injection')).toThrow('Instructions contain potentially dangerous patterns');
     });
 
     it('should reject instructions with invalid control characters', () => {
       expect(() => agentManager.validateInstructions('test\x01control')).toThrow(EnvironmentValidationError);
       expect(() => agentManager.validateInstructions('test\x7Fdelete')).toThrow(EnvironmentValidationError);
+    });
+
+    it('should accept instructions with code snippets and technical content', () => {
+      const validInputs = [
+        'Help me debug this function: `const result = getData();`',
+        'Implement this code:\n```javascript\nconst data = process();\nif (data) {\n  console.log("Success");\n}\n```',
+        'Run these shell commands: ls -la; cat file.txt | grep "pattern"',
+        'Use pipe operator: data | transform | output',
+        'Check command: echo $USER and $HOME variables',
+        'Test logical operators: if condition && result',
+        'Use backticks for inline code: `npm install express`',
+        'Show semicolon usage: var a = 1; var b = 2;',
+        'Pipeline example: input | filter | sort | output',
+        'Variable usage: $HOME directory and $PATH settings',
+      ];
+
+      validInputs.forEach(input => {
+        expect(() => agentManager.validateInstructions(input)).not.toThrow();
+      });
     });
 
     it('should accept instructions with allowed special characters', () => {

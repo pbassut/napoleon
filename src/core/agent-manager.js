@@ -30,7 +30,7 @@ const AgentStatus = {
 
 // Input validation patterns for security
 const DANGEROUS_PATTERNS = [
-  /[;&|`$]/, // Shell metacharacters (dangerous ones)
+  /\$\(/, // Command substitution - ACTUAL DANGER
   /\.\.[/\\]/, // Directory traversal
   /^-/, // Options starting with dash
   /\0/, // Null bytes
@@ -910,9 +910,9 @@ class AgentManager {
     for (const pattern of DANGEROUS_PATTERNS) {
       if (pattern.test(trimmed)) {
         throw new EnvironmentValidationError(
-          'Instructions contain potentially dangerous characters',
+          'Instructions contain potentially dangerous patterns. Please avoid command substitution ($(...)) and path traversal (../)',
           'DANGEROUS_INPUT_DETECTED',
-          'Please remove special characters and shell metacharacters from your instructions',
+          'Remove command substitution patterns and directory traversal sequences from your instructions',
         );
       }
     }
