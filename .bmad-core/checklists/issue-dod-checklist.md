@@ -100,7 +100,12 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] Create a Pull request in Github against the `main` branch.
 
 10. **Filling the Pull Request description:**
+
+   [[LLM: Present the work to others]]
+
    - [ ] The content of the PR description should resemble what you did on the code
+   - [ ] Link the Pull request you opened to the issue you were assigned to on github
+
 
 ## Final Confirmation
 
