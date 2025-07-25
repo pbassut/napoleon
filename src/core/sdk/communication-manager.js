@@ -164,7 +164,7 @@ class SDKCommunicationManager {
         abortController: session.abortController,
       };
 
-      // Log SDK request with truncated prompt (AC1)
+      // Log SDK request with full prompt for debugging
       if (this.agentLogManager) {
         try {
           await this.agentLogManager.writeLogEntry(agentId, {
@@ -374,10 +374,10 @@ class SDKCommunicationManager {
         error: error.message,
         errorName: error.name,
         errorCode: error.code,
-        errorStack: `${error.stack?.substring(0, 500)}...`,
+        errorStack: error.stack,
         duration: Date.now() - startTime,
-        promptLength: prompt.length,
-        abortSignal: errorSession.abortController?.signal?.aborted || 'no-signal',
+        promptLength: prompt?.length || 0,
+        abortSignal: errorSession?.abortController?.signal?.aborted || 'no-signal',
         errorType: SDKCommunicationManager.classifySDKError(error),
       });
 

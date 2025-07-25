@@ -1252,7 +1252,7 @@ class AgentManager {
 
       // Add log entry for instruction processing
       this.handleSDKMessage(agentId, {
-        content: `Processing instructions: "${instructions.substring(0, 100)}${instructions.length > 100 ? '...' : ''}"`,
+        content: `Processing instructions: "${instructions}"`,
         type: 'info',
       });
 

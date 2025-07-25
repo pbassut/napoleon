@@ -232,7 +232,7 @@ describe('SDKCommunicationManager', () => {
         );
       });
 
-      it('should truncate long prompts in request logs', async () => {
+      it('should log full prompts in request logs for debugging', async () => {
         const agentId = 'test-agent-2';
         const longPrompt = 'A'.repeat(300); // 300 characters
         const mockMessages = [{ id: 'msg1', content: 'Response 1' }];
@@ -253,8 +253,8 @@ describe('SDKCommunicationManager', () => {
         
         expect(requestLogCall).toBeDefined();
         const logContent = JSON.parse(requestLogCall[1].content);
-        expect(logContent.prompt).toHaveLength(203); // 200 + '...'
-        expect(logContent.prompt).toMatch(/\.\.\.$/); // Ends with '...'
+        expect(logContent.prompt).toHaveLength(300); // Full prompt length
+        expect(logContent.prompt).toBe(longPrompt); // Exact match with original prompt
       });
 
       it('should log each SDK response message', async () => {
