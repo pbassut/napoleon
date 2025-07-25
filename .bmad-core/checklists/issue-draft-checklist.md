@@ -6,8 +6,8 @@ The Scrum Master should use this checklist to validate that each issue contains 
 
 Before proceeding with this checklist, ensure you have access to:
 
-1. The Github issue being validated(in a Github project)
-2. The parent epic context
+1. The github issue being validated(in a Github project)
+2. The parent milestone context
 3. Any referenced architecture or design documents
 4. Previous related stories if this builds on prior work
 
@@ -75,7 +75,7 @@ Note: We don't need every file listed - just the important ones.]]
 4. References are accessible (not broken links)
 5. Previous issue context is summarized if needed]]
 
-- [ ] References to external documents point to specific relevant sections
+- [ ] References to external issue point to specific relevant sections
 - [ ] Critical information from previous stories is summarized (not just referenced)
 - [ ] Context is provided for why references are relevant
 - [ ] References to other issues use consistent format (e.g., `#123)
@@ -88,7 +88,7 @@ Note: We don't need every file listed - just the important ones.]]
 2. Domain terms are explained or obvious from context
 3. Assumptions are stated explicitly
 4. Edge cases are mentioned (even if deferred)
-5. The issue could be understood without reading 10 other documents]]
+5. The issue could be understood without reading 10 other issues]]
 
 - [ ] Core information needed is included (not overly reliant on external docs)
 - [ ] Implicit assumptions are made explicit
@@ -110,6 +110,7 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] Success criteria are defined
 - [ ] Special testing considerations are noted (if applicable)
 
+
 ## VALIDATION RESULT
 
 [[LLM: FINAL ISSUE VALIDATION REPORT
@@ -118,7 +119,8 @@ Generate a concise validation report:
 
 1. Quick Summary
 
-   - Issue readiness: READY / NEEDS REVISION / BLOCKED
+   - Direct link to the issue on github
+   - Issue status on github: READY / NEEDS REVISION / BLOCKED
    - Clarity score (1-10)
    - Major gaps identified
 
@@ -138,6 +140,10 @@ Generate a concise validation report:
    - Could YOU implement this issue as written?
    - What questions would you have?
    - What might cause delays or rework?
+
+5. Project Management
+   - Issue is in a project in github
+   - Issue has the default(Draft) status
 
 Be pragmatic - perfect documentation doesn't exist, but it must be enough to provide the extreme context a dev agent needs to get the work down and not create a mess.]]
 
