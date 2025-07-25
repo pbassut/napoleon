@@ -3,6 +3,7 @@ const fs = require('fs');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
 const { loadConfig } = require('../config');
+const toolUsageTracker = require('../tool-usage-tracker');
 
 /**
  * SDK Communication Manager
@@ -273,6 +274,9 @@ class SDKCommunicationManager {
 
         // Log each response message (AC2) - non-blocking
         this.logSDKResponse(agentId, message, startTime, messages.length - 1, messages.length);
+
+        // Track TodoWrite tool usage
+        this.trackToolUsage(agentId, message);
 
         // Update session with message info
         session.lastMessageId = message.id || Date.now().toString();
@@ -709,6 +713,42 @@ class SDKCommunicationManager {
     }
 
     return 'unknown_error';
+  }
+
+  /**
+   * Track tool usage from SDK messages
+   * @param {string} agentId - The agent ID
+   * @param {Object} message - The SDK message object
+   */
+  trackToolUsage(agentId, message) {
+    try {
+      // Check if message contains tool_use content
+      if (message.content && Array.isArray(message.content)) {
+        const toolUse = message.content.find(item => item.type === 'tool_use');
+        if (toolUse && toolUse.name === 'TodoWrite') {
+          // Initialize tool tracking for this agent
+          toolUsageTracker.initializeAgent(agentId);
+          
+          // Track the TodoWrite usage
+          toolUsageTracker.trackTodoWrite(agentId, toolUse, message);
+          
+          // Log tool tracking success
+          this.logger.debug('TodoWrite usage tracked', {
+            agentId,
+            toolId: toolUse.id,
+            messageId: message.id,
+            todoCount: toolUse.input?.todos?.length || 0
+          });
+        }
+      }
+    } catch (error) {
+      // Non-blocking: tool tracking failures shouldn't break SDK operation
+      this.logger.warn('Failed to track tool usage', {
+        agentId,
+        error: error.message,
+        messageId: message.id
+      });
+    }
   }
 }
 

@@ -12,6 +12,7 @@ const WorktreeLifecycleManager = require('./worktree-lifecycle-manager');
 const SDKCommunicationManager = require('./sdk/communication-manager');
 const { SDKStatus } = require('./sdk/sdk-types');
 const AgentLogManager = require('./logging/agent-log-manager');
+const toolUsageTracker = require('./tool-usage-tracker');
 
 // Agent status types as per US004 requirements
 const AgentStatus = {
@@ -1595,6 +1596,9 @@ class AgentManager {
         }
       }
 
+      // Clean up tool usage tracking data
+      toolUsageTracker.cleanupAgent(agentId);
+
       // Remove agent from active list and mark as terminated
       this.agents.delete(agentId);
       await this.saveSessions();
@@ -1673,6 +1677,9 @@ class AgentManager {
     const session = this.agents.get(agentId);
     if (!session) return null;
 
+    // Get current todos from tool usage tracker
+    const todos = toolUsageTracker.getAgentTodos(agentId);
+
     return {
       id: session.id,
       status: session.status,
@@ -1685,6 +1692,7 @@ class AgentManager {
       branch: session.branch || 'main',
       environmentVars: session.environmentVars || {},
       process: session.process,
+      todos: todos,
     };
   }
 

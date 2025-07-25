@@ -60,9 +60,21 @@ export class LogParser {
                   name: toolUse.name,
                   input: toolUse.input,
                 };
-                parsedEntry.parsedContent = textContent
-                  ? `${textContent}\n[Tool: ${toolUse.name}]`
-                  : `[Tool: ${toolUse.name}]`;
+                
+                // Special handling for TodoWrite tool
+                if (toolUse.name === 'TodoWrite' && toolUse.input?.todos) {
+                  const todoCount = toolUse.input.todos.length;
+                  const completedCount = toolUse.input.todos.filter((todo: any) => todo.status === 'completed').length;
+                  const inProgressCount = toolUse.input.todos.filter((todo: any) => todo.status === 'in_progress').length;
+
+                  parsedEntry.parsedContent = textContent
+                    ? `${textContent}\n[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`
+                    : `[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`;
+                } else {
+                  parsedEntry.parsedContent = textContent
+                    ? `${textContent}\n[Tool: ${toolUse.name}]`
+                    : `[Tool: ${toolUse.name}]`;
+                }
               } else {
                 parsedEntry.parsedContent = textContent;
               }

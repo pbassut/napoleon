@@ -1,3 +1,10 @@
+export interface TodoItem {
+  id: string;
+  content: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in_progress' | 'completed';
+}
+
 export interface Agent {
   id: string;
   name: string;
@@ -8,6 +15,7 @@ export interface Agent {
   workingDirectory?: string;
   error?: any;
   progress?: any;
+  todos?: TodoItem[];
 }
 
 export interface AgentManagerHookReturn {

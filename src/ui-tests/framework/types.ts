@@ -1,8 +1,16 @@
+export interface TodoItem {
+  id: string;
+  content: string;
+  priority: 'high' | 'medium' | 'low';
+  status: 'pending' | 'in_progress' | 'completed';
+}
+
 export interface Agent {
   id: string;
   prompt: string;
   status: 'running' | 'stopped' | 'failed';
   output?: string;
+  todos?: TodoItem[];
 }
 
 export interface UIState {
