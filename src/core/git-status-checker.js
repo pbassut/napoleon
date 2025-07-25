@@ -1,7 +1,10 @@
-const { execSync } = require('child_process');
+const { execSync, exec } = require('child_process');
+const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
 const logger = require('../utils/logger');
+
+const execAsync = promisify(exec);
 
 /**
  * Git Status Checker
@@ -54,40 +57,40 @@ class GitStatusChecker {
   }
 
   /**
-   * Find git directory from current working directory
+   * Find git directory from current working directory (async)
    * @returns {Promise<string|null>} Path to .git directory or null if not found
    */
   async findGitDirectory() {
     try {
-      const gitDir = execSync('git rev-parse --git-dir', {
+      const { stdout } = await execAsync('git rev-parse --git-dir', {
         encoding: 'utf8',
-        stdio: 'pipe',
-      }).trim();
+        timeout: 2000, // 2 second timeout
+      });
 
       // Convert to absolute path
-      return path.resolve(gitDir);
+      return path.resolve(stdout.trim());
     } catch (error) {
       return null;
     }
   }
 
   /**
-   * Get detailed git status using porcelain format
+   * Get detailed git status using porcelain format (async)
    * @returns {Promise<Object>} Parsed git status object
    */
   async getGitStatus() {
     try {
       // Get porcelain status for reliable parsing
-      const result = execSync('git status --porcelain', {
+      const { stdout } = await execAsync('git status --porcelain', {
         encoding: 'utf8',
-        stdio: 'pipe',
+        timeout: 3000, // 3 second timeout
       });
 
       const modified = [];
       const untracked = [];
       const staged = [];
 
-      result.split('\n').forEach((line) => {
+      stdout.split('\n').forEach((line) => {
         if (line.trim()) {
           const status = line.substring(0, 2);
           const file = line.substring(3);
@@ -210,17 +213,28 @@ class GitStatusChecker {
   }
 
   /**
-   * Validate git repository and working tree state
+   * Validate git repository and working tree state (async with parallel checks)
    * @returns {Promise<Object>} Validation result
    */
   async validateGitRepository() {
     try {
-      // Check if git is available
-      execSync('git --version', { stdio: 'pipe' });
+      // Run git version and directory checks in parallel
+      const [gitVersionResult, gitDir] = await Promise.allSettled([
+        execAsync('git --version', { timeout: 1000 }),
+        this.findGitDirectory(),
+      ]);
+
+      // Check git availability
+      if (gitVersionResult.status === 'rejected') {
+        return {
+          isValid: false,
+          error: 'GIT_NOT_AVAILABLE',
+          message: 'Git is not available in system PATH',
+        };
+      }
 
       // Check if in git repository
-      const gitDir = await this.findGitDirectory();
-      if (!gitDir) {
+      if (gitDir.status === 'rejected' || !gitDir.value) {
         return {
           isValid: false,
           error: 'NOT_IN_GIT_REPO',
@@ -228,8 +242,14 @@ class GitStatusChecker {
         };
       }
 
-      // Check if git directory is accessible
-      if (!fs.existsSync(gitDir)) {
+      // Check if git directory is accessible (async check)
+      const directoryExists = await new Promise((resolve) => {
+        fs.access(gitDir.value, fs.constants.F_OK, (err) => {
+          resolve(!err);
+        });
+      });
+
+      if (!directoryExists) {
         return {
           isValid: false,
           error: 'GIT_DIR_NOT_ACCESSIBLE',
@@ -239,13 +259,13 @@ class GitStatusChecker {
 
       return {
         isValid: true,
-        gitDir,
+        gitDir: gitDir.value,
       };
     } catch (error) {
       return {
         isValid: false,
-        error: 'GIT_NOT_AVAILABLE',
-        message: 'Git is not available in system PATH',
+        error: 'GIT_VALIDATION_FAILED',
+        message: `Git validation failed: ${error.message}`,
       };
     }
   }

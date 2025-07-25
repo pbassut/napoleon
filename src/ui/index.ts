@@ -16,12 +16,18 @@ class InkUIWrapper {
     logger.info('Initializing Napoleon Ink UI');
 
     try {
-      // Initialize AgentManager
+      // Create AgentManager but don't initialize it yet - this allows UI to render immediately
       this.agentManager = new AgentManagerClass();
-      await this.agentManager!.initialize();
-
-      // Start Ink UI with AgentManager
-      await startInkWithManager(this.agentManager);
+      
+      // Start Ink UI first with the uninitialized AgentManager
+      // This allows the UI to show loading state while heavy operations complete
+      const uiPromise = startInkWithManager(this.agentManager);
+      
+      // Initialize AgentManager in the background while UI renders
+      const initPromise = this.agentManager!.initialize();
+      
+      // Wait for both UI and initialization to complete
+      await Promise.all([uiPromise, initPromise]);
 
       logger.info('Ink UI initialized successfully');
     } catch (error: any) {

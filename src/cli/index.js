@@ -1,17 +1,16 @@
 const { initializeSessionStorage, loadConfig } = require('../core/config');
 const { validateEnvironment } = require('./validators/environment');
 const logger = require('../utils/logger');
-const LogsCommand = require('./commands/logs');
 
 /**
- * Initializes the CLI application
+ * Initializes the CLI application (optimized for fast startup)
  */
 async function initializeApplication(program) {
   try {
     // Validate environment before initialization
     await validateEnvironment();
 
-    // Initialize session storage
+    // Initialize session storage (lightweight operation)
     await initializeSessionStorage();
 
     // Set up CLI commands
@@ -53,11 +52,7 @@ async function initializeApplication(program) {
         // TODO: This will be implemented in later stories
       });
 
-    // Log commands
-    const config = loadConfig();
-    const logsCommand = new LogsCommand(config);
-
-    // logs list command
+    // logs list command (lazy-load LogsCommand)
     program
       .command('logs list')
       .description('List all agent logs')
@@ -65,6 +60,10 @@ async function initializeApplication(program) {
       .option('-f, --format <format>', 'output format (table|json)', 'table')
       .action(async (options) => {
         try {
+          const config = loadConfig();
+          // eslint-disable-next-line global-require
+          const LogsCommand = require('./commands/logs');
+          const logsCommand = new LogsCommand(config);
           await logsCommand.listLogs(options);
         } catch (error) {
           console.error(`Error: ${error.message}`);
@@ -72,7 +71,7 @@ async function initializeApplication(program) {
         }
       });
 
-    // logs view command
+    // logs view command (lazy-load LogsCommand)
     program
       .command('logs view <identifier>')
       .description('View a specific log file')
@@ -81,6 +80,10 @@ async function initializeApplication(program) {
       .option('-r, --raw', 'show raw log entries without formatting')
       .action(async (identifier, options) => {
         try {
+          const config = loadConfig();
+          // eslint-disable-next-line global-require
+          const LogsCommand = require('./commands/logs');
+          const logsCommand = new LogsCommand(config);
           await logsCommand.viewLog(identifier, options);
         } catch (error) {
           console.error(`Error: ${error.message}`);
@@ -88,7 +91,7 @@ async function initializeApplication(program) {
         }
       });
 
-    // logs search command
+    // logs search command (lazy-load LogsCommand)
     program
       .command('logs search <term>')
       .description('Search across all logs for a term')
@@ -97,6 +100,10 @@ async function initializeApplication(program) {
       .option('-c, --context <number>', 'lines of context around matches', (value) => parseInt(value, 10), 2)
       .action(async (term, options) => {
         try {
+          const config = loadConfig();
+          // eslint-disable-next-line global-require
+          const LogsCommand = require('./commands/logs');
+          const logsCommand = new LogsCommand(config);
           await logsCommand.searchLogs(term, options);
         } catch (error) {
           console.error(`Error: ${error.message}`);
@@ -104,13 +111,17 @@ async function initializeApplication(program) {
         }
       });
 
-    // logs prompt command
+    // logs prompt command (lazy-load LogsCommand)
     program
       .command('logs prompt <keyword>')
       .description('Find logs by prompt keywords')
       .option('-l, --limit <number>', 'limit number of results', (value) => parseInt(value, 10))
       .action(async (keyword, options) => {
         try {
+          const config = loadConfig();
+          // eslint-disable-next-line global-require
+          const LogsCommand = require('./commands/logs');
+          const logsCommand = new LogsCommand(config);
           await logsCommand.searchByPrompt(keyword, options);
         } catch (error) {
           console.error(`Error: ${error.message}`);

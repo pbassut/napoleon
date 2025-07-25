@@ -40,18 +40,53 @@ class WorktreeLifecycleManager {
     logger.info('Initializing worktree lifecycle management');
 
     try {
-      // Step 1: Validate git worktree state
+      // Step 1: Quick validation only (avoid heavy discovery)
       const validationResult = await this.discovery.validateWorktreeState();
       if (!validationResult.valid) {
         this.metrics.validationErrors++;
         logger.warn('Worktree state validation issues detected', validationResult);
       }
 
-      // Step 2: Discover existing worktrees
+      // Fast initialization complete - do heavy work in background
+      logger.info('Worktree lifecycle manager initialized (background discovery started)');
+      
+      // Start background discovery without blocking
+      this.backgroundDiscovery().catch(error => {
+        logger.error('Background worktree discovery failed', { error: error.message });
+      });
+
+      this.metrics.startupTime = Date.now() - startTime;
+
+      logger.info('Worktree lifecycle management initialized successfully', {
+        startupTimeMs: this.metrics.startupTime,
+        metrics: this.metrics,
+      });
+
+      return {
+        success: true,
+        metrics: this.metrics,
+      };
+    } catch (error) {
+      logger.error('Failed to initialize worktree lifecycle management', {
+        error: error.message,
+        startupTimeMs: Date.now() - startTime,
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Perform heavy worktree discovery operations in background
+   */
+  async backgroundDiscovery() {
+    try {
+      logger.info('Starting background worktree discovery');
+
+      // Step 2: Discover existing worktrees (heavy operation)
       const discoveryResult = await this.discovery.discoverWorktrees();
       this.metrics.discoveredWorktrees = discoveryResult.total;
 
-      logger.info('Worktree discovery completed', {
+      logger.info('Background worktree discovery completed', {
         total: discoveryResult.total,
         active: discoveryResult.active.length,
         orphaned: discoveryResult.orphaned.length,
@@ -67,24 +102,13 @@ class WorktreeLifecycleManager {
         await this.handleActiveWorktrees(discoveryResult.active);
       }
 
-      this.metrics.startupTime = Date.now() - startTime;
-
-      logger.info('Worktree lifecycle management initialized successfully', {
-        startupTimeMs: this.metrics.startupTime,
-        metrics: this.metrics,
-      });
-
-      return {
-        success: true,
-        metrics: this.metrics,
-        discoveryResult,
-      };
+      logger.info('Background worktree discovery fully completed');
     } catch (error) {
-      logger.error('Failed to initialize worktree lifecycle management', {
+      logger.error('Background worktree discovery failed', { 
         error: error.message,
-        startupTimeMs: Date.now() - startTime,
+        stack: error.stack 
       });
-      throw error;
+      this.metrics.discoveryErrors++;
     }
   }
 

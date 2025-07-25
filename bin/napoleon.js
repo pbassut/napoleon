@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 const { program } = require('commander');
-const { validateEnvironment } = require('../src/cli/validators/environment');
 const { initializeApplication } = require('../src/cli/index');
 const logger = require('../src/utils/logger');
 
@@ -16,7 +15,7 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
   logger.error('Unhandled promise rejection', {
     reason: reason instanceof Error ? reason.message : reason,
     stack: reason instanceof Error ? reason.stack : 'No stack available',
@@ -42,10 +41,7 @@ process.on('SIGINT', () => {
 
 async function main() {
   try {
-    // Validate system requirements
-    await validateEnvironment();
-
-    // Initialize CLI framework
+    // Initialize CLI framework (validation moved here to avoid duplication)
     await initializeApplication(program);
 
     // Parse arguments and execute

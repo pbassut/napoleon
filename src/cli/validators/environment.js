@@ -1,11 +1,14 @@
 const semver = require('semver');
-const { execSync } = require('child_process');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 const chalk = require('chalk');
 const { EnvironmentValidationError } = require('../../utils/errors');
 const ApiKeyValidator = require('../../core/api-key-validator');
 const ApiKeySetupGuide = require('../../core/api-key-setup-guide');
 const GitStatusChecker = require('../../core/git-status-checker');
 const StartupWarningDisplay = require('../../core/startup-warning-display');
+
+const execAsync = promisify(exec);
 
 /**
  * Validates git working tree status
@@ -82,10 +85,10 @@ async function validateApiKey() {
 }
 
 /**
- * Validates the system environment for Napoleon
+ * Validates the system environment for Napoleon (optimized with parallel checks)
  */
 async function validateEnvironment() {
-  // Node.js version check
+  // Node.js version check (immediate, no async needed)
   const nodeVersion = process.version;
   if (!semver.gte(nodeVersion, '18.0.0')) {
     throw new EnvironmentValidationError(
@@ -95,44 +98,74 @@ async function validateEnvironment() {
     );
   }
 
-  // Git availability check
-  try {
-    const gitVersion = execSync('git --version', { encoding: 'utf8' });
-    const version = gitVersion.match(/git version (\d+\.\d+\.\d+)/)?.[1];
-    if (!version || !semver.gte(version, '2.20.0')) {
-      throw new EnvironmentValidationError(
-        `Git version ${version} is not supported. Required: >=2.20.0`,
-        'GIT_VERSION_UNSUPPORTED',
-        'Please upgrade git to version 2.20.0 or higher',
-      );
+  // Run all async validations in parallel for faster startup
+  const validationPromises = [
+    // Git version check (async)
+    (async () => {
+      try {
+        const { stdout: gitVersion } = await execAsync('git --version', {
+          encoding: 'utf8',
+          timeout: 2000,
+        });
+        const version = gitVersion.match(/git version (\d+\.\d+\.\d+)/)?.[1];
+        if (!version || !semver.gte(version, '2.20.0')) {
+          throw new EnvironmentValidationError(
+            `Git version ${version} is not supported. Required: >=2.20.0`,
+            'GIT_VERSION_UNSUPPORTED',
+            'Please upgrade git to version 2.20.0 or higher',
+          );
+        }
+      } catch (error) {
+        if (error instanceof EnvironmentValidationError) {
+          throw error;
+        }
+        throw new EnvironmentValidationError(
+          'Git is not available in system PATH',
+          'GIT_NOT_FOUND',
+          'Please install git and ensure it is available in your PATH',
+        );
+      }
+    })(),
+
+    // Claude Code SDK check (optional, async)
+    (async () => {
+      try {
+        await execAsync('claude --version', {
+          encoding: 'utf8',
+          timeout: 1000,
+        });
+      } catch (error) {
+        // Claude Code SDK is not required for basic functionality
+        // This is just a warning for now - but don't warn in tests
+        if (process.env.NODE_ENV !== 'test') {
+          console.warn(
+            'Warning: Claude Code SDK not found. Some features may be limited.',
+          );
+        }
+      }
+    })(),
+
+    // Git working tree status validation
+    validateGitWorkingTree(),
+
+    // API key validation
+    validateApiKey(),
+  ];
+
+  // Wait for all validations to complete
+  // Use allSettled to handle optional validations gracefully
+  const results = await Promise.allSettled(validationPromises);
+
+  // Check for critical failures (non-optional validations)
+  results.forEach((result, index) => {
+    if (result.status === 'rejected') {
+      // Index 2 and 3 are git and API key validation (critical)
+      // Index 0 is git version (critical), Index 1 is Claude SDK (optional)
+      if (index !== 1) { // Skip Claude SDK check failure (index 1)
+        throw result.reason;
+      }
     }
-  } catch (error) {
-    if (error instanceof EnvironmentValidationError) {
-      throw error;
-    }
-    throw new EnvironmentValidationError(
-      'Git is not available in system PATH',
-      'GIT_NOT_FOUND',
-      'Please install git and ensure it is available in your PATH',
-    );
-  }
-
-  // Claude Code SDK check (optional for now)
-  try {
-    execSync('claude --version', { encoding: 'utf8', stdio: 'ignore' });
-  } catch (error) {
-    // Claude Code SDK is not required for basic functionality
-    // This is just a warning for now
-    console.warn(
-      'Warning: Claude Code SDK not found. Some features may be limited.',
-    );
-  }
-
-  // Git working tree status validation
-  await validateGitWorkingTree();
-
-  // API key validation
-  await validateApiKey();
+  });
 }
 
 module.exports = {

@@ -54,29 +54,56 @@ class AgentManager {
     this.orphanScanInterval = null;
     this.sdkManager = new SDKCommunicationManager();
     this.agentLogManager = null; // Will be initialized based on config
+    this.isInitialized = false;
+    this.initializationPromise = null;
   }
 
   /**
    * Initialize the agent manager
    */
   async initialize() {
+    // Return existing promise if already initializing
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+
+    // Create initialization promise
+    this.initializationPromise = this._performInitialization();
+    
+    try {
+      await this.initializationPromise;
+      this.isInitialized = true;
+    } catch (error) {
+      // Reset promise on failure to allow retry
+      this.initializationPromise = null;
+      throw error;
+    }
+  }
+
+  async _performInitialization() {
     try {
       this.config = loadConfig();
 
-      // Initialize worktree lifecycle management
+      // Initialize core components in parallel where possible
+      const initTasks = [];
+
+      // 1. Initialize worktree lifecycle management
       this.worktreeLifecycle = new WorktreeLifecycleManager({
         maxConcurrentCleanups: this.config.maxConcurrentCleanups || 2,
         retryAttempts: this.config.cleanupRetryAttempts || 3,
       });
 
-      // Initialize worktree lifecycle (discovery and cleanup of orphans)
-      await this.worktreeLifecycle.initialize();
+      // Run heavy operations in parallel
+      initTasks.push(
+        this.worktreeLifecycle.initialize(),
+        this.initializeAgentLogging()
+      );
 
-      // Initialize persistent agent logging
-      await this.initializeAgentLogging();
+      // Wait for core services to initialize
+      await Promise.all(initTasks);
 
-      // Load existing sessions
-      await this.loadSessions();
+      // Load existing sessions in background (start but don't await)
+      this.loadSessionsBackground();
 
       // Start background orphan scanning
       // DISABLED: Commenting out background orphan scanning to prevent worktree removal
@@ -84,7 +111,7 @@ class AgentManager {
 
       logger.info('Agent manager initialized successfully', {
         activeSessions: this.agents.size,
-        worktreeMetrics: this.worktreeLifecycle.getMetrics(),
+        worktreeMetrics: this.worktreeLifecycle?.getMetrics(),
         persistentLogging: this.agentLogManager ? 'enabled' : 'disabled',
       });
     } catch (error) {
@@ -93,6 +120,36 @@ class AgentManager {
       });
       throw error;
     }
+  }
+
+  /**
+   * Check if the agent manager is fully initialized
+   */
+  isFullyInitialized() {
+    return this.isInitialized;
+  }
+
+  /**
+   * Get initialization status for UI display
+   */
+  getInitializationStatus() {
+    if (this.isInitialized) {
+      return { status: 'ready', message: 'Fully initialized' };
+    } else if (this.initializationPromise) {
+      return { status: 'initializing', message: 'Loading services...' };
+    } else {
+      return { status: 'pending', message: 'Not initialized' };
+    }
+  }
+
+  /**
+   * Load sessions in background without blocking initialization
+   */
+  loadSessionsBackground() {
+    // Run session loading in background
+    this.loadSessions().catch(error => {
+      logger.error('Background session loading failed', { error: error.message });
+    });
   }
 
   /**
@@ -920,6 +977,12 @@ class AgentManager {
     let agentId;
 
     try {
+      // Ensure initialization is complete before spawning agents
+      if (!this.isInitialized) {
+        logger.info('Agent manager not yet initialized, waiting...');
+        await this.initialize();
+      }
+
       // Checkpoint 1: Input validation
       const validationStartTime = Date.now();
 
