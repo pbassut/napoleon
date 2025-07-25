@@ -92,12 +92,12 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] Come up with a descriptive git branch name that relates to the work being done. Unless you're working on a existing branch
    - [ ] Commit the work you have done in small commits with short but descriptive messages
 
-9.  **Push your work to the remote:**
+9. **Push your work:**
 
    [[LLM: To make this visible to other users]]
 
-   - [ ] Push your code to the remote if not already pushed
-   - [ ] Create a Pull request in Github against the `main` branch.
+   - [ ] Push your code to the git remote
+   - [ ] Create a Pull Request in Github against the `main` branch.
 
 10. **Filling the Pull Request description:**
 
