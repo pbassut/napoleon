@@ -106,7 +106,7 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
 - Verify all source references are included for technical details
 - Ensure tasks align with both epic requirements and architecture constraints
 - Update status to "Draft" and save the story file
-- Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/story-draft-checklist`
+- Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/issue-draft-checklist`
 - Provide summary to user including:
   - Story created: `{devStoryLocation}/{epicNum}.{storyNum}.story.md`
   - Status: Draft
