@@ -104,7 +104,7 @@ The goal is quality delivery, not just checking boxes.]]
    [[LLM: Present the work to others]]
 
    - [ ] The content of the PR description should resemble what you did on the code
-   - [ ] Link PR to the Issue by adding a comment to the PR saying "Closes #<issue_number>".
+   - [ ] The PR description should include "Closes #<issue_number>" at the end to link the PR and Issue together
 
 
 ## Final Confirmation
