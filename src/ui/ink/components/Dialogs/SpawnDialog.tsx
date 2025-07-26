@@ -3,13 +3,9 @@ import {
   Box, Text, useInput, useFocus,
 } from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
+import { TextEditor } from '../Common/TextEditor';
 import logger from '../../../../utils/logger.js';
 import { protectBackticks, isInputSafe } from '../../../../utils/backtick-protection.js';
-
-// We'll use a simple text input for now instead of ink-text-input
-const SimpleTextInput = ({
-  value, onChange, placeholder, focus,
-}) => <Text>{value || placeholder}</Text>;
 
 interface SpawnDialogProps {
   isOpen: boolean;
@@ -36,88 +32,45 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     }
   }, [isOpen]);
 
-  // Memoize useInput options to prevent infinite re-renders
+  // Handle global escape key to close dialog
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
-
-  // Handle keyboard input
+  
   useInput((input: string, key: any) => {
     if (!isOpen || isLoading) return;
 
-    // Log all inputs for debugging
-    logger.debug('SpawnDialog: Input received', {
-      input,
-      inputLength: input?.length,
-      key: {
-        return: key.return,
-        shift: key.shift,
-        ctrl: key.ctrl,
-        escape: key.escape,
-      },
-    });
-
-    // Handle Escape to close
+    // Handle Escape to close dialog (global handler)
     if (key.escape) {
       logger.debug('SpawnDialog: Escape pressed, closing dialog');
       onClose();
       return;
     }
-
-    // Handle Enter to submit (check this BEFORE text input)
-    if (key.return && !key.shift) {
-      logger.debug('SpawnDialog: Enter pressed, submitting', {
-        text: text.trim(),
-        textLength: text.length,
-        isLoading,
-        isOpen,
-      });
-      handleSubmit();
-      return;
-    }
-
-    // Handle Shift+Enter for new line
-    if (key.shift && key.return) {
-      logger.debug('SpawnDialog: Shift+Enter pressed, adding new line');
-      setText((prev) => `${prev}\n`);
-      return;
-    }
-
-    // Handle text input
-    if (!key.ctrl && !key.meta && !key.return && input) {
-      setText((prev) => prev + input);
-      return;
-    }
-
-    // Handle backspace
-    if (key.backspace || key.delete) {
-      setText((prev) => prev.slice(0, -1));
-    }
   }, inputOptions);
 
   const handleSubmit = async () => {
-    const rawPrompt = text.trim();
+    const prompt = text.trim();
 
-    if (!rawPrompt) {
+    if (!prompt) {
       setError('Please enter instructions for the agent');
       return;
     }
 
     // Validate input safety
-    if (!isInputSafe(rawPrompt)) {
+    if (!isInputSafe(prompt)) {
       setError('Invalid input provided');
       return;
     }
 
     // Protect backticks from command substitution while preserving formatting
-    const safePrompt = protectBackticks(rawPrompt);
+    const safePrompt = protectBackticks(prompt);
 
     setError('');
     setIsLoading(true);
 
     try {
       logger.debug('SpawnDialog: Submitting prompt:', {
-        originalPrompt: rawPrompt,
+        originalPrompt: prompt,
         safePrompt,
-        hasBackticks: rawPrompt.includes('`'),
+        hasBackticks: prompt.includes('`'),
       });
       await onSubmit(safePrompt);
       logger.debug('SpawnDialog: onSubmit completed successfully');
@@ -166,11 +119,16 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
             <Box marginBottom={1}>
               <Text color="gray">{' Agent Instructions '}</Text>
             </Box>
-            <SimpleTextInput
+            <TextEditor
               value={text}
               onChange={setText}
               placeholder="Type your instructions here..."
-              focus={isFocused}
+              autoFocus={isFocused}
+              multiline={true}
+              showCursor={true}
+              disabled={isLoading}
+              onSubmit={handleSubmit}
+              showPositionIndicator={true}
             />
           </Box>
         </Box>
@@ -189,7 +147,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
         <Box justifyContent="center">
           <Text color="yellow" bold>
-            [Enter] Spawn [Shift+Enter] New line [Esc] Cancel
+            [Enter] Spawn [Shift+Enter] New line [Ctrl+A] Select All [Esc] Cancel
           </Text>
         </Box>
       </Box>

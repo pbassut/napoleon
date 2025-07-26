@@ -1,5 +1,5 @@
 const semver = require('semver');
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 const { promisify } = require('util');
 const chalk = require('chalk');
 const { EnvironmentValidationError } = require('../../utils/errors');

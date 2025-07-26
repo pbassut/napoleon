@@ -19,6 +19,9 @@ interface KeyObject {
   tab?: boolean;
   return?: boolean;
   escape?: boolean;
+  backspace?: boolean;
+  delete?: boolean;
+  fn?: boolean;
   name?: string;
 }
 
@@ -34,6 +37,13 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
     if (key.meta && !key.alt) {
       normalized.alt = true;
       normalized.meta = false;
+    }
+    
+    // Fix Mac keyboard mapping: The "delete" key on Mac acts as backspace
+    // Only the fn+delete combination should act as forward delete
+    if (key.delete && !key.fn) {
+      normalized.backspace = true;
+      normalized.delete = false;
     }
   }
 
@@ -92,9 +102,15 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
     Object.assign(normalized, escapeSequences[input]);
   }
 
-  // Handle Ctrl+key combinations
+  // Handle Ctrl+key combinations and special characters
   if (input.length === 1) {
     const charCode = input.charCodeAt(0);
+
+    // Handle backspace key (ASCII 127 / \x7f)
+    if (charCode === 127) {
+      normalized.backspace = true;
+      return normalized;
+    }
 
     // Ctrl+A through Ctrl+Z (1-26)
     if (charCode >= 1 && charCode <= 26) {
