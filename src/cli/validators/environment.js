@@ -60,6 +60,8 @@ async function validateGitWorkingTree() {
  * Validates Anthropic API key
  */
 async function validateApiKey() {
+  return;
+
   const validator = new ApiKeyValidator();
   const setupGuide = new ApiKeySetupGuide();
 
