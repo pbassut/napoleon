@@ -142,8 +142,8 @@ Generate a concise validation report:
    - What might cause delays or rework?
 
 5. Project Management
-   - Issue is in a project in github
-   - Issue has the default(Draft) status
+   - Issue MUST be in a project in github
+   - Issue has the Draft status inside the github project
 
 Be pragmatic - perfect documentation doesn't exist, but it must be enough to provide the extreme context a dev agent needs to get the work down and not create a mess.]]
 
