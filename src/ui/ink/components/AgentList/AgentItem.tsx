@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { Agent } from '../../types';
+import { Agent, getCurrentTask } from '../../types';
 import { getStatusInfo } from '../../constants/agentStatus';
 import { ActivityIndicator } from '../Common/ActivityIndicator';
 
@@ -59,6 +59,17 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
     return `${name.substring(0, maxLength - 3)}...`;
   };
 
+  const truncateTask = (task: string, maxLength: number = 22): string => {
+    if (task.length <= maxLength) return task;
+    return `${task.substring(0, maxLength - 3)}...`;
+  };
+
+  // Get current task from agent's todos
+  const currentTask = getCurrentTask(agent.todos);
+  const currentTaskDisplay = currentTask 
+    ? truncateTask(currentTask.content) 
+    : 'No active task';
+
   return (
     <Box
       width="100%"
@@ -71,9 +82,9 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       </Box>
 
       {/* Agent name column */}
-      <Box width={50}>
+      <Box width={35}>
         <Text color={textColor} bold={isSelected}>
-          {truncateName(agent.name)}
+          {truncateName(agent.name, 30)}
         </Text>
       </Box>
 
@@ -104,16 +115,34 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
           </>
         )}
       </Box>
+
+      {/* Current Task column */}
+      <Box width={25} marginLeft={2}>
+        <Text color={currentTask ? textColor : 'gray'}>
+          {currentTaskDisplay}
+        </Text>
+      </Box>
     </Box>
   );
-}, (prevProps, nextProps) =>
+}, (prevProps, nextProps) => {
   // Re-render only when these properties change
-  prevProps.agent.id === nextProps.agent.id
+  const agentPropsEqual = prevProps.agent.id === nextProps.agent.id
     && prevProps.agent.status === nextProps.agent.status
     && prevProps.agent.name === nextProps.agent.name
-    && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime()
-    && prevProps.isSelected === nextProps.isSelected
-    && prevProps.isFocused === nextProps.isFocused);
+    && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime();
+  
+  const interactionPropsEqual = prevProps.isSelected === nextProps.isSelected
+    && prevProps.isFocused === nextProps.isFocused;
+  
+  // Check if todos have changed
+  const prevCurrentTask = getCurrentTask(prevProps.agent.todos);
+  const nextCurrentTask = getCurrentTask(nextProps.agent.todos);
+  const todosEqual = (prevCurrentTask?.id === nextCurrentTask?.id 
+    && prevCurrentTask?.content === nextCurrentTask?.content 
+    && prevCurrentTask?.status === nextCurrentTask?.status);
+  
+  return agentPropsEqual && interactionPropsEqual && todosEqual;
+});
 
 AgentItem.displayName = 'AgentItem';
 AgentItem.whyDidYouRender = true;

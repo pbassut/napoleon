@@ -79,9 +79,10 @@ const AgentList: React.FC<AgentListProps> = ({
         {/* Column headers */}
         <Box>
           <Box width={2}><Text> </Text></Box>
-          <Box width={50}><Text bold>Agent</Text></Box>
+          <Box width={35}><Text bold>Agent</Text></Box>
           <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
           <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
+          <Box width={25} marginLeft={2}><Text bold>Current Task</Text></Box>
         </Box>
 
         {/* Separator line */}
@@ -118,9 +119,10 @@ const AgentList: React.FC<AgentListProps> = ({
       {/* Column headers */}
       <Box>
         <Box width={2}><Text> </Text></Box>
-        <Box width={50}><Text bold>Agent</Text></Box>
+        <Box width={35}><Text bold>Agent</Text></Box>
         <Box width={10} justifyContent="flex-end"><Text bold>Runtime</Text></Box>
         <Box width={18} marginLeft={2}><Text bold>Status</Text></Box>
+        <Box width={25} marginLeft={2}><Text bold>Current Task</Text></Box>
       </Box>
 
       {/* Separator line */}

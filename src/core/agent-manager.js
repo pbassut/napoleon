@@ -1759,6 +1759,34 @@ class AgentManager {
   }
 
   /**
+   * Get current task for an agent from todos array
+   */
+  getCurrentTask(agentId) {
+    const todos = toolUsageTracker.getAgentTodos(agentId);
+    
+    if (!todos || !Array.isArray(todos)) {
+      return null;
+    }
+    
+    const inProgressTasks = todos.filter(todo => todo.status === 'in_progress');
+    
+    if (inProgressTasks.length === 0) {
+      return null; // No active task
+    }
+    
+    if (inProgressTasks.length === 1) {
+      return inProgressTasks[0];
+    }
+    
+    // Handle edge case of multiple in_progress tasks
+    logger.warn('Multiple in_progress todos found for agent', {
+      agentId,
+      count: inProgressTasks.length
+    });
+    return inProgressTasks[0]; // Return first one
+  }
+
+  /**
    * Get comprehensive agent details for detail view
    */
   getAgentDetails(agentId) {

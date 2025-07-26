@@ -40,6 +40,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     workingDirectory: agentData.workingDirectory,
     error: agentData.error,
     progress: agentData.progress,
+    todos: agentData.todos || [], // Include todos from agent data
   }), []);
 
   // Fetch agents from AgentManager
@@ -52,7 +53,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
 
     try {
       const activeAgents = agentManager.getActiveAgents();
-      const convertedAgents = activeAgents.map(convertAgent);
+      // Enrich agents with todos data using getAgentDetails
+      const enrichedAgents = activeAgents.map(agent => {
+        const agentDetails = agentManager.getAgentDetails(agent.id);
+        return {
+          ...agent,
+          todos: agentDetails?.todos || []
+        };
+      });
+      const convertedAgents = enrichedAgents.map(convertAgent);
 
       setAgents(convertedAgents);
       setError(null);
@@ -87,7 +96,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
 
       try {
         const activeAgents = agentManager.getActiveAgents();
-        const convertedAgents = activeAgents.map((agentData: any) => ({
+        // Enrich agents with todos data using getAgentDetails
+        const enrichedAgents = activeAgents.map(agent => {
+          const agentDetails = agentManager.getAgentDetails(agent.id);
+          return {
+            ...agent,
+            todos: agentDetails?.todos || []
+          };
+        });
+        const convertedAgents = enrichedAgents.map((agentData: any) => ({
           id: agentData.id,
           name: agentData.id,
           status: agentData.status || 'unknown',
@@ -97,6 +114,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
           workingDirectory: agentData.workingDirectory,
           error: agentData.error,
           progress: agentData.progress,
+          todos: agentData.todos || [],
         }));
 
         // Only update if agents actually changed
@@ -183,7 +201,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       // Trigger a manual refresh without depending on fetchAgents
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
-        const convertedAgents = activeAgents.map(convertAgent);
+        // Enrich agents with todos data using getAgentDetails
+        const enrichedAgents = activeAgents.map(agent => {
+          const agentDetails = agentManager.getAgentDetails(agent.id);
+          return {
+            ...agent,
+            todos: agentDetails?.todos || []
+          };
+        });
+        const convertedAgents = enrichedAgents.map(convertAgent);
         setAgents(convertedAgents);
       }
     } catch (err) {
@@ -208,7 +234,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       // Trigger a manual refresh without depending on fetchAgents
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
-        const convertedAgents = activeAgents.map(convertAgent);
+        // Enrich agents with todos data using getAgentDetails
+        const enrichedAgents = activeAgents.map(agent => {
+          const agentDetails = agentManager.getAgentDetails(agent.id);
+          return {
+            ...agent,
+            todos: agentDetails?.todos || []
+          };
+        });
+        const convertedAgents = enrichedAgents.map(convertAgent);
         setAgents(convertedAgents);
       }
     } catch (err) {
