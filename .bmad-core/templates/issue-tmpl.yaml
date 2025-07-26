@@ -21,14 +21,6 @@ agent_config:
     - Comments
 
 attributes:
-  - id: status
-    title: Status
-    type: choice
-    choices: [Draft, Approved, In Progress, Ready to Review, Done]
-    instruction: Select the current status of the issue
-    owner: scrum-master
-    editors: [scrum-master, dev-agent]
-    
   - id: issue
     title: Issue
     type: template-text
@@ -51,7 +43,7 @@ attributes:
     
   - id: tasks-subtasks
     title: Tasks / Subtasks
-    type: bullet-list
+    type: github-issue-subtasks
     instruction: |
       Break down the story into specific tasks and subtasks needed for implementation.
       Reference applicable acceptance criteria numbers where relevant.
