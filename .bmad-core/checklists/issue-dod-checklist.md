@@ -104,7 +104,7 @@ The goal is quality delivery, not just checking boxes.]]
    [[LLM: Present the work to others]]
 
    - [ ] The content of the PR description should resemble what you did on the code
-   - [ ] Link the Pull request you opened to the issue you were assigned to on github
+   - [ ] Link PR to the Issue by adding a comment to the PR saying "Closes #<issue_number>".
 
 
 ## Final Confirmation
