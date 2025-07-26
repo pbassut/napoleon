@@ -1265,16 +1265,39 @@ class AgentManager {
       const sessionId = session.sessionId || session.id;
       const { workingDirectory } = session;
 
-      this.sdkManager
-        .executeQuery(sessionId, instructions, {
-          cwd: workingDirectory,
-        })
-        .then((messages) => {
-          logger.info('SDK query completed for agent', { agentId });
-          // Process each message from SDK
-          for (const message of messages) {
-            logger.info('SDK message received', { agentId, message });
-            // Handle real-time output from SDK
+      // Execute SDK query with real-time streaming
+      (async () => {
+        try {
+          logger.info('Starting real-time SDK query stream for agent', { agentId });
+          
+          // Get the streaming query response from Claude Code SDK directly
+          const { query } = require('@anthropic-ai/claude-code');
+          const session = this.sdkManager.getSession(sessionId);
+          
+          if (!session) {
+            throw new Error(`No SDK session found for agent ${agentId}`);
+          }
+
+          const queryOptions = {
+            permissionMode: 'bypassPermissions',
+            cwd: workingDirectory,
+            abortController: session.abortController,
+          };
+
+          const queryResponse = query({
+            prompt: instructions,
+            options: queryOptions,
+          });
+
+          // Process messages as they arrive in real-time using for await
+          for await (const message of queryResponse) {
+            logger.info('SDK message received (real-time)', { 
+              agentId, 
+              messageType: message.type,
+              messageId: message.id 
+            });
+            
+            // Handle real-time output from SDK immediately
             this.handleSDKMessage(agentId, message);
           }
 
@@ -1283,9 +1306,10 @@ class AgentManager {
           if (currentSession && currentSession.status === AgentStatus.RUNNING) {
             this.updateAgentStatus(agentId, AgentStatus.IDLE);
           }
-        })
-        .catch((error) => {
-          logger.error('SDK query failed for agent', {
+          
+          logger.info('SDK query stream completed for agent', { agentId });
+        } catch (error) {
+          logger.error('SDK query stream failed for agent', {
             agentId,
             error: error.message,
             stack: error.stack,
@@ -1302,7 +1326,8 @@ class AgentManager {
               error: error.message,
             });
           }
-        });
+        }
+      })();
 
       logger.info('SDK query started in background', {
         agentId,
