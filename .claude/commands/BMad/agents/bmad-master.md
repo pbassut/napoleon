@@ -88,7 +88,7 @@ dependencies:
     - market-research-tmpl.yaml
     - prd-tmpl.yaml
     - project-brief-tmpl.yaml
-    - story-tmpl.yaml
+    - issue-tmpl.yaml
   data:
     - bmad-kb.md
     - brainstorming-techniques.md

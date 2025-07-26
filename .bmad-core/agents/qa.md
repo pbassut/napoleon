@@ -66,5 +66,5 @@ dependencies:
   data:
     - technical-preferences.md
   templates:
-    - story-tmpl.yaml
+    - issue-tmpl.yaml
 ```

@@ -72,7 +72,7 @@ dependencies:
     - brownfield-create-story.md
     - validate-next-issue.md
   templates:
-    - story-tmpl.yaml
+    - issue-tmpl.yaml
   checklists:
     - po-master-checklist.md
     - change-checklist.md

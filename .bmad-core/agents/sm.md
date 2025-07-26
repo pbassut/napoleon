@@ -56,7 +56,7 @@ dependencies:
     - execute-checklist.md
     - correct-course.md
   templates:
-    - story-tmpl.yaml
+    - issue-tmpl.yaml
   checklists:
     - issue-draft-checklist.md
 ```

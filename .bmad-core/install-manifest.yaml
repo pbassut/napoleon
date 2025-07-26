@@ -33,7 +33,7 @@ files:
   - path: .bmad-core/utils/bmad-doc-template.md
     hash: 4b2f7c4408835b9e
     modified: false
-  - path: .bmad-core/templates/story-tmpl.yaml
+  - path: .bmad-core/templates/issue-tmpl.yaml
     hash: dee630bee4fcaad3
     modified: false
   - path: .bmad-core/templates/project-brief-tmpl.yaml

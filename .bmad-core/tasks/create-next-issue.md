@@ -75,7 +75,7 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
 
 ### 5. Populate Story Template with Full Context
 
-- Create new story file: `{devStoryLocation}/{epicNum}.{storyNum}.story.md` using Story Template
+- Create new issue using Story Template
 - Fill in basic story information: Title, Status (Draft), Story statement, Acceptance Criteria from Epic
 - **`Dev Notes` section (CRITICAL):**
   - CRITICAL: This section MUST contain ONLY information extracted from architecture documents. NEVER invent or assume technical details.
