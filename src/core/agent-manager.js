@@ -1509,9 +1509,9 @@ class AgentManager {
       session.lastActivity = new Date().toISOString();
 
       // If agent is terminated, remove from active sessions
-      if (status === AgentStatus.TERMINATING || status === AgentStatus.ERROR) {
-        this.agents.delete(agentId);
-      }
+      // if (status === AgentStatus.TERMINATING || status === AgentStatus.ERROR) {
+      //   this.agents.delete(agentId);
+      // }
 
       // Save sessions
       this.saveSessions().catch((error) => {
