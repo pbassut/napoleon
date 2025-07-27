@@ -47,14 +47,20 @@ export class LogParser {
             if (sdkMessage.message?.content) {
               const { content } = sdkMessage.message;
 
-              // Handle text content
+              // Validate content is an array before processing
+              if (!Array.isArray(content)) {
+                throw new Error('Message content is not an array');
+              }
+
+              // Handle text content - filter out null/undefined items
               const textContent = content
-                .filter((item: any) => item.type === 'text')
+                .filter((item: any) => item && typeof item === 'object' && item.type === 'text')
                 .map((item: any) => item.text)
+                .filter((text: string) => typeof text === 'string')
                 .join(' ');
 
-              // Handle tool use
-              const toolUse = content.find((item: any) => item.type === 'tool_use');
+              // Handle tool use - filter out null/undefined items
+              const toolUse = content.find((item: any) => item && typeof item === 'object' && item.type === 'tool_use');
               if (toolUse) {
                 parsedEntry.toolUse = {
                   name: toolUse.name,
@@ -62,10 +68,15 @@ export class LogParser {
                 };
                 
                 // Special handling for TodoWrite tool
-                if (toolUse.name === 'TodoWrite' && toolUse.input?.todos) {
-                  const todoCount = toolUse.input.todos.length;
-                  const completedCount = toolUse.input.todos.filter((todo: any) => todo.status === 'completed').length;
-                  const inProgressCount = toolUse.input.todos.filter((todo: any) => todo.status === 'in_progress').length;
+                if (toolUse.name === 'TodoWrite' && toolUse.input?.todos && Array.isArray(toolUse.input.todos)) {
+                  // Validate todos array and filter out invalid entries
+                  const validTodos = toolUse.input.todos.filter((todo: any) => 
+                    todo && typeof todo === 'object' && typeof todo.status === 'string'
+                  );
+                  
+                  const todoCount = validTodos.length;
+                  const completedCount = validTodos.filter((todo: any) => todo.status === 'completed').length;
+                  const inProgressCount = validTodos.filter((todo: any) => todo.status === 'in_progress').length;
 
                   parsedEntry.parsedContent = textContent
                     ? `${textContent}\n[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`
@@ -85,8 +96,13 @@ export class LogParser {
             if (sdkMessage.message?.content) {
               const { content } = sdkMessage.message;
 
-              // Handle tool results
-              const toolResult = content.find((item: any) => item.type === 'tool_result');
+              // Validate content is an array before processing
+              if (!Array.isArray(content)) {
+                throw new Error('Message content is not an array');
+              }
+
+              // Handle tool results - filter out null/undefined items
+              const toolResult = content.find((item: any) => item && typeof item === 'object' && item.type === 'tool_result');
               if (toolResult) {
                 parsedEntry.toolResult = {
                   content: toolResult.content,
@@ -94,10 +110,11 @@ export class LogParser {
                 };
                 parsedEntry.parsedContent = `[Tool Result${toolResult.is_error ? ' - Error' : ''}]: ${toolResult.content}`;
               } else {
-                // Handle regular user messages
+                // Handle regular user messages - filter out null/undefined items
                 const textContent = content
-                  .filter((item: any) => item.type === 'text')
+                  .filter((item: any) => item && typeof item === 'object' && item.type === 'text')
                   .map((item: any) => item.text)
+                  .filter((text: string) => typeof text === 'string')
                   .join(' ');
                 parsedEntry.parsedContent = textContent;
               }
@@ -160,7 +177,11 @@ export class LogParser {
 
   static formatTimestamp(timestamp: string): string {
     try {
-      return new Date(timestamp).toLocaleTimeString('en-US', {
+      const date = new Date(timestamp);
+      if (isNaN(date.getTime())) {
+        return timestamp;
+      }
+      return date.toLocaleTimeString('en-US', {
         hour12: false,
         hour: '2-digit',
         minute: '2-digit',
