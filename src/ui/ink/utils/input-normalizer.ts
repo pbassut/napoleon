@@ -4,6 +4,7 @@
  */
 
 import * as os from 'os';
+// eslint-disable-next-line import/extensions, import/no-unresolved
 import { isWindowsTerminal, isMacTerminal } from './terminal-capabilities';
 
 interface KeyObject {

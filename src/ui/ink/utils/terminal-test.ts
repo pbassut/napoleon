@@ -6,7 +6,8 @@
  */
 
 import chalk from 'chalk';
-import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities.js';
+// eslint-disable-next-line import/extensions, import/no-unresolved
+import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities';
 
 console.log('Napoleon Terminal Compatibility Test\n');
 
@@ -20,7 +21,8 @@ console.log('Node Version:', chalk.cyan(process.version));
 console.log('');
 
 console.log('Capabilities:');
-console.log('  Color Support:', chalk.green(capabilities.colors === 16777216 ? '24-bit True Color' : `${capabilities.colors} colors`));
+console.log('  Color Support:', chalk.green(capabilities.colors === 16777216
+  ? '24-bit True Color' : `${capabilities.colors} colors`));
 console.log('  Unicode:', capabilities.unicode ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));
 console.log('  Box Drawing:', capabilities.boxDrawing ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));
 console.log('  Mouse:', capabilities.mouse ? chalk.green('✓ Supported') : chalk.red('✗ Not Supported'));

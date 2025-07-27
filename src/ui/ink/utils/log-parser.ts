@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/extensions, import/no-unresolved
 import { LogEntry } from '../hooks/useAgentLogs';
 
 export interface ParsedLogEntry {
@@ -54,13 +55,15 @@ export class LogParser {
 
               // Handle text content - filter out null/undefined items
               const textContent = content
-                .filter((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'text')
+                .filter((item: unknown) => item && typeof item === 'object'
+                  && (item as Record<string, unknown>).type === 'text')
                 .map((item: unknown) => (item as Record<string, unknown>).text)
                 .filter((text: unknown): text is string => typeof text === 'string')
                 .join(' ');
 
               // Handle tool use - filter out null/undefined items
-              const toolUse = content.find((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'tool_use') as Record<string, unknown> | undefined;
+              const toolUse = content.find((item: unknown) => item && typeof item === 'object'
+                && (item as Record<string, unknown>).type === 'tool_use') as Record<string, unknown> | undefined;
               if (toolUse) {
                 parsedEntry.toolUse = {
                   name: toolUse.name as string,
@@ -69,19 +72,27 @@ export class LogParser {
 
                 // Special handling for TodoWrite tool
                 const todoInput = toolUse.input as Record<string, unknown>;
-                if (toolUse.name === 'TodoWrite' && toolUse.input && typeof toolUse.input === 'object' && todoInput.todos && Array.isArray(todoInput.todos)) {
+                if (toolUse.name === 'TodoWrite' && toolUse.input && typeof toolUse.input === 'object'
+                  && todoInput.todos && Array.isArray(todoInput.todos)) {
                   // Validate todos array and filter out invalid entries
                   const validTodos = (todoInput.todos as unknown[]).filter(
-                    (todo: unknown) => todo && typeof todo === 'object' && typeof (todo as Record<string, unknown>).status === 'string',
+                    (todo: unknown) => todo && typeof todo === 'object'
+                      && typeof (todo as Record<string, unknown>).status === 'string',
                   );
 
                   const todoCount = validTodos.length;
-                  const completedCount = validTodos.filter((todo: unknown) => (todo as Record<string, unknown>).status === 'completed').length;
-                  const inProgressCount = validTodos.filter((todo: unknown) => (todo as Record<string, unknown>).status === 'in_progress').length;
+                  const completedCount = validTodos.filter(
+                    (todo: unknown) => (todo as Record<string, unknown>).status === 'completed',
+                  ).length;
+                  const inProgressCount = validTodos.filter(
+                    (todo: unknown) => (todo as Record<string, unknown>).status === 'in_progress',
+                  ).length;
 
                   parsedEntry.parsedContent = textContent
-                    ? `${textContent}\n[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`
-                    : `[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`;
+                    ? `${textContent}\n[TodoWrite: ${todoCount} tasks `
+                    + `(${completedCount} completed, ${inProgressCount} in progress)]`
+                    : `[TodoWrite: ${todoCount} tasks `
+                    + `(${completedCount} completed, ${inProgressCount} in progress)]`;
                 } else {
                   parsedEntry.parsedContent = textContent
                     ? `${textContent}\n[Tool: ${toolUse.name as string}]`
@@ -103,17 +114,20 @@ export class LogParser {
               }
 
               // Handle tool results - filter out null/undefined items
-              const toolResult = content.find((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'tool_result') as Record<string, unknown> | undefined;
+              const toolResult = content.find((item: unknown) => item && typeof item === 'object'
+                && (item as Record<string, unknown>).type === 'tool_result') as Record<string, unknown> | undefined;
               if (toolResult) {
                 parsedEntry.toolResult = {
                   content: toolResult.content as string,
                   isError: toolResult.is_error as boolean,
                 };
-                parsedEntry.parsedContent = `[Tool Result${toolResult.is_error ? ' - Error' : ''}]: ${toolResult.content as string}`;
+                parsedEntry.parsedContent = `[Tool Result${toolResult.is_error ? ' - Error' : ''}]: `
+                  + `${toolResult.content as string}`;
               } else {
                 // Handle regular user messages - filter out null/undefined items
                 const textContent = content
-                  .filter((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'text')
+                  .filter((item: unknown) => item && typeof item === 'object'
+                    && (item as Record<string, unknown>).type === 'text')
                   .map((item: unknown) => (item as Record<string, unknown>).text)
                   .filter((text: unknown): text is string => typeof text === 'string')
                   .join(' ');
