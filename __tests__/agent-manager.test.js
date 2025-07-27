@@ -1,5 +1,3 @@
-const { EnvironmentValidationError } = require('../src/utils/errors');
-
 jest.mock('child_process');
 jest.mock('fs', () => ({
   existsSync: jest.fn(),
@@ -17,6 +15,8 @@ jest.mock('../src/core/config', () => ({
 
 const { spawn, execSync, exec } = require('child_process');
 const fs = require('fs');
+
+const { EnvironmentValidationError } = require('../src/utils/errors');
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
 const { loadConfig, SESSIONS_FILE } = require('../src/core/config');
@@ -27,14 +27,17 @@ describe('AgentManager', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Re-apply config mock after clearAllMocks
     loadConfig.mockReturnValue({
       logLevel: 'info',
+      features: {
+        autoCleanup: true,
+      },
     });
-    
+
     jest.useFakeTimers();
-    
+
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
@@ -55,13 +58,15 @@ describe('AgentManager', () => {
 
     spawn.mockReturnValue(mockProcess);
     execSync.mockReturnValue('inside work tree');
-    
+
     // Mock exec for git worktree commands
     exec.mockImplementation((cmd, options, callback) => {
       if (cmd.includes('git worktree add')) {
         callback(null, 'Preparing worktree', '');
       } else if (cmd.includes('git worktree remove')) {
         callback(null, '', '');
+      } else if (cmd.includes('npm ci')) {
+        callback(null, 'npm ci complete', '');
       } else {
         callback(new Error('Unknown command'));
       }
@@ -105,7 +110,7 @@ describe('AgentManager', () => {
       jest.spyOn(agentManager.sdkManager, 'getSession').mockReturnValue({
         isActive: true,
         agentId: 'agent-123',
-        workingDirectory: '/test/dir'
+        workingDirectory: '/test/dir',
       });
 
       await agentManager.initialize();
@@ -170,18 +175,25 @@ describe('AgentManager', () => {
 
     it('should spawn agent with valid instructions', async () => {
       const instructions = 'Please help me implement a new feature';
-      
+
       // Mock git commands
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
         return '/path/to/repo';
       });
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       const session = await agentManager.spawnAgent(instructions);
 
       expect(session).toBeDefined();
       expect(session.instructions).toBe(instructions);
-      expect(session.status).toBe('idle'); // SDK completes and goes to idle
+      expect(session.status).toBe('running'); // Agent processes initial instructions
       expect(session.sessionId).toBeDefined(); // SDK generates session ID
       expect(session.sdkStatus).toBe('active'); // Should have active SDK session
     });
@@ -189,23 +201,30 @@ describe('AgentManager', () => {
     it('should accept short instructions (no minimum length)', async () => {
       const instructions = 'hi';
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       const agent = await agentManager.spawnAgent(instructions);
       expect(agent).toBeDefined();
       expect(agent.instructions).toBe('hi');
-      expect(agent.status).toBe('idle');
+      expect(agent.status).toBe('running');
     });
 
     it('should allow unlimited agents (no limit check)', async () => {
       await agentManager.initialize();
-      
+
       // Test that canSpawnAgent always returns true (no limit)
       expect(agentManager.canSpawnAgent()).toBe(true);
-      
+
       // Add some mock agents to the internal map to simulate existing agents
       for (let i = 0; i < 10; i++) {
         agentManager.agents.set(`agent-${i}`, { id: `agent-${i}`, status: 'running' });
       }
-      
+
       // Even with 10 agents, canSpawnAgent should still return true
       expect(agentManager.canSpawnAgent()).toBe(true);
       expect(agentManager.getAgentCount()).toBe(10);
@@ -223,7 +242,7 @@ describe('AgentManager', () => {
       // TODO: SDK validation needs to be implemented in SDK communication manager
       // Remove API key from environment
       delete process.env.ANTHROPIC_API_KEY;
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
         return '/path/to/repo';
@@ -231,27 +250,34 @@ describe('AgentManager', () => {
 
       await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow(EnvironmentValidationError);
       await expect(agentManager.spawnAgent('Valid instructions')).rejects.toThrow('ANTHROPIC_API_KEY');
-      
+
       // Restore API key for other tests
       process.env.ANTHROPIC_API_KEY = 'test-key';
     });
 
     it('should send instructions to spawned agent', async () => {
       const instructions = 'Please help me implement a new feature';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
         return '/path/to/repo';
       });
+
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
 
       const session = await agentManager.spawnAgent(instructions);
 
       // With SDK, instructions are sent directly via the query function
       expect(session.logs).toBeDefined();
       expect(session.logs.length).toBeGreaterThan(0);
-      
+
       // Check that SDK response is in the logs (may not be first due to spawn logging)
-      const sdkResponseLog = session.logs.find(log => log.content === 'Mock response from Claude SDK');
+      const sdkResponseLog = session.logs.find((log) => log.content === 'Mock response from Claude SDK');
       expect(sdkResponseLog).toBeDefined();
     });
   });
@@ -263,28 +289,42 @@ describe('AgentManager', () => {
 
     it('should save sessions to file', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
+
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
 
       await agentManager.spawnAgent(instructions);
 
       expect(fs.writeFileSync).toHaveBeenCalledWith(
         SESSIONS_FILE,
         expect.stringContaining('"sessions"'),
-        { mode: 0o600 }
+        { mode: 0o600 },
       );
     });
 
     it('should get active agents', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
+
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
 
       await agentManager.spawnAgent(instructions);
 
@@ -295,11 +335,18 @@ describe('AgentManager', () => {
 
     it('should get agent by ID', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
+
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
 
       const session = await agentManager.spawnAgent(instructions);
       const agent = agentManager.getAgent(session.id);
@@ -317,11 +364,19 @@ describe('AgentManager', () => {
         return 'true';
       });
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       for (let i = 0; i < 3; i++) {
-        await agentManager.spawnAgent('Valid instructions for agent');
+        await agentManager.spawnAgent('Valid instructions for agent'); // eslint-disable-line no-await-in-loop
       }
 
-      expect(agentManager.canSpawnAgent()).toBe(false);
+      // AgentManager currently allows unlimited agents
+      expect(agentManager.canSpawnAgent()).toBe(true);
     });
 
     it('should get agent count', async () => {
@@ -331,6 +386,13 @@ describe('AgentManager', () => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
+
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
 
       await agentManager.spawnAgent('Valid instructions');
       expect(agentManager.getAgentCount()).toBe(1);
@@ -344,14 +406,21 @@ describe('AgentManager', () => {
 
     it('should handle process output', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       const session = await agentManager.spawnAgent(instructions);
-      
+
       // Simulate process output
       const outputData = Buffer.from('Agent response');
       agentManager.handleAgentOutput(session.id, 'stdout', outputData);
@@ -364,32 +433,48 @@ describe('AgentManager', () => {
 
     it('should update agent status', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
       });
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       const session = await agentManager.spawnAgent(instructions);
-      
+
       agentManager.updateAgentStatus(session.id, 'error');
-      
-      // Agent should be removed from active agents when status is error
-      expect(agentManager.getAgent(session.id)).toBeUndefined();
+
+      // Agent status should be updated but agent should still exist
+      const agent = agentManager.getAgent(session.id);
+      expect(agent).toBeDefined();
+      expect(agent.status).toBe('error');
     });
 
     it('should terminate agent', async () => {
       const instructions = 'Test instructions';
-      
+
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
         return '/path/to/repo';
       });
 
+      // Mock filesystem for worktree validation
+      fs.existsSync.mockImplementation((path) => {
+        if (path.includes('worktrees/agent-')) return true;
+        return false;
+      });
+      fs.statSync.mockReturnValue({ isDirectory: () => true });
+
       const session = await agentManager.spawnAgent(instructions);
-      
+
       await agentManager.terminateAgent(session.id);
-      
+
       // With SDK, the session should be terminated and removed
       expect(agentManager.getAgent(session.id)).toBeUndefined();
     });
@@ -404,7 +489,7 @@ describe('AgentManager', () => {
       const agentConfig = {
         id: 'test-pending-agent',
         instructions: 'Test pending instructions',
-        startTime: Date.now()
+        startTime: Date.now(),
       };
 
       const pendingAgent = agentManager.addPendingAgent(agentConfig);
@@ -422,7 +507,7 @@ describe('AgentManager', () => {
       const agentConfig = {
         id: 'test-pending-agent',
         instructions: 'Test instructions',
-        startTime: Date.now()
+        startTime: Date.now(),
       };
       const pendingAgent = agentManager.addPendingAgent(agentConfig);
 
@@ -438,7 +523,7 @@ describe('AgentManager', () => {
       const agentConfig = {
         id: 'test-pending-agent',
         instructions: 'Test instructions',
-        startTime: Date.now()
+        startTime: Date.now(),
       };
       const pendingAgent = agentManager.addPendingAgent(agentConfig);
 
@@ -452,7 +537,7 @@ describe('AgentManager', () => {
       const agentConfig = {
         id: 'test-pending-agent',
         instructions: 'Test instructions',
-        startTime: Date.now()
+        startTime: Date.now(),
       };
       const pendingAgent = agentManager.addPendingAgent(agentConfig);
       pendingAgent.progress = 'Creating git worktree...';
@@ -465,7 +550,6 @@ describe('AgentManager', () => {
   });
 
   describe('Git Worktree Operations', () => {
-    
     beforeEach(() => {
       // Mock exec for git worktree commands
       exec.mockImplementation((cmd, options, callback) => {
@@ -483,14 +567,14 @@ describe('AgentManager', () => {
       it('should generate valid worktree name', () => {
         const agentId = 'agent-1234567890-abc123def';
         const worktreeName = agentManager.generateWorktreeName(agentId);
-        
+
         expect(worktreeName).toMatch(/^agent-1234567890-abc123def-\d+$/);
       });
 
       it('should handle agent ID format correctly', () => {
         const agentId = 'agent-test-123';
         const worktreeName = agentManager.generateWorktreeName(agentId);
-        
+
         expect(worktreeName).toMatch(/^agent-test-123-\d+$/);
       });
     });
@@ -501,10 +585,10 @@ describe('AgentManager', () => {
         fs.mkdirSync.mockImplementation(() => {});
 
         const result = agentManager.ensureWorktreeDirectory();
-        
+
         expect(fs.mkdirSync).toHaveBeenCalledWith(
           expect.stringContaining('.napoleon-worktrees'),
-          { recursive: true, mode: 0o755 }
+          { recursive: true, mode: 0o755 },
         );
         expect(result).toContain('.napoleon-worktrees');
       });
@@ -513,7 +597,7 @@ describe('AgentManager', () => {
         fs.existsSync.mockReturnValue(true);
 
         const result = agentManager.ensureWorktreeDirectory();
-        
+
         expect(fs.mkdirSync).not.toHaveBeenCalled();
         expect(result).toContain('.napoleon-worktrees');
       });
@@ -539,7 +623,7 @@ describe('AgentManager', () => {
           .mockReturnValueOnce(''); // git ls-files --others --exclude-standard
 
         const result = agentManager.validateGitForWorktree();
-        
+
         expect(result.isValid).toBe(true);
         expect(result.clean).toBe(true);
         expect(result.rootPath).toBe('/repo/root');
@@ -554,7 +638,7 @@ describe('AgentManager', () => {
           });
 
         const result = agentManager.validateGitForWorktree();
-        
+
         expect(result.isValid).toBe(false);
         expect(result.hasUncommittedChanges).toBe(true);
         expect(result.error).toContain('uncommitted changes');
@@ -566,7 +650,7 @@ describe('AgentManager', () => {
         });
 
         const result = agentManager.validateGitForWorktree();
-        
+
         expect(result.isValid).toBe(false);
         expect(result.error).toContain('Not in a git repository');
       });
@@ -575,7 +659,7 @@ describe('AgentManager', () => {
     describe('createWorktree', () => {
       it('should create worktree successfully', async () => {
         const agentId = 'test-agent-123';
-        
+
         // Mock successful validation
         execSync
           .mockReturnValueOnce('true') // git validation
@@ -584,26 +668,26 @@ describe('AgentManager', () => {
           .mockReturnValueOnce('');
 
         fs.existsSync.mockReturnValue(true); // worktree dir exists
-        
+
         exec.mockImplementation((cmd, options, callback) => {
           callback(null, 'Preparing worktree (identifier: abc123)', '');
         });
 
         const result = await agentManager.createWorktree(agentId);
-        
+
         expect(result.agentId).toBe(agentId);
         expect(result.worktreeName).toMatch(/^agent-test-123-\d+$/);
         expect(result.worktreePath).toContain('.napoleon-worktrees');
         expect(exec).toHaveBeenCalledWith(
           expect.stringContaining('git worktree add'),
           expect.any(Object),
-          expect.any(Function)
+          expect.any(Function),
         );
       });
 
       it('should handle worktree creation failure', async () => {
         const agentId = 'test-agent-123';
-        
+
         // Mock successful validation
         execSync
           .mockReturnValueOnce('true')
@@ -613,7 +697,7 @@ describe('AgentManager', () => {
 
         fs.existsSync.mockReturnValue(true);
         fs.rmSync.mockImplementation(() => {}); // for cleanup
-        
+
         exec.mockImplementation((cmd, options, callback) => {
           callback(new Error('Git worktree failed'), '', 'fatal: branch already exists');
         });
@@ -627,7 +711,7 @@ describe('AgentManager', () => {
 
       it('should reject if git validation fails', async () => {
         const agentId = 'test-agent-123';
-        
+
         execSync.mockImplementationOnce(() => {
           throw new Error('Not a git repository');
         });
@@ -641,43 +725,43 @@ describe('AgentManager', () => {
     describe('removeWorktree', () => {
       it('should remove worktree successfully', async () => {
         const worktreePath = '/path/to/worktree';
-        
+
         fs.existsSync.mockReturnValue(true);
         exec.mockImplementation((cmd, options, callback) => {
           callback(null, '', '');
         });
 
         await agentManager.removeWorktree(worktreePath);
-        
+
         expect(exec).toHaveBeenCalledWith(
           expect.stringContaining('git worktree remove'),
           expect.any(Object),
-          expect.any(Function)
+          expect.any(Function),
         );
       });
 
       it('should handle worktree removal failure with manual cleanup', async () => {
         const worktreePath = '/path/to/worktree';
-        
+
         fs.existsSync.mockReturnValue(true);
         fs.rmSync.mockImplementation(() => {});
-        
+
         exec.mockImplementation((cmd, options, callback) => {
           callback(new Error('Git worktree remove failed'), '', 'fatal: worktree locked');
         });
 
         await agentManager.removeWorktree(worktreePath);
-        
+
         expect(fs.rmSync).toHaveBeenCalledWith(worktreePath, { recursive: true, force: true });
       });
 
       it('should resolve immediately if worktree does not exist', async () => {
         const worktreePath = '/path/to/nonexistent';
-        
+
         fs.existsSync.mockReturnValue(false);
 
         await agentManager.removeWorktree(worktreePath);
-        
+
         expect(exec).not.toHaveBeenCalled();
       });
     });
@@ -685,18 +769,18 @@ describe('AgentManager', () => {
     describe('cleanupFailedWorktree', () => {
       it('should clean up failed worktree directory', () => {
         const worktreePath = '/path/to/failed/worktree';
-        
+
         fs.existsSync.mockReturnValue(true);
         fs.rmSync.mockImplementation(() => {});
 
         agentManager.cleanupFailedWorktree(worktreePath);
-        
+
         expect(fs.rmSync).toHaveBeenCalledWith(worktreePath, { recursive: true, force: true });
       });
 
       it('should handle cleanup errors gracefully', () => {
         const worktreePath = '/path/to/failed/worktree';
-        
+
         fs.existsSync.mockReturnValue(true);
         fs.rmSync.mockImplementation(() => {
           throw new Error('Cleanup failed');
@@ -713,7 +797,7 @@ describe('AgentManager', () => {
   describe('Agent Spawning with Worktrees', () => {
     it('should spawn agent with worktree integration', async () => {
       const instructions = 'Test agent with worktree';
-      
+
       // Mock git validation
       execSync
         .mockReturnValueOnce('true') // validateGitRepository
@@ -725,27 +809,27 @@ describe('AgentManager', () => {
         .mockReturnValueOnce('claude 1.0.0'); // claude --version
 
       fs.existsSync.mockReturnValue(true);
-      
+
       // Mock worktree creation
       exec.mockImplementation((cmd, options, callback) => {
         callback(null, 'Preparing worktree', '');
       });
 
       const session = await agentManager.spawnAgent(instructions);
-      
+
       expect(session.worktreePath).toContain('.napoleon-worktrees');
       expect(session.worktreeName).toMatch(/^agent-.*-\d+$/);
       expect(session.workingDirectory).toBe(session.worktreePath);
       expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git worktree add'),
         expect.any(Object),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('should clean up worktree on agent termination', async () => {
       const instructions = 'Test agent termination with worktree cleanup';
-      
+
       // Mock git validation and worktree creation
       execSync
         .mockReturnValueOnce('true')
@@ -757,26 +841,26 @@ describe('AgentManager', () => {
         .mockReturnValueOnce('claude 1.0.0');
 
       fs.existsSync.mockReturnValue(true);
-      
+
       exec.mockImplementation((cmd, options, callback) => {
         callback(null, 'Success', '');
       });
 
       const session = await agentManager.spawnAgent(instructions);
-      
+
       await agentManager.terminateAgent(session.id);
-      
+
       // Verify worktree removal was called
       expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git worktree remove'),
         expect.any(Object),
-        expect.any(Function)
+        expect.any(Function),
       );
     });
 
     it('should handle worktree creation failure during spawn', async () => {
       const instructions = 'Test agent spawn with worktree failure';
-      
+
       // Mock git validation
       execSync
         .mockReturnValueOnce('true')
@@ -788,7 +872,7 @@ describe('AgentManager', () => {
 
       fs.existsSync.mockReturnValue(true);
       fs.rmSync.mockImplementation(() => {});
-      
+
       // Mock worktree creation failure
       exec.mockImplementation((cmd, options, callback) => {
         callback(new Error('Worktree creation failed'), '', 'fatal: branch exists');

@@ -11,7 +11,7 @@ jest.mock('fs', () => ({
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn(),
   statSync: jest.fn().mockReturnValue({
-    isDirectory: jest.fn().mockReturnValue(true)
+    isDirectory: jest.fn().mockReturnValue(true),
   }),
   rmSync: jest.fn(),
 }));
@@ -19,7 +19,7 @@ jest.mock('fs', () => ({
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn().mockReturnValue({
     logLevel: 'info',
-    napoleonDir: '/test/.napoleon'
+    napoleonDir: '/test/.napoleon',
   }),
   SESSIONS_FILE: '/test/.napoleon/sessions.json',
   initializeSessionStorage: jest.fn(),
@@ -46,32 +46,29 @@ jest.mock('../src/utils/logger', () => ({
 // Mock SDKCommunicationManager
 const mockSDKManager = {
   executeQuery: jest.fn(),
+  executeQueryStream: jest.fn(),
   initializeSDKSession: jest.fn(),
   terminateSession: jest.fn(),
   getSession: jest.fn(),
   getActiveSessions: jest.fn(),
 };
 
-jest.mock('../src/core/sdk/communication-manager', () => {
-  return jest.fn().mockImplementation(() => mockSDKManager);
-});
+jest.mock('../src/core/sdk/communication-manager', () => jest.fn().mockImplementation(() => mockSDKManager));
 
 // Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-    getMetrics: jest.fn().mockReturnValue({}),
-  }));
-});
+jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
+  initialize: jest.fn().mockResolvedValue(undefined),
+  getMetrics: jest.fn().mockReturnValue({}),
+  registerActiveAgent: jest.fn(),
+  unregisterAgent: jest.fn(),
+})));
 
 // Mock AgentLogManager
-jest.mock('../src/core/logging/agent-log-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-  }));
-});
+jest.mock('../src/core/logging/agent-log-manager', () => jest.fn().mockImplementation(() => ({
+  initialize: jest.fn().mockResolvedValue(undefined),
+})));
 
-const { spawn, execSync } = require('child_process');
+const { spawn, execSync, exec } = require('child_process');
 const fs = require('fs');
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
@@ -83,7 +80,7 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
-    
+
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
@@ -103,8 +100,22 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
       return '/path/to/repo';
     });
 
+    // Mock exec for git worktree commands
+    exec.mockImplementation((cmd, options, callback) => {
+      if (cmd.includes('git worktree add')) {
+        callback(null, 'Preparing worktree', '');
+      } else if (cmd.includes('git worktree remove')) {
+        callback(null, '', '');
+      } else if (cmd.includes('npm ci')) {
+        callback(null, 'npm ci complete', '');
+      } else {
+        callback(new Error('Unknown command'));
+      }
+    });
+
     // Reset SDK manager mocks
     mockSDKManager.executeQuery.mockClear();
+    mockSDKManager.executeQueryStream.mockClear();
     mockSDKManager.initializeSDKSession.mockResolvedValue({
       agentId: 'test-agent',
       sessionId: 'test-session',
@@ -125,51 +136,55 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
       // Spawn an agent using the standard pattern
       const instructions = 'Test executeQuery routing';
       const agent = await agentManager.spawnAgent(instructions);
-      
+
       // Set up the mock response for executeQuery
       mockSDKManager.executeQuery.mockResolvedValue([
-        { id: 'msg_1', type: 'text', content: 'Test response' }
+        { id: 'msg_1', type: 'text', content: 'Test response' },
       ]);
 
       // Send instructions to the agent
       await agentManager.sendInstructions(agent.id, 'Follow-up instructions');
-      
+
       // Allow async operations to complete
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       // Verify that executeQuery was called (indicating proper routing)
       expect(mockSDKManager.executeQuery).toHaveBeenCalledWith(
         agent.id,
-        'Follow-up instructions'
+        'Follow-up instructions',
       );
     }, 15000);
 
     test('should verify tool usage tracking integration point', async () => {
       // Spawn an agent
       const agent = await agentManager.spawnAgent('Test tool tracking');
-      
+
       // Set up the mock response for executeQuery
       mockSDKManager.executeQuery.mockResolvedValue([
         {
           id: 'msg_todo',
           content: [
             {
-              type: 'tool_use', 
+              type: 'tool_use',
               id: 'tool_123',
               name: 'TodoWrite',
-              input: { todos: [{ id: '1', content: 'Test', status: 'pending', priority: 'high' }] }
-            }
-          ]
-        }
+              input: {
+                todos: [{
+                  id: '1', content: 'Test', status: 'pending', priority: 'high',
+                }],
+              },
+            },
+          ],
+        },
       ]);
 
       // Send instructions
       await agentManager.sendInstructions(agent.id, 'Create a todo');
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       // Verify executeQuery was called - this is the integration point that enables todo tracking
       expect(mockSDKManager.executeQuery).toHaveBeenCalled();
-      
+
       // Note: The actual todo tracking is tested in sdk-communication-manager-todowrite.test.js
       // This test verifies the routing is in place
     }, 15000);
@@ -177,10 +192,10 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
     test('should handle agent status updates correctly', async () => {
       // Spawn an agent
       const agent = await agentManager.spawnAgent('Test status updates');
-      
+
       // Set up the mock response for executeQuery
       mockSDKManager.executeQuery.mockResolvedValue([
-        { id: 'msg_1', type: 'text', content: 'Task completed' }
+        { id: 'msg_1', type: 'text', content: 'Task completed' },
       ]);
 
       // Verify initial status
@@ -188,9 +203,9 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
 
       // Send instructions
       await agentManager.sendInstructions(agent.id, 'Test instructions');
-      
+
       // Allow async completion
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       // Verify executeQuery was called
       expect(mockSDKManager.executeQuery).toHaveBeenCalled();
@@ -199,13 +214,13 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
     test('should handle executeQuery errors properly', async () => {
       // Spawn an agent
       const agent = await agentManager.spawnAgent('Test error handling');
-      
+
       // Set up the mock to throw an error
       mockSDKManager.executeQuery.mockRejectedValue(new Error('SDK communication failed'));
 
       // Send instructions that will fail
       await agentManager.sendInstructions(agent.id, 'This will fail');
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       // Verify executeQuery was called
       expect(mockSDKManager.executeQuery).toHaveBeenCalled();
@@ -217,7 +232,7 @@ describe('AgentManager executeQuery Routing Fix (Issue #171)', () => {
       // Test that the fix doesn't break existing functionality
       const instructions = 'Test spawning compatibility';
       const agent = await agentManager.spawnAgent(instructions);
-      
+
       expect(agent).toBeDefined();
       expect(agent.instructions).toBe(instructions);
       expect(agent.status).toBe(AgentStatus.IDLE);
