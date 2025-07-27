@@ -7,7 +7,7 @@ interface FooterProps {
   agentCount: number;
 }
 
-const Footer: React.FC<FooterProps> = memo(() => (
+export const Footer: React.FC<FooterProps> = memo(() => (
   <Box width="100%" paddingX={1}>
     <Box>
       <Text color="yellow">[n]</Text>
