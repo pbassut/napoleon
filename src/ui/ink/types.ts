@@ -13,8 +13,8 @@ export interface Agent {
   lastActivity?: Date;
   instructions?: string;
   workingDirectory?: string;
-  error?: any;
-  progress?: any;
+  error?: Error | string;
+  progress?: Record<string, unknown>;
   todos?: TodoItem[];
 }
 
@@ -31,11 +31,11 @@ export interface AgentManagerHookReturn {
 
 export interface AgentManager {
   initialize: () => Promise<void>;
-  getActiveAgents: () => any[];
+  getActiveAgents: () => Agent[];
   canSpawnAgent: () => boolean;
-  spawnAgent: (instructions: string, options?: any) => Promise<any>;
+  spawnAgent: (instructions: string, options?: Record<string, unknown>) => Promise<Agent>;
   terminateAgent: (agentId: string) => Promise<void>;
-  getAgentDetails: (agentId: string) => any;
+  getAgentDetails: (agentId: string) => Agent | null;
   getCurrentTask: (agentId: string) => TodoItem | null;
 }
 
