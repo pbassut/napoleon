@@ -8,8 +8,6 @@ jest.mock('../../../src/core/git-status-checker');
 jest.mock('../../../src/core/startup-warning-display');
 jest.mock('../../../src/utils/logger');
 jest.mock('child_process');
-jest.mock('../../../src/core/api-key-validator');
-jest.mock('../../../src/core/api-key-setup-guide');
 
 const { execSync } = require('child_process');
 

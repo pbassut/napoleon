@@ -21,7 +21,6 @@ npx napoleon
 - Node.js >= 18.0.0
 - Git >= 2.20.0
 - Claude Code SDK (automatically managed)
-- Anthropic API key - [Setup Guide](./API-KEY-SETUP.md)
 
 ## Usage
 

@@ -1,4 +1,4 @@
-const { validateEnvironment, validateApiKey } = require('../../src/cli/validators/environment');
+const { validateEnvironment } = require('../../src/cli/validators/environment');
 const { initializeApplication } = require('../../src/cli/index');
 const { EnvironmentValidationError, ConfigurationError } = require('../../src/utils/errors');
 
@@ -6,15 +6,11 @@ const { EnvironmentValidationError, ConfigurationError } = require('../../src/ut
 jest.mock('child_process');
 jest.mock('../../src/core/config');
 jest.mock('../../src/utils/logger');
-jest.mock('../../src/core/api-key-validator');
-jest.mock('../../src/core/api-key-setup-guide');
 jest.mock('../../src/core/git-status-checker');
 jest.mock('../../src/core/startup-warning-display');
 
 const { execSync } = require('child_process');
 const { initializeSessionStorage, loadConfig } = require('../../src/core/config');
-const ApiKeyValidator = require('../../src/core/api-key-validator');
-const ApiKeySetupGuide = require('../../src/core/api-key-setup-guide');
 const GitStatusChecker = require('../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../src/core/startup-warning-display');
 

@@ -217,7 +217,6 @@ If you need to revert to Napoleon:
 
 - **Documentation**: See README.md for full Napoleon documentation
 - **Issues**: Report problems at https://github.com/pbassut/napoleon/issues
-- **API Key Setup**: Detailed guide in API-KEY-SETUP.md
 
 ## Next Steps
 
