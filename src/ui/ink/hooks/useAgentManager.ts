@@ -143,18 +143,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
               
               // Check todos array changes
               const todosChangedResult = todosChanged(prevAgent.todos || [], newAgent.todos || []);
-              
-              // DEBUG: Log todos comparison for debugging
-              if (todosChangedResult) {
-                logger.info('TODOS_DEBUG: Agent todos changed', {
-                  agentId: newAgent.id,
-                  prevTodos: JSON.stringify(prevAgent.todos || []),
-                  newTodos: JSON.stringify(newAgent.todos || []),
-                  prevTodosCount: (prevAgent.todos || []).length,
-                  newTodosCount: (newAgent.todos || []).length,
-                });
-              }
-              
+
               return basicChanged || todosChangedResult;
             });
 
@@ -168,17 +157,6 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
                 status: a.status,
                 todosCount: (a.todos || []).length,
                 currentTask: (a.todos || []).find(t => t.status === 'in_progress')?.content || 'No active task'
-              })),
-            });
-          } else {
-            // DEBUG: Log when no changes detected to help debug
-            logger.debug('TODOS_DEBUG: No agent changes detected', {
-              agentCount: prevAgents.length,
-              agents: prevAgents.map((a) => ({ 
-                id: a.id, 
-                status: a.status,
-                todosCount: (a.todos || []).length,
-                inProgressTodos: (a.todos || []).filter(t => t.status === 'in_progress').length
               })),
             });
           }
