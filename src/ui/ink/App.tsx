@@ -3,13 +3,13 @@ import {
   Box, useApp, Text, useInput, useStdout,
 } from 'ink'; // eslint-disable-line import/no-unresolved
 import { useAgentManager } from './hooks/useAgentManager'; // eslint-disable-line import/no-unresolved, import/extensions
-import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
+import ErrorBoundary from './components/Common/ErrorBoundary';
 import { Header } from './components/Layout/Header';
 import { MainContent } from './components/Layout/MainContent';
 import { Footer } from './components/Layout/Footer';
 import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 import { TerminationDialog } from './components/Dialogs/TerminationDialog';
-import AgentListDefault from './components/AgentList/AgentList';
+import AgentList from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
 import logger from '../../utils/logger';
 
@@ -144,34 +144,35 @@ const App = ({ agentManager }) => {
     }
   };
 
-  const handleTerminateAgent = async () => {
+  const handleTerminateAgent = async (deleteWorktree = false) => {
     if (!selectedAgent) return;
 
     try {
-      await terminateAgent(selectedAgent.id);
+      // Pass deleteWorktree option to the terminateAgent function
+      await terminateAgent(selectedAgent.id, { deleteWorktree });
       setIsTerminationDialogOpen(false);
     } catch (terminateError) {
-      logger.error('Failed to terminate agent:', { error: terminateError });
+      const operation = deleteWorktree ? 'delete' : 'terminate';
+      logger.error(`Failed to ${operation} agent:`, { error: terminateError });
       // Let the dialog show the error
+      throw terminateError;
     }
   };
 
-  // Import components dynamically
-  const ErrorBoundary = ErrorBoundaryDefault;
-  const AgentList = AgentListDefault;
-
-  // If detail view is open, show only the detail view
-  if (isDetailViewOpen && selectedAgent) {
-    return (
-      <ErrorBoundary>
-        <DetailView
-          agent={selectedAgent}
-          onClose={() => setIsDetailViewOpen(false)}
-          agentManager={agentManager}
-        />
-      </ErrorBoundary>
-    );
-  }
+  const DetailViewComponent = useMemo(() => {
+    if (isDetailViewOpen && selectedAgent) {
+      return (
+        <Box flexDirection="column" width="100%" height={stdout.rows}>
+          <DetailView
+            agent={selectedAgent}
+            onClose={() => setIsDetailViewOpen(false)}
+            agentManager={agentManager}
+          />
+        </Box>
+      );
+    }
+    return null;
+  }, [isDetailViewOpen, selectedAgent, stdout.rows]);
 
   return (
     <ErrorBoundary>
@@ -253,6 +254,8 @@ const App = ({ agentManager }) => {
           }}
         />
       </Box>
+
+      {DetailViewComponent}
     </ErrorBoundary>
   );
 };

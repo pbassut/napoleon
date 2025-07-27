@@ -280,10 +280,17 @@ class WorktreeLifecycleManager {
     });
 
     const config = loadConfig();
-    if (!config.features.autoCleanup) {
+
+    // Allow bypassing autoCleanup check for UI deletion mode
+    if (!options.bypassAutoCleanupCheck && !config.features.autoCleanup) {
       logger.debug('Worktree force cleanup disabled by configuration', { worktreePath });
       return Promise.resolve();
     }
+
+    if (options.bypassAutoCleanupCheck) {
+      logger.debug('Bypassing autoCleanup check for deletion mode', { worktreePath });
+    }
+
     return this.cleanupQueue.forceCleanup(worktreePath, options);
   }
 

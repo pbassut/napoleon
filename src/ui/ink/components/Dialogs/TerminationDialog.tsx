@@ -8,27 +8,28 @@ import { ModalOverlay } from '../Common/ModalOverlay';
 interface TerminationDialogProps {
   isOpen: boolean;
   agent: Agent | null;
-  onConfirm: () => Promise<void>;
+  onConfirm: (deleteWorktree?: boolean) => Promise<void>;
   onCancel: () => void;
 }
 
 const TerminationDialog: React.FC<TerminationDialogProps> = ({
   isOpen, agent, onConfirm, onCancel,
 }) => {
-  const [selectedOption, setSelectedOption] = useState<'yes' | 'no'>('no');
+  const [selectedOption, setSelectedOption] = useState<'terminate' | 'delete' | 'cancel'>('cancel');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Auto-focus when dialog opens
   const { isFocused } = useFocus({ autoFocus: isOpen });
 
-  const handleConfirm = async () => {
+  const handleConfirm = async (deleteWorktree = false) => {
     setIsLoading(true);
     setError(null);
     try {
-      await onConfirm();
+      await onConfirm(deleteWorktree);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to terminate agent');
+      const operation = deleteWorktree ? 'delete' : 'terminate';
+      setError(err instanceof Error ? err.message : `Failed to ${operation} agent`);
       setIsLoading(false);
     }
   };
@@ -36,14 +37,14 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
   // Reset state when dialog opens/closes
   useEffect(() => {
     if (isOpen) {
-      setSelectedOption('no');
+      setSelectedOption('cancel');
       setError(null);
       setIsLoading(false);
     }
   }, [isOpen]);
 
   // Handle keyboard input
-  useInput((input: string, key: { escape?: boolean; return?: boolean; leftArrow?: boolean; rightArrow?: boolean }) => {
+  useInput((input: string, key: { escape?: boolean; return?: boolean; leftArrow?: boolean; rightArrow?: boolean; tab?: boolean }) => {
     if (!isOpen || isLoading) return;
 
     // Cancel on Escape
@@ -53,25 +54,35 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
     }
 
     // Quick shortcuts
-    if (input === 'y') {
-      handleConfirm();
+    if (input === 't') {
+      handleConfirm(false); // Terminate only
       return;
     }
-    if (input === 'n') {
+    if (input === 'd') {
+      handleConfirm(true); // Delete with worktree
+      return;
+    }
+    if (input === 'c' || input === 'n') {
       onCancel();
       return;
     }
 
-    // Arrow navigation
+    // Arrow navigation and tab
     if (key.leftArrow || key.rightArrow || key.tab) {
-      setSelectedOption((current) => (current === 'no' ? 'yes' : 'no'));
+      setSelectedOption((current) => {
+        if (current === 'cancel') return 'terminate';
+        if (current === 'terminate') return 'delete';
+        return 'cancel';
+      });
       return;
     }
 
     // Enter confirms current selection
     if (key.return) {
-      if (selectedOption === 'yes') {
-        handleConfirm();
+      if (selectedOption === 'terminate') {
+        handleConfirm(false);
+      } else if (selectedOption === 'delete') {
+        handleConfirm(true);
       } else {
         onCancel();
       }
@@ -106,7 +117,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
         {/* Title */}
         <Box justifyContent="center" marginBottom={1}>
           <Text bold color="red">
-            Terminate Agent?
+            Agent Action
           </Text>
         </Box>
 
@@ -121,9 +132,15 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
         </Box>
 
         {/* Warning Message */}
-        <Box marginY={1}>
+        <Box marginY={1} flexDirection="column">
           <Text color="yellow">
-            ⚠️  This will stop the agent and end its session immediately.
+            ⚠️  Choose an action for this agent:
+          </Text>
+          <Text dimColor marginTop={1}>
+            • Terminate: Stop agent, keep worktree
+          </Text>
+          <Text dimColor>
+            • Delete: Stop agent and remove worktree permanently
           </Text>
         </Box>
 
@@ -137,29 +154,40 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
         {/* Loading State */}
         {isLoading && (
           <Box marginY={1} justifyContent="center">
-            <Text color="cyan">Terminating agent...</Text>
+            <Text color="cyan">
+              {selectedOption === 'delete' ? 'Deleting agent and worktree...' : 'Terminating agent...'}
+            </Text>
           </Box>
         )}
 
         {/* Buttons */}
         {!isLoading && (
-          <Box marginTop={2} justifyContent="center" gap={4}>
+          <Box marginTop={2} justifyContent="center" gap={2}>
             <Box
-              paddingX={2}
-              borderStyle={selectedOption === 'no' ? 'single' : undefined}
+              paddingX={1}
+              borderStyle={selectedOption === 'cancel' ? 'single' : undefined}
               borderColor="green"
             >
-              <Text color={selectedOption === 'no' ? 'green' : 'gray'}>
-                [ No ]
+              <Text color={selectedOption === 'cancel' ? 'green' : 'gray'}>
+                [ Cancel ]
               </Text>
             </Box>
             <Box
-              paddingX={2}
-              borderStyle={selectedOption === 'yes' ? 'single' : undefined}
+              paddingX={1}
+              borderStyle={selectedOption === 'terminate' ? 'single' : undefined}
+              borderColor="yellow"
+            >
+              <Text color={selectedOption === 'terminate' ? 'yellow' : 'gray'}>
+                [ Terminate ]
+              </Text>
+            </Box>
+            <Box
+              paddingX={1}
+              borderStyle={selectedOption === 'delete' ? 'single' : undefined}
               borderColor="red"
             >
-              <Text color={selectedOption === 'yes' ? 'red' : 'gray'}>
-                [ Yes ]
+              <Text color={selectedOption === 'delete' ? 'red' : 'gray'}>
+                [ Delete ]
               </Text>
             </Box>
           </Box>
@@ -168,7 +196,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
         {/* Instructions */}
         {!isLoading && (
           <Box marginTop={1} justifyContent="center">
-            <Text dimColor>Press y/n or Enter to confirm</Text>
+            <Text dimColor>Press c/t/d or Tab/Enter to select</Text>
           </Box>
         )}
       </Box>

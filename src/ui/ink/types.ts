@@ -23,7 +23,7 @@ export interface AgentManagerHookReturn {
   selectedAgentId: string | null;
   selectAgent: (agentId: string) => void;
   spawnAgent: (options: { instructions: string; workingDirectory: string }) => Promise<void>;
-  terminateAgent: (agentId: string) => Promise<void>;
+  terminateAgent: (agentId: string, options?: Record<string, unknown>) => Promise<void>;
   canSpawnAgent: boolean;
   isLoading: boolean;
   error: Error | null;
@@ -34,7 +34,7 @@ export interface AgentManager {
   getActiveAgents: () => Agent[];
   canSpawnAgent: () => boolean;
   spawnAgent: (instructions: string, options?: Record<string, unknown>) => Promise<Agent>;
-  terminateAgent: (agentId: string) => Promise<void>;
+  terminateAgent: (agentId: string, options?: Record<string, unknown>) => Promise<void>;
   getAgentDetails: (agentId: string) => Agent | null;
   getCurrentTask: (agentId: string) => TodoItem | null;
 }

@@ -1593,6 +1593,11 @@ class AgentManager {
 
   /**
    * Terminate agent
+   * @param {string} agentId - The agent ID to terminate
+   * @param {Object} options - Termination options
+   * @param {boolean} options.force - Force termination
+   * @param {boolean} options.preserveBranch - Preserve git branch during cleanup
+   * @param {boolean} options.deleteWorktree - Delete worktree completely (for UI deletion)
    */
   async terminateAgent(agentId, options = {}) {
     const session = this.agents.get(agentId);
@@ -1635,23 +1640,43 @@ class AgentManager {
             agentId,
             worktreePath: session.worktreePath,
             autoCleanup: this.config.features?.autoCleanup,
+            deleteWorktree: options.deleteWorktree,
           });
 
-          await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
-            force: options.force || false,
-            preserveBranch: options.preserveBranch || false,
-          });
-
-          logger.info('Agent worktree cleanup handled by lifecycle manager', {
-            agentId,
-            worktreePath: session.worktreePath,
-          });
+          // For deletion mode, force cleanup regardless of autoCleanup config
+          if (options.deleteWorktree) {
+            await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
+              force: true,
+              preserveBranch: false,
+              bypassAutoCleanupCheck: true,
+            });
+            logger.info('Agent worktree deleted via deletion mode', {
+              agentId,
+              worktreePath: session.worktreePath,
+            });
+          } else {
+            // Normal termination - respect existing behavior
+            await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
+              force: options.force || false,
+              preserveBranch: options.preserveBranch || false,
+            });
+            logger.info('Agent worktree cleanup handled by lifecycle manager', {
+              agentId,
+              worktreePath: session.worktreePath,
+            });
+          }
         } catch (error) {
-          logger.error('Failed to cleanup worktree via lifecycle manager', {
+          const errorContext = options.deleteWorktree ? 'delete worktree' : 'cleanup worktree via lifecycle manager';
+          logger.error(`Failed to ${errorContext}`, {
             agentId,
             worktreePath: session.worktreePath,
             error: error.message,
           });
+
+          // For deletion mode, re-throw the error to provide user feedback
+          if (options.deleteWorktree) {
+            throw error;
+          }
         }
       } else if (session.worktreePath && !this.worktreeLifecycle) {
         logger.warn('No lifecycle manager available for worktree cleanup', {

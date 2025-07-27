@@ -224,13 +224,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }, [agentManager, convertAgent]);
 
   // Terminate agent
-  const terminateAgent = useCallback(async (agentId: string) => {
+  const terminateAgent = useCallback(async (agentId: string, options = {}) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
     }
 
     try {
-      await agentManager.terminateAgent(agentId);
+      await agentManager.terminateAgent(agentId, options);
 
       // Clear selection if terminated agent was selected
       setSelectedAgentId((currentSelectedId) => (currentSelectedId === agentId ? null : currentSelectedId));

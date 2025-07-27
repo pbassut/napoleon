@@ -478,6 +478,126 @@ describe('AgentManager', () => {
       // With SDK, the session should be terminated and removed
       expect(agentManager.getAgent(session.id)).toBeUndefined();
     });
+
+    it('should terminate agent with deleteWorktree option', async () => {
+      // Create a mock agent session directly to avoid spawn complications
+      const testAgentId = 'test-agent-delete';
+      const mockSession = {
+        id: testAgentId,
+        status: 'running',
+        worktreePath: '/test/worktree/path',
+        sdkStatus: 'ACTIVE',
+      };
+
+      // Add the session directly to the agents map
+      agentManager.agents.set(testAgentId, mockSession);
+
+      // Mock worktree lifecycle manager
+      const mockForceCleanupWorktree = jest.fn().mockResolvedValue();
+      agentManager.worktreeLifecycle = {
+        forceCleanupWorktree: mockForceCleanupWorktree,
+      };
+
+      // Mock SDK manager
+      agentManager.sdkManager = {
+        terminateSession: jest.fn().mockResolvedValue(true),
+      };
+
+      // Test deletion mode
+      await agentManager.terminateAgent(testAgentId, { deleteWorktree: true });
+
+      // Verify worktree cleanup was called with correct options for deletion
+      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
+        '/test/worktree/path',
+        {
+          force: true,
+          preserveBranch: false,
+          bypassAutoCleanupCheck: true,
+        },
+      );
+
+      // Agent should be removed
+      expect(agentManager.getAgent(testAgentId)).toBeUndefined();
+    });
+
+    it('should terminate agent without deleteWorktree option (normal termination)', async () => {
+      // Create a mock agent session directly to avoid spawn complications
+      const testAgentId = 'test-agent-normal';
+      const mockSession = {
+        id: testAgentId,
+        status: 'running',
+        worktreePath: '/test/worktree/path',
+        sdkStatus: 'ACTIVE',
+      };
+
+      // Add the session directly to the agents map
+      agentManager.agents.set(testAgentId, mockSession);
+
+      // Mock worktree lifecycle manager
+      const mockForceCleanupWorktree = jest.fn().mockResolvedValue();
+      agentManager.worktreeLifecycle = {
+        forceCleanupWorktree: mockForceCleanupWorktree,
+      };
+
+      // Mock SDK manager
+      agentManager.sdkManager = {
+        terminateSession: jest.fn().mockResolvedValue(true),
+      };
+
+      // Test normal termination (no deleteWorktree option)
+      await agentManager.terminateAgent(testAgentId, { force: true });
+
+      // Verify worktree cleanup was called with normal options
+      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
+        '/test/worktree/path',
+        {
+          force: true,
+          preserveBranch: false,
+        },
+      );
+
+      // Agent should be removed
+      expect(agentManager.getAgent(testAgentId)).toBeUndefined();
+    });
+
+    it('should handle worktree deletion errors gracefully', async () => {
+      // Create a mock agent session directly to avoid spawn complications
+      const testAgentId = 'test-agent-error';
+      const mockSession = {
+        id: testAgentId,
+        status: 'running',
+        worktreePath: '/test/worktree/path',
+        sdkStatus: 'ACTIVE',
+      };
+
+      // Add the session directly to the agents map
+      agentManager.agents.set(testAgentId, mockSession);
+
+      // Mock worktree lifecycle manager that throws error
+      const mockForceCleanupWorktree = jest.fn().mockRejectedValue(new Error('Worktree deletion failed'));
+      agentManager.worktreeLifecycle = {
+        forceCleanupWorktree: mockForceCleanupWorktree,
+      };
+
+      // Mock SDK manager
+      agentManager.sdkManager = {
+        terminateSession: jest.fn().mockResolvedValue(true),
+      };
+
+      // Test that errors are propagated
+      await expect(agentManager.terminateAgent(testAgentId, { deleteWorktree: true }))
+        .rejects.toThrow('Worktree deletion failed');
+
+      // Verify cleanup was attempted
+      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
+        '/test/worktree/path',
+        {
+          force: true,
+          preserveBranch: false,
+          bypassAutoCleanupCheck: true,
+        },
+      );
+    });
   });
 
   describe('pending agent management', () => {
