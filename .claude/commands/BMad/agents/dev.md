@@ -61,8 +61,8 @@ commands:
   - explain: teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer.
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-issue:
-  update-issue-status:
-    - Use the Github API to update the issue status to be "In Progress".
+  using-the-gh-tool:
+    - Update the issue status to be "In Progress".
   git-branching: 
     - CRITICAL: UNLESS you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do.
     - CRITICAL: DO NOT create a new branch if you're told to work off of an issue that already has a Pull Request attached to it. Make sure to pull the branch attached to that issue and make commits and pushes to that branch.

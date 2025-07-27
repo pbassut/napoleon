@@ -6,10 +6,11 @@ The Scrum Master should use this checklist to validate that each issue contains 
 
 Before proceeding with this checklist, ensure you have access to:
 
-1. The github issue being validated(in a Github project)
-2. The parent milestone context
-3. Any referenced architecture or design documents
-4. Previous related stories if this builds on prior work
+1. The `gh` tool - will be used for project management on Github
+2. The github issue being validated(in a Github project)
+3. The parent milestone context
+4. Any referenced architecture or design documents
+5. Previous related stories if this builds on prior work
 
 IMPORTANT: This checklist validates individual stories BEFORE implementation begins.
 

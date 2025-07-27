@@ -101,7 +101,9 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
 - Review all sections for completeness and accuracy
 - Verify all source references are included for technical details
 - Ensure tasks align with both epic requirements and architecture constraints
-- Update status to "Draft" on Github
+- Use the `gh` tool to:
+  - - Add the issue to the Github project if it doesn't have one already
+  - - Update status of the issue to "Draft" on the Github project
 - Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/issue-draft-checklist`
 - Provide summary to user including:
   - Story created: `{devStoryLocation}/{epicNum}.{storyNum}.story.md`
