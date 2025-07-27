@@ -1,8 +1,7 @@
-const { execSync, exec } = require('child_process');
+const { exec } = require('child_process');
 const { promisify } = require('util');
 const path = require('path');
 const fs = require('fs');
-const logger = require('../utils/logger');
 
 const execAsync = promisify(exec);
 
@@ -24,7 +23,7 @@ class GitStatusChecker {
   async checkWorkingTreeStatus() {
     try {
       // Check if in git repository
-      const gitDir = await this.findGitDirectory();
+      const gitDir = await GitStatusChecker.findGitDirectory();
       if (!gitDir) {
         throw new Error('Not in a git repository');
       }
@@ -60,7 +59,7 @@ class GitStatusChecker {
    * Find git directory from current working directory (async)
    * @returns {Promise<string|null>} Path to .git directory or null if not found
    */
-  async findGitDirectory() {
+  static async findGitDirectory() {
     try {
       const { stdout } = await execAsync('git rev-parse --git-dir', {
         encoding: 'utf8',
@@ -78,7 +77,7 @@ class GitStatusChecker {
    * Get detailed git status using porcelain format (async)
    * @returns {Promise<Object>} Parsed git status object
    */
-  async getGitStatus() {
+  static async getGitStatus() {
     try {
       // Get porcelain status for reliable parsing
       const { stdout } = await execAsync('git status --porcelain', {
@@ -105,7 +104,7 @@ class GitStatusChecker {
             staged.push({
               file,
               status: stagedChar,
-              type: this.getStatusType(stagedChar),
+              type: GitStatusChecker.getStatusType(stagedChar),
             });
           }
 
@@ -114,7 +113,7 @@ class GitStatusChecker {
             modified.push({
               file,
               status: workingChar,
-              type: this.getStatusType(workingChar),
+              type: GitStatusChecker.getStatusType(workingChar),
             });
           }
 
@@ -145,7 +144,7 @@ class GitStatusChecker {
    * @param {string} statusCode - Git status code character
    * @returns {string} Human-readable status type
    */
-  getStatusType(statusCode) {
+  static getStatusType(statusCode) {
     const statusTypes = {
       M: 'modified',
       A: 'added',
@@ -164,7 +163,7 @@ class GitStatusChecker {
    * @param {Object} status - Status result from checkWorkingTreeStatus
    * @returns {string} Formatted warning message
    */
-  generateWarningMessage(status) {
+  static generateWarningMessage(status) {
     const warnings = [];
 
     if (status.hasUncommittedChanges) {
@@ -187,7 +186,7 @@ class GitStatusChecker {
    * @param {Object} status - Status result from checkWorkingTreeStatus
    * @returns {Object} Detailed file information
    */
-  getDetailedFileInfo(status) {
+  static getDetailedFileInfo(status) {
     return {
       modified: status.details.modified.map((item) => `  ${item.file} (${item.type})`).join('\n'),
       untracked: status.details.untracked.map((item) => `  ${item.file}`).join('\n'),
@@ -216,12 +215,12 @@ class GitStatusChecker {
    * Validate git repository and working tree state (async with parallel checks)
    * @returns {Promise<Object>} Validation result
    */
-  async validateGitRepository() {
+  static async validateGitRepository() {
     try {
       // Run git version and directory checks in parallel
       const [gitVersionResult, gitDir] = await Promise.allSettled([
         execAsync('git --version', { timeout: 1000 }),
-        this.findGitDirectory(),
+        GitStatusChecker.findGitDirectory(),
       ]);
 
       // Check git availability
