@@ -113,6 +113,17 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] Success criteria are defined
 - [ ] Special testing considerations are noted (if applicable)
 
+## 6. TRACKING
+
+[[LLM: Use `gh` tool to interface with github projects
+
+1. Make sure the issue is in a project in Github
+2. Confirm it has the default status: Draft]]
+
+- [ ] Issue is linked to a project
+- [ ] Issue has a status within the project: Draft
+
+
 
 ## VALIDATION RESULT
 
