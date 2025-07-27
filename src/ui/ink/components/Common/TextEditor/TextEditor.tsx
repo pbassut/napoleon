@@ -77,15 +77,15 @@ export const TextEditor: React.FC<TextEditorProps> = ({
 
     // Handle submission
     if (normalizedKey.return && !normalizedKey.shift && onSubmit) {
-      if (!multiline) {
-        onSubmit();
-        return;
-      }
-      // In multiline mode, Enter without shift creates new line
-      if (!normalizedKey.shift) {
-        insertText('\n');
-        return;
-      }
+      // Enter without shift calls onSubmit (regardless of multiline mode)
+      onSubmit();
+      return;
+    }
+
+    // Handle Shift+Enter for new line (only in multiline mode)
+    if (normalizedKey.shift && normalizedKey.return && multiline) {
+      insertText('\n');
+      return;
     }
 
     // Handle cursor movement
