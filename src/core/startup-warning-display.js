@@ -64,7 +64,7 @@ class StartupWarningDisplay {
     console.log(this.chalk.red.bold('Git Issues Detected:'));
     console.log();
 
-    const message = this.gitChecker.generateWarningMessage(statusResult);
+    const message = GitStatusChecker.generateWarningMessage(statusResult);
     const lines = message.split('\n');
 
     lines.forEach((line) => {
@@ -83,7 +83,7 @@ class StartupWarningDisplay {
     console.log(this.chalk.cyan.bold('Recommended Actions:'));
     console.log();
 
-    const recommendations = this.generateRecommendations(statusResult);
+    const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
     recommendations.forEach((rec) => {
       console.log(this.chalk.cyan(`  ${rec.icon} ${rec.action}`));
       if (rec.command) {
@@ -98,7 +98,7 @@ class StartupWarningDisplay {
    * @param {Object} statusResult - Git status result
    * @returns {Array} Array of recommendation objects
    */
-  generateRecommendations(statusResult) {
+  static generateRecommendations(statusResult) {
     const recommendations = [];
 
     if (statusResult.hasUncommittedChanges) {
@@ -140,7 +140,7 @@ class StartupWarningDisplay {
    * @param {Object} statusResult - Git status result
    */
   displayDetailedFileInfo(statusResult) {
-    const fileInfo = this.gitChecker.getDetailedFileInfo(statusResult);
+    const fileInfo = GitStatusChecker.getDetailedFileInfo(statusResult);
     let hasFiles = false;
 
     console.log(this.chalk.white.bold('Affected Files:'));

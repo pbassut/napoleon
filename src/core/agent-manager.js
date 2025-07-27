@@ -14,6 +14,15 @@ const { SDKStatus } = require('./sdk/sdk-types');
 const AgentLogManager = require('./logging/agent-log-manager');
 const toolUsageTracker = require('./tool-usage-tracker');
 
+// Load claude-code SDK dynamically when needed
+let claudeCodeSDK;
+try {
+  // eslint-disable-next-line global-require
+  claudeCodeSDK = require('@anthropic-ai/claude-code');
+} catch (error) {
+  claudeCodeSDK = null;
+}
+
 // Agent status types as per US004 requirements
 const AgentStatus = {
   SPAWNING: 'spawning',
@@ -34,9 +43,8 @@ const DANGEROUS_PATTERNS = [
   /\.\.[/\\]/, // Directory traversal
   /^-/, // Options starting with dash
   /\0/, // Null bytes
-  /\x00-\x08/, // Control characters (excluding tab, newline, carriage return)
-  /\x0B\x0C/, // Vertical tab, form feed
-  /\x0E-\x1F/, // Other control characters
+  // eslint-disable-next-line no-control-regex
+  /[\x00-\x08\x0B\x0C\x0E-\x1F]/, // Control characters (excluding tab, newline, carriage return)
   /\x7F/, // DEL character
 ];
 
@@ -68,11 +76,12 @@ class AgentManager {
     }
 
     // Create initialization promise
-    this.initializationPromise = this._performInitialization();
+    this.initializationPromise = this.performInitialization();
 
     try {
       await this.initializationPromise;
       this.isInitialized = true;
+      return this.initializationPromise;
     } catch (error) {
       // Reset promise on failure to allow retry
       this.initializationPromise = null;
@@ -80,7 +89,7 @@ class AgentManager {
     }
   }
 
-  async _performInitialization() {
+  async performInitialization() {
     try {
       this.config = loadConfig();
 
@@ -239,7 +248,7 @@ class AgentManager {
    * Note: This is limited by the fact that we can't directly reattach to existing stdio streams
    * But we can at least ensure the session is properly initialized
    */
-  async reattachToProcess(session) {
+  static async reattachToProcess(session) {
     try {
       // Unfortunately, we can't reattach to existing stdio streams of a running process
       // This is a limitation of how processes work - once spawned, we can't capture their output
@@ -252,7 +261,7 @@ class AgentManager {
       });
 
       // Set process to null since we can't reattach to existing streams
-      session.process = null;
+      Object.assign(session, { process: null });
 
       // Only add diagnostic info if logs are truly empty (no actual output was captured)
       // and avoid duplicates by checking for restore message
@@ -367,7 +376,7 @@ class AgentManager {
   /**
    * Validate git repository context
    */
-  validateGitRepository() {
+  static validateGitRepository() {
     try {
       // Check if we're in a git repository
       execSync('git rev-parse --is-inside-work-tree', {
@@ -397,6 +406,14 @@ class AgentManager {
   }
 
   /**
+   * Instance method wrapper for validateGitRepository
+   */
+  // eslint-disable-next-line class-methods-use-this
+  validateGitRepository() {
+    return AgentManager.validateGitRepository();
+  }
+
+  /**
    * Migrate legacy session to SDK format
    * @private
    */
@@ -421,16 +438,16 @@ class AgentManager {
    */
   static initializeRestoredSession(session) {
     // Initialize logging arrays if they don't exist
-    if (!session.logs) {
-      session.logs = [];
-    }
-    if (!session.output) {
-      session.output = [];
-    }
+    const logs = session.logs || [];
+    const output = session.output || [];
 
     // Mark this session as restored from previous run
-    session.wasRestored = true;
-    session.sdkStatus = SDKStatus.ACTIVE;
+    Object.assign(session, {
+      logs,
+      output,
+      wasRestored: true,
+      sdkStatus: SDKStatus.ACTIVE,
+    });
   }
 
   /**
@@ -458,7 +475,7 @@ class AgentManager {
   async initializeSDKSession(agentId, workingDirectory) {
     try {
       // Validate API key before initializing session
-      this.validateAPIKey();
+      AgentManager.validateAPIKey();
 
       logger.info('Initializing SDK session', { agentId, workingDirectory });
 
@@ -497,7 +514,7 @@ class AgentManager {
   /**
    * Generate unique agent ID
    */
-  generateAgentId() {
+  static generateAgentId() {
     return `agent-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
@@ -505,7 +522,7 @@ class AgentManager {
    * Generate worktree name following the naming convention
    * Pattern: agent-{id}-{timestamp}
    */
-  generateWorktreeName(agentId) {
+  static generateWorktreeName(agentId) {
     const timestamp = Date.now();
     return `agent-${agentId.replace('agent-', '')}-${timestamp}`;
   }
@@ -513,7 +530,7 @@ class AgentManager {
   /**
    * Ensure worktree directory structure exists
    */
-  ensureWorktreeDirectory() {
+  static ensureWorktreeDirectory() {
     // Use ~/.napoleon/worktrees/ to avoid git clean issues
     const worktreesDir = path.join(os.homedir(), '.napoleon', 'worktrees');
 
@@ -536,10 +553,10 @@ class AgentManager {
   /**
    * Validate git repository state for worktree creation
    */
-  validateGitForWorktree() {
+  static validateGitForWorktree() {
     try {
       // Check if we're in a git repository
-      const gitValidation = this.validateGitRepository();
+      const gitValidation = AgentManager.validateGitRepository();
       if (!gitValidation.isValid) {
         return gitValidation;
       }
@@ -606,7 +623,7 @@ class AgentManager {
         const startTime = Date.now();
 
         // Validate git state
-        const gitValidation = this.validateGitForWorktree();
+        const gitValidation = AgentManager.validateGitForWorktree();
         if (!gitValidation.isValid) {
           reject(
             new EnvironmentValidationError(
@@ -619,10 +636,10 @@ class AgentManager {
         }
 
         // Ensure worktree directory exists
-        const worktreesDir = this.ensureWorktreeDirectory();
+        const worktreesDir = AgentManager.ensureWorktreeDirectory();
 
         // Generate worktree name and path
-        const worktreeName = this.generateWorktreeName(agentId);
+        const worktreeName = AgentManager.generateWorktreeName(agentId);
         const worktreePath = path.join(worktreesDir, worktreeName);
 
         logger.info('Creating git worktree', {
@@ -815,7 +832,7 @@ class AgentManager {
           cwd: process.cwd(),
           timeout: 10000,
         },
-        (unlockError, unlockStdout, unlockStderr) => {
+        (unlockError) => {
           if (unlockError) {
             logger.debug('Worktree unlock failed (this is normal if not locked)', {
               worktreePath,
@@ -883,7 +900,7 @@ class AgentManager {
   /**
    * Validate agent instructions for security and format
    */
-  validateInstructions(instructions) {
+  static validateInstructions(instructions) {
     if (!instructions || typeof instructions !== 'string') {
       throw new EnvironmentValidationError(
         'Instructions must be a non-empty string',
@@ -906,7 +923,7 @@ class AgentManager {
     }
 
     // Security validation - check for dangerous patterns
-    for (const pattern of DANGEROUS_PATTERNS) {
+    DANGEROUS_PATTERNS.forEach((pattern) => {
       if (pattern.test(trimmed)) {
         throw new EnvironmentValidationError(
           'Instructions contain potentially dangerous patterns. Please avoid command substitution ($(...)) and path traversal (../)',
@@ -914,7 +931,7 @@ class AgentManager {
           'Remove command substitution patterns and directory traversal sequences from your instructions',
         );
       }
-    }
+    });
 
     // Character set validation
     if (!ALLOWED_CHARS.test(trimmed)) {
@@ -931,7 +948,7 @@ class AgentManager {
   /**
    * Validate options object for spawning agent
    */
-  validateOptions(options) {
+  static validateOptions(options) {
     if (!options || typeof options !== 'object') {
       return {}; // Return empty object if invalid
     }
@@ -985,15 +1002,15 @@ class AgentManager {
       // Checkpoint 1: Input validation
       const validationStartTime = Date.now();
 
-      const sanitizedInstructions = this.validateInstructions(instructions);
-      const validatedOptions = this.validateOptions(options);
+      const sanitizedInstructions = AgentManager.validateInstructions(instructions);
+      const validatedOptions = AgentManager.validateOptions(options);
 
       const validationDuration = Date.now() - validationStartTime;
 
       // No agent limit - allow unlimited agents
 
       // Validate git repository
-      const gitValidation = this.validateGitRepository();
+      const gitValidation = AgentManager.validateGitRepository();
       if (!gitValidation.isValid) {
         throw new EnvironmentValidationError(
           gitValidation.error,
@@ -1003,7 +1020,7 @@ class AgentManager {
       }
 
       // Generate agent session (or use provided one for pending agent replacement)
-      agentId = options.agentId || this.generateAgentId();
+      agentId = validatedOptions.agentId || options.agentId || AgentManager.generateAgentId();
 
       logger.info('SPAWN_FLOW: Starting agent spawn process', {
         agentId,
@@ -1218,16 +1235,9 @@ class AgentManager {
    * Validate API key for SDK operations
    * @private
    */
-  validateAPIKey() {
-    return;
-
-    if (!process.env.ANTHROPIC_API_KEY) {
-      throw new EnvironmentValidationError(
-        'ANTHROPIC_API_KEY environment variable is not set',
-        'CLAUDE_API_KEY_NOT_FOUND',
-        'Please set your Anthropic API key: export ANTHROPIC_API_KEY=your_key_here',
-      );
-    }
+  static validateAPIKey() {
+    // API key validation is currently disabled
+    // TODO: Re-enable when needed
   }
 
   /**
@@ -1270,13 +1280,32 @@ class AgentManager {
       (async () => {
         try {
           logger.info('Starting real-time SDK query stream for agent', { agentId });
-          
-          // Use the new streaming method from SDKCommunicationManager
-          const messageStream = this.sdkManager.executeQueryStream(sessionId, instructions);
 
-          // Process messages as they arrive in real-time using for await
-          for await (const message of messageStream) {
-            logger.info('SDK message received (real-time)', { 
+          // Get the streaming query response from Claude Code SDK directly
+          const { query } = claudeCodeSDK;
+          const sdkSession = this.sdkManager.getSession(sessionId);
+
+          if (!sdkSession) {
+            throw new Error(`No SDK session found for agent ${agentId}`);
+          }
+
+          const queryOptions = {
+            permissionMode: 'bypassPermissions',
+            cwd: workingDirectory,
+            abortController: sdkSession.abortController,
+          };
+
+          const queryResponse = query({
+            prompt: instructions,
+            options: queryOptions,
+          });
+
+          // Process messages as they arrive in real-time using async iteration
+          const messageIterator = queryResponse[Symbol.asyncIterator]();
+          let result = await messageIterator.next();
+          while (!result.done) {
+            const message = result.value;
+            logger.info('SDK message received (real-time)', {
               agentId,
               messageType: message.type,
               messageId: message.id,
@@ -1284,6 +1313,9 @@ class AgentManager {
 
             // Handle real-time output from SDK immediately
             this.handleSDKMessage(agentId, message);
+
+            // eslint-disable-next-line no-await-in-loop
+            result = await messageIterator.next();
           }
 
           // Update status when SDK query completes
@@ -1696,8 +1728,16 @@ class AgentManager {
   /**
    * Check if can spawn more agents
    */
-  canSpawnAgent() {
+  static canSpawnAgent() {
     return true; // No limit - always allow spawning
+  }
+
+  /**
+   * Instance method wrapper for canSpawnAgent
+   */
+  // eslint-disable-next-line class-methods-use-this
+  canSpawnAgent() {
+    return AgentManager.canSpawnAgent();
   }
 
   /**
@@ -1715,7 +1755,7 @@ class AgentManager {
   /**
    * Format runtime duration in HH:MM format with 'min' label
    */
-  formatRuntime(seconds) {
+  static formatRuntime(seconds) {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
 
@@ -1736,7 +1776,7 @@ class AgentManager {
     return {
       id: session.id,
       status: session.status,
-      runtime: this.formatRuntime(runtime),
+      runtime: AgentManager.formatRuntime(runtime),
       spawnTime: session.spawnTime,
       lastActivity: session.lastActivity,
       pid: session.pid,
@@ -1746,7 +1786,7 @@ class AgentManager {
   /**
    * Get current task for an agent from todos array
    */
-  getCurrentTask(agentId) {
+  static getCurrentTask(agentId) {
     const todos = toolUsageTracker.getAgentTodos(agentId);
 
     if (!todos || !Array.isArray(todos)) {
@@ -1811,7 +1851,7 @@ class AgentManager {
       && session.pid
       && session.wasRestored
     ) {
-      this.reattachToProcess(session);
+      AgentManager.reattachToProcess(session);
     }
 
     // Return logs with proper structure for detail view
@@ -1862,6 +1902,8 @@ class AgentManager {
     logger.info('Background orphan scanning started', {
       intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)),
     });
+
+    return { started: true, intervalMinutes: Math.round(scanIntervalMs / (60 * 1000)) };
   }
 
   /**

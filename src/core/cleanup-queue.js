@@ -1,5 +1,4 @@
 const fs = require('fs').promises;
-const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const logger = require('../utils/logger');
@@ -34,10 +33,10 @@ class WorktreeCleanupQueue {
    */
   async enqueue(worktreePath, options = {}) {
     const queueItem = {
-      id: this.generateCleanupId(),
+      id: WorktreeCleanupQueue.generateCleanupId(),
       worktreePath,
       agentId: options.agentId,
-      priority: options.priority || this.calculatePriority(options),
+      priority: options.priority || WorktreeCleanupQueue.calculatePriority(options),
       force: options.force || false,
       preserveBranch: options.preserveBranch || false,
       timestamp: Date.now(),
@@ -55,7 +54,7 @@ class WorktreeCleanupQueue {
       this.queue.splice(insertIndex, 0, queueItem);
     }
 
-    this.metrics.totalEnqueued++;
+    this.metrics.totalEnqueued += 1;
 
     logger.info('Worktree enqueued for cleanup', {
       id: queueItem.id,
@@ -92,6 +91,7 @@ class WorktreeCleanupQueue {
         if (batch.length > 0) {
           // Process batch concurrently
           const promises = batch.map((item) => this.processCleanupItem(item));
+          // eslint-disable-next-line no-await-in-loop
           await Promise.allSettled(promises);
         }
       }
@@ -114,9 +114,8 @@ class WorktreeCleanupQueue {
    * Process individual cleanup item with retry logic
    */
   async processCleanupItem(item) {
-    this.metrics.currentlyProcessing++;
-    item.status = 'processing';
-    item.attempts++;
+    this.metrics.currentlyProcessing += 1;
+    Object.assign(item, { status: 'processing', attempts: item.attempts + 1 });
 
     logger.debug('Processing cleanup item', {
       id: item.id,
@@ -126,11 +125,11 @@ class WorktreeCleanupQueue {
     });
 
     try {
-      await this.cleanupWorktree(item);
+      await WorktreeCleanupQueue.cleanupWorktree(item);
 
-      item.status = 'completed';
-      this.metrics.totalSuccessful++;
-      this.metrics.totalProcessed++;
+      Object.assign(item, { status: 'completed' });
+      this.metrics.totalSuccessful += 1;
+      this.metrics.totalProcessed += 1;
 
       logger.info('Worktree cleanup successful', {
         id: item.id,
@@ -138,8 +137,10 @@ class WorktreeCleanupQueue {
         attempts: item.attempts,
       });
     } catch (error) {
-      item.lastError = error.message;
-      item.status = 'failed';
+      Object.assign(item, {
+        lastError: error.message,
+        status: 'failed',
+      });
 
       logger.warn('Worktree cleanup failed', {
         id: item.id,
@@ -156,7 +157,7 @@ class WorktreeCleanupQueue {
           this.maxRetryDelayMs,
         );
 
-        item.status = 'retry-scheduled';
+        Object.assign(item, { status: 'retry-scheduled' });
 
         logger.debug('Scheduling cleanup retry', {
           id: item.id,
@@ -166,8 +167,10 @@ class WorktreeCleanupQueue {
 
         setTimeout(() => {
           // Re-enqueue with higher priority
-          item.priority += 10;
-          item.status = 'queued';
+          Object.assign(item, {
+            priority: item.priority + 10,
+            status: 'queued',
+          });
           this.queue.unshift(item);
 
           if (!this.processing) {
@@ -175,8 +178,8 @@ class WorktreeCleanupQueue {
           }
         }, delay);
       } else {
-        this.metrics.totalFailed++;
-        this.metrics.totalProcessed++;
+        this.metrics.totalFailed += 1;
+        this.metrics.totalProcessed += 1;
 
         logger.error('Worktree cleanup failed permanently', {
           id: item.id,
@@ -186,7 +189,7 @@ class WorktreeCleanupQueue {
         });
       }
     } finally {
-      this.metrics.currentlyProcessing--;
+      this.metrics.currentlyProcessing -= 1;
       this.notifyProgress();
     }
   }
@@ -194,7 +197,7 @@ class WorktreeCleanupQueue {
   /**
    * Perform actual worktree cleanup
    */
-  async cleanupWorktree(item) {
+  static async cleanupWorktree(item) {
     const { worktreePath, force, preserveBranch } = item;
 
     logger.debug('CLEANUP_PATH: cleanupWorktree executing', {
@@ -220,7 +223,9 @@ class WorktreeCleanupQueue {
 
     // Check for uncommitted changes if not forcing
     if (!force) {
-      const hasUncommittedChanges = await this.checkUncommittedChanges(worktreePath);
+      const hasUncommittedChanges = await WorktreeCleanupQueue.checkUncommittedChanges(
+        worktreePath,
+      );
       if (hasUncommittedChanges) {
         throw new Error(`Worktree has uncommitted changes: ${worktreePath}`);
       }
@@ -228,7 +233,7 @@ class WorktreeCleanupQueue {
 
     // Preserve branch if requested
     if (preserveBranch) {
-      await this.preserveBranchChanges(worktreePath);
+      await WorktreeCleanupQueue.preserveBranchChanges(worktreePath);
     }
 
     // Remove git worktree
@@ -279,7 +284,7 @@ class WorktreeCleanupQueue {
   /**
    * Check for uncommitted changes in worktree
    */
-  async checkUncommittedChanges(worktreePath) {
+  static async checkUncommittedChanges(worktreePath) {
     try {
       const { stdout } = await execAsync('git status --porcelain', {
         cwd: worktreePath,
@@ -300,7 +305,7 @@ class WorktreeCleanupQueue {
   /**
    * Preserve branch changes before cleanup
    */
-  async preserveBranchChanges(worktreePath) {
+  static async preserveBranchChanges(worktreePath) {
     try {
       // Create a commit with any uncommitted changes
       await execAsync('git add .', { cwd: worktreePath, timeout: 10000 });
@@ -331,7 +336,7 @@ class WorktreeCleanupQueue {
   /**
    * Calculate cleanup priority based on options
    */
-  calculatePriority(options) {
+  static calculatePriority(options) {
     let priority = 0;
 
     // Higher priority for older worktrees
@@ -365,7 +370,7 @@ class WorktreeCleanupQueue {
   /**
    * Generate unique cleanup ID
    */
-  generateCleanupId() {
+  static generateCleanupId() {
     return `cleanup-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
 
@@ -388,13 +393,13 @@ class WorktreeCleanupQueue {
       metrics: { ...this.metrics },
     };
 
-    for (const callback of this.progressCallbacks) {
+    this.progressCallbacks.forEach((callback) => {
       try {
         callback(progress);
       } catch (error) {
         logger.warn('Progress callback error', { error: error.message });
       }
-    }
+    });
   }
 
   /**
@@ -456,7 +461,10 @@ class WorktreeCleanupQueue {
     const startTime = Date.now();
 
     while (this.processing && (Date.now() - startTime) < maxWaitMs) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
     }
 
     // Clear remaining queue
