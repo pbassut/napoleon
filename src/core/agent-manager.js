@@ -1766,24 +1766,55 @@ class AgentManager {
   getCurrentTask(agentId) {
     const todos = toolUsageTracker.getAgentTodos(agentId);
     
+    // DEBUG: Log todos retrieval for debugging
+    logger.info('TODOS_DEBUG: getCurrentTask called', {
+      agentId,
+      todos: JSON.stringify(todos),
+      todosType: typeof todos,
+      todosIsArray: Array.isArray(todos),
+      todosLength: todos ? todos.length : 'null'
+    });
+    
     if (!todos || !Array.isArray(todos)) {
+      logger.info('TODOS_DEBUG: No todos found or not array', {
+        agentId,
+        todos,
+        type: typeof todos
+      });
       return null;
     }
     
     const inProgressTasks = todos.filter(todo => todo.status === 'in_progress');
     
+    logger.info('TODOS_DEBUG: Filtered in_progress tasks', {
+      agentId,
+      totalTodos: todos.length,
+      inProgressCount: inProgressTasks.length,
+      inProgressTasks: JSON.stringify(inProgressTasks),
+      allTodos: JSON.stringify(todos.map(t => ({ id: t.id, status: t.status, content: t.content })))
+    });
+    
     if (inProgressTasks.length === 0) {
+      logger.info('TODOS_DEBUG: No in_progress tasks found', {
+        agentId,
+        availableStatuses: todos.map(t => t.status)
+      });
       return null; // No active task
     }
     
     if (inProgressTasks.length === 1) {
+      logger.info('TODOS_DEBUG: Found single in_progress task', {
+        agentId,
+        task: JSON.stringify(inProgressTasks[0])
+      });
       return inProgressTasks[0];
     }
     
     // Handle edge case of multiple in_progress tasks
     logger.warn('Multiple in_progress todos found for agent', {
       agentId,
-      count: inProgressTasks.length
+      count: inProgressTasks.length,
+      tasks: JSON.stringify(inProgressTasks)
     });
     return inProgressTasks[0]; // Return first one
   }
@@ -1797,6 +1828,16 @@ class AgentManager {
 
     // Get current todos from tool usage tracker
     const todos = toolUsageTracker.getAgentTodos(agentId);
+
+    // DEBUG: Log getAgentDetails todos retrieval
+    logger.info('TODOS_DEBUG: getAgentDetails called', {
+      agentId,
+      sessionExists: !!session,
+      todos: JSON.stringify(todos),
+      todosType: typeof todos,
+      todosIsArray: Array.isArray(todos),
+      todosLength: todos ? todos.length : 'null'
+    });
 
     return {
       id: session.id,

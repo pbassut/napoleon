@@ -82,7 +82,21 @@ class ToolUsageTracker {
    */
   getAgentTodos(agentId) {
     const agentData = this.agentToolUsage.get(agentId);
-    return agentData ? agentData.todos : [];
+    const todos = agentData ? agentData.todos : [];
+    
+    // DEBUG: Log detailed todos retrieval
+    console.log('TODOS_DEBUG: toolUsageTracker.getAgentTodos called', {
+      agentId,
+      hasAgentData: !!agentData,
+      agentDataKeys: agentData ? Object.keys(agentData) : 'null',
+      todos: JSON.stringify(todos),
+      todosLength: todos.length,
+      todosTypes: todos.map(t => typeof t),
+      trackedAgents: Array.from(this.agentToolUsage.keys()),
+      trackedAgentsCount: this.agentToolUsage.size
+    });
+    
+    return todos;
   }
 
   /**

@@ -119,20 +119,67 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
 
         // Only update if agents actually changed
         setAgents((prevAgents) => {
+          // Helper function to compare todos arrays
+          const todosChanged = (prevTodos: any[], newTodos: any[]) => {
+            if (prevTodos.length !== newTodos.length) return true;
+            return prevTodos.some((prevTodo, i) => {
+              const newTodo = newTodos[i];
+              return !newTodo
+                || prevTodo.id !== newTodo.id
+                || prevTodo.status !== newTodo.status
+                || prevTodo.content !== newTodo.content;
+            });
+          };
+
           const hasChanged = prevAgents.length !== convertedAgents.length
             || prevAgents.some((prevAgent, i) => {
               const newAgent = convertedAgents[i];
-              return !newAgent
-                || prevAgent.id !== newAgent.id
+              if (!newAgent) return true;
+              
+              // Check basic agent properties
+              const basicChanged = prevAgent.id !== newAgent.id
                 || prevAgent.status !== newAgent.status
                 || prevAgent.name !== newAgent.name;
+              
+              // Check todos array changes
+              const todosChangedResult = todosChanged(prevAgent.todos || [], newAgent.todos || []);
+              
+              // DEBUG: Log todos comparison for debugging
+              if (todosChangedResult) {
+                logger.info('TODOS_DEBUG: Agent todos changed', {
+                  agentId: newAgent.id,
+                  prevTodos: JSON.stringify(prevAgent.todos || []),
+                  newTodos: JSON.stringify(newAgent.todos || []),
+                  prevTodosCount: (prevAgent.todos || []).length,
+                  newTodosCount: (newAgent.todos || []).length,
+                });
+              }
+              
+              return basicChanged || todosChangedResult;
             });
 
           if (hasChanged) {
             logger.debug('useAgentManager: Agents changed', {
               prevCount: prevAgents.length,
               newCount: convertedAgents.length,
-              agents: convertedAgents.map((a) => ({ id: a.id, name: a.name, status: a.status })),
+              agents: convertedAgents.map((a) => ({ 
+                id: a.id, 
+                name: a.name, 
+                status: a.status,
+                todosCount: (a.todos || []).length,
+                currentTask: (a.todos || []).find(t => t.status === 'in_progress')?.content || 'No active task'
+              })),
+            });
+          } else {
+            // DEBUG: Log when no changes detected to help debug
+            logger.debug('TODOS_DEBUG: No agent changes detected', {
+              agentCount: prevAgents.length,
+              agents: prevAgents.map((a) => ({ 
+                id: a.id, 
+                status: a.status,
+                todosCount: (a.todos || []).length,
+                inProgressTodos: (a.todos || []).filter(t => t.status === 'in_progress').length
+              })),
             });
           }
 
