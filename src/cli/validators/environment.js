@@ -1,7 +1,6 @@
 const semver = require('semver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const chalk = require('chalk');
 const { EnvironmentValidationError } = require('../../utils/errors');
 const GitStatusChecker = require('../../core/git-status-checker');
 const StartupWarningDisplay = require('../../core/startup-warning-display');
