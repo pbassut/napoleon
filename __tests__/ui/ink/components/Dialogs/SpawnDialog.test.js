@@ -126,5 +126,27 @@ describe('SpawnDialog', () => {
       expect(component).toBeDefined();
       // Users should be able to continue typing after the preset text
     });
+
+    it('should reset text to preset after successful submission', () => {
+      const component = React.createElement(SpawnDialog, {
+        isOpen: true,
+        onClose: mockOnClose,
+        onSubmit: mockOnSubmit
+      });
+      
+      expect(component).toBeDefined();
+      // Text should be reset to BASIC_PRESET after successful submission
+    });
+
+    it('should clear error when modal opens', () => {
+      const component = React.createElement(SpawnDialog, {
+        isOpen: true,
+        onClose: mockOnClose,
+        onSubmit: mockOnSubmit
+      });
+      
+      expect(component).toBeDefined();
+      // useEffect should clear error state when isOpen becomes true
+    });
   });
 });

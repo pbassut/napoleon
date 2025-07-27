@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box, Text, useInput, useFocus,
 } from 'ink';
@@ -24,6 +24,12 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   const focusOptions = useMemo(() => ({ autoFocus: isOpen }), [isOpen]);
   const { isFocused } = useFocus(focusOptions);
 
+  // Clear error when modal opens (but keep user's text)
+  useEffect(() => {
+    if (isOpen) {
+      setError('');
+    }
+  }, [isOpen]);
 
   // Handle global escape key to close dialog
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
@@ -68,7 +74,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       await onSubmit(safePrompt);
       logger.debug('SpawnDialog: onSubmit completed successfully');
       setIsLoading(false);
-      setText(''); // Clear text after successful submission
+      setText(BASIC_PRESET); // Reset to preset text after successful submission
       // Don't close here - let the parent handle closing after successful spawn
     } catch (err: any) {
       logger.error('SpawnDialog: Error in onSubmit:', { error: err });
