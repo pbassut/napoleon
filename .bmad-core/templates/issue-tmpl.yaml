@@ -22,8 +22,8 @@ agent_config:
     - Comments
 
 attributes:
-  - id: issue
-    title: Issue
+  - id: summary
+    title: Summary
     type: template-text
     template: |
       **As a** {{role}},
