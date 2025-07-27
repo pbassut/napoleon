@@ -27,7 +27,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     if (isOpen) {
       logger.debug('SpawnDialog: Dialog opened, resetting state');
 
-      setText('/BMad:agents:dev');
+      setText('/BMad:agents:dev ');
       setIsLoading(false);
     }
   }, [isOpen]);
