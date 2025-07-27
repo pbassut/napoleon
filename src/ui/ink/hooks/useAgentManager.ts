@@ -43,44 +43,6 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     todos: agentData.todos || [], // Include todos from agent data
   }), []);
 
-  // Fetch agents from AgentManager
-  const fetchAgents = useCallback(() => {
-    if (!agentManager) {
-      setAgents([]);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      const activeAgents = agentManager.getActiveAgents();
-      // Enrich agents with todos data using getAgentDetails
-      const enrichedAgents = activeAgents.map(agent => {
-        const agentDetails = agentManager.getAgentDetails(agent.id);
-        return {
-          ...agent,
-          todos: agentDetails?.todos || []
-        };
-      });
-      const convertedAgents = enrichedAgents.map(convertAgent);
-
-      setAgents(convertedAgents);
-      setError(null);
-
-      // Check if selected agent still exists without adding selectedAgentId to dependencies
-      setSelectedAgentId((currentSelectedId) => {
-        if (currentSelectedId && !convertedAgents.find((a) => a.id === currentSelectedId)) {
-          return null;
-        }
-        return currentSelectedId;
-      });
-    } catch (err) {
-      setError(err as Error);
-      console.error('Failed to fetch agents:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [agentManager, convertAgent]);
-
   // Set up polling for agent updates
   // Note: In the future, this should be replaced with event-based updates
   useEffect(() => {
@@ -227,13 +189,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
         // Enrich agents with todos data using getAgentDetails
-        const enrichedAgents = activeAgents.map(agent => {
-          const agentDetails = agentManager.getAgentDetails(agent.id);
-          return {
-            ...agent,
-            todos: agentDetails?.todos || []
-          };
-        });
+        const enrichedAgents = activeAgents.map(agent => agentManager.getAgentDetails(agent.id));
         const convertedAgents = enrichedAgents.map(convertAgent);
         setAgents(convertedAgents);
       }
@@ -279,12 +235,6 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   // Memoize canSpawnAgent to prevent re-evaluation on every render
   const canSpawnAgent = useMemo(() => agentManager?.canSpawnAgent() ?? false, [agentManager, agents.length]); // Re-evaluate when agent count changes
 
-  // No maximum limit
-  const maxAgents = useMemo(
-    () => Number.MAX_SAFE_INTEGER, // Effectively unlimited
-    [agentManager],
-  );
-
   return {
     agents,
     selectedAgentId,
@@ -292,7 +242,6 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     spawnAgent,
     terminateAgent,
     canSpawnAgent,
-    maxAgents,
     isLoading,
     error,
   };

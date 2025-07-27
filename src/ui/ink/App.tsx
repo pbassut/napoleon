@@ -32,7 +32,6 @@ const App = ({ agentManager }) => {
     spawnAgent,
     terminateAgent,
     canSpawnAgent,
-    maxAgents,
     isLoading,
     error,
   } = useAgentManager(agentManager);

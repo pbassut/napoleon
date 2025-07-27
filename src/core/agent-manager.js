@@ -1811,7 +1811,7 @@ class AgentManager {
       branch: session.branch || 'main',
       environmentVars: session.environmentVars || {},
       process: session.process,
-      todos: todos,
+      todos: todos || [],
     };
   }
 
