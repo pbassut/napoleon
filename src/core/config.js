@@ -29,7 +29,7 @@ const DEFAULT_CONFIG = {
   ui: {
     toolSuppression: {
       enabled: true,
-      suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      suppressedTools: [],
       showToolResults: true,
     },
   },
