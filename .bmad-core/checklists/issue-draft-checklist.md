@@ -80,6 +80,8 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] Critical information from previous stories is summarized (not just referenced)
 - [ ] Context is provided for why references are relevant
 - [ ] References to other issues use consistent format (e.g., `#123)
+- [ ] The issue is inside a Github Project
+- [ ] The issue has a status(default is Draft)
 
 ## 4. SELF-CONTAINMENT ASSESSMENT
 
@@ -121,7 +123,7 @@ Generate a concise validation report:
 1. Quick Summary
 
    - Direct link to the issue on github
-   - Issue status on github: READY / NEEDS REVISION / BLOCKED
+   - Issue status on github
    - Clarity score (1-10)
    - Major gaps identified
 
