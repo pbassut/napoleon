@@ -4,7 +4,7 @@ import { Agent, getCurrentTask } from '../../types';
 import { getStatusInfo } from '../../constants/agentStatus';
 import { ActivityIndicator } from '../Common/ActivityIndicator';
 
-const { memo, useState, useEffect } = React;
+const { memo } = React;
 
 interface AgentItemProps {
   agent: Agent;
@@ -35,7 +35,7 @@ const formatRuntime = (startTime: Date | undefined, endTime?: Date | undefined):
 };
 
 const AgentItem: React.FC<AgentItemProps> = memo(({
-  agent, isSelected, isFocused, index,
+  agent, isSelected, isFocused,
 }) => {
   const statusInfo = getStatusInfo(agent.status);
   const textColor = isSelected && isFocused ? 'cyan' : 'white';
@@ -53,8 +53,8 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 
   // Get current task from agent's todos
   const currentTask = getCurrentTask(agent.todos);
-  const currentTaskDisplay = currentTask 
-    ? truncateTask(currentTask.content) 
+  const currentTaskDisplay = currentTask
+    ? truncateTask(currentTask.content)
     : 'No active task';
 
   return (
@@ -117,17 +117,17 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
     && prevProps.agent.status === nextProps.agent.status
     && prevProps.agent.name === nextProps.agent.name
     && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime();
-  
+
   const interactionPropsEqual = prevProps.isSelected === nextProps.isSelected
     && prevProps.isFocused === nextProps.isFocused;
-  
+
   // Check if todos have changed
   const prevCurrentTask = getCurrentTask(prevProps.agent.todos);
   const nextCurrentTask = getCurrentTask(nextProps.agent.todos);
-  const todosEqual = (prevCurrentTask?.id === nextCurrentTask?.id 
-    && prevCurrentTask?.content === nextCurrentTask?.content 
+  const todosEqual = (prevCurrentTask?.id === nextCurrentTask?.id
+    && prevCurrentTask?.content === nextCurrentTask?.content
     && prevCurrentTask?.status === nextCurrentTask?.status);
-  
+
   return agentPropsEqual && interactionPropsEqual && todosEqual;
 });
 

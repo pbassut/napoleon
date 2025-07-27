@@ -19,7 +19,6 @@ interface AgentListProps {
 const AgentList: React.FC<AgentListProps> = ({
   agents,
   selectedIndex,
-  onSelectionChange,
   height = 10,
   isModalOpen = false,
 }) => {
@@ -55,7 +54,10 @@ const AgentList: React.FC<AgentListProps> = ({
   // Reserve lines for header and potential scroll indicators
   const visibleItems = Math.max(1, height - 3);
 
-  const visibleAgents = useMemo(() => agents.slice(scrollOffset, scrollOffset + visibleItems), [agents, scrollOffset, visibleItems]);
+  const visibleAgents = useMemo(
+    () => agents.slice(scrollOffset, scrollOffset + visibleItems),
+    [agents, scrollOffset, visibleItems],
+  );
 
   const adjustScrollOffset = useCallback((newSelectedIndex: number) => {
     if (newSelectedIndex < scrollOffset) {

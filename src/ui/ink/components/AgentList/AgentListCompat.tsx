@@ -2,7 +2,7 @@ import React from 'react';
 import {
   Box, Text, useInput, useFocus,
 } from 'ink';
-import { getBoxChar, getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities';
+import { getStatusSymbol, detectCapabilities } from '../../utils/terminal-capabilities';
 import { normalizeKey, matchesBinding } from '../../utils/input-normalizer';
 import { Agent } from '../../types';
 
@@ -67,7 +67,7 @@ const AgentListCompat: React.FC<AgentListCompatProps> = ({
   const AgentListContent: React.FC = () => {
     const { isFocused } = useFocus();
 
-    useInput((input: string, key: any) => {
+    useInput((input: string, key: { upArrow?: boolean; downArrow?: boolean }) => {
       if (!isFocused) return;
 
       const normalizedKey = normalizeKey(input, key);
