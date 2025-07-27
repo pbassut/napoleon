@@ -40,7 +40,7 @@ Check for available resources in this order:
 3. **Brownfield PRD** (file docs/prd.md)
    - May contain embedded technical details
 
-4. **Epic Files** (Github Milestones)
+4. **Milestones**
    - Created by brownfield-create-epic task
 
 5. **User-Provided Documentation**
