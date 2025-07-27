@@ -69,7 +69,7 @@ class AgentManager {
 
     // Create initialization promise
     this.initializationPromise = this._performInitialization();
-    
+
     try {
       await this.initializationPromise;
       this.isInitialized = true;
@@ -96,7 +96,7 @@ class AgentManager {
       // Run heavy operations in parallel
       initTasks.push(
         this.worktreeLifecycle.initialize(),
-        this.initializeAgentLogging()
+        this.initializeAgentLogging(),
       );
 
       // Wait for core services to initialize
@@ -135,11 +135,10 @@ class AgentManager {
   getInitializationStatus() {
     if (this.isInitialized) {
       return { status: 'ready', message: 'Fully initialized' };
-    } else if (this.initializationPromise) {
+    } if (this.initializationPromise) {
       return { status: 'initializing', message: 'Loading services...' };
-    } else {
-      return { status: 'pending', message: 'Not initialized' };
     }
+    return { status: 'pending', message: 'Not initialized' };
   }
 
   /**
@@ -147,7 +146,7 @@ class AgentManager {
    */
   loadSessionsBackground() {
     // Run session loading in background
-    this.loadSessions().catch(error => {
+    this.loadSessions().catch((error) => {
       logger.error('Background session loading failed', { error: error.message });
     });
   }
@@ -1220,7 +1219,7 @@ class AgentManager {
    * @private
    */
   validateAPIKey() {
-    return; 
+    return;
 
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new EnvironmentValidationError(
@@ -1278,11 +1277,11 @@ class AgentManager {
           // Process messages as they arrive in real-time using for await
           for await (const message of messageStream) {
             logger.info('SDK message received (real-time)', { 
-              agentId, 
+              agentId,
               messageType: message.type,
-              messageId: message.id 
+              messageId: message.id,
             });
-            
+
             // Handle real-time output from SDK immediately
             this.handleSDKMessage(agentId, message);
           }
@@ -1292,7 +1291,7 @@ class AgentManager {
           if (currentSession && currentSession.status === AgentStatus.RUNNING) {
             this.updateAgentStatus(agentId, AgentStatus.IDLE);
           }
-          
+
           logger.info('SDK query stream completed for agent', { agentId });
         } catch (error) {
           logger.error('SDK query stream failed for agent', {
@@ -1749,26 +1748,26 @@ class AgentManager {
    */
   getCurrentTask(agentId) {
     const todos = toolUsageTracker.getAgentTodos(agentId);
-    
+
     if (!todos || !Array.isArray(todos)) {
       return null;
     }
-    
-    const inProgressTasks = todos.filter(todo => todo.status === 'in_progress');
-    
+
+    const inProgressTasks = todos.filter((todo) => todo.status === 'in_progress');
+
     if (inProgressTasks.length === 0) {
       return null; // No active task
     }
-    
+
     if (inProgressTasks.length === 1) {
       return inProgressTasks[0];
     }
-    
+
     // Handle edge case of multiple in_progress tasks
     logger.warn('Multiple in_progress todos found for agent', {
       agentId,
       count: inProgressTasks.length,
-      tasks: JSON.stringify(inProgressTasks)
+      tasks: JSON.stringify(inProgressTasks),
     });
     return inProgressTasks[0]; // Return first one
   }

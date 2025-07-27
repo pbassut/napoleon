@@ -1,8 +1,8 @@
 import chalk from 'chalk';
-import logger from '../utils/logger.js'; // eslint-disable-line import/extensions
-import type { AgentManager } from './ink/types'; // eslint-disable-line import/no-unresolved
-import AgentManagerClass from '../core/agent-manager.js'; // eslint-disable-line import/extensions
-import startInkWithManager from './ink/startWithManager'; // eslint-disable-line import/no-unresolved, import/extensions
+import logger from '../utils/logger';
+import { AgentManager } from './ink/types';
+import AgentManagerClass from '../core/agent-manager';
+import startInkWithManager from './ink/startWithManager';
 
 /**
  * Napoleon UI Entry Point

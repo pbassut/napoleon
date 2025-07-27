@@ -47,7 +47,31 @@
           "jsx": "never",
           "ts": "never",
           "tsx": "never"
-        }]
+        }],
+        "no-plusplus": "off",
+        "class-methods-use-this": "off",
+        "@typescript-eslint/no-explicit-any": "warn",
+        "@typescript-eslint/no-unused-vars": "warn",
+        "no-await-in-loop": "warn",
+        "no-restricted-syntax": "warn",
+        "import/prefer-default-export": "off",
+        "max-len": ["error", { "code": 120, "ignoreComments": true }],
+        "no-param-reassign": "off",
+        "no-underscore-dangle": "off",
+        "consistent-return": "off",
+        "no-control-regex": "off",
+        "no-else-return": "off",
+        "no-shadow": "off",
+        "no-nested-ternary": "off",
+        "global-require": "off",
+        "@typescript-eslint/no-require-imports": "off",
+        "default-case": "off",
+        "no-restricted-globals": "warn",
+        "implicit-arrow-linebreak": "off",
+        "function-paren-newline": "off",
+        "comma-dangle": "off",
+        "no-trailing-spaces": "off",
+        "arrow-parens": "off"
       }
     }
   ]

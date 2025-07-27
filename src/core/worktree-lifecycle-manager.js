@@ -49,9 +49,9 @@ class WorktreeLifecycleManager {
 
       // Fast initialization complete - do heavy work in background
       logger.info('Worktree lifecycle manager initialized (background discovery started)');
-      
+
       // Start background discovery without blocking
-      this.backgroundDiscovery().catch(error => {
+      this.backgroundDiscovery().catch((error) => {
         logger.error('Background worktree discovery failed', { error: error.message });
       });
 
@@ -104,9 +104,9 @@ class WorktreeLifecycleManager {
 
       logger.info('Background worktree discovery fully completed');
     } catch (error) {
-      logger.error('Background worktree discovery failed', { 
+      logger.error('Background worktree discovery failed', {
         error: error.message,
-        stack: error.stack 
+        stack: error.stack,
       });
       this.metrics.discoveryErrors++;
     }

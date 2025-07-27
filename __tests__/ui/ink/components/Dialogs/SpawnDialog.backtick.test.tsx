@@ -1,10 +1,10 @@
 import React from 'react';
 import { render } from 'ink-testing-library';
 import { SpawnDialog } from '../../../../../src/ui/ink/components/Dialogs/SpawnDialog';
-import { protectBackticks, isInputSafe } from '../../../../../src/utils/backtick-protection.js';
+import { protectBackticks, isInputSafe } from '../../../../../src/utils/backtick-protection';
 
 // Mock logger to prevent console output during tests
-jest.mock('../../../../../src/utils/logger.js', () => ({
+jest.mock('../../../../../src/utils/logger', () => ({
   debug: jest.fn(),
   error: jest.fn(),
   info: jest.fn(),

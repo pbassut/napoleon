@@ -11,7 +11,7 @@ import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentListDefault from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
-import logger from '../../utils/logger.js'; // eslint-disable-line import/extensions
+import logger from '../../utils/logger';
 
 const {
   useState, useMemo, useCallback,

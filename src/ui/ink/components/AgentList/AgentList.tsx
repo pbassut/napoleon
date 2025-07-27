@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import AgentItem from './AgentItem';
 import { Agent } from '../../types';
-import logger from '../../../../utils/logger.js';
+import logger from '../../../../utils/logger';
 
 const {
   useState, useEffect, useMemo, useCallback,

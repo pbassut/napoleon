@@ -15,7 +15,7 @@ class ToolUsageTracker {
     if (!this.agentToolUsage.has(agentId)) {
       this.agentToolUsage.set(agentId, {
         todos: [],
-        toolCalls: []
+        toolCalls: [],
       });
     }
   }
@@ -28,19 +28,19 @@ class ToolUsageTracker {
    */
   trackTodoWrite(agentId, toolUse, message) {
     this.initializeAgent(agentId);
-    
+
     const agentData = this.agentToolUsage.get(agentId);
-    
+
     try {
-      const input = toolUse.input;
+      const { input } = toolUse;
       if (input && input.todos && Array.isArray(input.todos)) {
         // Update the todos array with new data
-        agentData.todos = input.todos.map(todo => ({
+        agentData.todos = input.todos.map((todo) => ({
           id: todo.id,
           content: todo.content,
           priority: todo.priority,
           status: todo.status,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         }));
 
         // Track successful tool call
@@ -49,7 +49,7 @@ class ToolUsageTracker {
           timestamp: new Date().toISOString(),
           messageId: message.id || null,
           input: input.todos,
-          success: true
+          success: true,
         });
       } else {
         // Track failed tool call for invalid input
@@ -58,19 +58,19 @@ class ToolUsageTracker {
           timestamp: new Date().toISOString(),
           messageId: message.id || null,
           error: 'Invalid input: todos array not found or not an array',
-          success: false
+          success: false,
         });
       }
     } catch (error) {
       console.error('Error tracking TodoWrite usage:', error);
-      
+
       // Track failed tool call for exceptions
       agentData.toolCalls.push({
         toolName: 'TodoWrite',
         timestamp: new Date().toISOString(),
         messageId: message.id || null,
         error: error.message,
-        success: false
+        success: false,
       });
     }
   }
@@ -83,7 +83,7 @@ class ToolUsageTracker {
   getAgentTodos(agentId) {
     const agentData = this.agentToolUsage.get(agentId);
     const todos = agentData ? agentData.todos : [];
-    
+
     return todos;
   }
 
@@ -99,15 +99,15 @@ class ToolUsageTracker {
         totalToolCalls: 0,
         todoWriteCalls: 0,
         currentTodos: [],
-        toolCallHistory: []
+        toolCallHistory: [],
       };
     }
 
     return {
       totalToolCalls: agentData.toolCalls.length,
-      todoWriteCalls: agentData.toolCalls.filter(call => call.toolName === 'TodoWrite').length,
+      todoWriteCalls: agentData.toolCalls.filter((call) => call.toolName === 'TodoWrite').length,
       currentTodos: agentData.todos,
-      toolCallHistory: agentData.toolCalls
+      toolCallHistory: agentData.toolCalls,
     };
   }
 
@@ -146,7 +146,7 @@ class ToolUsageTracker {
     if (data && typeof data === 'object') {
       this.agentToolUsage.set(agentId, {
         todos: data.todos || [],
-        toolCalls: data.toolCalls || []
+        toolCalls: data.toolCalls || [],
       });
     }
   }

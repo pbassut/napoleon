@@ -2,7 +2,7 @@
 import { render } from 'ink';
 import React from 'react';
 import { AgentManager } from './types';
-import logger from '../../utils/logger.js';
+import logger from '../../utils/logger';
 import createAppDefault from './createApp';
 
 /**

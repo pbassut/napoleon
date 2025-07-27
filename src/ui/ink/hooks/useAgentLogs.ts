@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  useState, useEffect, useRef, useCallback,
+} from 'react';
 import { promises as fs } from 'fs';
 
 export interface LogEntry {
@@ -30,11 +32,11 @@ interface UseAgentLogsReturn {
   streamingError: Error | null;
 }
 
-export const useAgentLogs = ({ 
-  agentId, 
-  agentManager, 
-  refreshInterval = 1000, 
-  enableStreaming = true 
+export const useAgentLogs = ({
+  agentId,
+  agentManager,
+  refreshInterval = 1000,
+  enableStreaming = true,
 }: UseAgentLogsParams): UseAgentLogsReturn => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,14 +46,14 @@ export const useAgentLogs = ({
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const bufferRef = useRef<LogEntry[]>([]);
   const updateTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const BUFFER_SIZE = 1000; // Keep last 1000 entries in memory
   const UPDATE_BATCH_DELAY = 50; // Batch updates every 50ms for performance
 
   // Performance-optimized function to add new log entries
   const addLogEntry = useCallback((entry: LogEntry) => {
     bufferRef.current.push(entry);
-    
+
     // Maintain buffer size
     if (bufferRef.current.length > BUFFER_SIZE) {
       bufferRef.current = bufferRef.current.slice(-BUFFER_SIZE);
@@ -61,7 +63,7 @@ export const useAgentLogs = ({
     if (updateTimeoutRef.current) {
       clearTimeout(updateTimeoutRef.current);
     }
-    
+
     updateTimeoutRef.current = setTimeout(() => {
       setLogs([...bufferRef.current]);
     }, UPDATE_BATCH_DELAY);
@@ -108,10 +110,10 @@ export const useAgentLogs = ({
       });
 
       // Keep only the last BUFFER_SIZE entries
-      const trimmedLogs = parsedLogs.length > BUFFER_SIZE 
-        ? parsedLogs.slice(-BUFFER_SIZE) 
+      const trimmedLogs = parsedLogs.length > BUFFER_SIZE
+        ? parsedLogs.slice(-BUFFER_SIZE)
         : parsedLogs;
-      
+
       setLogs(trimmedLogs);
       bufferRef.current = [...trimmedLogs];
       setError(null);
@@ -138,7 +140,7 @@ export const useAgentLogs = ({
       // Subscribe to streaming events
       agentManager.agentLogManager.on('log-entry', handleLogEntry);
       agentManager.agentLogManager.subscribeToAgent(agentId);
-      
+
       setIsStreaming(true);
       setStreamingError(null);
 
@@ -194,8 +196,8 @@ export const useAgentLogs = ({
         });
 
         // Keep only the last BUFFER_SIZE entries
-        const trimmedLogs = parsedLogs.length > BUFFER_SIZE 
-          ? parsedLogs.slice(-BUFFER_SIZE) 
+        const trimmedLogs = parsedLogs.length > BUFFER_SIZE
+          ? parsedLogs.slice(-BUFFER_SIZE)
           : parsedLogs;
 
         setLogs(trimmedLogs);
@@ -230,7 +232,7 @@ export const useAgentLogs = ({
 
       // Try to setup streaming first
       const streamingCleanup = setupStreaming();
-      
+
       if (streamingCleanup) {
         // Streaming is active
         cleanupFn = streamingCleanup;
@@ -248,7 +250,7 @@ export const useAgentLogs = ({
       if (cleanupFn) {
         cleanupFn();
       }
-      
+
       // Clean up batched update timeout
       if (updateTimeoutRef.current) {
         clearTimeout(updateTimeoutRef.current);
@@ -256,11 +258,11 @@ export const useAgentLogs = ({
     };
   }, [agentId, agentManager, refreshInterval, enableStreaming, loadInitialLogs, setupStreaming, setupPolling]);
 
-  return { 
-    logs, 
-    isLoading, 
-    error, 
-    isStreaming, 
-    streamingError 
+  return {
+    logs,
+    isLoading,
+    error,
+    isStreaming,
+    streamingError,
   };
 };

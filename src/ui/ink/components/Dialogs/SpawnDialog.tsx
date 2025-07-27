@@ -4,8 +4,8 @@ import {
 } from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
 import { TextEditor } from '../Common/TextEditor';
-import logger from '../../../../utils/logger.js';
-import { protectBackticks, isInputSafe } from '../../../../utils/backtick-protection.js';
+import logger from '../../../../utils/logger';
+import { protectBackticks, isInputSafe } from '../../../../utils/backtick-protection';
 
 interface SpawnDialogProps {
   isOpen: boolean;
@@ -33,7 +33,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
   // Handle global escape key to close dialog
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
-  
+
   useInput((input: string, key: any) => {
     if (!isOpen || isLoading) return;
 
@@ -41,7 +41,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     if (key.escape) {
       logger.debug('SpawnDialog: Escape pressed, closing dialog');
       onClose();
-      return;
     }
   }, inputOptions);
 

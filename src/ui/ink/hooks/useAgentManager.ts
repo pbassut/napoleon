@@ -2,7 +2,7 @@ import {
   useState, useEffect, useCallback, useRef, useMemo,
 } from 'react';
 import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
-import logger from '../../../utils/logger.js';
+import logger from '../../../utils/logger';
 
 // Agent status types from AgentManager
 const AgentStatus = {
@@ -59,11 +59,11 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       try {
         const activeAgents = agentManager.getActiveAgents();
         // Enrich agents with todos data using getAgentDetails
-        const enrichedAgents = activeAgents.map(agent => {
+        const enrichedAgents = activeAgents.map((agent) => {
           const agentDetails = agentManager.getAgentDetails(agent.id);
           return {
             ...agent,
-            todos: agentDetails?.todos || []
+            todos: agentDetails?.todos || [],
           };
         });
         const convertedAgents = enrichedAgents.map((agentData: any) => ({
@@ -97,12 +97,12 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
             || prevAgents.some((prevAgent, i) => {
               const newAgent = convertedAgents[i];
               if (!newAgent) return true;
-              
+
               // Check basic agent properties
               const basicChanged = prevAgent.id !== newAgent.id
                 || prevAgent.status !== newAgent.status
                 || prevAgent.name !== newAgent.name;
-              
+
               // Check todos array changes
               const todosChangedResult = todosChanged(prevAgent.todos || [], newAgent.todos || []);
 
@@ -113,12 +113,12 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
             logger.debug('useAgentManager: Agents changed', {
               prevCount: prevAgents.length,
               newCount: convertedAgents.length,
-              agents: convertedAgents.map((a) => ({ 
-                id: a.id, 
-                name: a.name, 
+              agents: convertedAgents.map((a) => ({
+                id: a.id,
+                name: a.name,
                 status: a.status,
                 todosCount: (a.todos || []).length,
-                currentTask: (a.todos || []).find(t => t.status === 'in_progress')?.content || 'No active task'
+                currentTask: (a.todos || []).find((t) => t.status === 'in_progress')?.content || 'No active task',
               })),
             });
           }
@@ -189,7 +189,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
         // Enrich agents with todos data using getAgentDetails
-        const enrichedAgents = activeAgents.map(agent => agentManager.getAgentDetails(agent.id));
+        const enrichedAgents = activeAgents.map((agent) => agentManager.getAgentDetails(agent.id));
         const convertedAgents = enrichedAgents.map(convertAgent);
         setAgents(convertedAgents);
       }
@@ -216,11 +216,11 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
         // Enrich agents with todos data using getAgentDetails
-        const enrichedAgents = activeAgents.map(agent => {
+        const enrichedAgents = activeAgents.map((agent) => {
           const agentDetails = agentManager.getAgentDetails(agent.id);
           return {
             ...agent,
-            todos: agentDetails?.todos || []
+            todos: agentDetails?.todos || [],
           };
         });
         const convertedAgents = enrichedAgents.map(convertAgent);

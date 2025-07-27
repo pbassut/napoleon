@@ -25,12 +25,12 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const contentHeight = terminalHeight - 6; // Header + footer + borders
 
   // Use real logs with streaming if agentManager is provided
-  const { 
-    logs: realLogs, 
-    isLoading, 
+  const {
+    logs: realLogs,
+    isLoading,
     error: logsError,
     isStreaming,
-    streamingError 
+    streamingError,
   } = useAgentLogs({
     agentId: agent.id,
     agentManager,

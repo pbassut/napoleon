@@ -73,7 +73,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({
     if (disabled) return;
 
     const normalizedKey = normalizeKey(input, key);
-    
 
     // Handle submission
     if (normalizedKey.return && !normalizedKey.shift && onSubmit) {
@@ -215,7 +214,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({
             const selection = getTextSelection(
               state.text,
               state.selectionStart,
-              state.selectionEnd
+              state.selectionEnd,
             );
             if (selection.text) {
               deleteText('selection');
@@ -228,7 +227,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({
             const selection = getTextSelection(
               state.text,
               state.selectionStart,
-              state.selectionEnd
+              state.selectionEnd,
             );
             // In a real terminal app, this would copy to clipboard
             // For now, we just acknowledge the copy

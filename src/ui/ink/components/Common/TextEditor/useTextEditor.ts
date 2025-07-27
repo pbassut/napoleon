@@ -196,7 +196,7 @@ export function useTextEditor(initialValue: string = '') {
       if (prevState.selectionStart !== undefined && prevState.selectionEnd !== undefined) {
         const start = Math.min(prevState.selectionStart, prevState.selectionEnd);
         const end = Math.max(prevState.selectionStart, prevState.selectionEnd);
-        
+
         baseText = prevState.text.substring(0, start) + prevState.text.substring(end);
         insertPosition = start;
       }
@@ -261,7 +261,7 @@ export function useTextEditor(initialValue: string = '') {
         // Delete selected text
         const start = Math.min(prevState.selectionStart, prevState.selectionEnd);
         const end = Math.max(prevState.selectionStart, prevState.selectionEnd);
-        
+
         newText = prevState.text.substring(0, start) + prevState.text.substring(end);
         newCursorPosition = start;
       } else if (type === 'backspace' && prevState.cursorPosition > 0) {

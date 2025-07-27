@@ -38,7 +38,7 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
       normalized.alt = true;
       normalized.meta = false;
     }
-    
+
     // Fix Mac keyboard mapping: The "delete" key on Mac acts as backspace
     // Only the fn+delete combination should act as forward delete
     if (key.delete && !key.fn) {

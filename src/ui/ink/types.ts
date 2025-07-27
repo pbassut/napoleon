@@ -44,17 +44,17 @@ export const getCurrentTask = (todos?: TodoItem[]): TodoItem | null => {
   if (!todos || !Array.isArray(todos)) {
     return null;
   }
-  
-  const inProgressTasks = todos.filter(todo => todo.status === 'in_progress');
-  
+
+  const inProgressTasks = todos.filter((todo) => todo.status === 'in_progress');
+
   if (inProgressTasks.length === 0) {
     return null; // No active task
   }
-  
+
   if (inProgressTasks.length === 1) {
     return inProgressTasks[0];
   }
-  
+
   // Handle edge case of multiple in_progress tasks - return first one
   return inProgressTasks[0];
 };

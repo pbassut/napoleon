@@ -66,14 +66,12 @@ export class LogParser {
                   name: toolUse.name,
                   input: toolUse.input,
                 };
-                
+
                 // Special handling for TodoWrite tool
                 if (toolUse.name === 'TodoWrite' && toolUse.input?.todos && Array.isArray(toolUse.input.todos)) {
                   // Validate todos array and filter out invalid entries
-                  const validTodos = toolUse.input.todos.filter((todo: any) => 
-                    todo && typeof todo === 'object' && typeof todo.status === 'string'
-                  );
-                  
+                  const validTodos = toolUse.input.todos.filter((todo: any) => todo && typeof todo === 'object' && typeof todo.status === 'string');
+
                   const todoCount = validTodos.length;
                   const completedCount = validTodos.filter((todo: any) => todo.status === 'completed').length;
                   const inProgressCount = validTodos.filter((todo: any) => todo.status === 'in_progress').length;
