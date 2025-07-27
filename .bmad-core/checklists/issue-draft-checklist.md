@@ -115,7 +115,7 @@ Note: We don't need every file listed - just the important ones.]]
 
 ## 6. TRACKING
 
-[[LLM: Use `gh` tool to interface with github projects
+[[LLM: Use `gh` tool to interface with github projects and:
 
 1. Make sure the issue is in a project in Github
 2. Confirm it has the default status: Draft]]

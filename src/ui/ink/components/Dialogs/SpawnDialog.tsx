@@ -86,8 +86,8 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   return (
     <ModalOverlay isOpen={isOpen}>
       <Box
-        width={70}
-        height={18}
+        width={105}
+        height={36}
         borderStyle="single"
         borderColor="green"
         flexDirection="column"
@@ -124,6 +124,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
               placeholder="Type your instructions here..."
               autoFocus={isFocused}
               multiline={true}
+              maxLines={20}
               showCursor={true}
               disabled={isLoading}
               onSubmit={handleSubmit}
