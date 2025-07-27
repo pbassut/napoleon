@@ -128,7 +128,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
               showCursor={true}
               disabled={isLoading}
               onSubmit={handleSubmit}
-              showPositionIndicator={true}
+              showPositionIndicator={false}
             />
           </Box>
         </Box>
