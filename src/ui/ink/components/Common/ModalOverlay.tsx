@@ -46,4 +46,4 @@ export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
   ));
 
 ModalOverlay.displayName = 'ModalOverlay';
-ModalOverlay.whyDidYouRender = true;
+ModalOverlay.whyDidYouRender = false;

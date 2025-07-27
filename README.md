@@ -95,6 +95,14 @@ npm run lint
 npm run format
 ```
 
+### Pre-commit Hooks
+This project uses Husky to run pre-commit hooks that automatically lint staged files before commits. The hooks will:
+- Run ESLint on staged JavaScript/TypeScript files
+- Automatically fix fixable issues
+- Block commits if unfixable lint errors exist
+
+After running `npm install`, the hooks are automatically configured. No additional setup required.
+
 ## License
 
 MIT

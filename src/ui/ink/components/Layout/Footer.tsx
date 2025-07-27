@@ -18,14 +18,11 @@ export const Footer: React.FC<FooterProps> = memo(() => (
       <Text> inspect  </Text>
       <Text color="yellow">[q]</Text>
       <Text>uit     </Text>
-      <Text color="gray">🔍 </Text>
-      <Text color="gray">[/] search  </Text>
-      <Text color="gray">[f] follow</Text>
     </Box>
   </Box>
 ));
 
 Footer.displayName = 'Footer';
-Footer.whyDidYouRender = true;
+Footer.whyDidYouRender = false;
 
 export default Footer;

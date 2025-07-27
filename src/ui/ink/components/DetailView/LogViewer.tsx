@@ -1,7 +1,7 @@
 import React, {
   useState, useEffect, useMemo, useCallback,
 } from 'react';
-import { Box, Text, useInput } from 'ink';
+import { Box, Static, Text, useInput } from 'ink';
 import { LogEntry as RawLogEntry } from '../../hooks/useAgentLogs';
 import { LogParser, ParsedLogEntry, LogParserOptions } from '../../utils/log-parser';
 import { LogEntry } from './LogEntry';
@@ -148,18 +148,18 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {displayedLogs.map((entry, index) => {
-        const globalIndex = scrollOffset + index;
-        const lineNumber = globalIndex + 1;
+      <Static items={displayedLogs}>
+        {(entry, index) =>  {
+          const globalIndex = scrollOffset + index;
+          const lineNumber = globalIndex + 1;
 
-        return (
-          <LogEntry
+          return <LogEntry
             key={`${entry.id}-${globalIndex}`}
             entry={entry}
             lineNumber={lineNumber}
           />
-        );
-      })}
+        }}
+      </Static>
     </Box>
   );
 };

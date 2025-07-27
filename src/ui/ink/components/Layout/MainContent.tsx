@@ -11,6 +11,6 @@ export const MainContent: React.FC<MainContentProps> = ({ children }) => (
   </Box>
 );
 
-MainContent.whyDidYouRender = true;
+MainContent.whyDidYouRender = false;
 
 export default MainContent;

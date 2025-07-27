@@ -257,6 +257,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   );
 };
 
-DetailView.whyDidYouRender = true;
+DetailView.whyDidYouRender = false;
 
 export { DetailView };

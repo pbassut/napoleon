@@ -355,4 +355,4 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   );
 };
 
-TextEditor.whyDidYouRender = true;
+TextEditor.whyDidYouRender = false;

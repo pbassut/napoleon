@@ -7,10 +7,10 @@ describe('LogParser', () => {
   beforeAll(() => {
     // Import the TypeScript LogParser by reading and adapting it
     const logParserPath = path.join(__dirname, '../src/ui/ink/utils/log-parser.ts');
-    const logParserCode = fs.readFileSync(logParserPath, 'utf-8');
+    fs.readFileSync(logParserPath, 'utf-8');
     
     // Create a minimal JavaScript version for testing
-    const parseLogEntry = function(rawLog) {
+    const parseLogEntry = function parseLogEntry(rawLog) {
       try {
         const parsedEntry = {
           ...rawLog,
@@ -130,10 +130,10 @@ describe('LogParser', () => {
       }
     };
 
-    const formatTimestamp = function(timestamp) {
+    const formatTimestamp = function formatTimestamp(timestamp) {
       try {
         const date = new Date(timestamp);
-        if (isNaN(date.getTime())) {
+        if (Number.isNaN(date.getTime())) {
           return timestamp;
         }
         return date.toLocaleTimeString('en-US', {
@@ -147,7 +147,7 @@ describe('LogParser', () => {
       }
     };
 
-    const shouldShowLog = function(entry, options) {
+    const shouldShowLog = function shouldShowLog(entry, options) {
       // Tool suppression logic - applies only to assistant messages with toolUse
       if (options.toolSuppression?.enabled && entry.toolUse && entry.displayFormat === 'assistant') {
         const toolName = entry.toolUse.name;
