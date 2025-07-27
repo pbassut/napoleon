@@ -3,7 +3,7 @@ import { Box, Text } from 'ink';
 
 const { memo } = React;
 
-export const Header: React.FC = memo(() => (
+const Header: React.FC = memo(() => (
   <Box width="100%" justifyContent="center" paddingY={1}>
     <Text bold>Napoleon</Text>
   </Box>
@@ -11,3 +11,5 @@ export const Header: React.FC = memo(() => (
 
 Header.displayName = 'Header';
 Header.whyDidYouRender = true;
+
+export default Header;

@@ -5,10 +5,12 @@ interface MainContentProps {
   children: React.ReactNode;
 }
 
-export const MainContent: React.FC<MainContentProps> = ({ children }) => (
+const MainContent: React.FC<MainContentProps> = ({ children }) => (
   <Box flexGrow={1} flexDirection="column">
     {children}
   </Box>
 );
 
 MainContent.whyDidYouRender = true;
+
+export default MainContent;

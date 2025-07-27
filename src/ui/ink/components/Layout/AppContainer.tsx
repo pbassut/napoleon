@@ -5,7 +5,7 @@ interface AppContainerProps {
   children: React.ReactNode;
 }
 
-export const AppContainer: React.FC<AppContainerProps> = ({ children }) => {
+const AppContainer: React.FC<AppContainerProps> = ({ children }) => {
   const width = 82; // Fixed width for consistency
 
   return (
@@ -35,3 +35,5 @@ export const AppContainer: React.FC<AppContainerProps> = ({ children }) => {
     </Box>
   );
 };
+
+export default AppContainer;
