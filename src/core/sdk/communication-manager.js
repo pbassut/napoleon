@@ -1,8 +1,8 @@
 // const { query } = require('@anthropic-ai/claude-code'); // Moved to method to support mocking
 const fs = require('fs');
+const path = require('path');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
-const { loadConfig } = require('../config');
 const toolUsageTracker = require('../tool-usage-tracker');
 
 /**
@@ -70,7 +70,6 @@ class SDKCommunicationManager {
       }
 
       // Create session object with SDK configuration
-      const config = loadConfig();
       const session = {
         agentId,
         workingDirectory,
@@ -153,7 +152,7 @@ class SDKCommunicationManager {
 
       // Merge options with session defaults
       // Use the claude executable from the worktree's node_modules
-      const claudeExecutable = require('path').join(session.workingDirectory, 'node_modules', '.bin', 'claude');
+      const claudeExecutable = path.join(session.workingDirectory, 'node_modules', '.bin', 'claude');
 
       const queryOptions = {
         permissionMode: 'bypassPermissions',
@@ -253,7 +252,7 @@ class SDKCommunicationManager {
       let messageCount = 0;
       while (!iteratorResult.done) {
         const message = iteratorResult.value;
-        messageCount++;
+        messageCount += 1;
         messages.push(message);
 
         this.logger.debug('SDK: Processing message', {
@@ -1011,20 +1010,20 @@ class SDKCommunicationManager {
     try {
       // Check if message contains tool_use content
       if (message.content && Array.isArray(message.content)) {
-        const toolUse = message.content.find(item => item.type === 'tool_use');
+        const toolUse = message.content.find((item) => item.type === 'tool_use');
         if (toolUse && toolUse.name === 'TodoWrite') {
           // Initialize tool tracking for this agent
           toolUsageTracker.initializeAgent(agentId);
-          
+
           // Track the TodoWrite usage
           toolUsageTracker.trackTodoWrite(agentId, toolUse, message);
-          
+
           // Log tool tracking success
           this.logger.debug('TodoWrite usage tracked', {
             agentId,
             toolId: toolUse.id,
             messageId: message.id,
-            todoCount: toolUse.input?.todos?.length || 0
+            todoCount: toolUse.input?.todos?.length || 0,
           });
         }
       }
@@ -1033,7 +1032,7 @@ class SDKCommunicationManager {
       this.logger.warn('Failed to track tool usage', {
         agentId,
         error: error.message,
-        messageId: message.id
+        messageId: message.id,
       });
     }
   }
