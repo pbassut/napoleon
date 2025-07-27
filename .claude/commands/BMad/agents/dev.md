@@ -61,8 +61,8 @@ commands:
   - explain: teach me what and why you did whatever you just did in detail so I can learn. Explain to me as if you were training a junior engineer.
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-issue:
-  start-issue:
-    - Update the issue status to be "In progress". Notice this is not meant to comment on the issue but update the ISSUE STATUS.
+  update-issue-status:
+    - Use the Github API to update the issue status to be "In Progress".
   git-branching: 
     - CRITICAL: UNLESS you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do.
     - CRITICAL: DO NOT create a new branch if you're told to work off of an issue that already has a Pull Request attached to it. Make sure to pull the branch attached to that issue and make commits and pushes to that branch.
@@ -73,7 +73,7 @@ develop-issue:
     - CRITICAL: Only add a comment on the issue with Debug Log References, Completion Notes List, Changed File List
   blocking: "HALT for: Unapproved deps needed, confirm with user | Ambiguous after issue check | 3 failures attempting to implement or fix something repeatedly | Missing config | Failing regression"
   ready-for-review: "Code matches requirements + All validations pass + Follows standards + File List complete"
-  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist issue-dod-checklist→code is pushed to the remote and PR is created→update project issue status: 'Ready to Review'→HALT"
+  completion: "All Tasks and Subtasks marked [x] and have tests→Validations and full regression passes (DON'T BE LAZY, EXECUTE ALL TESTS and CONFIRM)→Ensure File List is Complete→run the task execute-checklist for the checklist issue-dod-checklist→code is pushed to the remote and PR is created→update-issue-status to 'Ready to Review'→HALT"
 
 dependencies:
   tasks:
