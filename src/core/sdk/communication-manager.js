@@ -651,7 +651,6 @@ class SDKCommunicationManager {
         lastMessageId: session.lastMessageId,
         duration: Date.now() - startTime,
       });
-
     } catch (error) {
       const errorSession = this.sessions.get(agentId);
 

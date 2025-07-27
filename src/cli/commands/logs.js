@@ -271,7 +271,8 @@ class LogsCommand {
       const prompt = log.prompt.length > 30 ? `${log.prompt.substring(0, 27)}...` : log.prompt;
 
       console.log(
-        `${chalk.cyan(log.date)} ${chalk.yellow(log.agentId.padEnd(10))} ${prompt.padEnd(30)} ${size.padEnd(8)} ${chalk.gray(log.modifiedRelative)}`,
+        `${chalk.cyan(log.date)} ${chalk.yellow(log.agentId.padEnd(10))} ${prompt.padEnd(30)} `
+        + `${size.padEnd(8)} ${chalk.gray(log.modifiedRelative)}`,
       );
     });
   }

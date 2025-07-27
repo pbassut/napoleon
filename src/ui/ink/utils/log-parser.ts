@@ -67,8 +67,12 @@ export class LogParser {
                 .join(' ');
 
               // Handle tool use - filter out null/undefined items
-              const toolUse = content.find((item: unknown) => item && typeof item === 'object'
-                && (item as Record<string, unknown>).type === 'tool_use') as Record<string, unknown> | undefined;
+              const toolUse = content.find(
+                (item: unknown) =>
+                  item
+                  && typeof item === 'object'
+                  && (item as Record<string, unknown>).type === 'tool_use'
+              ) as Record<string, unknown> | undefined;
               if (toolUse) {
                 parsedEntry.toolUse = {
                   name: toolUse.name as string,

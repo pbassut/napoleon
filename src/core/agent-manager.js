@@ -76,12 +76,13 @@ class AgentManager {
     }
 
     // Create initialization promise
-    this.initializationPromise = this.performInitialization();
+    // eslint-disable-next-line no-underscore-dangle
+    this.initializationPromise = this._performInitialization();
 
     try {
       await this.initializationPromise;
       this.isInitialized = true;
-      return this.initializationPromise;
+      return this;
     } catch (error) {
       // Reset promise on failure to allow retry
       this.initializationPromise = null;
@@ -89,7 +90,8 @@ class AgentManager {
     }
   }
 
-  async performInitialization() {
+  // eslint-disable-next-line no-underscore-dangle
+  async _performInitialization() {
     try {
       this.config = loadConfig();
 
@@ -832,7 +834,7 @@ class AgentManager {
           cwd: process.cwd(),
           timeout: 10000,
         },
-        (unlockError) => {
+        (unlockError, _unlockStdout, _unlockStderr) => {
           if (unlockError) {
             logger.debug('Worktree unlock failed (this is normal if not locked)', {
               worktreePath,
@@ -1274,37 +1276,17 @@ class AgentManager {
       // Don't await - let the agent run asynchronously
       // Capture session data to prevent race conditions
       const sessionId = session.sessionId || session.id;
-      const { workingDirectory } = session;
 
       // Execute SDK query with real-time streaming through SDKCommunicationManager
       (async () => {
         try {
           logger.info('Starting real-time SDK query stream for agent', { agentId });
 
-          // Get the streaming query response from Claude Code SDK directly
-          const { query } = claudeCodeSDK;
-          const sdkSession = this.sdkManager.getSession(sessionId);
+          // Use the new streaming method from SDKCommunicationManager
+          const messageStream = this.sdkManager.executeQueryStream(sessionId, instructions);
 
-          if (!sdkSession) {
-            throw new Error(`No SDK session found for agent ${agentId}`);
-          }
-
-          const queryOptions = {
-            permissionMode: 'bypassPermissions',
-            cwd: workingDirectory,
-            abortController: sdkSession.abortController,
-          };
-
-          const queryResponse = query({
-            prompt: instructions,
-            options: queryOptions,
-          });
-
-          // Process messages as they arrive in real-time using async iteration
-          const messageIterator = queryResponse[Symbol.asyncIterator]();
-          let result = await messageIterator.next();
-          while (!result.done) {
-            const message = result.value;
+          // Process messages as they arrive in real-time using for await
+          for await (const message of messageStream) {
             logger.info('SDK message received (real-time)', {
               agentId,
               messageType: message.type,
@@ -1313,9 +1295,6 @@ class AgentManager {
 
             // Handle real-time output from SDK immediately
             this.handleSDKMessage(agentId, message);
-
-            // eslint-disable-next-line no-await-in-loop
-            result = await messageIterator.next();
           }
 
           // Update status when SDK query completes

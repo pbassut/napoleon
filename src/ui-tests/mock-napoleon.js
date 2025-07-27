@@ -133,27 +133,25 @@ process.stdin.on('data', (key) => {
         render();
       }
     }
-  } else {
+  } else if (key === 'n') {
     // Main navigation
-    if (key === 'n') {
-      inDialog = true;
-      dialogType = 'spawn';
-      dialogBuffer = '';
+    inDialog = true;
+    dialogType = 'spawn';
+    dialogBuffer = '';
+    render();
+  } else if (key === 't' && agents.length > 0) {
+    inDialog = true;
+    dialogType = 'terminate';
+    render();
+  } else if (key === '\u001b[A') { // Up arrow
+    if (agents.length > 0) {
+      selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : agents.length - 1;
       render();
-    } else if (key === 't' && agents.length > 0) {
-      inDialog = true;
-      dialogType = 'terminate';
+    }
+  } else if (key === '\u001b[B') { // Down arrow
+    if (agents.length > 0) {
+      selectedIndex = (selectedIndex + 1) % agents.length;
       render();
-    } else if (key === '\u001b[A') { // Up arrow
-      if (agents.length > 0) {
-        selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : agents.length - 1;
-        render();
-      }
-    } else if (key === '\u001b[B') { // Down arrow
-      if (agents.length > 0) {
-        selectedIndex = (selectedIndex + 1) % agents.length;
-        render();
-      }
     }
   }
 });

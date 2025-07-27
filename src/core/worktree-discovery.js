@@ -327,7 +327,7 @@ class WorktreeDiscovery {
     // Check for git worktrees without filesystem directories
     for (const gitWorktree of gitWorktrees) {
       if (gitWorktree.path.includes('.napoleon') && gitWorktree.path.includes('worktrees')) {
-        const hasFilesystem = filesystemWorktrees.some((fs) => fs.path === gitWorktree.path);
+        const hasFilesystem = filesystemWorktrees.some((fsWorktree) => fsWorktree.path === gitWorktree.path);
         if (!hasFilesystem) {
           inconsistencies.push({
             type: 'git-without-filesystem',

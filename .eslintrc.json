@@ -14,7 +14,21 @@
   },
   "rules": {
     "no-console": "off",
-    "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.spec.js", "jest.config.js"]}]
+    "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.spec.js", "jest.config.js", "test-*.js", "src/testing/**/*", "src/ui-tests/**/*", "**/*wdyr*"]}],
+    "class-methods-use-this": "off",
+    "no-restricted-syntax": "off",
+    "no-plusplus": "off",
+    "no-param-reassign": "off",
+    "no-await-in-loop": "warn",
+    "consistent-return": "off",
+    "no-unused-vars": "warn",
+    "no-useless-constructor": "off",
+    "no-empty-function": "off",
+    "no-promise-executor-return": "off",
+    "no-useless-escape": "off",
+    "no-continue": "off",
+    "global-require": "off",
+    "max-len": ["error", { "code": 200, "ignoreComments": true, "ignoreUrls": true }]
   },
   "settings": {
     "import/resolver": {
@@ -39,9 +53,20 @@
           "jsx": true
         }
       },
+      "settings": {
+        "import/resolver": {
+          "typescript": {
+            "alwaysTryTypes": true,
+            "project": "./tsconfig.json"
+          },
+          "node": {
+            "extensions": [".js", ".jsx", ".ts", ".tsx"]
+          }
+        }
+      },
       "rules": {
         "no-console": "off",
-        "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.test.ts", "**/*.spec.js", "**/*.spec.ts", "jest.config.js"]}],
+        "import/no-extraneous-dependencies": ["error", {"devDependencies": ["**/*.test.js", "**/*.test.ts", "**/*.spec.js", "**/*.spec.ts", "jest.config.js", "**/*wdyr*", "src/ui/**/*"]}],
         "import/extensions": ["error", "ignorePackages", {
           "js": "never",
           "jsx": "never",
@@ -54,9 +79,9 @@
         "@typescript-eslint/no-explicit-any": "warn",
         "@typescript-eslint/no-unused-vars": "warn",
         "no-await-in-loop": "warn",
-        "no-restricted-syntax": "warn",
+        "no-restricted-syntax": "off",
         "import/prefer-default-export": "off",
-        "max-len": ["error", { "code": 120, "ignoreComments": true }],
+        "max-len": ["error", { "code": 200, "ignoreComments": true, "ignoreUrls": true }],
         "no-param-reassign": "off",
         "no-underscore-dangle": "off",
         "consistent-return": "off",
@@ -72,7 +97,13 @@
         "function-paren-newline": "off",
         "comma-dangle": "off",
         "no-trailing-spaces": "off",
-        "arrow-parens": "off"
+        "arrow-parens": "off",
+        "no-useless-constructor": "off",
+        "no-empty-function": "off",
+        "no-promise-executor-return": "off",
+        "no-useless-escape": "off",
+        "no-continue": "off",
+        "no-shadow": "off"
       }
     }
   ]

@@ -5,7 +5,6 @@
 
 const { spawn } = require('child_process');
 const EventEmitter = require('events');
-const path = require('path');
 const fs = require('fs').promises;
 
 class InkUITester extends EventEmitter {

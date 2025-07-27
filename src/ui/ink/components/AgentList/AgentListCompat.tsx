@@ -155,7 +155,9 @@ const AgentListCompat: React.FC<AgentListCompatProps> = ({
         {showScrollIndicators && hasMoreBelow && (
           <Box paddingX={1}>
             <Text color="gray">
-              {`${getStatusSymbol('arrowDown', capabilities)} ${agents.length - scrollOffset - visibleItems} more below`}
+              {`${getStatusSymbol('arrowDown', capabilities)} ${
+                agents.length - scrollOffset - visibleItems
+              } more below`}
             </Text>
           </Box>
         )}
