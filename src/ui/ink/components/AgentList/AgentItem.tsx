@@ -37,19 +37,6 @@ const formatRuntime = (startTime: Date | undefined, endTime?: Date | undefined):
 const AgentItem: React.FC<AgentItemProps> = memo(({
   agent, isSelected, isFocused, index,
 }) => {
-  const [currentTime, setCurrentTime] = useState(Date.now());
-
-  // Update time every second only for running agents
-  useEffect(() => {
-    if (agent.status === 'running' || agent.status === 'spawning' || agent.status === 'starting') {
-      const interval = setInterval(() => {
-        setCurrentTime(Date.now());
-      }, 1000);
-
-      return () => clearInterval(interval);
-    }
-  }, [agent.status]);
-
   const statusInfo = getStatusInfo(agent.status);
   const textColor = isSelected && isFocused ? 'cyan' : 'white';
   const selectionColor = isSelected && isFocused ? 'cyan' : undefined;
@@ -145,6 +132,6 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 });
 
 AgentItem.displayName = 'AgentItem';
-AgentItem.whyDidYouRender = true;
+AgentItem.whyDidYouRender = false;
 
 export default AgentItem;
