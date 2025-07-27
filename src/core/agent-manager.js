@@ -1784,7 +1784,7 @@ class AgentManager {
   }
 
   /**
-   * Get current task for an agent from todos array
+   * Get current task for an agent from todos array (static)
    */
   static getCurrentTask(agentId) {
     const todos = toolUsageTracker.getAgentTodos(agentId);
@@ -1810,6 +1810,13 @@ class AgentManager {
       tasks: JSON.stringify(inProgressTasks),
     });
     return inProgressTasks[0]; // Return first one
+  }
+
+  /**
+   * Get current task for an agent from todos array (instance method)
+   */
+  getCurrentTask(agentId) {
+    return AgentManager.getCurrentTask(agentId);
   }
 
   /**

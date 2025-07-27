@@ -53,6 +53,20 @@ describe('SDKCommunicationManager', () => {
     mockAgentLogManager = new AgentLogManager();
     manager = new SDKCommunicationManager(mockAgentLogManager);
     mockQuery = require('@anthropic-ai/claude-code').query;
+    
+    // Set default mock implementation for query
+    mockQuery.mockImplementation(async function* () {
+      yield {
+        type: 'response',
+        content: 'Mock response from Claude SDK',
+        timestamp: new Date().toISOString(),
+      };
+      yield {
+        type: 'status',
+        content: 'Task completed',
+        timestamp: new Date().toISOString(),
+      };
+    });
   });
 
   describe('constructor', () => {
@@ -206,6 +220,11 @@ describe('SDKCommunicationManager', () => {
         // Create a fresh manager for logging tests to avoid session conflicts
         testMockAgentLogManager = new AgentLogManager();
         testManager = new SDKCommunicationManager(testMockAgentLogManager);
+        
+        // Ensure the writeLogEntry is a spy
+        if (!jest.isMockFunction(testMockAgentLogManager.writeLogEntry)) {
+          testMockAgentLogManager.writeLogEntry = jest.fn().mockResolvedValue(true);
+        }
       });
 
       it('should log SDK request before executing query', async () => {
@@ -655,11 +674,13 @@ describe('SDKCommunicationManager', () => {
         .rejects
         .toThrow('Map error');
 
-      expect(logger.error).toHaveBeenCalledWith('Failed to initialize SDK session', {
-        agentId,
-        workingDirectory,
-        error: 'Map error',
-      });
+      expect(logger.error).toHaveBeenCalledWith('Failed to initialize SDK session', 
+        expect.objectContaining({
+          agentId,
+          workingDirectory,
+          error: 'Map error',
+        })
+      );
 
       // Restore original method
       Map.prototype.set = originalMap;

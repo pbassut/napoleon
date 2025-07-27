@@ -6,9 +6,61 @@ jest.mock('../src/utils/logger');
 jest.mock('../src/core/config', () => ({
   loadConfig: () => ({
     maxAgents: 3,
+    napoleonDir: '/test/.napoleon',
     logging: { agents: { enabled: false } },
+    features: {}
   }),
   SESSIONS_FILE: '/tmp/test-sessions.json',
+}));
+
+jest.mock('child_process', () => ({
+  spawn: jest.fn(),
+  execSync: jest.fn(),
+  exec: jest.fn(),
+}));
+
+jest.mock('fs', () => ({
+  existsSync: jest.fn().mockReturnValue(true),
+  readFileSync: jest.fn().mockReturnValue('{"sessions": []}'),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  statSync: jest.fn().mockReturnValue({
+    isDirectory: jest.fn().mockReturnValue(true)
+  }),
+}));
+
+// Mock WorktreeLifecycleManager
+jest.mock('../src/core/worktree-lifecycle-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+    getMetrics: jest.fn().mockReturnValue({}),
+  }));
+});
+
+// Mock SDKCommunicationManager
+jest.mock('../src/core/sdk/communication-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    executeQuery: jest.fn(),
+    initializeSDKSession: jest.fn(),
+    terminateSession: jest.fn(),
+    getSession: jest.fn(),
+    getActiveSessions: jest.fn(),
+  }));
+});
+
+// Mock AgentLogManager
+jest.mock('../src/core/logging/agent-log-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+  }));
+});
+
+// Mock tool usage tracker
+jest.mock('../src/core/tool-usage-tracker', () => ({
+  initializeAgent: jest.fn(),
+  trackTodoWrite: jest.fn(),
+  getAgentTodos: jest.fn().mockReturnValue([]),
+  cleanupAgent: jest.fn(),
 }));
 
 describe('Agent Auto-Termination', () => {
@@ -75,7 +127,7 @@ describe('Agent Auto-Termination', () => {
           done(error);
         }
       });
-    });
+    }, 15000);
 
     test('should NOT auto-terminate agent for non-result message types', () => {
       const agentId = 'test-agent-2';

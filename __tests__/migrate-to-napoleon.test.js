@@ -1,3 +1,9 @@
+// Mock fs and os for testing BEFORE importing other modules
+jest.mock('fs');
+jest.mock('os', () => ({
+  homedir: jest.fn()
+}));
+
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -9,10 +15,6 @@ const {
   performMigration,
   validateMigration
 } = require('../bin/migrate-to-napoleon');
-
-// Mock fs for testing
-jest.mock('fs');
-jest.mock('os');
 
 describe('Migration Helper Tests', () => {
   const mockHomeDir = '/mock/home';

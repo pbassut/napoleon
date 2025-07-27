@@ -1,10 +1,10 @@
-const AgentManager = require('../src/core/agent-manager');
-
-// Mock dependencies
+// Mock dependencies BEFORE importing AgentManager
 jest.mock('../src/core/tool-usage-tracker', () => ({
   getAgentTodos: jest.fn(),
   cleanupAgent: jest.fn(),
 }));
+
+const AgentManager = require('../src/core/agent-manager');
 jest.mock('../src/utils/logger', () => ({
   info: jest.fn(),
   debug: jest.fn(),

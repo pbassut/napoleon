@@ -4,14 +4,76 @@ const path = require('path');
 const AgentManager = require('../src/core/agent-manager');
 
 jest.mock('child_process');
-jest.mock('fs');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  rmSync: jest.fn(),
+  statSync: jest.fn().mockReturnValue({
+    isDirectory: jest.fn().mockReturnValue(true)
+  }),
+}));
+
+// Mock config
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn().mockReturnValue({
+    logLevel: 'info',
+    napoleonDir: '/test/.napoleon',
+    features: {}
+  }),
+  SESSIONS_FILE: '/test/.napoleon/sessions.json',
+  initializeSessionStorage: jest.fn(),
+}));
+
+// Mock logger
+jest.mock('../src/utils/logger', () => ({
+  info: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+}));
+
+// Mock WorktreeLifecycleManager
+jest.mock('../src/core/worktree-lifecycle-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+    getMetrics: jest.fn().mockReturnValue({}),
+  }));
+});
+
+// Mock SDKCommunicationManager
+jest.mock('../src/core/sdk/communication-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    executeQuery: jest.fn(),
+    initializeSDKSession: jest.fn(),
+    terminateSession: jest.fn(),
+    getSession: jest.fn(),
+    getActiveSessions: jest.fn(),
+  }));
+});
+
+// Mock AgentLogManager
+jest.mock('../src/core/logging/agent-log-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+  }));
+});
+
+// Mock tool usage tracker
+jest.mock('../src/core/tool-usage-tracker', () => ({
+  initializeAgent: jest.fn(),
+  trackTodoWrite: jest.fn(),
+  getAgentTodos: jest.fn().mockReturnValue([]),
+  cleanupAgent: jest.fn(),
+}));
 
 describe('Git Worktree Integration Tests', () => {
   let agentManager;
   let mockProcess;
   let timers = [];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.clearAllMocks();
     timers = [];
 
@@ -58,6 +120,7 @@ describe('Git Worktree Integration Tests', () => {
     });
 
     agentManager = new AgentManager();
+    await agentManager.initialize();
   });
 
   afterEach(() => {
