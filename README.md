@@ -1,5 +1,11 @@
 # Napoleon
 
+[![CI](https://img.shields.io/github/actions/workflow/status/pbassut/napoleon/ci.yml?branch=main)](https://github.com/pbassut/napoleon/actions/workflows/ci.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/pbassut/napoleon)](https://codecov.io/gh/pbassut/napoleon)
+[![npm version](https://img.shields.io/npm/v/napoleon-cli)](https://www.npmjs.com/package/napoleon-cli)
+[![License](https://img.shields.io/github/license/pbassut/napoleon)](LICENSE)
+[![Node](https://img.shields.io/node/v/napoleon-cli)](https://www.npmjs.com/package/napoleon-cli)
+
 Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions with git worktree isolation.
 
 Napoleon is a powerful development tool that leverages the Claude Code SDK to manage multiple AI agents working on different parts of your project simultaneously, each in their own isolated git worktree.

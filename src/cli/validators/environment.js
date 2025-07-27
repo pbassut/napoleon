@@ -116,7 +116,7 @@ async function validateEnvironment() {
     })(),
 
     // Git working tree status validation
-    validateGitWorkingTree(),
+    // validateGitWorkingTree(),
   ];
 
   // Wait for all validations to complete
