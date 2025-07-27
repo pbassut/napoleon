@@ -1,10 +1,11 @@
 // Ink UI entry point for direct testing with real AgentManager
+// eslint-disable-next-line import/extensions, import/no-unresolved
 import './wdyr'; // Must be first import
 import React from 'react';
-import { render } from 'ink';
+import { render } from 'ink'; // eslint-disable-line import/no-unresolved
 import App from './App';
-import logger from '../../utils/logger.js';
-import AgentManagerClass from '../../core/agent-manager.js';
+import logger from '../../utils/logger.js'; // eslint-disable-line import/extensions
+import AgentManagerClass from '../../core/agent-manager.js'; // eslint-disable-line import/extensions
 
 async function startInkUI() {
   try {

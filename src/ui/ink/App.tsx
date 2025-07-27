@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   Box, useApp, Text, useInput, useStdout,
-} from 'ink';
-import { useAgentManager } from './hooks/useAgentManager';
+} from 'ink'; // eslint-disable-line import/no-unresolved
+import { useAgentManager } from './hooks/useAgentManager'; // eslint-disable-line import/no-unresolved, import/extensions
 import ErrorBoundaryDefault from './components/Common/ErrorBoundary';
 import { Header } from './components/Layout/Header';
 import { MainContent } from './components/Layout/MainContent';
@@ -11,10 +11,10 @@ import { SpawnDialog } from './components/Dialogs/SpawnDialog';
 import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentListDefault from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
-import logger from '../../utils/logger.js';
+import logger from '../../utils/logger.js'; // eslint-disable-line import/extensions
 
 const {
-  useState, useEffect, useMemo, useCallback,
+  useState, useMemo, useCallback,
 } = React;
 
 const App = ({ agentManager }) => {
@@ -137,10 +137,10 @@ const App = ({ agentManager }) => {
       });
       logger.debug('App: Agent spawned successfully, closing dialog');
       setIsSpawnDialogOpen(false);
-    } catch (error) {
-      logger.error('App: Error spawning agent:', { error });
+    } catch (spawnError) {
+      logger.error('App: Error spawning agent:', { error: spawnError });
       // Re-throw to let dialog handle the error
-      throw error;
+      throw spawnError;
     }
   };
 
@@ -150,8 +150,8 @@ const App = ({ agentManager }) => {
     try {
       await terminateAgent(selectedAgent.id);
       setIsTerminationDialogOpen(false);
-    } catch (error) {
-      logger.error('Failed to terminate agent:', { error });
+    } catch (terminateError) {
+      logger.error('Failed to terminate agent:', { error: terminateError });
       // Let the dialog show the error
     }
   };
@@ -197,23 +197,31 @@ const App = ({ agentManager }) => {
           {/* Main content with padding */}
           <Box flexGrow={1} paddingX={2} paddingY={1}>
             <MainContent>
-              {isLoading ? (
-                <Box paddingY={2} justifyContent="center" alignItems="center">
-                  <Text color="yellow">Loading agents...</Text>
-                </Box>
-              ) : error ? (
-                <Box paddingY={2} justifyContent="center" alignItems="center">
-                  <Text color="red">Error: {error.message}</Text>
-                </Box>
-              ) : (
-                <AgentList
-                  agents={agents}
-                  selectedIndex={selectedIndex}
-                  onSelectionChange={handleSelectionChange}
-                  height={Math.max(10, stdout.rows - 12)}
-                  isModalOpen={isSpawnDialogOpen || isTerminationDialogOpen}
-                />
-              )}
+              {(() => {
+                if (isLoading) {
+                  return (
+                    <Box paddingY={2} justifyContent="center" alignItems="center">
+                      <Text color="yellow">Loading agents...</Text>
+                    </Box>
+                  );
+                }
+                if (error) {
+                  return (
+                    <Box paddingY={2} justifyContent="center" alignItems="center">
+                      <Text color="red">Error: {error.message}</Text>
+                    </Box>
+                  );
+                }
+                return (
+                  <AgentList
+                    agents={agents}
+                    selectedIndex={selectedIndex}
+                    onSelectionChange={handleSelectionChange}
+                    height={Math.max(10, stdout.rows - 12)}
+                    isModalOpen={isSpawnDialogOpen || isTerminationDialogOpen}
+                  />
+                );
+              })()}
             </MainContent>
           </Box>
 
