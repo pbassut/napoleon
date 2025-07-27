@@ -147,9 +147,46 @@ describe('LogParser', () => {
       }
     };
 
+    const shouldShowLog = function(entry, options) {
+      // Tool suppression logic - applies only to assistant messages with toolUse
+      if (options.toolSuppression?.enabled && entry.toolUse && entry.displayFormat === 'assistant') {
+        const toolName = entry.toolUse.name;
+        if (options.toolSuppression.suppressedTools.some(pattern => toolName.match(pattern))) {
+          return false;
+        }
+      }
+
+      // If showing all logs, show everything
+      if (options.showAllSources && options.showAllTypes && options.includeSystemLogs) {
+        return true;
+      }
+
+      // Default filtering: only claude_sdk user/assistant messages
+      if (!options.showAllSources) {
+        if (entry.source !== 'claude_sdk') {
+          return false;
+        }
+      }
+
+      if (!options.showAllTypes) {
+        if (!['user', 'assistant'].includes(entry.type)) {
+          return false;
+        }
+      }
+
+      if (!options.includeSystemLogs) {
+        if (entry.displayFormat === 'system') {
+          return false;
+        }
+      }
+
+      return true;
+    };
+
     LogParser = {
       parseLogEntry,
-      formatTimestamp
+      formatTimestamp,
+      shouldShowLog
     };
   });
 
@@ -421,6 +458,210 @@ describe('LogParser', () => {
       
       // Should return the original timestamp for invalid dates
       expect(result).toBe(invalidTimestamp);
+    });
+  });
+
+  describe('shouldShowLog - Tool Suppression', () => {
+    test('should suppress Read tool when enabled', () => {
+      const readToolEntry = {
+        id: 'test-1',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool: Read]',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true,
+        toolUse: {
+          name: 'Read',
+          input: { file_path: '/some/path' }
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: true,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(readToolEntry, options);
+      expect(result).toBe(false);
+    });
+
+    test('should suppress Bash tool when enabled', () => {
+      const bashToolEntry = {
+        id: 'test-2',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool: Bash]',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true,
+        toolUse: {
+          name: 'Bash',
+          input: { command: 'ls -la' }
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: true,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(bashToolEntry, options);
+      expect(result).toBe(false);
+    });
+
+    test('should not suppress tools not in suppressedTools list', () => {
+      const todoWriteEntry = {
+        id: 'test-3',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool: TodoWrite]',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true,
+        toolUse: {
+          name: 'TodoWrite',
+          input: { todos: [] }
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: true,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(todoWriteEntry, options);
+      expect(result).toBe(true);
+    });
+
+    test('should not suppress tools when tool suppression is disabled', () => {
+      const readToolEntry = {
+        id: 'test-4',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool: Read]',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true,
+        toolUse: {
+          name: 'Read',
+          input: { file_path: '/some/path' }
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: false,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(readToolEntry, options);
+      expect(result).toBe(true);
+    });
+
+    test('should not suppress tool results (user messages)', () => {
+      const toolResultEntry = {
+        id: 'test-5',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool Result]: File content here',
+        type: 'user',
+        source: 'claude_sdk',
+        displayFormat: 'user',
+        isVisible: true,
+        toolResult: {
+          content: 'File content here',
+          isError: false
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: true,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(toolResultEntry, options);
+      expect(result).toBe(true);
+    });
+
+    test('should only apply tool suppression to assistant messages with toolUse', () => {
+      const assistantMessageWithoutTool = {
+        id: 'test-6',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: 'Regular assistant message',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false,
+        toolSuppression: {
+          enabled: true,
+          suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+          showToolResults: true
+        }
+      };
+
+      const result = LogParser.shouldShowLog(assistantMessageWithoutTool, options);
+      expect(result).toBe(true);
+    });
+
+    test('should work with missing toolSuppression configuration', () => {
+      const readToolEntry = {
+        id: 'test-7',
+        timestamp: '2025-07-27T05:05:12.186Z',
+        content: '[Tool: Read]',
+        type: 'assistant',
+        source: 'claude_sdk',
+        displayFormat: 'assistant',
+        isVisible: true,
+        toolUse: {
+          name: 'Read',
+          input: { file_path: '/some/path' }
+        }
+      };
+
+      const options = {
+        showAllSources: false,
+        showAllTypes: false,
+        includeSystemLogs: false
+        // No toolSuppression config
+      };
+
+      const result = LogParser.shouldShowLog(readToolEntry, options);
+      expect(result).toBe(true);
     });
   });
 });

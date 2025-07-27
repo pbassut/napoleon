@@ -26,6 +26,13 @@ const DEFAULT_CONFIG = {
       maxPromptLength: 50,
     },
   },
+  ui: {
+    toolSuppression: {
+      enabled: true,
+      suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      showToolResults: true,
+    },
+  },
 };
 
 const DEFAULT_SESSIONS = {

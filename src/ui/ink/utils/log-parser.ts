@@ -25,6 +25,11 @@ export interface LogParserOptions {
   showAllSources: boolean;
   showAllTypes: boolean;
   includeSystemLogs: boolean;
+  toolSuppression?: {
+    enabled: boolean;
+    suppressedTools: string[];
+    showToolResults: boolean;
+  };
 }
 
 export class LogParser {
@@ -163,6 +168,14 @@ export class LogParser {
   }
 
   static shouldShowLog(entry: ParsedLogEntry, options: LogParserOptions): boolean {
+    // Tool suppression logic - applies only to assistant messages with toolUse
+    if (options.toolSuppression?.enabled && entry.toolUse && entry.displayFormat === 'assistant') {
+      const toolName = entry.toolUse.name;
+      if (options.toolSuppression.suppressedTools.some(pattern => toolName.match(pattern))) {
+        return false;
+      }
+    }
+
     // If showing all logs, show everything
     if (options.showAllSources && options.showAllTypes && options.includeSystemLogs) {
       return true;

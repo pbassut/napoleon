@@ -17,6 +17,11 @@ interface LogViewerProps {
   isFocused: boolean;
   onFilterChange?: (filterInfo: { visible: number; total: number; isShowingAll: boolean }) => void;
   isStreaming?: boolean;
+  toolSuppressionConfig?: {
+    enabled: boolean;
+    suppressedTools: string[];
+    showToolResults: boolean;
+  };
 }
 
 export const LogViewer: React.FC<LogViewerProps> = ({
@@ -30,12 +35,28 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   isFocused,
   onFilterChange,
   isStreaming = false,
+  toolSuppressionConfig,
 }) => {
   const [filterOptions, setFilterOptions] = useState<LogParserOptions>({
     showAllSources: false,
     showAllTypes: false,
     includeSystemLogs: false,
+    toolSuppression: toolSuppressionConfig || {
+      enabled: true,
+      suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      showToolResults: true,
+    },
   });
+
+  // Update tool suppression config when it changes
+  useEffect(() => {
+    if (toolSuppressionConfig) {
+      setFilterOptions(prev => ({
+        ...prev,
+        toolSuppression: toolSuppressionConfig,
+      }));
+    }
+  }, [toolSuppressionConfig]);
 
   // Parse and filter logs
   const parsedLogs = useMemo(() => logs
