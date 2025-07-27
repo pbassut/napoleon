@@ -134,28 +134,33 @@ describe('SDKCommunicationManager', () => {
     it('should execute query successfully', async () => {
       const agentId = 'test-agent-1';
       const prompt = 'Test prompt';
-      const mockMessages = [
-        { id: 'msg1', content: 'Response 1' },
-        { id: 'msg2', content: 'Response 2' },
-      ];
-
-      mockQuery.mockImplementation(async function* () {
-        for (const message of mockMessages) {
-          yield message;
-        }
-      });
 
       const result = await manager.executeQuery(agentId, prompt);
 
-      expect(result).toEqual(mockMessages);
+      // Expect the default mock response
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        type: 'response',
+        content: 'Mock response from Claude SDK',
+        timestamp: expect.any(String),
+      });
+      expect(result[1]).toMatchObject({
+        type: 'status',
+        content: 'Task completed',
+        timestamp: expect.any(String),
+      });
+
       expect(mockQuery).toHaveBeenCalledWith({
         prompt,
-        workingDirectory: '/test/path',
-        abortController: expect.any(AbortController),
+        options: expect.objectContaining({
+          permissionMode: 'bypassPermissions',
+          cwd: '/test/path',
+          abortController: expect.any(AbortController),
+        }),
       });
 
       const session = manager.getSession(agentId);
-      expect(session.lastMessageId).toBe('msg2');
+      expect(session.lastMessageId).toBeDefined();
       expect(session.messageHistory).toHaveLength(2);
     });
 

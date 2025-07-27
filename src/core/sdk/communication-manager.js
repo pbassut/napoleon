@@ -1,4 +1,4 @@
-const { query } = require('@anthropic-ai/claude-code');
+// const { query } = require('@anthropic-ai/claude-code'); // Moved to method to support mocking
 const fs = require('fs');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const logger = require('../../utils/logger');
@@ -116,7 +116,7 @@ class SDKCommunicationManager {
   }
 
   /**
-   * Execute query using Claude Code SDK
+   * Execute query using Claude Code SDK - returns all messages at once
    * @param {string} agentId - Agent identifier
    * @param {string} prompt - Query prompt to send
    * @param {Object} options - Additional options for the query
@@ -225,6 +225,7 @@ class SDKCommunicationManager {
         pathToClaudeCodeExecutable: queryOptions.pathToClaudeCodeExecutable,
       });
 
+      const { query } = require('@anthropic-ai/claude-code');
       const queryResponse = query({
         prompt,
         options: queryOptions,
@@ -233,7 +234,8 @@ class SDKCommunicationManager {
       this.logger.debug('SDK: Query response object created, starting message iteration', {
         agentId,
         responseType: typeof queryResponse,
-        hasAsyncIterator: Symbol.asyncIterator in queryResponse,
+        queryResponseValue: queryResponse,
+        hasAsyncIterator: queryResponse && Symbol.asyncIterator in queryResponse,
       });
 
       // Process streaming response
@@ -409,6 +411,291 @@ class SDKCommunicationManager {
       }
 
       this.logger.error('Failed to execute SDK query', {
+        agentId,
+        error: error.message,
+        duration: Date.now() - startTime,
+      });
+
+      if (errorSession) {
+        errorSession.lastActivity = new Date().toISOString();
+        errorSession.messageHistory.push({
+          id: Date.now().toString(),
+          timestamp: errorSession.lastActivity,
+          type: 'error',
+          content: error.message,
+        });
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Execute query using Claude Code SDK - yields messages in real-time
+   * @param {string} agentId - Agent identifier
+   * @param {string} prompt - Query prompt to send
+   * @param {Object} options - Additional options for the query
+   * @returns {AsyncGenerator<Object>} Async generator that yields messages from SDK
+   */
+  async* executeQueryStream(agentId, prompt, options = {}) {
+    const startTime = Date.now();
+    try {
+      const session = this.sessions.get(agentId);
+      if (!session) {
+        throw new ConfigurationError(
+          `No SDK session found for agent ${agentId}`,
+          'SDK_SESSION_NOT_FOUND',
+          'Initialize SDK session before executing queries',
+        );
+      }
+
+      if (!session.isActive) {
+        throw new ConfigurationError(
+          `SDK session for agent ${agentId} is not active`,
+          'SDK_SESSION_INACTIVE',
+          'Reinitialize SDK session to continue',
+        );
+      }
+
+      // Validate prompt
+      if (!prompt || typeof prompt !== 'string') {
+        throw new EnvironmentValidationError(
+          'Prompt must be a non-empty string',
+          'INVALID_PROMPT',
+          'Provide a valid prompt string',
+        );
+      }
+
+      // Merge options with session defaults
+      // Use the claude executable from the worktree's node_modules
+      const claudeExecutable = require('path').join(session.workingDirectory, 'node_modules', '.bin', 'claude');
+
+      const queryOptions = {
+        permissionMode: 'bypassPermissions',
+        pathToClaudeCodeExecutable: claudeExecutable,
+        cwd: session.workingDirectory,
+        ...session.options,
+        ...options,
+        abortController: session.abortController,
+      };
+
+      // Log SDK request with full prompt for debugging
+      if (this.agentLogManager) {
+        try {
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_request',
+            source: 'claude_sdk',
+            content: JSON.stringify({
+              prompt,
+              options: {
+                model: queryOptions.model,
+                maxTokens: queryOptions.maxTokens,
+                temperature: queryOptions.temperature,
+              },
+            }, null, 2),
+            metadata: {
+              promptLength: prompt.length,
+              model: queryOptions.model || 'default',
+              maxTokens: queryOptions.maxTokens,
+              temperature: queryOptions.temperature,
+              requestTimestamp: new Date().toISOString(),
+              requestStartTime: startTime,
+            },
+          });
+        } catch (logError) {
+          // Non-blocking: continue SDK operation if logging fails
+          this.logger.warn('Failed to log SDK request', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
+      this.logger.info('Executing SDK query stream', {
+        agentId,
+        promptLength: prompt.length,
+        options: queryOptions,
+        promptPreview: prompt,
+      });
+
+      this.logger.debug('SDK: Starting streaming query execution', {
+        agentId,
+        sessionActive: session.isActive,
+        hasAbortController: !!session.abortController,
+        abortSignal: session.abortController?.signal?.aborted || 'no-signal',
+        workingDirectory: queryOptions.workingDirectory,
+      });
+
+      let messageCount = 0;
+      let tokenUsage = { input: 0, output: 0, total: 0 };
+
+      // Execute query using Claude Code SDK
+      this.logger.debug('SDK: Executing streaming query with Claude Code SDK', {
+        agentId,
+        promptLength: prompt.length,
+        options: queryOptions,
+        permissionMode: queryOptions.permissionMode,
+        workingDirectory: queryOptions.workingDirectory,
+        cwd: queryOptions.cwd,
+        pathToClaudeCodeExecutable: queryOptions.pathToClaudeCodeExecutable,
+      });
+
+      const { query } = require('@anthropic-ai/claude-code');
+      const queryResponse = query({
+        prompt,
+        options: queryOptions,
+      });
+
+      this.logger.debug('SDK: Query response object created for streaming', {
+        agentId,
+        responseType: typeof queryResponse,
+        hasAsyncIterator: Symbol.asyncIterator in queryResponse,
+      });
+
+      // Process streaming response and yield messages immediately
+      for await (const message of queryResponse) {
+        messageCount++;
+
+        this.logger.debug('SDK: Processing streaming message', {
+          agentId,
+          messageIndex: messageCount,
+          messageType: message.type,
+          messageId: message.id,
+          hasContent: !!message.content,
+          contentLength: message.content?.length || 0,
+        });
+
+        // Update token usage if available
+        if (message.usage) {
+          tokenUsage = message.usage;
+          this.logger.debug('SDK: Token usage updated', {
+            agentId,
+            tokenUsage,
+          });
+        }
+
+        // Log each response message (AC2) - non-blocking
+        this.logSDKResponse(agentId, message, startTime, messageCount - 1, messageCount);
+
+        // Track TodoWrite tool usage
+        this.trackToolUsage(agentId, message);
+
+        // Update session with message info
+        session.lastMessageId = message.id || Date.now().toString();
+        session.lastActivity = new Date().toISOString();
+        session.messageHistory.push({
+          id: session.lastMessageId,
+          timestamp: session.lastActivity,
+          type: 'response',
+          content: message.content || JSON.stringify(message),
+        });
+
+        // Yield message immediately for real-time processing
+        yield message;
+      }
+
+      this.logger.debug('SDK: Streaming iteration completed', {
+        agentId,
+        totalMessages: messageCount,
+        finalTokenUsage: tokenUsage,
+      });
+
+      // Keep message history manageable
+      if (session.messageHistory.length > 100) {
+        session.messageHistory = session.messageHistory.slice(-100);
+      }
+
+      // Log final summary (AC4)
+      if (this.agentLogManager) {
+        try {
+          const totalDuration = Date.now() - startTime;
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_summary',
+            source: 'claude_sdk',
+            content: 'SDK streaming query completed successfully',
+            metadata: {
+              totalDuration,
+              messageCount,
+              finalTokenUsage: tokenUsage,
+              costEstimate: SDKCommunicationManager.calculateCostEstimate(tokenUsage),
+              averageResponseTime: messageCount > 0 ? totalDuration / messageCount : 0,
+              performanceWarning: totalDuration > 30000,
+            },
+          });
+
+          // Log performance warning if request took too long
+          if (totalDuration > 30000) {
+            await this.agentLogManager.writeLogEntry(agentId, {
+              type: 'sdk_warning',
+              source: 'claude_sdk',
+              content: `Slow SDK streaming request detected: ${totalDuration}ms (threshold: 30000ms)`,
+              metadata: {
+                duration: totalDuration,
+                threshold: 30000,
+                promptLength: prompt.length,
+                messageCount,
+              },
+            });
+          }
+        } catch (logError) {
+          // Non-blocking: continue SDK operation if logging fails
+          this.logger.warn('Failed to log SDK summary', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
+      this.logger.info('SDK streaming query completed', {
+        agentId,
+        messageCount,
+        lastMessageId: session.lastMessageId,
+        duration: Date.now() - startTime,
+      });
+
+    } catch (error) {
+      const errorSession = this.sessions.get(agentId);
+
+      this.logger.error('SDK: Streaming query execution failed with error', {
+        agentId,
+        error: error.message,
+        errorName: error.name,
+        errorCode: error.code,
+        errorStack: error.stack,
+        duration: Date.now() - startTime,
+        promptLength: prompt?.length || 0,
+        abortSignal: errorSession?.abortController?.signal?.aborted || 'no-signal',
+        errorType: SDKCommunicationManager.classifySDKError(error),
+      });
+
+      // Log SDK errors with complete context (AC3)
+      if (this.agentLogManager) {
+        try {
+          await this.agentLogManager.writeLogEntry(agentId, {
+            type: 'sdk_error',
+            source: 'claude_sdk',
+            content: `SDK Streaming Error: ${error.message}`,
+            metadata: {
+              error: error.name,
+              message: error.message,
+              stack: error.stack,
+              duration: Date.now() - startTime,
+              promptLength: prompt.length,
+              requestOptions: options,
+              requestTimestamp: new Date().toISOString(),
+              errorType: SDKCommunicationManager.classifySDKError(error),
+            },
+          });
+        } catch (logError) {
+          // Non-blocking: continue error handling if logging fails
+          this.logger.warn('Failed to log SDK error', {
+            agentId,
+            error: logError.message,
+          });
+        }
+      }
+
+      this.logger.error('Failed to execute SDK streaming query', {
         agentId,
         error: error.message,
         duration: Date.now() - startTime,

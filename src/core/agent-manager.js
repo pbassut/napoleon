@@ -1267,32 +1267,16 @@ class AgentManager {
       const sessionId = session.sessionId || session.id;
       const { workingDirectory } = session;
 
-      // Execute SDK query with real-time streaming
+      // Execute SDK query with real-time streaming through SDKCommunicationManager
       (async () => {
         try {
           logger.info('Starting real-time SDK query stream for agent', { agentId });
           
-          // Get the streaming query response from Claude Code SDK directly
-          const { query } = require('@anthropic-ai/claude-code');
-          const session = this.sdkManager.getSession(sessionId);
-          
-          if (!session) {
-            throw new Error(`No SDK session found for agent ${agentId}`);
-          }
-
-          const queryOptions = {
-            permissionMode: 'bypassPermissions',
-            cwd: workingDirectory,
-            abortController: session.abortController,
-          };
-
-          const queryResponse = query({
-            prompt: instructions,
-            options: queryOptions,
-          });
+          // Use the new streaming method from SDKCommunicationManager
+          const messageStream = this.sdkManager.executeQueryStream(sessionId, instructions);
 
           // Process messages as they arrive in real-time using for await
-          for await (const message of queryResponse) {
+          for await (const message of messageStream) {
             logger.info('SDK message received (real-time)', { 
               agentId, 
               messageType: message.type,
