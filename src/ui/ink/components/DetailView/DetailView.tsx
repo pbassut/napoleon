@@ -4,18 +4,18 @@ import {
 } from 'ink';
 import { Agent } from '../../types';
 import { useAgentLogs, LogEntry } from '../../hooks/useAgentLogs';
-import { ActivityIndicator, SpinnerIndicator } from '../Common/ActivityIndicator';
+import { ActivityIndicator } from '../Common/ActivityIndicator';
 import { LogViewer } from './LogViewer';
 
 interface DetailViewProps {
   agent: Agent;
   onClose: () => void;
-  agentManager: any;
+  agentManager: unknown;
 }
 
 const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [filterInfo, setFilterInfo] = useState({ visible: 0, total: 0, isShowingAll: false });
   const { isFocused } = useFocus({ autoFocus: true });
@@ -41,7 +41,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const {
     logs: realLogs,
     isLoading,
-    error: logsError,
     isStreaming,
     streamingError,
   } = useAgentLogs({
@@ -125,7 +124,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const logs = agentManager && realLogs.length > 0 ? realLogs : mockLogs;
 
   // Handle keyboard input for close
-  useInput((input: string, key: any) => {
+  useInput((input: string, key: { escape?: boolean }) => {
     if (!isFocused) return;
 
     // Close on Escape or 'q'

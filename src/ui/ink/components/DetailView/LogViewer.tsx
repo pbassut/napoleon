@@ -1,7 +1,9 @@
 import React, {
   useState, useEffect, useMemo, useCallback,
 } from 'react';
-import { Box, Static, Text, useInput } from 'ink';
+import {
+  Box, Static, Text, useInput 
+} from 'ink';
 import { LogEntry as RawLogEntry } from '../../hooks/useAgentLogs';
 import { LogParser, ParsedLogEntry, LogParserOptions } from '../../utils/log-parser';
 import { LogEntry } from './LogEntry';
@@ -112,7 +114,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   }, { isActive: isFocused });
 
   // Handle scroll navigation
-  useInput((input: string, key: any) => {
+  useInput((input: string, key: { upArrow?: boolean; downArrow?: boolean; pageUp?: boolean; pageDown?: boolean }) => {
     if (!isFocused) return;
 
     const maxOffset = Math.max(0, visibleLogs.length - contentHeight);
@@ -151,7 +153,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   return (
     <Box flexDirection="column" flexGrow={1}>
       <Static items={displayedLogs}>
-        {(entry, index) =>  {
+        {(entry, index) => {
           const globalIndex = scrollOffset + index;
           const lineNumber = globalIndex + 1;
 
@@ -159,7 +161,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             key={`${entry.id}-${globalIndex}`}
             entry={entry}
             lineNumber={lineNumber}
-          />
+          />;
         }}
       </Static>
     </Box>

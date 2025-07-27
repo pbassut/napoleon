@@ -16,7 +16,6 @@ interface ModalOverlayProps {
 export const ModalOverlay: React.FC<ModalOverlayProps> = memo(({
   isOpen,
   children,
-  zIndex = 1000,
 }) =>
   // Always render the structure to prevent flickering
   // Keep in DOM but control visibility and interactivity

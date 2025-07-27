@@ -10,7 +10,7 @@ interface ErrorBoundaryProps {
   children: React.ReactNode;
 }
 
-function createErrorBoundary(React: any, Box: any, Text: any) {
+function createErrorBoundary(React: typeof import('react'), Box: unknown, Text: unknown) {
   const { Component } = React;
 
   class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {

@@ -12,7 +12,6 @@ interface LogEntryProps {
 export const LogEntry: React.FC<LogEntryProps> = ({
   entry,
   isHighlighted = false,
-  compact = false,
   lineNumber,
 }) => {
   const getEntryColor = () => {

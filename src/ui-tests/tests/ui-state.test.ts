@@ -14,7 +14,7 @@ export const uiStateTestSuite: UITestSuite = {
     },
     {
       name: 'should center modal dialogs',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for dialog centering
         const mockDialog = { centered: true };
         if (!mockDialog.centered) throw new Error('Dialog not centered');
@@ -22,7 +22,7 @@ export const uiStateTestSuite: UITestSuite = {
     },
     {
       name: 'should handle UI updates',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for UI updates
         const mockUI = { updated: true };
         if (!mockUI.updated) throw new Error('UI not updated');

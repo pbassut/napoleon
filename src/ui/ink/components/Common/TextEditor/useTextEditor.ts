@@ -1,5 +1,5 @@
 import {
-  useState, useCallback, useMemo, useRef,
+  useState, useCallback, useRef,
 } from 'react';
 
 export interface TextEditorState {
@@ -12,13 +12,6 @@ export interface TextEditorState {
   currentColumn: number;
   history: string[];
   historyIndex: number;
-}
-
-interface EditOperation {
-  type: 'insert' | 'delete' | 'replace';
-  position: number;
-  content: string;
-  length?: number;
 }
 
 export function useTextEditor(initialValue: string = '') {
@@ -40,59 +33,6 @@ export function useTextEditor(initialValue: string = '') {
   const MAX_LINES = 1000;
 
   const debounceTimeout = useRef<NodeJS.Timeout>();
-
-  // Helper function to update state and recalculate derived values
-  const updateState = useCallback((newText: string, newCursorPosition?: number, addToHistory = true) => {
-    setState((prevState) => {
-      const lines = newText.split('\n');
-      const cursorPos = newCursorPosition ?? prevState.cursorPosition;
-
-      // Calculate current line and column from cursor position
-      let currentLine = 0;
-      let currentColumn = 0;
-      let charCount = 0;
-
-      for (let i = 0; i < lines.length; i++) {
-        if (charCount + lines[i].length >= cursorPos) {
-          currentLine = i;
-          currentColumn = cursorPos - charCount;
-          break;
-        }
-        charCount += lines[i].length + 1; // +1 for newline character
-      }
-
-      // Ensure cursor doesn't go beyond line length
-      if (currentColumn > (lines[currentLine]?.length || 0)) {
-        currentColumn = lines[currentLine]?.length || 0;
-      }
-
-      let newHistory = prevState.history;
-      let newHistoryIndex = prevState.historyIndex;
-
-      if (addToHistory && newText !== prevState.text) {
-        // Clear redo history and add new state
-        newHistory = [...prevState.history.slice(0, prevState.historyIndex + 1), newText];
-        newHistoryIndex = newHistory.length - 1;
-
-        // Limit history size to prevent memory issues
-        if (newHistory.length > 50) {
-          newHistory = newHistory.slice(-50);
-          newHistoryIndex = newHistory.length - 1;
-        }
-      }
-
-      return {
-        ...prevState,
-        text: newText,
-        cursorPosition: cursorPos,
-        lines,
-        currentLine,
-        currentColumn,
-        history: newHistory,
-        historyIndex: newHistoryIndex,
-      };
-    });
-  }, []);
 
   // Debounced history update for rapid typing
   const addToHistoryDebounced = useCallback((text: string) => {

@@ -1,10 +1,9 @@
 import React, {
-  useState, useEffect, useCallback, useMemo,
+  useEffect, useCallback, useMemo,
 } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { useTextEditor } from './useTextEditor';
 import { normalizeKey } from '../../../utils/input-normalizer';
-import { getStatusSymbol } from '../../../utils/terminal-capabilities';
 import { getTextSelection } from './textEditorUtils';
 
 export interface TextEditorProps {
@@ -27,7 +26,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   onSubmit,
   placeholder = '',
   multiline = true,
-  maxLines = 10,
   autoFocus = false,
   disabled = false,
   showCursor = true,
@@ -41,7 +39,6 @@ export const TextEditor: React.FC<TextEditorProps> = ({
     deleteText,
     selectText,
     selectAll,
-    selectWordAtCursor,
     undo,
     redo,
     jumpToStart,
@@ -69,7 +66,19 @@ export const TextEditor: React.FC<TextEditorProps> = ({
     isActive: !disabled && autoFocus,
   }), [disabled, autoFocus]);
 
-  useInput((input: string, key: any) => {
+  useInput((input: string, key: {
+    escape?: boolean;
+    ctrl?: boolean;
+    meta?: boolean;
+    shift?: boolean;
+    return?: boolean;
+    upArrow?: boolean;
+    downArrow?: boolean;
+    leftArrow?: boolean;
+    rightArrow?: boolean;
+    delete?: boolean;
+    backspace?: boolean;
+  }) => {
     if (disabled) return;
 
     const normalizedKey = normalizeKey(input, key);
@@ -224,7 +233,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({
         case 'c':
           // Copy operation - just show that text is copied
           if (state.selectionStart !== undefined && state.selectionEnd !== undefined) {
-            const selection = getTextSelection(
+            getTextSelection(
               state.text,
               state.selectionStart,
               state.selectionEnd,

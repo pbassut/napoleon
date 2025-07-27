@@ -89,7 +89,7 @@ export function generateTestPrompt(prefix: string = 'Test'): string {
 
 export async function captureScreenshot(
   context: UITestContext,
-  testName: string,
+  _testName: string,
 ): Promise<string> {
   const { processManager, pid } = context;
   const output = await processManager.readProcessOutput(pid, 100);

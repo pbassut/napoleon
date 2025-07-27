@@ -27,8 +27,8 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
     setError(null);
     try {
       await onConfirm();
-    } catch (err: any) {
-      setError(err.message || 'Failed to terminate agent');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to terminate agent');
       setIsLoading(false);
     }
   };
@@ -43,7 +43,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
   }, [isOpen]);
 
   // Handle keyboard input
-  useInput((input: string, key: any) => {
+  useInput((input: string, key: { escape?: boolean; return?: boolean; leftArrow?: boolean; rightArrow?: boolean }) => {
     if (!isOpen || isLoading) return;
 
     // Cancel on Escape

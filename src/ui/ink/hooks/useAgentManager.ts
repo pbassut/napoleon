@@ -30,7 +30,14 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Convert AgentManager agent to UI Agent type
-  const convertAgent = useCallback((agentData: any): Agent => ({
+  const convertAgent = useCallback((agentData: {
+    id: string;
+    status?: string;
+    spawnTime?: string | number;
+    lastActivity?: string | number;
+    instructions?: string;
+    workingDirectory?: string;
+  }): Agent => ({
     id: agentData.id,
     name: agentData.id, // Use ID as name for now
     status: agentData.status || 'unknown',
@@ -66,7 +73,17 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
             todos: agentDetails?.todos || [],
           };
         });
-        const convertedAgents = enrichedAgents.map((agentData: any) => ({
+        const convertedAgents = enrichedAgents.map((agentData: {
+          id: string;
+          status?: string;
+          spawnTime?: string | number;
+          lastActivity?: string | number;
+          instructions?: string;
+          workingDirectory?: string;
+          error?: string;
+          progress?: number;
+          todos?: unknown[];
+        }) => ({
           id: agentData.id,
           name: agentData.id,
           status: agentData.status || 'unknown',
@@ -82,7 +99,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         // Only update if agents actually changed
         setAgents((prevAgents) => {
           // Helper function to compare todos arrays
-          const todosChanged = (prevTodos: any[], newTodos: any[]) => {
+          const todosChanged = (prevTodos: unknown[], newTodos: unknown[]) => {
             if (prevTodos.length !== newTodos.length) return true;
             return prevTodos.some((prevTodo, i) => {
               const newTodo = newTodos[i];

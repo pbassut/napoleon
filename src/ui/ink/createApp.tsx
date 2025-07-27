@@ -2,7 +2,7 @@
 import React from 'react';
 import App from './App';
 
-async function createApp(): Promise<React.FC<any>> {
+async function createApp(): Promise<React.FC<{ agentManager?: unknown }>> {
   return App;
 }
 

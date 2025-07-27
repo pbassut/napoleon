@@ -34,7 +34,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   // Handle global escape key to close dialog
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
 
-  useInput((input: string, key: any) => {
+  useInput((input: string, key: { escape?: boolean }) => {
     if (!isOpen || isLoading) return;
 
     // Handle Escape to close dialog (global handler)
@@ -75,7 +75,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
       setIsLoading(false);
       setText(BASIC_PRESET); // Reset to preset text after successful submission
       // Don't close here - let the parent handle closing after successful spawn
-    } catch (err: any) {
+    } catch (err: unknown) {
       logger.error('SpawnDialog: Error in onSubmit:', { error: err });
       setError(err instanceof Error ? err.message : 'Failed to spawn agent');
       setIsLoading(false);

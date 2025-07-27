@@ -70,8 +70,8 @@ async function startFallbackUI(agentManager: AgentManager): Promise<void> {
         console.log(`  ${index + 1}. ${agent.name} (${agent.status})`);
       });
     }
-  } catch (error: any) {
-    console.log('Could not list agents:', error.message);
+  } catch (error: unknown) {
+    console.log('Could not list agents:', error instanceof Error ? error.message : String(error));
   }
 
   console.log('');
@@ -104,11 +104,11 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
                      || process.env.NODE_ENV === 'development';
 
     // Render the app with error handling for raw mode
-    let result: any;
+    let result: { clear: () => void };
     try {
       result = render(appElement, { debug: debugMode });
-    } catch (renderError: any) {
-      if (renderError.message.includes('Raw mode is not supported')) {
+    } catch (renderError: unknown) {
+      if (renderError instanceof Error && renderError.message.includes('Raw mode is not supported')) {
         logger.warn('Raw mode not supported, falling back to console UI');
         await startFallbackUI(agentManager);
         return;
@@ -127,11 +127,11 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
     await waitUntilExit();
 
     logger.info('Ink UI closed');
-  } catch (error: any) {
-    logger.error('Failed to start Ink UI with AgentManager', { error: error.message });
+  } catch (error: unknown) {
+    logger.error('Failed to start Ink UI with AgentManager', { error: error instanceof Error ? error.message : String(error) });
 
     // Try fallback UI if Ink fails
-    if (error.message.includes('Raw mode is not supported')) {
+    if (error instanceof Error && error.message.includes('Raw mode is not supported')) {
       logger.info('Attempting fallback UI due to raw mode issue');
       await startFallbackUI(agentManager);
     } else {

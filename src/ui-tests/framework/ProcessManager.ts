@@ -10,7 +10,7 @@ export class ProcessManager {
 
   private bufferIntervals: Map<number, NodeJS.Timeout> = new Map();
 
-  private processes: Map<number, any> = new Map();
+  private processes: Map<number, unknown> = new Map();
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
     return new Promise((resolve, reject) => {
@@ -93,7 +93,7 @@ export class ProcessManager {
 
   async readProcessOutput(
     pid: number,
-    duration: number = 1000,
+    _duration = 1000,
   ): Promise<string> {
     // Since we're managing the process directly, return buffered output
     const buffer = this.outputBuffers.get(pid) || [];

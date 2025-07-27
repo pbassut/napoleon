@@ -9,7 +9,7 @@ export interface LogEntry {
   content: string;
   type: string;
   source: string;
-  metadata: any;
+  metadata: unknown;
 }
 
 interface LogStreamEvent {
@@ -19,7 +19,7 @@ interface LogStreamEvent {
 
 interface UseAgentLogsParams {
   agentId: string;
-  agentManager: any;
+  agentManager: unknown;
   refreshInterval?: number;
   enableStreaming?: boolean;
 }

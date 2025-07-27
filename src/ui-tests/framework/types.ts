@@ -44,8 +44,8 @@ export const DEFAULT_TEST_CONFIG: TestConfig = {
 export type AssertionResult = {
   passed: boolean;
   message: string;
-  actual?: any;
-  expected?: any;
+  actual?: unknown;
+  expected?: unknown;
 };
 
 export interface TestReport {

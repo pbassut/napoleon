@@ -5,7 +5,7 @@ export const agentManagementTestSuite: UITestSuite = {
   tests: [
     {
       name: 'should spawn agent with simple prompt',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for agent spawning
         const mockAgent = {
           id: 'agent-1',
@@ -20,7 +20,7 @@ export const agentManagementTestSuite: UITestSuite = {
     },
     {
       name: 'should terminate agent',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for agent termination
         const mockTermination = {
           agentId: 'agent-1',
@@ -33,7 +33,7 @@ export const agentManagementTestSuite: UITestSuite = {
     },
     {
       name: 'should handle agent lifecycle',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for agent lifecycle management
         const mockLifecycle = {
           created: true,

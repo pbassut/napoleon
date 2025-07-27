@@ -5,7 +5,7 @@ export const navigationTestSuite: UITestSuite = {
   tests: [
     {
       name: 'should handle keyboard navigation',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for keyboard navigation
         const mockNavigation = {
           currentIndex: 0,
@@ -18,7 +18,7 @@ export const navigationTestSuite: UITestSuite = {
     },
     {
       name: 'should scroll through agent list',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for scrolling
         const mockScrolling = { canScroll: true };
         if (!mockScrolling.canScroll) throw new Error('Scrolling not available');
@@ -26,7 +26,7 @@ export const navigationTestSuite: UITestSuite = {
     },
     {
       name: 'should wrap navigation at boundaries',
-      test: async (context) => {
+      test: async (_context) => {
         // Mock test for boundary wrapping
         const mockBoundary = { wrapped: true };
         if (!mockBoundary.wrapped) throw new Error('Boundary wrapping not working');
