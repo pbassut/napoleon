@@ -124,7 +124,6 @@ Note: We don't need every file listed - just the important ones.]]
 - [ ] Issue has a status within the project: Draft
 
 
-
 ## VALIDATION RESULT
 
 [[LLM: FINAL ISSUE VALIDATION REPORT

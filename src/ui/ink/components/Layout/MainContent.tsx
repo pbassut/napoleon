@@ -5,7 +5,7 @@ interface MainContentProps {
   children: React.ReactNode;
 }
 
-const MainContent: React.FC<MainContentProps> = ({ children }) => (
+export const MainContent: React.FC<MainContentProps> = ({ children }) => (
   <Box flexGrow={1} flexDirection="column">
     {children}
   </Box>
