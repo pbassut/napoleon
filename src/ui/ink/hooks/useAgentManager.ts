@@ -5,18 +5,18 @@ import { Agent, AgentManager, AgentManagerHookReturn } from '../types';
 import logger from '../../../utils/logger';
 
 // Agent status types from AgentManager
-const AgentStatus = {
-  SPAWNING: 'spawning',
-  FORKING: 'forking',
-  STARTING: 'starting',
-  RUNNING: 'running',
-  PENDING: 'pending',
-  IDLE: 'idle',
-  ERROR: 'error',
-  FAILED: 'failed',
-  TERMINATED: 'terminated',
-  TERMINATING: 'terminating',
-};
+// const AgentStatus = {
+//   SPAWNING: 'spawning',
+//   FORKING: 'forking',
+//   STARTING: 'starting',
+//   RUNNING: 'running',
+//   PENDING: 'pending',
+//   IDLE: 'idle',
+//   ERROR: 'error',
+//   FAILED: 'failed',
+//   TERMINATED: 'terminated',
+//   TERMINATING: 'terminating',
+// };
 
 /**
  * Hook to integrate Ink UI with AgentManager
@@ -162,7 +162,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }, []);
 
   // Spawn new agent
-  const spawnAgent = useCallback(async ({ instructions, workingDirectory }: { instructions: string, workingDirectory: string }) => {
+  const spawnAgent = useCallback(async ({
+    instructions,
+    workingDirectory,
+  }: {
+    instructions: string,
+    workingDirectory: string
+  }) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
     }

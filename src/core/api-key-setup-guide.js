@@ -11,10 +11,10 @@ class ApiKeySetupGuide {
    * @param {string} apiKey - The invalid API key
    */
   displayFormatError(apiKey = '') {
-    const maskedKey = apiKey.length > 10 ? 
-      `${apiKey.substring(0, 7)}***${apiKey.substring(apiKey.length - 6)}` : 
-      '***';
-    
+    const maskedKey = apiKey.length > 10
+      ? `${apiKey.substring(0, 7)}***${apiKey.substring(apiKey.length - 6)}`
+      : '***';
+
     console.error('\n❌ Invalid API Key Format');
     console.error(`\nThe provided API key (${maskedKey}) does not match the expected Anthropic format.`);
     console.error('\n📋 Expected format: sk-ant-api03-[your-key-here]');
@@ -70,7 +70,7 @@ class ApiKeySetupGuide {
   displayValidationError(error) {
     console.error('\n❌ API Key Validation Failed');
     console.error(`\nError: ${error.message}`);
-    
+
     if (error.error === 'API_KEY_INVALID_FORMAT') {
       this.displayFormatError();
     } else if (error.error === 'API_KEY_MISSING') {

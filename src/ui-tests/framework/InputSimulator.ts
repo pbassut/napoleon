@@ -1,6 +1,7 @@
 import { ProcessManager } from './ProcessManager';
 
 export class InputSimulator {
+  // eslint-disable-next-line no-useless-constructor, no-empty-function
   constructor(private processManager: ProcessManager) {}
 
   async pressKey(pid: number, key: string): Promise<void> {

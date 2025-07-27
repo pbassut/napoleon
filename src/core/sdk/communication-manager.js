@@ -552,6 +552,7 @@ class SDKCommunicationManager {
       });
 
       // Process streaming response and yield messages immediately
+      // eslint-disable-next-line no-restricted-syntax
       for await (const message of queryResponse) {
         messageCount++;
 

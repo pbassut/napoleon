@@ -14,22 +14,22 @@ const os = require('os');
 function checkAddManagerData() {
   const homeDir = os.homedir();
   const addManagerDir = path.join(homeDir, '.add-manager');
-  
+
   if (!fs.existsSync(addManagerDir)) {
     return { exists: false, path: addManagerDir };
   }
-  
+
   // Check for typical AddManager files
   const configFile = path.join(addManagerDir, 'config.json');
   const sessionsFile = path.join(addManagerDir, 'sessions.json');
-  
+
   return {
     exists: true,
     path: addManagerDir,
     hasConfig: fs.existsSync(configFile),
     hasSessions: fs.existsSync(sessionsFile),
     configPath: configFile,
-    sessionsPath: sessionsFile
+    sessionsPath: sessionsFile,
   };
 }
 
@@ -39,22 +39,22 @@ function checkAddManagerData() {
 function checkNapoleonData() {
   const homeDir = os.homedir();
   const napoleonDir = path.join(homeDir, '.napoleon');
-  
+
   if (!fs.existsSync(napoleonDir)) {
     return { exists: false, path: napoleonDir };
   }
-  
+
   // Check for Napoleon files
   const configFile = path.join(napoleonDir, 'config.json');
   const sessionsFile = path.join(napoleonDir, 'sessions.json');
-  
+
   return {
     exists: true,
     path: napoleonDir,
     hasConfig: fs.existsSync(configFile),
     hasSessions: fs.existsSync(sessionsFile),
     configPath: configFile,
-    sessionsPath: sessionsFile
+    sessionsPath: sessionsFile,
   };
 }
 
@@ -65,8 +65,8 @@ function transformSessionData(addManagerSessions) {
   if (!addManagerSessions || !Array.isArray(addManagerSessions.sessions)) {
     return { sessions: [], lastUpdated: new Date().toISOString() };
   }
-  
-  const transformedSessions = addManagerSessions.sessions.map(session => ({
+
+  const transformedSessions = addManagerSessions.sessions.map((session) => ({
     id: session.id || session.agentId,
     instructions: session.instructions || session.prompt,
     spawnTime: session.spawnTime || session.createdAt,
@@ -81,12 +81,12 @@ function transformSessionData(addManagerSessions) {
     // Napoleon-specific fields
     sessionId: session.id || session.agentId,
     sdkStatus: 'inactive',
-    lastMessageId: null
+    lastMessageId: null,
   }));
-  
+
   return {
     sessions: transformedSessions,
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
   };
 }
 
@@ -100,32 +100,32 @@ function transformConfigData(addManagerConfig) {
       sessionStorage: path.join(os.homedir(), '.napoleon', 'sessions'),
       maxPromptLength: 50,
       features: {
-        autoCleanup: true
+        autoCleanup: true,
       },
       logging: {
         agents: {
-          enabled: false
-        }
-      }
+          enabled: false,
+        },
+      },
     };
   }
-  
+
   // Map AddManager config to Napoleon config
   return {
     napoleonDir: addManagerConfig.dataDir || path.join(os.homedir(), '.napoleon'),
     sessionStorage: addManagerConfig.sessionStorage || path.join(os.homedir(), '.napoleon', 'sessions'),
     maxPromptLength: addManagerConfig.maxPromptLength || 50,
     features: {
-      autoCleanup: addManagerConfig.autoCleanup !== false
+      autoCleanup: addManagerConfig.autoCleanup !== false,
     },
     logging: {
       agents: {
         enabled: addManagerConfig.logging?.enabled || false,
-        maxPromptLength: addManagerConfig.logging?.maxPromptLength || 50
-      }
+        maxPromptLength: addManagerConfig.logging?.maxPromptLength || 50,
+      },
     },
     // Preserve any additional settings
-    ...addManagerConfig
+    ...addManagerConfig,
   };
 }
 
@@ -134,28 +134,28 @@ function transformConfigData(addManagerConfig) {
  */
 async function performMigration(options = {}) {
   const { dryRun = false, backup = true } = options;
-  
+
   const addManagerData = checkAddManagerData();
   const napoleonData = checkNapoleonData();
-  
+
   if (!addManagerData.exists) {
     return {
       success: true,
       message: 'No AddManager data found - nothing to migrate',
-      migrated: false
+      migrated: false,
     };
   }
-  
+
   if (napoleonData.exists && !options.force) {
     return {
       success: false,
       message: 'Napoleon data already exists - use --force to overwrite',
-      error: 'NAPOLEON_EXISTS'
+      error: 'NAPOLEON_EXISTS',
     };
   }
-  
+
   const migrationSteps = [];
-  
+
   try {
     // Create Napoleon directory
     if (!dryRun) {
@@ -164,58 +164,57 @@ async function performMigration(options = {}) {
       }
     }
     migrationSteps.push('Created Napoleon directory');
-    
+
     // Migrate config
     if (addManagerData.hasConfig) {
       const addManagerConfig = JSON.parse(fs.readFileSync(addManagerData.configPath, 'utf8'));
       const napoleonConfig = transformConfigData(addManagerConfig);
-      
+
       if (!dryRun) {
         fs.writeFileSync(napoleonData.configPath, JSON.stringify(napoleonConfig, null, 2));
       }
       migrationSteps.push('Migrated configuration');
     }
-    
+
     // Migrate sessions
     if (addManagerData.hasSessions) {
       const addManagerSessions = JSON.parse(fs.readFileSync(addManagerData.sessionsPath, 'utf8'));
       const napoleonSessions = transformSessionData(addManagerSessions);
-      
+
       if (!dryRun) {
         fs.writeFileSync(napoleonData.sessionsPath, JSON.stringify(napoleonSessions, null, 2));
       }
       migrationSteps.push('Migrated sessions');
     }
-    
+
     // Create backup if requested
     if (backup && !dryRun) {
-      const backupDir = path.join(addManagerData.path, 'backup-' + Date.now());
+      const backupDir = path.join(addManagerData.path, `backup-${Date.now()}`);
       fs.mkdirSync(backupDir, { recursive: true });
-      
+
       if (addManagerData.hasConfig) {
         fs.copyFileSync(addManagerData.configPath, path.join(backupDir, 'config.json'));
       }
       if (addManagerData.hasSessions) {
         fs.copyFileSync(addManagerData.sessionsPath, path.join(backupDir, 'sessions.json'));
       }
-      
+
       migrationSteps.push('Created backup');
     }
-    
+
     return {
       success: true,
       message: 'Migration completed successfully',
       migrated: true,
       steps: migrationSteps,
-      dryRun
+      dryRun,
     };
-    
   } catch (error) {
     return {
       success: false,
       message: `Migration failed: ${error.message}`,
       error: error.message,
-      steps: migrationSteps
+      steps: migrationSteps,
     };
   }
 }
@@ -225,25 +224,25 @@ async function performMigration(options = {}) {
  */
 function validateMigration() {
   const napoleonData = checkNapoleonData();
-  
+
   if (!napoleonData.exists) {
     return {
       valid: false,
       message: 'Napoleon directory not found',
-      issues: ['Missing Napoleon directory']
+      issues: ['Missing Napoleon directory'],
     };
   }
-  
+
   const issues = [];
-  
+
   if (!napoleonData.hasConfig) {
     issues.push('Missing config.json');
   }
-  
+
   if (!napoleonData.hasSessions) {
     issues.push('Missing sessions.json');
   }
-  
+
   // Validate config structure
   if (napoleonData.hasConfig) {
     try {
@@ -255,7 +254,7 @@ function validateMigration() {
       issues.push('Invalid config: malformed JSON');
     }
   }
-  
+
   // Validate sessions structure
   if (napoleonData.hasSessions) {
     try {
@@ -267,11 +266,11 @@ function validateMigration() {
       issues.push('Invalid sessions: malformed JSON');
     }
   }
-  
+
   return {
     valid: issues.length === 0,
     message: issues.length === 0 ? 'Migration validation passed' : 'Migration validation failed',
-    issues
+    issues,
   };
 }
 
@@ -281,12 +280,12 @@ if (require.main === module) {
   const options = {
     dryRun: args.includes('--dry-run'),
     force: args.includes('--force'),
-    backup: !args.includes('--no-backup')
+    backup: !args.includes('--no-backup'),
   };
-  
+
   console.log('Napoleon Migration Tool');
   console.log('======================');
-  
+
   if (args.includes('--help')) {
     console.log(`
 Usage: node migrate-to-napoleon.js [options]
@@ -299,24 +298,24 @@ Options:
 `);
     process.exit(0);
   }
-  
+
   (async () => {
     try {
       const result = await performMigration(options);
-      
+
       if (result.success) {
         console.log('✅', result.message);
         if (result.steps) {
-          result.steps.forEach(step => console.log('  -', step));
+          result.steps.forEach((step) => console.log('  -', step));
         }
-        
+
         if (!result.dryRun && result.migrated) {
           const validation = validateMigration();
           if (validation.valid) {
             console.log('✅ Migration validation passed');
           } else {
             console.log('❌ Migration validation failed:');
-            validation.issues.forEach(issue => console.log('  -', issue));
+            validation.issues.forEach((issue) => console.log('  -', issue));
           }
         }
       } else {
@@ -336,5 +335,5 @@ module.exports = {
   transformSessionData,
   transformConfigData,
   performMigration,
-  validateMigration
+  validateMigration,
 };

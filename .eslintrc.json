@@ -103,7 +103,16 @@
         "no-promise-executor-return": "off",
         "no-useless-escape": "off",
         "no-continue": "off",
-        "no-shadow": "off"
+        "no-unused-vars": "off",
+        "no-lonely-if": "off"
+      }
+    },
+    {
+      "files": ["*.js"],
+      "rules": {
+        "consistent-return": "off",
+        "no-unused-vars": "off",
+        "no-lonely-if": "off"
       }
     }
   ]

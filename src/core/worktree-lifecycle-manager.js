@@ -127,6 +127,7 @@ class WorktreeLifecycleManager {
 
     logger.info('Processing orphaned worktrees', { count: orphanedWorktrees.length });
 
+    // eslint-disable-next-line no-restricted-syntax
     for (const worktree of orphanedWorktrees) {
       try {
         // Calculate age and size for priority
@@ -139,6 +140,7 @@ class WorktreeLifecycleManager {
           priority: this.calculateOrphanedPriority(worktree),
         };
 
+        // eslint-disable-next-line no-await-in-loop
         const cleanupId = await this.cleanupQueue.enqueue(worktree.path, cleanupOptions);
 
         logger.debug('Orphaned worktree enqueued for cleanup', {
@@ -162,7 +164,7 @@ class WorktreeLifecycleManager {
   async handleActiveWorktrees(activeWorktrees) {
     logger.info('Processing potentially active worktrees', { count: activeWorktrees.length });
 
-    for (const worktree of activeWorktrees) {
+    activeWorktrees.forEach((worktree) => {
       try {
         // For now, we'll just track these as potentially recoverable
         // The actual agent resumption would be handled by AgentManager
@@ -184,7 +186,7 @@ class WorktreeLifecycleManager {
           error: error.message,
         });
       }
-    }
+    });
   }
 
   /**
@@ -233,7 +235,7 @@ class WorktreeLifecycleManager {
           worktreePath: session.worktreePath,
         });
         logger.debug('Agent unregistered', { agentId });
-        return;
+        return Promise.resolve();
       }
 
       // Queue worktree for cleanup
@@ -254,7 +256,7 @@ class WorktreeLifecycleManager {
           cleanupId,
         });
 
-        return cleanupId;
+        return Promise.resolve(cleanupId);
       } catch (error) {
         logger.error('Failed to queue agent worktree for cleanup', {
           agentId,
@@ -280,7 +282,7 @@ class WorktreeLifecycleManager {
     const config = loadConfig();
     if (!config.features.autoCleanup) {
       logger.debug('Worktree force cleanup disabled by configuration', { worktreePath });
-      return;
+      return Promise.resolve();
     }
     return this.cleanupQueue.forceCleanup(worktreePath, options);
   }

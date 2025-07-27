@@ -63,7 +63,9 @@ export const LogViewer: React.FC<LogViewerProps> = ({
     .map((log) => LogParser.parseLogEntry(log))
     .filter((entry): entry is ParsedLogEntry => entry !== null), [logs]);
 
-  const visibleLogs = useMemo(() => parsedLogs.filter((entry) => LogParser.shouldShowLog(entry, filterOptions)), [parsedLogs, filterOptions]);
+  const visibleLogs = useMemo(() => parsedLogs.filter(
+    (entry) => LogParser.shouldShowLog(entry, filterOptions),
+  ), [parsedLogs, filterOptions]);
 
   // Auto-scroll to bottom when new logs arrive, with special handling for streaming
   useEffect(() => {

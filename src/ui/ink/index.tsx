@@ -1,5 +1,5 @@
 // Ink UI entry point for direct testing with real AgentManager
-import './wdyr'; // Must be first import
+import './wdyr.ts'; // Must be first import
 import React from 'react';
 import { render } from 'ink'; // eslint-disable-line import/no-unresolved
 import App from './App';

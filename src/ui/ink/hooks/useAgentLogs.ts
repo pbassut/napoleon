@@ -96,7 +96,7 @@ export const useAgentLogs = ({
             source: entry.source || 'unknown',
             metadata: entry.metadata || {},
           };
-        } catch (e) {
+        } catch {
           // Handle non-JSON lines
           return {
             id: `${agentId}-${index}`,
@@ -182,7 +182,7 @@ export const useAgentLogs = ({
               source: entry.source || 'unknown',
               metadata: entry.metadata || {},
             };
-          } catch (e) {
+          } catch {
             // Handle non-JSON lines
             return {
               id: `${agentId}-${index}`,

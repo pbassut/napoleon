@@ -116,7 +116,7 @@ async function startInkWithManager(agentManager: AgentManager): Promise<void> {
       throw renderError;
     }
 
-    const { unmount, waitUntilExit, clear } = result;
+    const { waitUntilExit, clear } = result;
 
     // Handle cleanup on exit
     process.on('exit', () => {

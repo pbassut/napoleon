@@ -3,7 +3,7 @@ import {
   Box, Text, useInput, useFocus,
 } from 'ink';
 import { ModalOverlay } from '../Common/ModalOverlay';
-import { TextEditor } from '../Common/TextEditor';
+import { TextEditor } from '../Common/TextEditor/index';
 import logger from '../../../../utils/logger';
 import { protectBackticks, isInputSafe } from '../../../../utils/backtick-protection';
 

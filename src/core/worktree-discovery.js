@@ -36,7 +36,7 @@ class WorktreeDiscovery {
       const activeWorktrees = [];
       const orphanedWorktrees = [];
 
-      for (const fsWorktree of filesystemWorktrees) {
+      filesystemWorktrees.forEach((fsWorktree) => {
         const gitWorktree = gitWorktrees.find((gw) => gw.path === fsWorktree.path);
         const isActiveProcess = this.isWorktreeProcessActive(fsWorktree, runningProcesses);
 
@@ -53,7 +53,7 @@ class WorktreeDiscovery {
         } else {
           orphanedWorktrees.push(worktreeInfo);
         }
-      }
+      });
 
       logger.info('Worktree discovery completed', {
         total: filesystemWorktrees.length,
@@ -90,8 +90,9 @@ class WorktreeDiscovery {
       const entries = await fs.readdir(this.worktreesDir, { withFileTypes: true });
       const worktrees = [];
 
-      for (const entry of entries) {
-        if (entry.isDirectory() && entry.name.startsWith('agent-')) {
+      const worktreePromises = entries
+        .filter((entry) => entry.isDirectory() && entry.name.startsWith('agent-'))
+        .map(async (entry) => {
           const worktreePath = path.join(this.worktreesDir, entry.name);
           const worktreeInfo = this.parseWorktreeInfo(entry.name, worktreePath);
 
@@ -102,10 +103,13 @@ class WorktreeDiscovery {
             worktreeInfo.lastModified = stats.mtime;
             worktreeInfo.size = await this.getDirectorySize(worktreePath);
 
-            worktrees.push(worktreeInfo);
+            return worktreeInfo;
           }
-        }
-      }
+          return null;
+        });
+
+      const worktreeResults = await Promise.all(worktreePromises);
+      worktrees.push(...worktreeResults.filter(Boolean));
 
       return worktrees.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     } catch (error) {
@@ -179,7 +183,7 @@ class WorktreeDiscovery {
     const lines = stdout.split('\n').filter((line) => line.trim());
 
     let currentWorktree = {};
-    for (const line of lines) {
+    lines.forEach((line) => {
       if (line.startsWith('worktree ')) {
         if (currentWorktree.path) {
           worktrees.push(currentWorktree);
@@ -199,7 +203,7 @@ class WorktreeDiscovery {
         currentWorktree.locked = true;
         currentWorktree.lockReason = line.substring(7);
       }
-    }
+    });
 
     // Add the last worktree
     if (currentWorktree.path) {
@@ -221,14 +225,14 @@ class WorktreeDiscovery {
       if (this.agentManager && this.agentManager.sdkManager) {
         const sdkSessions = this.agentManager.sdkManager.getActiveSessions();
 
-        for (const session of sdkSessions) {
+        sdkSessions.forEach((session) => {
           activeSessions.push({
             sessionId: session.agentId,
             workingDirectory: session.workingDirectory,
             isActive: session.isActive,
             lastActivity: session.lastActivity,
           });
-        }
+        });
       }
 
       logger.debug('Retrieved active SDK sessions', { count: activeSessions.length });
@@ -247,7 +251,7 @@ class WorktreeDiscovery {
     const agentIdPattern = worktree.agentId;
     const worktreePathPattern = worktree.path;
 
-    for (const session of activeSessions) {
+    return activeSessions.some((session) => {
       // Check for SDK session matches
       const isSessionMatch = (
         // Exact agent ID match
@@ -270,9 +274,8 @@ class WorktreeDiscovery {
         });
         return true;
       }
-    }
-
-    return false;
+      return false;
+    });
   }
 
   /**
@@ -325,9 +328,11 @@ class WorktreeDiscovery {
     const inconsistencies = [];
 
     // Check for git worktrees without filesystem directories
-    for (const gitWorktree of gitWorktrees) {
+    gitWorktrees.forEach((gitWorktree) => {
       if (gitWorktree.path.includes('.napoleon') && gitWorktree.path.includes('worktrees')) {
-        const hasFilesystem = filesystemWorktrees.some((fsWorktree) => fsWorktree.path === gitWorktree.path);
+        const hasFilesystem = filesystemWorktrees.some(
+          (fsWorktree) => fsWorktree.path === gitWorktree.path,
+        );
         if (!hasFilesystem) {
           inconsistencies.push({
             type: 'git-without-filesystem',
@@ -336,10 +341,10 @@ class WorktreeDiscovery {
           });
         }
       }
-    }
+    });
 
     // Check for filesystem worktrees without git metadata
-    for (const fsWorktree of filesystemWorktrees) {
+    filesystemWorktrees.forEach((fsWorktree) => {
       const hasGitMetadata = gitWorktrees.some((git) => git.path === fsWorktree.path);
       if (!hasGitMetadata) {
         inconsistencies.push({
@@ -348,7 +353,7 @@ class WorktreeDiscovery {
           description: 'Filesystem directory exists but git metadata is missing',
         });
       }
-    }
+    });
 
     return inconsistencies;
   }
@@ -382,15 +387,17 @@ class WorktreeDiscovery {
       let totalSize = 0;
       const items = await fs.readdir(dirPath, { withFileTypes: true });
 
-      for (const item of items) {
+      const sizePromises = items.map(async (item) => {
         const itemPath = path.join(dirPath, item.name);
         if (item.isDirectory()) {
-          totalSize += await this.getDirectorySize(itemPath);
-        } else {
-          const stats = await fs.stat(itemPath);
-          totalSize += stats.size;
+          return this.getDirectorySize(itemPath);
         }
-      }
+        const stats = await fs.stat(itemPath);
+        return stats.size;
+      });
+
+      const sizes = await Promise.all(sizePromises);
+      totalSize = sizes.reduce((sum, size) => sum + size, 0);
 
       return totalSize;
     } catch (error) {

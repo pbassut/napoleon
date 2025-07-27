@@ -13,12 +13,12 @@ class ApiKeyValidator {
    */
   async validateApiKey(apiKey = null) {
     const keyToValidate = apiKey || process.env.ANTHROPIC_API_KEY;
-    
+
     if (!keyToValidate) {
       return {
         isValid: false,
         error: 'API_KEY_MISSING',
-        message: 'ANTHROPIC_API_KEY environment variable is not set'
+        message: 'ANTHROPIC_API_KEY environment variable is not set',
       };
     }
 
@@ -27,7 +27,7 @@ class ApiKeyValidator {
       return {
         isValid: false,
         error: 'API_KEY_INVALID_FORMAT',
-        message: 'API key does not match expected Anthropic format'
+        message: 'API key does not match expected Anthropic format',
       };
     }
 
@@ -35,17 +35,17 @@ class ApiKeyValidator {
       // For now, we'll do basic validation
       // In a real implementation, this would make an API call to verify the key
       const maskedKey = this.maskApiKey(keyToValidate);
-      
+
       return {
         isValid: true,
-        maskedKey
+        maskedKey,
       };
     } catch (error) {
       this.logger.error('API key validation failed:', error);
       return {
         isValid: false,
         error: 'API_KEY_VALIDATION_FAILED',
-        message: 'Failed to validate API key'
+        message: 'Failed to validate API key',
       };
     }
   }
@@ -57,9 +57,9 @@ class ApiKeyValidator {
    */
   isValidKeyFormat(apiKey) {
     // Anthropic API keys typically start with 'sk-ant-'
-    return typeof apiKey === 'string' && 
-           apiKey.length > 10 && 
-           apiKey.startsWith('sk-ant-');
+    return typeof apiKey === 'string'
+           && apiKey.length > 10
+           && apiKey.startsWith('sk-ant-');
   }
 
   /**
@@ -71,7 +71,7 @@ class ApiKeyValidator {
     if (!apiKey || apiKey.length < 10) {
       return '***';
     }
-    
+
     return `${apiKey.substring(0, 7)}***${apiKey.substring(apiKey.length - 6)}`;
   }
 }

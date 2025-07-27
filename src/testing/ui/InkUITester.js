@@ -5,6 +5,7 @@
 
 const { spawn } = require('child_process');
 const EventEmitter = require('events');
+// const path = require('path');
 const fs = require('fs').promises;
 
 class InkUITester extends EventEmitter {
@@ -299,7 +300,9 @@ class InkUITester extends EventEmitter {
    * Utility delay function
    */
   delay(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   /**

@@ -5,8 +5,12 @@ import { Agent } from '../../types';
 
 // Mock all dependencies to avoid rendering issues
 jest.mock('../Common/ActivityIndicator', () => ({
-  ActivityIndicator: ({ isActive, symbol = '●' }: { isActive: boolean; symbol?: string }) => (isActive ? <span>{symbol}</span> : null),
-  SpinnerIndicator: ({ isActive, label }: { isActive: boolean; label?: string }) => (isActive ? <span>⠋{label && ` ${label}`}</span> : null),
+  ActivityIndicator: ({ isActive, symbol = '●' }: { isActive: boolean; symbol?: string }) => (
+    isActive ? <span>{symbol}</span> : null
+  ),
+  SpinnerIndicator: ({ isActive, label }: { isActive: boolean; label?: string }) => (
+    isActive ? <span>⠋{label && ` ${label}`}</span> : null
+  ),
 }));
 
 jest.mock('../../constants/agentStatus', () => ({
