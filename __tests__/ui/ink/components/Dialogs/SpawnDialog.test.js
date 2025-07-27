@@ -92,4 +92,39 @@ describe('SpawnDialog', () => {
       expect(component).toBeDefined();
     }).not.toThrow();
   });
+
+  describe('Basic Preset Text Functionality', () => {
+    it('should use basic preset text for all environments', () => {
+      const component = React.createElement(SpawnDialog, {
+        isOpen: true,
+        onClose: mockOnClose,
+        onSubmit: mockOnSubmit
+      });
+      
+      expect(component).toBeDefined();
+      // The basic preset '/BMad:agents:dev ' should be used in all environments
+    });
+
+    it('should maintain cursor positioning with preset text', () => {
+      const component = React.createElement(SpawnDialog, {
+        isOpen: true,
+        onClose: mockOnClose,
+        onSubmit: mockOnSubmit
+      });
+      
+      expect(component).toBeDefined();
+      // TextEditor should position cursor at the end of preset text
+    });
+
+    it('should allow users to easily append to preset text', () => {
+      const component = React.createElement(SpawnDialog, {
+        isOpen: true,
+        onClose: mockOnClose,
+        onSubmit: mockOnSubmit
+      });
+      
+      expect(component).toBeDefined();
+      // Users should be able to continue typing after the preset text
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box, Text, useInput, useFocus,
 } from 'ink';
@@ -13,8 +13,10 @@ interface SpawnDialogProps {
   onSubmit: (prompt: string) => Promise<void>;
 }
 
+const BASIC_PRESET = '/BMad:agents:dev ';
+
 const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) => {
-  const [text, setText] = useState('');
+  const [text, setText] = useState(BASIC_PRESET);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -22,15 +24,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   const focusOptions = useMemo(() => ({ autoFocus: isOpen }), [isOpen]);
   const { isFocused } = useFocus(focusOptions);
 
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (isOpen) {
-      logger.debug('SpawnDialog: Dialog opened, resetting state');
-
-      setText('/BMad:agents:dev ');
-      setIsLoading(false);
-    }
-  }, [isOpen]);
 
   // Handle global escape key to close dialog
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
