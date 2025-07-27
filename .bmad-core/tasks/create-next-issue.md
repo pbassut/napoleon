@@ -107,7 +107,8 @@ ALWAYS cite source documents: `[Source: architecture/{filename}.md#{section}]`
 - Execute `.bmad-core/tasks/execute-checklist` `.bmad-core/checklists/issue-draft-checklist`
 - Provide summary to user including:
   - Issue created: `https://<link>`
-  - Status: Draft
+  - Assigned to project: `Project Name`
+  - Project Status: `<issue_status>`
   - Key technical components included from architecture docs
   - Any deviations or conflicts noted between epic and architecture
   - Checklist Results
