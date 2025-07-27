@@ -105,6 +105,7 @@ The goal is quality delivery, not just checking boxes.]]
 
    - [ ] The content of the PR description should resemble what you did on the code
    - [ ] The PR description should include "Closes #<issue_number>" at the end to link the PR and Issue together
+   - [ ] Using `gh` tool to update the issue status to `Ready to Review`.
 
 
 ## Final Confirmation
