@@ -43,7 +43,9 @@ class LogQueryService {
       const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
 
       // Use Promise.all for better performance while avoiding for-of loop
-      await Promise.all(logFiles.map((logFile) => this.indexLogFile(path.join(this.logsDir, logFile))));
+      await Promise.all(
+        logFiles.map((logFile) => this.indexLogFile(path.join(this.logsDir, logFile))),
+      );
 
       logger.info('Search index built successfully', {
         filesIndexed: logFiles.length,
@@ -128,7 +130,7 @@ class LogQueryService {
         results = await this.performComplexSearch(query, options);
       }
 
-      const resultArray = await this.retrieveLogEntries(Array.from(results), options);
+      const resultArray = await LogQueryService.retrieveLogEntries(Array.from(results), options);
 
       return {
         results: resultArray,
@@ -187,7 +189,7 @@ class LogQueryService {
 
       const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
 
-      for (const logFile of logFiles) {
+      logFiles.forEach((logFile) => {
         const filePath = path.join(this.logsDir, logFile);
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n').filter((line) => line.trim());
@@ -204,7 +206,7 @@ class LogQueryService {
             // Skip non-JSON lines
           }
         });
-      }
+      });
     } catch (error) {
       logger.error('Regex search failed', { pattern: pattern.toString(), error: error.message });
     }
@@ -313,7 +315,7 @@ class LogQueryService {
 
     words.forEach((queryWord) => {
       this.searchIndex.textIndex.forEach((entrySet, indexedWord) => {
-        if (this.calculateSimilarity(queryWord, indexedWord) >= threshold) {
+        if (LogQueryService.calculateSimilarity(queryWord, indexedWord) >= threshold) {
           entrySet.forEach((entryId) => results.add(entryId));
         }
       });
@@ -322,29 +324,29 @@ class LogQueryService {
     return results;
   }
 
-  calculateSimilarity(str1, str2) {
+  static calculateSimilarity(str1, str2) {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
 
     if (longer.length === 0) return 1.0;
 
-    const distance = this.levenshteinDistance(longer, shorter);
+    const distance = LogQueryService.levenshteinDistance(longer, shorter);
     return (longer.length - distance) / longer.length;
   }
 
-  levenshteinDistance(str1, str2) {
+  static levenshteinDistance(str1, str2) {
     const matrix = [];
 
-    for (let i = 0; i <= str2.length; i++) {
+    for (let i = 0; i <= str2.length; i += 1) {
       matrix[i] = [i];
     }
 
-    for (let j = 0; j <= str1.length; j++) {
+    for (let j = 0; j <= str1.length; j += 1) {
       matrix[0][j] = j;
     }
 
-    for (let i = 1; i <= str2.length; i++) {
-      for (let j = 1; j <= str1.length; j++) {
+    for (let i = 1; i <= str2.length; i += 1) {
+      for (let j = 1; j <= str1.length; j += 1) {
         if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
           matrix[i][j] = matrix[i - 1][j - 1];
         } else {
@@ -360,17 +362,17 @@ class LogQueryService {
     return matrix[str2.length][str1.length];
   }
 
-  async retrieveLogEntries(entryIds, options) {
+  static async retrieveLogEntries(entryIds, options) {
     const entries = [];
     const contextLines = options.contextLines || 0;
 
     try {
-      for (const entryId of entryIds) {
+      entryIds.forEach((entryId) => {
         const [filePath, lineNumber] = entryId.split(':');
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n').filter((line) => line.trim());
 
-        const targetLine = parseInt(lineNumber);
+        const targetLine = parseInt(lineNumber, 10);
         const startLine = Math.max(0, targetLine - contextLines);
         const endLine = Math.min(lines.length - 1, targetLine + contextLines);
 
@@ -381,7 +383,7 @@ class LogQueryService {
           context: [],
         };
 
-        for (let i = startLine; i <= endLine; i++) {
+        for (let i = startLine; i <= endLine; i += 1) {
           try {
             const parsedEntry = JSON.parse(lines[i]);
             if (i === targetLine) {
@@ -400,7 +402,7 @@ class LogQueryService {
         if (entryData.entry) {
           entries.push(entryData);
         }
-      }
+      });
     } catch (error) {
       logger.error('Failed to retrieve log entries', { error: error.message });
     }
@@ -411,9 +413,9 @@ class LogQueryService {
   async analyzePerformance(dateRange, filters = {}) {
     try {
       const logs = await this.getAllLogsInRange(dateRange, filters);
-      const metrics = this.calculatePerformanceMetrics(logs);
-      const trends = this.analyzeTrends(logs, dateRange);
-      const insights = this.generatePerformanceInsights(metrics, trends);
+      const metrics = LogQueryService.calculatePerformanceMetrics(logs);
+      const trends = LogQueryService.analyzeTrends(logs);
+      const insights = LogQueryService.generatePerformanceInsights(metrics);
 
       return { metrics, trends, insights };
     } catch (error) {
@@ -422,7 +424,7 @@ class LogQueryService {
     }
   }
 
-  calculatePerformanceMetrics(logs) {
+  static calculatePerformanceMetrics(logs) {
     const metrics = {
       totalSessions: 0,
       averageSessionDuration: 0,
@@ -433,7 +435,7 @@ class LogQueryService {
       agentPerformance: new Map(),
     };
 
-    const sessions = this.groupLogsBySession(logs);
+    const sessions = LogQueryService.groupLogsBySession(logs);
     metrics.totalSessions = sessions.size;
 
     let totalDuration = 0;
@@ -442,32 +444,42 @@ class LogQueryService {
     let executionTimeCount = 0;
 
     sessions.forEach((sessionLogs, agentId) => {
-      const sessionMetrics = this.analyzeSession(sessionLogs);
+      const sessionMetrics = LogQueryService.analyzeSession(sessionLogs);
 
       if (sessionMetrics.duration > 0) {
         totalDuration += sessionMetrics.duration;
       }
 
       if (sessionMetrics.successful) {
-        successfulSessions++;
+        successfulSessions += 1;
       }
 
       if (sessionMetrics.executionTime > 0) {
         totalExecutionTime += sessionMetrics.executionTime;
-        executionTimeCount++;
-        metrics.executionTimes.min = Math.min(metrics.executionTimes.min, sessionMetrics.executionTime);
-        metrics.executionTimes.max = Math.max(metrics.executionTimes.max, sessionMetrics.executionTime);
+        executionTimeCount += 1;
+        metrics.executionTimes.min = Math.min(
+          metrics.executionTimes.min,
+          sessionMetrics.executionTime,
+        );
+        metrics.executionTimes.max = Math.max(
+          metrics.executionTimes.max,
+          sessionMetrics.executionTime,
+        );
       }
 
       metrics.tokenUsage.total += sessionMetrics.tokenUsage;
       metrics.agentPerformance.set(agentId, sessionMetrics);
     });
 
-    metrics.averageSessionDuration = metrics.totalSessions > 0 ? totalDuration / metrics.totalSessions : 0;
-    metrics.successRate = metrics.totalSessions > 0 ? (successfulSessions / metrics.totalSessions) * 100 : 0;
+    metrics.averageSessionDuration = metrics.totalSessions > 0
+      ? totalDuration / metrics.totalSessions : 0;
+    metrics.successRate = metrics.totalSessions > 0
+      ? (successfulSessions / metrics.totalSessions) * 100 : 0;
     metrics.errorRate = 100 - metrics.successRate;
-    metrics.tokenUsage.average = metrics.totalSessions > 0 ? metrics.tokenUsage.total / metrics.totalSessions : 0;
-    metrics.executionTimes.average = executionTimeCount > 0 ? totalExecutionTime / executionTimeCount : 0;
+    metrics.tokenUsage.average = metrics.totalSessions > 0
+      ? metrics.tokenUsage.total / metrics.totalSessions : 0;
+    metrics.executionTimes.average = executionTimeCount > 0
+      ? totalExecutionTime / executionTimeCount : 0;
 
     if (metrics.executionTimes.min === Infinity) {
       metrics.executionTimes.min = 0;
@@ -476,7 +488,7 @@ class LogQueryService {
     return metrics;
   }
 
-  groupLogsBySession(logs) {
+  static groupLogsBySession(logs) {
     const sessions = new Map();
 
     logs.forEach((log) => {
@@ -491,7 +503,7 @@ class LogQueryService {
     return sessions;
   }
 
-  analyzeSession(sessionLogs) {
+  static analyzeSession(sessionLogs) {
     const sortedLogs = sessionLogs.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
     const startTime = new Date(sortedLogs[0].timestamp);
     const endTime = new Date(sortedLogs[sortedLogs.length - 1].timestamp);
@@ -524,7 +536,7 @@ class LogQueryService {
     };
   }
 
-  analyzeTrends(logs, dateRange) {
+  static analyzeTrends(logs) {
     const trends = {
       dailyActivity: new Map(),
       errorTrends: new Map(),
@@ -540,10 +552,10 @@ class LogQueryService {
         trends.dailyActivity.set(date, { sessions: 0, errors: 0, tokens: 0 });
       }
       const dayData = trends.dailyActivity.get(date);
-      dayData.sessions++;
+      dayData.sessions += 1;
 
       if (log.type === 'error' || log.type === 'sdk_error') {
-        dayData.errors++;
+        dayData.errors += 1;
       }
 
       if (log.metadata && log.metadata.tokens) {
@@ -554,7 +566,7 @@ class LogQueryService {
     return trends;
   }
 
-  generatePerformanceInsights(metrics, trends) {
+  static generatePerformanceInsights(metrics) {
     const insights = [];
 
     // Success rate insights
@@ -602,9 +614,9 @@ class LogQueryService {
       const logs = await this.getAllLogsInTimeWindow(timeWindow);
       const errorLogs = logs.filter((log) => log.type === 'error' || log.type === 'sdk_error');
 
-      const patterns = this.identifyErrorPatterns(errorLogs);
-      const trends = this.analyzeErrorTrends(errorLogs, timeWindow);
-      const recommendations = this.generateErrorRecommendations(patterns, trends);
+      const patterns = LogQueryService.identifyErrorPatterns(errorLogs);
+      const trends = LogQueryService.analyzeErrorTrends(errorLogs, timeWindow);
+      const recommendations = LogQueryService.generateErrorRecommendations(patterns, trends);
 
       return { patterns, trends, recommendations };
     } catch (error) {
@@ -613,17 +625,17 @@ class LogQueryService {
     }
   }
 
-  identifyErrorPatterns(errorLogs) {
+  static identifyErrorPatterns(errorLogs) {
     const patterns = new Map();
 
     errorLogs.forEach((log) => {
-      const errorType = this.categorizeError(log);
-      const errorKey = `${errorType}:${this.extractErrorSignature(log)}`;
+      const errorType = LogQueryService.categorizeError(log);
+      const errorKey = `${errorType}:${LogQueryService.extractErrorSignature(log)}`;
 
       if (!patterns.has(errorKey)) {
         patterns.set(errorKey, {
           type: errorType,
-          signature: this.extractErrorSignature(log),
+          signature: LogQueryService.extractErrorSignature(log),
           count: 0,
           examples: [],
           firstSeen: log.timestamp,
@@ -633,7 +645,7 @@ class LogQueryService {
       }
 
       const pattern = patterns.get(errorKey);
-      pattern.count++;
+      pattern.count += 1;
       pattern.lastSeen = log.timestamp;
       pattern.affectedAgents.add(log.agentId);
 
@@ -651,7 +663,7 @@ class LogQueryService {
     return Array.from(patterns.values()).sort((a, b) => b.count - a.count);
   }
 
-  categorizeError(log) {
+  static categorizeError(log) {
     const content = log.content.toLowerCase();
     const metadata = JSON.stringify(log.metadata || {}).toLowerCase();
     const combined = `${content} ${metadata}`;
@@ -668,7 +680,7 @@ class LogQueryService {
     return 'unknown';
   }
 
-  extractErrorSignature(log) {
+  static extractErrorSignature(log) {
     // Extract key parts of error message for pattern matching
     const { content } = log;
     const lines = content.split('\n');
@@ -682,7 +694,7 @@ class LogQueryService {
       .substring(0, 100);
   }
 
-  analyzeErrorTrends(errorLogs, timeWindow) {
+  static analyzeErrorTrends(errorLogs, timeWindow) {
     const trends = {
       frequency: new Map(),
       growth: 'stable',
@@ -691,9 +703,9 @@ class LogQueryService {
     };
 
     // Group by time periods
-    const timeUnit = this.getTimeUnit(timeWindow);
+    const timeUnit = LogQueryService.getTimeUnit(timeWindow);
     errorLogs.forEach((log) => {
-      const timeKey = this.getTimeKey(log.timestamp, timeUnit);
+      const timeKey = LogQueryService.getTimeKey(log.timestamp, timeUnit);
       if (!trends.frequency.has(timeKey)) {
         trends.frequency.set(timeKey, 0);
       }
@@ -717,30 +729,31 @@ class LogQueryService {
     return trends;
   }
 
-  getTimeUnit(timeWindow) {
+  static getTimeUnit(timeWindow) {
     if (timeWindow.includes('h')) return 'hour';
     if (timeWindow.includes('d')) return 'day';
     if (timeWindow.includes('w')) return 'week';
     return 'day';
   }
 
-  getTimeKey(timestamp, timeUnit) {
+  static getTimeKey(timestamp, timeUnit) {
     const date = new Date(timestamp);
     switch (timeUnit) {
       case 'hour':
         return `${date.toISOString().split('T')[0]} ${date.getHours()}:00`;
       case 'day':
         return date.toISOString().split('T')[0];
-      case 'week':
+      case 'week': {
         const weekStart = new Date(date);
         weekStart.setDate(date.getDate() - date.getDay());
         return weekStart.toISOString().split('T')[0];
+      }
       default:
         return date.toISOString().split('T')[0];
     }
   }
 
-  generateErrorRecommendations(patterns, trends) {
+  static generateErrorRecommendations(patterns, trends) {
     const recommendations = [];
 
     patterns.forEach((pattern) => {
@@ -749,7 +762,7 @@ class LogQueryService {
           type: 'high_frequency',
           pattern: pattern.type,
           message: `${pattern.type} errors occurring frequently (${pattern.count} times)`,
-          action: this.getErrorRecommendation(pattern.type),
+          action: LogQueryService.getErrorRecommendation(pattern.type),
           priority: 'high',
         });
       }
@@ -767,7 +780,7 @@ class LogQueryService {
     return recommendations;
   }
 
-  getErrorRecommendation(errorType) {
+  static getErrorRecommendation(errorType) {
     const recommendations = {
       timeout: 'Increase timeout values or optimize processing speed',
       authentication: 'Verify API keys and authentication configuration',
@@ -785,9 +798,9 @@ class LogQueryService {
   async generateAgentAnalytics(agentId, options = {}) {
     try {
       const agentLogs = await this.getAgentLogs(agentId, options);
-      const behavior = this.analyzeBehavior(agentLogs);
-      const performance = this.analyzeAgentPerformance(agentLogs);
-      const recommendations = this.generateAgentRecommendations(behavior, performance);
+      const behavior = LogQueryService.analyzeBehavior(agentLogs);
+      const performance = LogQueryService.analyzeAgentPerformance(agentLogs);
+      const recommendations = LogQueryService.generateAgentRecommendations(behavior, performance);
 
       return { behavior, performance, recommendations };
     } catch (error) {
@@ -796,7 +809,7 @@ class LogQueryService {
     }
   }
 
-  analyzeBehavior(agentLogs) {
+  static analyzeBehavior(agentLogs) {
     const behavior = {
       sessionCount: 0,
       averageSessionLength: 0,
@@ -807,7 +820,7 @@ class LogQueryService {
       failurePatterns: [],
     };
 
-    const sessions = this.groupLogsBySession(agentLogs);
+    const sessions = LogQueryService.groupLogsBySession(agentLogs);
     behavior.sessionCount = sessions.size;
 
     let totalSessionLength = 0;
@@ -819,7 +832,7 @@ class LogQueryService {
       sessionLogs.forEach((log) => {
         if (log.metadata) {
           if (log.metadata.prompt) {
-            const promptPattern = this.extractPromptPattern(log.metadata.prompt);
+            const promptPattern = LogQueryService.extractPromptPattern(log.metadata.prompt);
             behavior.commonPromptPatterns.set(
               promptPattern,
               (behavior.commonPromptPatterns.get(promptPattern) || 0) + 1,
@@ -849,7 +862,7 @@ class LogQueryService {
     return behavior;
   }
 
-  extractPromptPattern(prompt) {
+  static extractPromptPattern(prompt) {
     // Simplified pattern extraction - could be enhanced with NLP
     const words = prompt.toLowerCase().split(/\s+/);
     const keyWords = words.filter((word) => word.length > 4
@@ -858,21 +871,21 @@ class LogQueryService {
     return keyWords.slice(0, 3).join(' ') || 'unknown';
   }
 
-  analyzeAgentPerformance(agentLogs) {
-    const sessions = this.groupLogsBySession(agentLogs);
+  static analyzeAgentPerformance(agentLogs) {
+    const sessions = LogQueryService.groupLogsBySession(agentLogs);
     let totalDuration = 0;
     let successfulSessions = 0;
     let totalTokens = 0;
     let sessionCount = 0;
 
     sessions.forEach((sessionLogs) => {
-      sessionCount++;
-      const sessionMetrics = this.analyzeSession(sessionLogs);
+      sessionCount += 1;
+      const sessionMetrics = LogQueryService.analyzeSession(sessionLogs);
       totalDuration += sessionMetrics.duration;
       totalTokens += sessionMetrics.tokenUsage;
 
       if (sessionMetrics.successful) {
-        successfulSessions++;
+        successfulSessions += 1;
       }
     });
 
@@ -884,7 +897,7 @@ class LogQueryService {
     };
   }
 
-  generateAgentRecommendations(behavior, performance) {
+  static generateAgentRecommendations(behavior, performance) {
     const recommendations = [];
 
     if (performance.successRate < 80) {
@@ -914,7 +927,7 @@ class LogQueryService {
     return recommendations;
   }
 
-  async getAllLogsInRange(dateRange, filters = {}) {
+  async getAllLogsInRange(dateRange) {
     const logs = [];
 
     try {
@@ -924,22 +937,22 @@ class LogQueryService {
 
       const logFiles = fs.readdirSync(this.logsDir).filter((file) => file.endsWith('.log'));
 
-      for (const logFile of logFiles) {
+      logFiles.forEach((logFile) => {
         const filePath = path.join(this.logsDir, logFile);
         const content = fs.readFileSync(filePath, 'utf8');
         const lines = content.split('\n').filter((line) => line.trim());
 
-        for (const line of lines) {
+        lines.forEach((line) => {
           try {
             const entry = JSON.parse(line);
-            if (this.isInDateRange(entry.timestamp, dateRange)) {
+            if (LogQueryService.isInDateRange(entry.timestamp, dateRange)) {
               logs.push(entry);
             }
           } catch (parseError) {
             // Skip non-JSON lines
           }
-        }
-      }
+        });
+      });
     } catch (error) {
       logger.error('Failed to retrieve logs in range', { error: error.message });
     }
@@ -949,7 +962,7 @@ class LogQueryService {
 
   async getAllLogsInTimeWindow(timeWindow) {
     const now = new Date();
-    const duration = this.parseTimeWindow(timeWindow);
+    const duration = LogQueryService.parseTimeWindow(timeWindow);
     const fromDate = new Date(now.getTime() - duration);
 
     return this.getAllLogsInRange({
@@ -958,14 +971,14 @@ class LogQueryService {
     });
   }
 
-  parseTimeWindow(timeWindow) {
+  static parseTimeWindow(timeWindow) {
     const match = timeWindow.match(/(\d+)([hdw])/);
     if (!match) return 24 * 60 * 60 * 1000; // Default 1 day
 
     const [, amount, unit] = match;
     const multipliers = { h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000, w: 7 * 24 * 60 * 60 * 1000 };
 
-    return parseInt(amount) * (multipliers[unit] || multipliers.d);
+    return parseInt(amount, 10) * (multipliers[unit] || multipliers.d);
   }
 
   async getAgentLogs(agentId, options = {}) {
@@ -973,7 +986,7 @@ class LogQueryService {
     return allLogs.filter((log) => log.agentId === agentId);
   }
 
-  isInDateRange(timestamp, dateRange) {
+  static isInDateRange(timestamp, dateRange) {
     if (!dateRange) return true;
 
     const date = new Date(timestamp);
@@ -1011,9 +1024,9 @@ class LogQueryService {
       }
 
       const reportData = await this.gatherReportData(reportType, options);
-      const report = this.formatReport(reportData, template, options);
-      const visualizations = this.generateVisualizations(reportData, options);
-      const exportData = this.prepareExportData(reportData, options);
+      const report = LogQueryService.formatReport(reportData, template, options);
+      const visualizations = LogQueryService.generateVisualizations(reportData);
+      const exportData = LogQueryService.prepareExportData(reportData, options);
 
       return { report, visualizations, exportData };
     } catch (error) {
@@ -1023,7 +1036,7 @@ class LogQueryService {
   }
 
   async gatherReportData(reportType, options) {
-    const dateRange = options.dateRange || this.getDefaultDateRange();
+    const dateRange = options.dateRange || LogQueryService.getDefaultDateRange();
 
     switch (reportType) {
       case 'performance_summary':
@@ -1038,7 +1051,7 @@ class LogQueryService {
     }
   }
 
-  getDefaultDateRange() {
+  static getDefaultDateRange() {
     const now = new Date();
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
@@ -1048,11 +1061,11 @@ class LogQueryService {
     };
   }
 
-  formatReport(reportData, template, options) {
+  static formatReport(reportData, template, options) {
     const report = {
       title: template.title,
       generatedAt: new Date().toISOString(),
-      timeRange: options.dateRange || this.getDefaultDateRange(),
+      timeRange: options.dateRange || LogQueryService.getDefaultDateRange(),
       sections: {},
     };
 
@@ -1065,7 +1078,7 @@ class LogQueryService {
     return report;
   }
 
-  generateVisualizations(reportData, options) {
+  static generateVisualizations(reportData) {
     const visualizations = [];
 
     // Generate simple text-based visualizations
@@ -1088,20 +1101,20 @@ class LogQueryService {
     return visualizations;
   }
 
-  prepareExportData(reportData, options) {
+  static prepareExportData(reportData, options) {
     const format = options.format || 'json';
 
     switch (format) {
       case 'json':
         return JSON.stringify(reportData, null, 2);
       case 'csv':
-        return this.convertToCSV(reportData);
+        return LogQueryService.convertToCSV(reportData);
       default:
         return reportData;
     }
   }
 
-  convertToCSV(data) {
+  static convertToCSV(data) {
     // Simple CSV conversion for metrics data
     const lines = ['timestamp,metric,value,agent_id'];
 
@@ -1124,9 +1137,9 @@ class LogQueryService {
         case 'json':
           return JSON.stringify(logs, null, 2);
         case 'csv':
-          return this.logsToCSV(logs);
+          return LogQueryService.logsToCSV(logs);
         case 'html':
-          return this.logsToHTML(logs);
+          return LogQueryService.logsToHTML(logs);
         default:
           throw new Error(`Unsupported export format: ${format}`);
       }
@@ -1136,7 +1149,7 @@ class LogQueryService {
     }
   }
 
-  logsToCSV(logs) {
+  static logsToCSV(logs) {
     const headers = ['timestamp', 'agentId', 'type', 'source', 'content', 'metadata'];
     const lines = [headers.join(',')];
 
@@ -1155,7 +1168,7 @@ class LogQueryService {
     return lines.join('\n');
   }
 
-  logsToHTML(logs) {
+  static logsToHTML(logs) {
     const html = `
 <!DOCTYPE html>
 <html>
@@ -1186,13 +1199,17 @@ class LogQueryService {
         </thead>
         <tbody>
             ${logs.map((log) => `
-                <tr class="${log.type === 'error' ? 'error' : log.type === 'warning' ? 'warning' : ''}">
+                <tr class="${(() => {
+    if (log.type === 'error') return 'error';
+    if (log.type === 'warning') return 'warning';
+    return '';
+  })()}">
                     <td>${log.timestamp || ''}</td>
                     <td>${log.agentId || ''}</td>
                     <td>${log.type || ''}</td>
                     <td>${log.source || ''}</td>
-                    <td>${this.escapeHtml(log.content || '')}</td>
-                    <td>${this.escapeHtml(JSON.stringify(log.metadata || {}))}</td>
+                    <td>${LogQueryService.escapeHtml(log.content || '')}</td>
+                    <td>${LogQueryService.escapeHtml(JSON.stringify(log.metadata || {}))}</td>
                 </tr>
             `).join('')}
         </tbody>
@@ -1203,7 +1220,7 @@ class LogQueryService {
     return html;
   }
 
-  escapeHtml(text) {
+  static escapeHtml(text) {
     const div = { innerHTML: text };
     return div.innerHTML
       .replace(/&/g, '&amp;')

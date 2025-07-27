@@ -2,7 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const zlib = require('zlib');
-const { promisify } = require('util');
 const logger = require('../../utils/logger');
 
 /**
@@ -16,7 +15,7 @@ class LogRetentionManager {
     this.config = config;
     this.napoleonDir = config.napoleonDir || path.join(os.homedir(), '.napoleon');
     this.logsDir = path.join(this.napoleonDir, 'logs', 'agents');
-    this.retentionConfig = config.logging?.retention || this.getDefaultConfig();
+    this.retentionConfig = config.logging?.retention || LogRetentionManager.getDefaultConfig();
     this.scheduler = null;
     this.compressionQueue = [];
     this.initialized = false;
@@ -27,7 +26,7 @@ class LogRetentionManager {
    * Get default retention configuration
    * @returns {Object} Default retention config
    */
-  getDefaultConfig() {
+  static getDefaultConfig() {
     return {
       enabled: true,
       maxAgeDays: 30,
@@ -179,26 +178,26 @@ class LogRetentionManager {
       const files = await fs.promises.readdir(this.logsDir);
       const logFiles = [];
 
-      for (const file of files) {
-        if (!file.endsWith('.log') && !file.endsWith('.log.gz')) {
-          continue;
-        }
+      const logFilePromises = files
+        .filter((file) => file.endsWith('.log') || file.endsWith('.log.gz'))
+        .map(async (file) => {
+          const filePath = path.join(this.logsDir, file);
+          const stats = await fs.promises.stat(filePath);
 
-        const filePath = path.join(this.logsDir, file);
-        const stats = await fs.promises.stat(filePath);
-
-        logFiles.push({
-          name: file,
-          path: filePath,
-          size: stats.size,
-          created: stats.birthtime,
-          modified: stats.mtime,
-          age: Date.now() - stats.mtime.getTime(),
-          ageDays: Math.floor((Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24)),
-          isCompressed: file.endsWith('.gz'),
-          agentId: this.extractAgentId(file),
+          return {
+            name: file,
+            path: filePath,
+            size: stats.size,
+            created: stats.birthtime,
+            modified: stats.mtime,
+            age: Date.now() - stats.mtime.getTime(),
+            ageDays: Math.floor((Date.now() - stats.mtime.getTime()) / (1000 * 60 * 60 * 24)),
+            isCompressed: file.endsWith('.gz'),
+            agentId: LogRetentionManager.extractAgentId(file),
+          };
         });
-      }
+
+      logFiles.push(...(await Promise.all(logFilePromises)));
 
       // Sort by modification time (newest first)
       logFiles.sort((a, b) => b.modified - a.modified);
@@ -218,7 +217,7 @@ class LogRetentionManager {
    * @param {string} filename - Log filename
    * @returns {string|null} Agent ID or null if not found
    */
-  extractAgentId(filename) {
+  static extractAgentId(filename) {
     // Format: YYYY-MM-DD_agent-id_sanitized-prompt.log(.gz)
     const match = filename.match(/^\d{4}-\d{2}-\d{2}_([^_]+)_/);
     return match ? match[1] : null;
@@ -267,7 +266,7 @@ class LogRetentionManager {
         && file.ageDays >= ageDays
         && !this.isAgentActive(file.agentId));
 
-      for (const file of filesToCompress) {
+      const compressionPromises = filesToCompress.map(async (file) => {
         try {
           const action = {
             type: 'compress',
@@ -277,7 +276,7 @@ class LogRetentionManager {
           };
 
           if (!dryRun) {
-            await this.compressFile(file.path);
+            await LogRetentionManager.compressFile(file.path);
             const compressedStats = await fs.promises.stat(`${file.path}.gz`);
             action.compressedSize = compressedStats.size;
             action.compressionRatio = (1 - compressedStats.size / file.size) * 100;
@@ -287,20 +286,25 @@ class LogRetentionManager {
           }
 
           results.actions.push(action);
-          results.filesCompressed++;
+          results.filesCompressed += 1;
+          return action;
         } catch (error) {
           logger.error('Failed to compress file', {
             file: file.name,
             error: error.message,
           });
-          results.actions.push({
+          const errorAction = {
             type: 'compress_error',
             file: file.name,
             error: error.message,
             timestamp: new Date().toISOString(),
-          });
+          };
+          results.actions.push(errorAction);
+          return errorAction;
         }
-      }
+      });
+
+      await Promise.all(compressionPromises);
 
       return results;
     } catch (error) {
@@ -316,7 +320,7 @@ class LogRetentionManager {
    * @param {string} filePath - Path to file to compress
    * @returns {Promise<void>}
    */
-  async compressFile(filePath) {
+  static async compressFile(filePath) {
     const gzip = zlib.createGzip();
     const source = fs.createReadStream(filePath);
     const destination = fs.createWriteStream(`${filePath}.gz`);
@@ -328,7 +332,7 @@ class LogRetentionManager {
         .on('finish', async () => {
           try {
             // Verify compressed file integrity
-            await this.verifyCompressedFile(`${filePath}.gz`);
+            await LogRetentionManager.verifyCompressedFile(`${filePath}.gz`);
 
             // Delete original file after successful compression
             await fs.promises.unlink(filePath);
@@ -346,7 +350,7 @@ class LogRetentionManager {
    * @param {string} compressedPath - Path to compressed file
    * @returns {Promise<void>}
    */
-  async verifyCompressedFile(compressedPath) {
+  static async verifyCompressedFile(compressedPath) {
     return new Promise((resolve, reject) => {
       const gunzip = zlib.createGunzip();
       const source = fs.createReadStream(compressedPath);
@@ -419,7 +423,7 @@ class LogRetentionManager {
     const filesToDelete = logFiles.filter((file) => file.ageDays > maxAge
       && !this.isAgentActive(file.agentId));
 
-    for (const file of filesToDelete) {
+    const deletePromises = filesToDelete.map(async (file) => {
       try {
         const action = {
           type: 'delete_age',
@@ -434,22 +438,27 @@ class LogRetentionManager {
           await fs.promises.unlink(file.path);
         }
 
-        results.filesDeleted++;
+        results.filesDeleted += 1;
         results.spaceSavedMB += file.size / (1024 * 1024);
         results.actions.push(action);
+        return action;
       } catch (error) {
         logger.error('Failed to delete file by age', {
           file: file.name,
           error: error.message,
         });
-        results.actions.push({
+        const errorAction = {
           type: 'delete_error',
           file: file.name,
           error: error.message,
           timestamp: new Date().toISOString(),
-        });
+        };
+        results.actions.push(errorAction);
+        return errorAction;
       }
-    }
+    });
+
+    await Promise.all(deletePromises);
 
     return results;
   }
@@ -477,7 +486,7 @@ class LogRetentionManager {
       .slice(maxCount)
       .filter((file) => !this.isAgentActive(file.agentId));
 
-    for (const file of filesToDelete) {
+    const deletePromises = filesToDelete.map(async (file) => {
       try {
         const action = {
           type: 'delete_count',
@@ -492,22 +501,27 @@ class LogRetentionManager {
           await fs.promises.unlink(file.path);
         }
 
-        results.filesDeleted++;
+        results.filesDeleted += 1;
         results.spaceSavedMB += file.size / (1024 * 1024);
         results.actions.push(action);
+        return action;
       } catch (error) {
         logger.error('Failed to delete file by count', {
           file: file.name,
           error: error.message,
         });
-        results.actions.push({
+        const errorAction = {
           type: 'delete_error',
           file: file.name,
           error: error.message,
           timestamp: new Date().toISOString(),
-        });
+        };
+        results.actions.push(errorAction);
+        return errorAction;
       }
-    }
+    });
+
+    await Promise.all(deletePromises);
 
     return results;
   }
@@ -538,12 +552,12 @@ class LogRetentionManager {
     // Delete oldest files first until we're under the size limit
     const sortedFiles = [...logFiles].sort((a, b) => a.modified - b.modified);
 
-    for (const file of sortedFiles) {
-      if (deletedSize >= excessSize) {
-        break;
-      }
+    // Process files sequentially until size limit is reached
+    for (let i = 0; i < sortedFiles.length && deletedSize < excessSize; i += 1) {
+      const file = sortedFiles[i];
 
       if (this.isAgentActive(file.agentId)) {
+        // eslint-disable-next-line no-continue
         continue; // Skip active agent logs
       }
 
@@ -558,11 +572,12 @@ class LogRetentionManager {
         };
 
         if (!dryRun) {
+          // eslint-disable-next-line no-await-in-loop
           await fs.promises.unlink(file.path);
         }
 
         deletedSize += file.size;
-        results.filesDeleted++;
+        results.filesDeleted += 1;
         results.spaceSavedMB += file.size / (1024 * 1024);
         results.actions.push(action);
       } catch (error) {
@@ -660,7 +675,7 @@ class LogRetentionManager {
    * @param {Array} actions - Array of cleanup actions
    * @returns {Object} Formatted report
    */
-  generateCleanupReport(actions) {
+  static generateCleanupReport(actions) {
     const report = {
       timestamp: new Date().toISOString(),
       totalActions: actions.length,
@@ -672,22 +687,22 @@ class LogRetentionManager {
       },
     };
 
-    for (const action of actions) {
+    actions.forEach((action) => {
       // Count actions by type
       if (!report.actionsByType[action.type]) {
         report.actionsByType[action.type] = 0;
       }
-      report.actionsByType[action.type]++;
+      report.actionsByType[action.type] += 1;
 
       // Update summary
-      report.summary.filesProcessed++;
+      report.summary.filesProcessed += 1;
       if (action.size) {
         report.summary.totalSpaceSaved += action.size;
       }
       if (action.error) {
-        report.summary.errors++;
+        report.summary.errors += 1;
       }
-    }
+    });
 
     report.summary.totalSpaceSavedMB = report.summary.totalSpaceSaved / (1024 * 1024);
 
