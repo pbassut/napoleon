@@ -1,29 +1,29 @@
-# Validate Next Story Task
+# Validate Next Issue Task
 
 ## Purpose
 
-To comprehensively validate a story draft before implementation begins, ensuring it is complete, accurate, and provides sufficient context for successful development. This task identifies issues and gaps that need to be addressed, preventing hallucinations and ensuring implementation readiness.
+To comprehensively validate a issue draft before implementation begins, ensuring it is complete, accurate, and provides sufficient context for successful development. This task identifies issues and gaps that need to be addressed, preventing hallucinations and ensuring implementation readiness.
 
 ## SEQUENTIAL Task Execution (Do not proceed until current Task is complete)
 
 ### 0. Load Core Configuration and Inputs
 
 - Load `.bmad-core/core-config.yaml`
-- If the file does not exist, HALT and inform the user: "core-config.yaml not found. This file is required for story validation."
+- If the file does not exist, HALT and inform the user: "core-config.yaml not found. This file is required for issue validation."
 - Extract key configurations: `devStoryLocation`, `prd.*`, `architecture.*`
 - Identify and load the following inputs:
-  - **Story file**: The drafted story to validate (provided by user or discovered in `devStoryLocation`)
-  - **Parent epic**: The epic containing this story's requirements
+  - **Issue number/link**: The drafted issue to validate (provided by user or discovered in `devStoryLocation`)
+  - **Parent milestone**: The milestone containing this issues's requirements
   - **Architecture documents**: Based on configuration (sharded or monolithic)
-  - **Story template**: `bmad-core/templates/issue-tmpl.md` for completeness validation
+  - **Issue template**: `bmad-core/templates/issue-tmpl.md` for completeness validation
 
 ### 1. Template Completeness Validation
 
 - Load `bmad-core/templates/issue-tmpl.md` and extract all section headings from the template
-- **Missing sections check**: Compare story sections against template sections to verify all required sections are present
+- **Missing sections check**: Compare issue sections against template sections to verify all required sections are present
 - **Placeholder validation**: Ensure no template placeholders remain unfilled (e.g., `{{EpicNum}}`, `{{role}}`, `_TBD_`)
 - **Agent section verification**: Confirm all sections from template exist for future agent use
-- **Structure compliance**: Verify story follows template structure and formatting
+- **Structure compliance**: Verify issue follows template structure and formatting
 
 ### 2. File Structure and Source Tree Validation
 
@@ -83,7 +83,7 @@ To comprehensively validate a story draft before implementation begins, ensuring
 
 ### 9. Dev Agent Implementation Readiness
 
-- **Self-contained context**: Can the story be implemented without reading external docs?
+- **Self-contained context**: Can the issue be implemented without reading external docs?
 - **Clear instructions**: Are implementation steps unambiguous?
 - **Complete technical context**: Are all required technical details present in Dev Notes?
 - **Missing information**: Identify any critical information gaps
@@ -95,11 +95,11 @@ Provide a structured validation report including:
 
 #### Template Compliance Issues
 
-- Missing sections from story template
+- Missing sections from issue template
 - Unfilled placeholders or template variables
 - Structural formatting issues
 
-#### Critical Issues (Must Fix - Story Blocked)
+#### Critical Issues (Must Fix - Issue Blocked)
 
 - Missing essential information for implementation
 - Inaccurate or unverifiable technical claims
@@ -128,7 +128,7 @@ Provide a structured validation report including:
 
 #### Final Assessment
 
-- **GO**: Story is ready for implementation
-- **NO-GO**: Story requires fixes before implementation
+- **GO**: Issue is ready for implementation
+- **NO-GO**: Issue requires fixes before implementation
 - **Implementation Readiness Score**: 1-10 scale
 - **Confidence Level**: High/Medium/Low for successful implementation

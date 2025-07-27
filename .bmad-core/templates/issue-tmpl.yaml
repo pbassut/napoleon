@@ -3,6 +3,7 @@ template:
   name: Issue Document
   version: 2.0
   output:
+    tool: gh
     format: Github Issues
     url: https://github.com/pbassut/napoleon/issues
     title: "Issue {{issue_title_short}}"
