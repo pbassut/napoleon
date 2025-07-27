@@ -204,7 +204,10 @@ export function getStatusSymbol(status: string, capabilities?: TerminalCapabilit
 /**
  * Test if terminal supports a specific feature
  */
-export function supportsFeature(feature: keyof TerminalCapabilities, capabilities?: TerminalCapabilities): boolean {
+export function supportsFeature(
+  feature: keyof TerminalCapabilities,
+  capabilities?: TerminalCapabilities,
+): boolean {
   const caps = capabilities || detectCapabilities();
   return caps[feature] as boolean;
 }

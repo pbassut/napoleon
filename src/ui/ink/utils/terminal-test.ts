@@ -6,7 +6,7 @@
  */
 
 import chalk from 'chalk';
-import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities';
+import { detectCapabilities, getBoxChar, getStatusSymbol } from './terminal-capabilities.js';
 
 console.log('Napoleon Terminal Compatibility Test\n');
 
@@ -39,7 +39,7 @@ const horizontal = getBoxChar('horizontal', capabilities);
 const vertical = getBoxChar('vertical', capabilities);
 
 console.log(`${topLeft}${horizontal.repeat(20)}${topRight}`);
-for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 3; i += 1) {
   console.log(`${vertical}${' '.repeat(20)}${vertical}`);
 }
 console.log(`${bottomLeft}${horizontal.repeat(20)}${bottomRight}`);
@@ -50,10 +50,16 @@ console.log('Status Symbol Test:');
 const statuses = ['running', 'pending', 'error', 'success', 'terminated'];
 statuses.forEach((status) => {
   const symbol = getStatusSymbol(status, capabilities);
-  const color = status === 'running' ? 'green'
-    : status === 'pending' ? 'yellow'
-      : status === 'error' ? 'red'
-        : status === 'success' ? 'green' : 'gray';
+  let color: keyof typeof chalk;
+  if (status === 'running' || status === 'success') {
+    color = 'green';
+  } else if (status === 'pending') {
+    color = 'yellow';
+  } else if (status === 'error') {
+    color = 'red';
+  } else {
+    color = 'gray';
+  }
   console.log(`  ${chalk[color](symbol)} ${status}`);
 });
 console.log('');

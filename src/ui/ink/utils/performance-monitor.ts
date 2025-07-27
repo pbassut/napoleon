@@ -183,8 +183,8 @@ export function logPerformanceSummary(): void {
 
   if (Object.keys(stats.componentStats).length > 0) {
     console.log('\n--- Component Stats ---');
-    Object.entries(stats.componentStats).forEach(([name, stats]) => {
-      console.log(`${name}: ${stats.count} renders, avg: ${stats.avg}ms, max: ${stats.max}ms`);
+    Object.entries(stats.componentStats).forEach(([name, componentStats]) => {
+      console.log(`${name}: ${componentStats.count} renders, avg: ${componentStats.avg}ms, max: ${componentStats.max}ms`);
     });
   }
 

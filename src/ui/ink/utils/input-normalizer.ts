@@ -4,10 +4,10 @@
  */
 
 import * as os from 'os';
-import { isWindowsTerminal, isMacTerminal, isITerm2 } from './terminal-capabilities';
+import { isWindowsTerminal, isMacTerminal } from './terminal-capabilities';
 
 interface KeyObject {
-  [key: string]: any;
+  [key: string]: unknown;
   upArrow?: boolean;
   downArrow?: boolean;
   leftArrow?: boolean;
@@ -137,6 +137,9 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
           normalized.escape = true;
           normalized.ctrl = false;
           break;
+        default:
+          // No special handling needed
+          break;
       }
     }
   }
@@ -144,7 +147,7 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
   // Normalize function keys across terminals
   if (normalized.name && normalized.name.startsWith('f')) {
     const fNum = parseInt(normalized.name.substring(1), 10);
-    if (!isNaN(fNum) && fNum >= 1 && fNum <= 12) {
+    if (!Number.isNaN(fNum) && fNum >= 1 && fNum <= 12) {
       normalized[`f${fNum}`] = true;
     }
   }

@@ -5,6 +5,8 @@ import React from 'react';
 if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'true' || process.env.NAPOLEON_DEBUG_RENDERS === 'true') {
   if (typeof window !== 'undefined') {
     // For browser environments (not applicable for Ink, but kept for completeness)
+    // eslint-disable-next-line import/no-extraneous-dependencies, global-require
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const whyDidYouRender = require('@welldone-software/why-did-you-render');
     whyDidYouRender(React, {
       trackAllPureComponents: false,
@@ -52,6 +54,8 @@ if (process.env.NODE_ENV === 'development' || process.env.NAPOLEON_DEBUG === 'tr
   } else {
     // For Node.js/Ink environment
     try {
+      // eslint-disable-next-line import/no-extraneous-dependencies, global-require
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const whyDidYouRender = require('@welldone-software/why-did-you-render');
       whyDidYouRender(React, {
         trackAllPureComponents: false,

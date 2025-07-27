@@ -6,13 +6,13 @@ export interface ParsedLogEntry {
   content: string;
   type: string;
   source: string;
-  metadata: any;
+  metadata: unknown;
   parsedContent: string;
   displayFormat: 'user' | 'assistant' | 'system' | 'error' | 'info';
   isVisible: boolean;
   toolUse?: {
     name: string;
-    input: any;
+    input: unknown;
   };
   toolResult?: {
     content: string;
@@ -54,35 +54,38 @@ export class LogParser {
 
               // Handle text content - filter out null/undefined items
               const textContent = content
-                .filter((item: any) => item && typeof item === 'object' && item.type === 'text')
-                .map((item: any) => item.text)
-                .filter((text: string) => typeof text === 'string')
+                .filter((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'text')
+                .map((item: unknown) => (item as Record<string, unknown>).text)
+                .filter((text: unknown): text is string => typeof text === 'string')
                 .join(' ');
 
               // Handle tool use - filter out null/undefined items
-              const toolUse = content.find((item: any) => item && typeof item === 'object' && item.type === 'tool_use');
+              const toolUse = content.find((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'tool_use') as Record<string, unknown> | undefined;
               if (toolUse) {
                 parsedEntry.toolUse = {
-                  name: toolUse.name,
+                  name: toolUse.name as string,
                   input: toolUse.input,
                 };
 
                 // Special handling for TodoWrite tool
-                if (toolUse.name === 'TodoWrite' && toolUse.input?.todos && Array.isArray(toolUse.input.todos)) {
+                const todoInput = toolUse.input as Record<string, unknown>;
+                if (toolUse.name === 'TodoWrite' && toolUse.input && typeof toolUse.input === 'object' && todoInput.todos && Array.isArray(todoInput.todos)) {
                   // Validate todos array and filter out invalid entries
-                  const validTodos = toolUse.input.todos.filter((todo: any) => todo && typeof todo === 'object' && typeof todo.status === 'string');
+                  const validTodos = (todoInput.todos as unknown[]).filter(
+                    (todo: unknown) => todo && typeof todo === 'object' && typeof (todo as Record<string, unknown>).status === 'string',
+                  );
 
                   const todoCount = validTodos.length;
-                  const completedCount = validTodos.filter((todo: any) => todo.status === 'completed').length;
-                  const inProgressCount = validTodos.filter((todo: any) => todo.status === 'in_progress').length;
+                  const completedCount = validTodos.filter((todo: unknown) => (todo as Record<string, unknown>).status === 'completed').length;
+                  const inProgressCount = validTodos.filter((todo: unknown) => (todo as Record<string, unknown>).status === 'in_progress').length;
 
                   parsedEntry.parsedContent = textContent
                     ? `${textContent}\n[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`
                     : `[TodoWrite: ${todoCount} tasks (${completedCount} completed, ${inProgressCount} in progress)]`;
                 } else {
                   parsedEntry.parsedContent = textContent
-                    ? `${textContent}\n[Tool: ${toolUse.name}]`
-                    : `[Tool: ${toolUse.name}]`;
+                    ? `${textContent}\n[Tool: ${toolUse.name as string}]`
+                    : `[Tool: ${toolUse.name as string}]`;
                 }
               } else {
                 parsedEntry.parsedContent = textContent;
@@ -100,25 +103,25 @@ export class LogParser {
               }
 
               // Handle tool results - filter out null/undefined items
-              const toolResult = content.find((item: any) => item && typeof item === 'object' && item.type === 'tool_result');
+              const toolResult = content.find((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'tool_result') as Record<string, unknown> | undefined;
               if (toolResult) {
                 parsedEntry.toolResult = {
-                  content: toolResult.content,
-                  isError: toolResult.is_error,
+                  content: toolResult.content as string,
+                  isError: toolResult.is_error as boolean,
                 };
-                parsedEntry.parsedContent = `[Tool Result${toolResult.is_error ? ' - Error' : ''}]: ${toolResult.content}`;
+                parsedEntry.parsedContent = `[Tool Result${toolResult.is_error ? ' - Error' : ''}]: ${toolResult.content as string}`;
               } else {
                 // Handle regular user messages - filter out null/undefined items
                 const textContent = content
-                  .filter((item: any) => item && typeof item === 'object' && item.type === 'text')
-                  .map((item: any) => item.text)
-                  .filter((text: string) => typeof text === 'string')
+                  .filter((item: unknown) => item && typeof item === 'object' && (item as Record<string, unknown>).type === 'text')
+                  .map((item: unknown) => (item as Record<string, unknown>).text)
+                  .filter((text: unknown): text is string => typeof text === 'string')
                   .join(' ');
                 parsedEntry.parsedContent = textContent;
               }
             }
           }
-        } catch (parseError) {
+        } catch {
           // Fall back to raw content if JSON parsing fails
           parsedEntry.parsedContent = `[Parse Error] ${rawLog.content}`;
           parsedEntry.displayFormat = 'error';
@@ -139,7 +142,7 @@ export class LogParser {
       }
 
       return parsedEntry;
-    } catch (error) {
+    } catch {
       // Return null for completely malformed entries
       return null;
     }
@@ -176,7 +179,7 @@ export class LogParser {
   static formatTimestamp(timestamp: string): string {
     try {
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) {
+      if (Number.isNaN(date.getTime())) {
         return timestamp;
       }
       return date.toLocaleTimeString('en-US', {
