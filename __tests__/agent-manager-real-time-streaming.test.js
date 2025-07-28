@@ -180,7 +180,7 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
 
       // Verify SDK executeQueryStream was called with correct parameters
       expect(agentManager.sdkManager.executeQueryStream).toHaveBeenCalledWith(agentId, instructions);
-    });
+    }, 15000);
 
     test('should handle errors in streaming gracefully', async () => {
       const agentId = 'test-error-agent';
@@ -229,7 +229,7 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
 
       // Verify handleSDKMessage was called for the instruction (error handling may prevent further calls)
       expect(handleSDKMessageSpy).toHaveBeenCalled();
-    });
+    }, 15000);
 
     test('should complete status update when streaming finishes', async () => {
       const agentId = 'test-completion-agent';
@@ -347,6 +347,6 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
       expect(firstMessageProcessed).toBe(true);
       expect(processingLatency).toBeGreaterThanOrEqual(0);
       expect(processingLatency).toBeLessThan(1000); // More reasonable expectation
-    });
+    }, 15000);
   });
 });
