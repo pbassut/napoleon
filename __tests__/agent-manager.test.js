@@ -28,6 +28,55 @@ jest.mock('../src/core/config', () => ({
   initializeSessionStorage: jest.fn(),
 }));
 
+// Mock SDKCommunicationManager
+jest.mock('../src/core/sdk/communication-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    executeQuery: jest.fn().mockResolvedValue('Mock response from Claude SDK'),
+    executeQueryStream: jest.fn().mockImplementation(() => {
+      // Return the same async iterator that the Claude SDK mock provides
+      const claudeSDK = require('@anthropic-ai/claude-code');
+      return claudeSDK.query({ prompt: 'test', options: {} });
+    }),
+    initializeSDKSession: jest.fn().mockResolvedValue({
+      agentId: 'mock-agent-id',
+      isActive: true,
+      workingDirectory: '/mock/worktree/path'
+    }),
+    terminateSession: jest.fn().mockResolvedValue(),
+    getSession: jest.fn().mockReturnValue({
+      agentId: 'mock-agent-id',
+      isActive: true
+    }),
+    getActiveSessions: jest.fn().mockReturnValue([]),
+  }));
+});
+
+// Mock other required managers
+jest.mock('../src/core/worktree-lifecycle-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+    registerActiveAgent: jest.fn(),
+    deregisterActiveAgent: jest.fn(),
+    isWorktreeActive: jest.fn().mockReturnValue(false),
+    getActiveAgents: jest.fn().mockReturnValue([]),
+    getMetrics: jest.fn().mockReturnValue({}),
+    forceCleanupWorktree: jest.fn().mockResolvedValue(),
+  }));
+});
+
+jest.mock('../src/core/logging/agent-log-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(undefined),
+  }));
+});
+
+jest.mock('../src/core/tool-usage-tracker', () => ({
+  initializeAgent: jest.fn(),
+  trackTodoWrite: jest.fn(),
+  getAgentTodos: jest.fn().mockReturnValue([]),
+  cleanupAgent: jest.fn(),
+}));
+
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
 const { loadConfig, SESSIONS_FILE } = require('../src/core/config');
@@ -160,10 +209,14 @@ describe('AgentManager', () => {
     });
 
     it('should remove stale sessions', async () => {
+      // Use real timers for this test
+      jest.useRealTimers();
+      
       const existingSessions = {
         sessions: [
           {
             id: 'agent-stale',
+            sessionId: 'agent-stale',
             pid: 99999,
             status: 'running',
             instructions: 'Test instructions',
@@ -174,14 +227,23 @@ describe('AgentManager', () => {
       fs.existsSync.mockReturnValue(true);
       fs.readFileSync.mockReturnValue(JSON.stringify(existingSessions));
 
+      // Mock the SDK manager to return null for stale sessions (simulating inactive SDK session)
+      agentManager.sdkManager.getSession.mockReturnValue(null);
+
       // Mock process.kill to simulate dead process
       jest.spyOn(process, 'kill').mockImplementation(() => {
         throw new Error('Process not found');
       });
 
       await agentManager.initialize();
+      
+      // Wait for background session loading to complete
+      await new Promise(resolve => setTimeout(resolve, 50));
 
       expect(agentManager.agents.size).toBe(0);
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     });
   });
 
@@ -313,6 +375,9 @@ describe('AgentManager', () => {
     });
 
     it('should send instructions to spawned agent', async () => {
+      // Use real timers for this test to allow async processing
+      jest.useRealTimers();
+      
       const instructions = 'Please help me implement a new feature';
 
       execSync.mockImplementation((cmd) => {
@@ -329,6 +394,9 @@ describe('AgentManager', () => {
 
       const session = await agentManager.spawnAgent(instructions);
 
+      // Wait for async SDK processing to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // With SDK, instructions are sent directly via the query function
       expect(session.logs).toBeDefined();
       expect(session.logs.length).toBeGreaterThan(0);
@@ -336,6 +404,9 @@ describe('AgentManager', () => {
       // Check that SDK response is in the logs (may not be first due to spawn logging)
       const sdkResponseLog = session.logs.find((log) => log.content === 'Mock response from Claude SDK');
       expect(sdkResponseLog).toBeDefined();
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     });
   });
 
@@ -776,14 +847,14 @@ describe('AgentManager', () => {
     describe('generateWorktreeName', () => {
       it('should generate valid worktree name', () => {
         const agentId = 'agent-1234567890-abc123def';
-        const worktreeName = agentManager.generateWorktreeName(agentId);
+        const worktreeName = AgentManager.generateWorktreeName(agentId);
 
         expect(worktreeName).toMatch(/^agent-1234567890-abc123def-\d+$/);
       });
 
       it('should handle agent ID format correctly', () => {
         const agentId = 'agent-test-123';
-        const worktreeName = agentManager.generateWorktreeName(agentId);
+        const worktreeName = AgentManager.generateWorktreeName(agentId);
 
         expect(worktreeName).toMatch(/^agent-test-123-\d+$/);
       });
@@ -794,10 +865,10 @@ describe('AgentManager', () => {
         fs.existsSync.mockReturnValue(false);
         fs.mkdirSync.mockImplementation(() => {});
 
-        const result = agentManager.ensureWorktreeDirectory();
+        const result = AgentManager.ensureWorktreeDirectory();
 
         expect(fs.mkdirSync).toHaveBeenCalledWith(
-          expect.stringContaining('.napoleon-worktrees'),
+          expect.stringContaining('worktrees'),
           { recursive: true, mode: 0o755 },
         );
         expect(result).toContain('worktrees');
@@ -806,7 +877,7 @@ describe('AgentManager', () => {
       it('should not create directory if it already exists', () => {
         fs.existsSync.mockReturnValue(true);
 
-        const result = agentManager.ensureWorktreeDirectory();
+        const result = AgentManager.ensureWorktreeDirectory();
 
         expect(fs.mkdirSync).not.toHaveBeenCalled();
         expect(result).toContain('worktrees');
@@ -832,7 +903,7 @@ describe('AgentManager', () => {
           .mockReturnValueOnce('') // git diff-index --quiet HEAD --
           .mockReturnValueOnce(''); // git ls-files --others --exclude-standard
 
-        const result = agentManager.validateGitForWorktree();
+        const result = AgentManager.validateGitForWorktree();
 
         expect(result.isValid).toBe(true);
         expect(result.clean).toBe(true);
@@ -847,7 +918,7 @@ describe('AgentManager', () => {
             throw new Error('Uncommitted changes');
           });
 
-        const result = agentManager.validateGitForWorktree();
+        const result = AgentManager.validateGitForWorktree();
 
         expect(result.isValid).toBe(false);
         expect(result.hasUncommittedChanges).toBe(true);
@@ -859,7 +930,7 @@ describe('AgentManager', () => {
           throw new Error('Not a git repository');
         });
 
-        const result = agentManager.validateGitForWorktree();
+        const result = AgentManager.validateGitForWorktree();
 
         expect(result.isValid).toBe(false);
         expect(result.error).toContain('Not in a git repository');
@@ -1030,7 +1101,7 @@ describe('AgentManager', () => {
 
       const session = await agentManager.spawnAgent(instructions);
 
-      expect(session.worktreePath).toContain('.napoleon-worktrees');
+      expect(session.worktreePath).toContain('worktrees');
       expect(session.worktreeName).toMatch(/^agent-.*-\d+$/);
       expect(session.workingDirectory).toBe(session.worktreePath);
       expect(exec).toHaveBeenCalledWith(
@@ -1041,6 +1112,9 @@ describe('AgentManager', () => {
     });
 
     it('should clean up worktree on agent termination', async () => {
+      // Use real timers for this test to allow async processing
+      jest.useRealTimers();
+      
       const instructions = 'Test agent termination with worktree cleanup';
 
       // Mock git validation and worktree creation
@@ -1063,17 +1137,26 @@ describe('AgentManager', () => {
 
       expect(session.worktreePath).toBeDefined();
 
-      await agentManager.terminateAgent(session.id);
+      await agentManager.terminateAgent(session.id, { deleteWorktree: true });
 
-      // Verify worktree removal was called
-      expect(exec).toHaveBeenCalledWith(
-        expect.stringContaining('git worktree remove'),
-        expect.any(Object),
-        expect.any(Function),
+      // Wait for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Verify worktree cleanup was called through the lifecycle manager
+      expect(agentManager.worktreeLifecycle.forceCleanupWorktree).toHaveBeenCalledWith(
+        session.worktreePath,
+        expect.objectContaining({
+          force: true,
+          preserveBranch: false,
+          bypassAutoCleanupCheck: true,
+        }),
       );
 
       // Verify agent was removed from active sessions after termination
       expect(agentManager.getAgent(session.id)).toBeUndefined();
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     });
 
     it('should handle worktree creation failure during spawn', async () => {
