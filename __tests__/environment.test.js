@@ -1,17 +1,19 @@
-const { validateEnvironment } = require('../src/cli/validators/environment');
 const { EnvironmentValidationError } = require('../src/utils/errors');
 
 // Mock dependencies
 const mockExecSync = jest.fn();
 const mockExec = jest.fn();
 
-jest.doMock('child_process', () => ({
+jest.mock('child_process', () => ({
   execSync: mockExecSync,
   exec: mockExec,
 }));
-jest.doMock('../src/core/git-status-checker');
-jest.doMock('../src/core/startup-warning-display');
-jest.doMock('../src/utils/logger');
+jest.mock('../src/core/git-status-checker');
+jest.mock('../src/core/startup-warning-display');
+jest.mock('../src/utils/logger');
+
+// Import after mocks are set up
+const { validateEnvironment } = require('../src/cli/validators/environment');
 
 const GitStatusChecker = require('../src/core/git-status-checker');
 const StartupWarningDisplay = require('../src/core/startup-warning-display');
@@ -122,7 +124,7 @@ describe('Environment Validation', () => {
       });
 
       await expect(validateEnvironment()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateEnvironment()).rejects.toThrow('Git version 2.19.0 is not supported');
+      await expect(validateEnvironment()).rejects.toThrow('Git version 2.19.0 is not supported. Required: >=2.20.0');
 
       // Restore original version
       Object.defineProperty(process, 'version', {
