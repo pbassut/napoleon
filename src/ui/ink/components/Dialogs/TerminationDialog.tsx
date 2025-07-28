@@ -106,7 +106,7 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
   return (
     <ModalOverlay isOpen={isOpen}>
       <Box
-        width={50}
+        width={100}
         height={16}
         borderStyle="single"
         borderColor={error ? 'red' : 'yellow'}
