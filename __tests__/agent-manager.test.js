@@ -1,16 +1,22 @@
-const { spawn, execSync, exec } = require('child_process');
-const fs = require('fs');
 const { EnvironmentValidationError } = require('../src/utils/errors');
 
-jest.mock('child_process');
-jest.mock('fs', () => ({
+const childProcess = {
+  spawn: jest.fn(),
+  execSync: jest.fn(),
+  exec: jest.fn(),
+};
+jest.mock('child_process', () => childProcess);
+
+const { spawn, execSync, exec } = require('child_process');
+const fs = {
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn(),
   statSync: jest.fn(),
   rmSync: jest.fn(),
-}));
+};
+jest.mock('fs', () => fs);
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn().mockReturnValue({
     logLevel: 'info',
