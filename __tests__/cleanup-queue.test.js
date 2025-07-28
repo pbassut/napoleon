@@ -1,21 +1,36 @@
-const fs = require('fs').promises;
-const { exec } = require('child_process');
-const WorktreeCleanupQueue = require('../src/core/cleanup-queue');
-
 const mockAccess = jest.fn();
 const mockRm = jest.fn();
+const mockExecAsync = jest.fn();
 
 jest.mock('fs', () => ({
   promises: {
     access: mockAccess,
-    rm: mockRm
-  }
+    rm: mockRm,
+  },
 }));
 
-const mockExec = jest.fn();
 jest.mock('child_process', () => ({
-  exec: mockExec
+  exec: jest.fn(),
 }));
+
+jest.mock('util', () => ({
+  ...jest.requireActual('util'),
+  promisify: jest.fn(() => mockExecAsync),
+}));
+
+// Mock config to enable autoCleanup
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn(() => ({
+    features: {
+      autoCleanup: true,
+    },
+  })),
+}));
+
+// Mock logger
+jest.mock('../src/utils/logger');
+
+const WorktreeCleanupQueue = require('../src/core/cleanup-queue');
 
 describe('WorktreeCleanupQueue', () => {
   let cleanupQueue;
@@ -26,7 +41,7 @@ describe('WorktreeCleanupQueue', () => {
     cleanupQueue = new WorktreeCleanupQueue({
       maxConcurrent: 1,
       retryAttempts: 2,
-      retryDelayMs: 100
+      retryDelayMs: 100,
     });
   });
 
@@ -41,7 +56,7 @@ describe('WorktreeCleanupQueue', () => {
   describe('constructor', () => {
     it('should initialize with default options', () => {
       const defaultQueue = new WorktreeCleanupQueue();
-      
+
       expect(defaultQueue.maxConcurrent).toBe(2);
       expect(defaultQueue.retryAttempts).toBe(3);
       expect(defaultQueue.queue).toEqual([]);
@@ -63,7 +78,7 @@ describe('WorktreeCleanupQueue', () => {
 
       expect(cleanupId).toMatch(/^cleanup-\d+-[a-z0-9]+$/);
       expect(cleanupQueue.queue).toHaveLength(1);
-      
+
       const queueItem = cleanupQueue.queue[0];
       expect(queueItem.worktreePath).toBe(worktreePath);
       expect(queueItem.agentId).toBe('test-agent');
@@ -85,7 +100,7 @@ describe('WorktreeCleanupQueue', () => {
     it('should start processing automatically', async () => {
       // Verify the queue starts with not processing
       expect(cleanupQueue.processing).toBe(false);
-      
+
       await cleanupQueue.enqueue('/test/worktree');
 
       // Verify item was enqueued
@@ -102,21 +117,21 @@ describe('WorktreeCleanupQueue', () => {
       const orphanOptions = { orphaned: true };
       const explicitOptions = { explicit: true };
 
-      expect(cleanupQueue.calculatePriority(oldOptions)).toBe(7);
-      expect(cleanupQueue.calculatePriority(largeOptions)).toBe(5);
-      expect(cleanupQueue.calculatePriority(forceOptions)).toBe(20);
-      expect(cleanupQueue.calculatePriority(orphanOptions)).toBe(15);
-      expect(cleanupQueue.calculatePriority(explicitOptions)).toBe(50);
+      expect(WorktreeCleanupQueue.calculatePriority(oldOptions)).toBe(7);
+      expect(WorktreeCleanupQueue.calculatePriority(largeOptions)).toBe(5);
+      expect(WorktreeCleanupQueue.calculatePriority(forceOptions)).toBe(20);
+      expect(WorktreeCleanupQueue.calculatePriority(orphanOptions)).toBe(15);
+      expect(WorktreeCleanupQueue.calculatePriority(explicitOptions)).toBe(50);
     });
 
     it('should combine multiple priority factors', () => {
       const combinedOptions = {
         force: true,
         orphaned: true,
-        age: 2 * 24 * 60 * 60 * 1000 // 2 days
+        age: 2 * 24 * 60 * 60 * 1000, // 2 days
       };
 
-      const priority = cleanupQueue.calculatePriority(combinedOptions);
+      const priority = WorktreeCleanupQueue.calculatePriority(combinedOptions);
       expect(priority).toBe(20 + 15 + 2); // force + orphaned + age
     });
   });
@@ -126,27 +141,27 @@ describe('WorktreeCleanupQueue', () => {
       const queueItem = {
         id: 'test-cleanup',
         worktreePath: '/test/worktree',
-        force: false
+        force: false,
       };
 
       mockAccess
         .mockResolvedValueOnce() // Initial check - exists
         .mockRejectedValueOnce(new Error('ENOENT')); // Final verification - doesn't exist
-      
-      mockExec.mockImplementation((cmd, options, callback) => {
+
+      mockExecAsync.mockImplementation((cmd, options) => {
         if (cmd.includes('git status --porcelain')) {
-          callback(null, { stdout: '', stderr: '' });
-        } else if (cmd.includes('git worktree remove')) {
-          callback(null, { stdout: 'worktree removed', stderr: '' });
+          return Promise.resolve({ stdout: '', stderr: '' });
+        } if (cmd.includes('git worktree remove')) {
+          return Promise.resolve({ stdout: 'worktree removed', stderr: '' });
         }
+        return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      await cleanupQueue.cleanupWorktree(queueItem);
+      await WorktreeCleanupQueue.cleanupWorktree(queueItem);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockExecAsync).toHaveBeenCalledWith(
         'git worktree remove "/test/worktree"',
         expect.any(Object),
-        expect.any(Function)
       );
     });
 
@@ -154,23 +169,23 @@ describe('WorktreeCleanupQueue', () => {
       const queueItem = {
         id: 'test-cleanup',
         worktreePath: '/test/worktree',
-        force: true
+        force: true,
       };
 
       // Mock fs.access to first succeed (exists), then fail (cleaned up)
       mockAccess.mockResolvedValueOnce().mockRejectedValue(new Error('ENOENT'));
-      mockExec.mockImplementation((cmd, options, callback) => {
+      mockExecAsync.mockImplementation((cmd, options) => {
         if (cmd.includes('git worktree remove')) {
-          callback(null, { stdout: 'worktree removed', stderr: '' });
+          return Promise.resolve({ stdout: 'worktree removed', stderr: '' });
         }
+        return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      await cleanupQueue.cleanupWorktree(queueItem);
+      await WorktreeCleanupQueue.cleanupWorktree(queueItem);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockExecAsync).toHaveBeenCalledWith(
         'git worktree remove "/test/worktree" --force',
         expect.any(Object),
-        expect.any(Function)
       );
     });
 
@@ -178,25 +193,26 @@ describe('WorktreeCleanupQueue', () => {
       const queueItem = {
         id: 'test-cleanup',
         worktreePath: '/test/worktree',
-        force: false
+        force: false,
       };
 
       // Mock fs.access to first return true (exists), then false (cleaned up)
       mockAccess.mockResolvedValueOnce().mockRejectedValue(new Error('ENOENT'));
       mockRm.mockResolvedValue();
-      mockExec.mockImplementation((cmd, options, callback) => {
+      mockExecAsync.mockImplementation((cmd, options) => {
         if (cmd.includes('git status --porcelain')) {
-          callback(null, { stdout: '', stderr: '' });
-        } else if (cmd.includes('git worktree remove')) {
-          callback(new Error('Git worktree remove failed'));
+          return Promise.resolve({ stdout: '', stderr: '' });
+        } if (cmd.includes('git worktree remove')) {
+          return Promise.reject(new Error('Git worktree remove failed'));
         }
+        return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      await cleanupQueue.cleanupWorktree(queueItem);
+      await WorktreeCleanupQueue.cleanupWorktree(queueItem);
 
-      expect(mockRm).toHaveBeenCalledWith('/test/worktree', { 
-        recursive: true, 
-        force: true 
+      expect(mockRm).toHaveBeenCalledWith('/test/worktree', {
+        recursive: true,
+        force: true,
       });
     });
 
@@ -204,33 +220,34 @@ describe('WorktreeCleanupQueue', () => {
       const queueItem = {
         id: 'test-cleanup',
         worktreePath: '/nonexistent/worktree',
-        force: false
+        force: false,
       };
 
       mockAccess.mockRejectedValue(new Error('ENOENT'));
 
-      await cleanupQueue.cleanupWorktree(queueItem);
+      await WorktreeCleanupQueue.cleanupWorktree(queueItem);
 
-      expect(exec).not.toHaveBeenCalled();
-      expect(fs.rm).not.toHaveBeenCalled();
+      expect(mockExecAsync).not.toHaveBeenCalled();
+      expect(mockRm).not.toHaveBeenCalled();
     });
 
     it('should reject cleanup of worktree with uncommitted changes unless forced', async () => {
       const queueItem = {
         id: 'test-cleanup',
         worktreePath: '/test/worktree',
-        force: false
+        force: false,
       };
 
       mockAccess.mockResolvedValue();
-      mockExec.mockImplementation((cmd, options, callback) => {
+      mockExecAsync.mockImplementation((cmd, options) => {
         if (cmd.includes('git status --porcelain')) {
-          callback(null, { stdout: 'M modified-file.txt\n', stderr: '' });
+          return Promise.resolve({ stdout: 'M modified-file.txt\n', stderr: '' });
         }
+        return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      await expect(cleanupQueue.cleanupWorktree(queueItem)).rejects.toThrow(
-        'Worktree has uncommitted changes'
+      await expect(WorktreeCleanupQueue.cleanupWorktree(queueItem)).rejects.toThrow(
+        'Worktree has uncommitted changes',
       );
     });
 
@@ -239,56 +256,54 @@ describe('WorktreeCleanupQueue', () => {
         id: 'test-cleanup',
         worktreePath: '/test/worktree',
         preserveBranch: true,
-        force: false
+        force: false,
       };
 
-      // Mock fs.access to first succeed (exists), then fail (cleaned up)  
+      // Mock fs.access to first succeed (exists), then fail (cleaned up)
       mockAccess.mockResolvedValueOnce().mockRejectedValue(new Error('ENOENT'));
       let gitStatusCallCount = 0;
-      mockExec.mockImplementation((cmd, options, callback) => {
+      mockExecAsync.mockImplementation((cmd, options) => {
         if (cmd.includes('git status --porcelain')) {
           gitStatusCallCount++;
           if (gitStatusCallCount === 1) {
             // First call: check for uncommitted changes - return none to pass initial check
-            callback(null, { stdout: '', stderr: '' });
-          } else {
-            // Subsequent calls: return changes for preserve logic
-            callback(null, { stdout: 'M file.txt\n', stderr: '' });
+            return Promise.resolve({ stdout: '', stderr: '' });
           }
-        } else if (cmd.includes('git add .')) {
-          callback(null, { stdout: '', stderr: '' });
-        } else if (cmd.includes('git commit')) {
-          callback(null, { stdout: 'commit created', stderr: '' });
-        } else if (cmd.includes('git worktree remove')) {
-          callback(null, { stdout: 'worktree removed', stderr: '' });
+          // Subsequent calls: return changes for preserve logic
+          return Promise.resolve({ stdout: 'M file.txt\n', stderr: '' });
+        } if (cmd.includes('git add .')) {
+          return Promise.resolve({ stdout: '', stderr: '' });
+        } if (cmd.includes('git commit')) {
+          return Promise.resolve({ stdout: 'commit created', stderr: '' });
+        } if (cmd.includes('git worktree remove')) {
+          return Promise.resolve({ stdout: 'worktree removed', stderr: '' });
         }
+        return Promise.resolve({ stdout: '', stderr: '' });
       });
 
-      await cleanupQueue.cleanupWorktree(queueItem);
+      await WorktreeCleanupQueue.cleanupWorktree(queueItem);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('git add .'),
         expect.objectContaining({ cwd: '/test/worktree' }),
-        expect.any(Function)
       );
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(mockExecAsync).toHaveBeenCalledWith(
         expect.stringContaining('git commit'),
         expect.objectContaining({ cwd: '/test/worktree' }),
-        expect.any(Function)
       );
     });
   });
 
   describe('processQueue', () => {
     it.skip('should process queue items sequentially', async () => {
-      const cleanupSpy = jest.spyOn(cleanupQueue, 'cleanupWorktree').mockResolvedValue();
+      const cleanupSpy = jest.spyOn(WorktreeCleanupQueue, 'cleanupWorktree').mockResolvedValue();
 
       await cleanupQueue.enqueue('/test/worktree1');
       await cleanupQueue.enqueue('/test/worktree2');
 
       // Wait for processing to complete
       jest.runAllTimers();
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       expect(cleanupSpy).toHaveBeenCalledTimes(2);
       expect(cleanupQueue.queue).toHaveLength(0);
@@ -298,7 +313,7 @@ describe('WorktreeCleanupQueue', () => {
 
     it.skip('should retry failed cleanup attempts', async () => {
       let attemptCount = 0;
-      const cleanupSpy = jest.spyOn(cleanupQueue, 'cleanupWorktree').mockImplementation(() => {
+      const cleanupSpy = jest.spyOn(WorktreeCleanupQueue, 'cleanupWorktree').mockImplementation(() => {
         attemptCount++;
         if (attemptCount < 2) {
           throw new Error('Cleanup failed');
@@ -309,10 +324,10 @@ describe('WorktreeCleanupQueue', () => {
       await cleanupQueue.enqueue('/test/worktree');
 
       // Process initial attempt
-      await new Promise(resolve => setImmediate(resolve));
-      
+      await new Promise((resolve) => setImmediate(resolve));
+
       // Advance timers for retry
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
       jest.advanceTimersByTime(1000);
 
       expect(cleanupSpy).toHaveBeenCalledTimes(2);
@@ -320,18 +335,18 @@ describe('WorktreeCleanupQueue', () => {
     });
 
     it.skip('should mark items as permanently failed after max retries', async () => {
-      const cleanupSpy = jest.spyOn(cleanupQueue, 'cleanupWorktree').mockRejectedValue(
-        new Error('Persistent cleanup failure')
+      const cleanupSpy = jest.spyOn(WorktreeCleanupQueue, 'cleanupWorktree').mockRejectedValue(
+        new Error('Persistent cleanup failure'),
       );
 
       await cleanupQueue.enqueue('/test/worktree');
 
       // Process all attempts
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
       jest.advanceTimersByTime(1000);
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
       jest.advanceTimersByTime(2000);
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       expect(cleanupSpy).toHaveBeenCalledTimes(2); // Initial + 1 retry
       expect(cleanupQueue.metrics.totalFailed).toBe(1);
@@ -346,10 +361,10 @@ describe('WorktreeCleanupQueue', () => {
       await cleanupQueue.enqueue('/test/worktree');
 
       expect(progressCallback).toHaveBeenCalled();
-      
+
       const lastCall = progressCallback.mock.calls[progressCallback.mock.calls.length - 1];
       const progress = lastCall[0];
-      
+
       expect(progress).toHaveProperty('queueLength');
       expect(progress).toHaveProperty('metrics');
       expect(progress).toHaveProperty('processing');
@@ -361,7 +376,7 @@ describe('WorktreeCleanupQueue', () => {
       const badCallback = jest.fn().mockImplementation(() => {
         throw new Error('Callback error');
       });
-      
+
       cleanupQueue.onProgress(badCallback);
 
       // Should not throw
@@ -381,9 +396,9 @@ describe('WorktreeCleanupQueue', () => {
           totalEnqueued: 0,
           totalProcessed: 0,
           totalSuccessful: 0,
-          totalFailed: 0
+          totalFailed: 0,
         }),
-        queue: []
+        queue: [],
       });
     });
 
@@ -396,7 +411,7 @@ describe('WorktreeCleanupQueue', () => {
       expect(status.queue[0]).toMatchObject({
         worktreePath: '/test/worktree',
         status: 'queued',
-        attempts: 0
+        attempts: 0,
       });
     });
   });
@@ -414,7 +429,7 @@ describe('WorktreeCleanupQueue', () => {
 
     it('should force cleanup with high priority', async () => {
       await cleanupQueue.enqueue('/test/low-priority', { priority: 1 });
-      
+
       const forceId = await cleanupQueue.forceCleanup('/test/force-cleanup');
 
       expect(cleanupQueue.queue[0].worktreePath).toBe('/test/force-cleanup');
@@ -440,14 +455,14 @@ describe('WorktreeCleanupQueue', () => {
 
     it.skip('should wait for current processing to complete', async () => {
       // Mock a long-running cleanup
-      jest.spyOn(cleanupQueue, 'cleanupWorktree').mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
+      jest.spyOn(WorktreeCleanupQueue, 'cleanupWorktree').mockImplementation(
+        () => new Promise((resolve) => setTimeout(resolve, 1000)),
       );
 
       await cleanupQueue.enqueue('/test/worktree');
-      
+
       // Start processing
-      await new Promise(resolve => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
 
       const shutdownPromise = cleanupQueue.shutdown();
 
