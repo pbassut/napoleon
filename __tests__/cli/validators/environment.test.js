@@ -31,7 +31,12 @@ describe('Environment Validator', () => {
     
     // Mock promisify to return our mock function
     mockExecAsync = jest.fn();
-    promisify.mockReturnValue(mockExecAsync);
+    promisify.mockImplementation((fn) => {
+      if (fn === exec) {
+        return mockExecAsync;
+      }
+      return jest.fn();
+    });
     
     // Suppress console output in tests
     console.warn = jest.fn();
@@ -54,12 +59,12 @@ describe('Environment Validator', () => {
 
   describe('validateEnvironment', () => {
     it('should pass validation with valid Node.js and git versions', async () => {
-      // Mock git version check - need to include full command with options
+      // Mock git and claude version checks
       mockExecAsync.mockImplementation((command, options) => {
-        if (command.startsWith('git --version')) {
+        if (command === 'git --version') {
           return Promise.resolve({ stdout: 'git version 2.30.0' });
         }
-        if (command.startsWith('claude --version')) {
+        if (command === 'claude --version') {
           return Promise.resolve({ stdout: 'claude 1.0.0' });
         }
         return Promise.reject(new Error(`Unknown command: ${command}`));
@@ -80,10 +85,10 @@ describe('Environment Validator', () => {
 
     it('should reject old git versions', async () => {
       mockExecAsync.mockImplementation((command, options) => {
-        if (command.startsWith('git --version')) {
+        if (command === 'git --version') {
           return Promise.resolve({ stdout: 'git version 2.10.0' });
         }
-        if (command.startsWith('claude --version')) {
+        if (command === 'claude --version') {
           return Promise.resolve({ stdout: 'claude 1.0.0' });
         }
         return Promise.reject(new Error(`Unknown command: ${command}`));
