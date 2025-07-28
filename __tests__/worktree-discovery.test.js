@@ -1,20 +1,27 @@
+// Mock fs.promises
+const mockAccess = jest.fn();
+const mockReaddir = jest.fn();
+const mockStat = jest.fn();
+
+jest.mock('fs', () => ({
+  promises: {
+    access: mockAccess,
+    readdir: mockReaddir,
+    stat: mockStat,
+  },
+}));
+
+// Mock child_process
+const mockExec = jest.fn();
+jest.mock('child_process', () => ({
+  exec: mockExec,
+}));
+
 const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const WorktreeDiscovery = require('../src/core/worktree-discovery');
-
-jest.mock('fs', () => ({
-  promises: {
-    access: jest.fn(),
-    readdir: jest.fn(),
-    stat: jest.fn(),
-  }
-}));
-
-jest.mock('child_process');
-
-const execAsync = promisify(exec);
 
 describe('WorktreeDiscovery', () => {
   let discovery;
@@ -29,7 +36,7 @@ describe('WorktreeDiscovery', () => {
   describe('constructor', () => {
     it('should initialize with default worktrees directory', () => {
       const defaultDiscovery = new WorktreeDiscovery();
-      expect(defaultDiscovery.worktreesDir).toBe(path.join(process.cwd(), '.napoleon-worktrees'));
+      expect(defaultDiscovery.worktreesDir).toBe(path.join(require('os').homedir(), '.napoleon', 'worktrees'));
     });
 
     it('should use provided worktrees directory', () => {
@@ -39,12 +46,12 @@ describe('WorktreeDiscovery', () => {
 
   describe('scanFilesystemWorktrees', () => {
     it('should return empty array when worktrees directory does not exist', async () => {
-      fs.access.mockRejectedValue(new Error('ENOENT'));
+      mockAccess.mockRejectedValue(new Error('ENOENT'));
 
       const result = await discovery.scanFilesystemWorktrees();
 
       expect(result).toEqual([]);
-      expect(fs.access).toHaveBeenCalledWith(mockWorktreesDir);
+      expect(mockAccess).toHaveBeenCalledWith(mockWorktreesDir);
     });
 
     it('should scan and parse valid worktree directories', async () => {
@@ -52,17 +59,17 @@ describe('WorktreeDiscovery', () => {
         { name: 'agent-test123-1234567890', isDirectory: () => true },
         { name: 'agent-test456-1234567891', isDirectory: () => true },
         { name: 'not-agent-dir', isDirectory: () => true },
-        { name: 'some-file.txt', isDirectory: () => false }
+        { name: 'some-file.txt', isDirectory: () => false },
       ];
 
       const mockStats = {
         birthtime: new Date('2025-01-01T10:00:00Z'),
-        mtime: new Date('2025-01-01T11:00:00Z')
+        mtime: new Date('2025-01-01T11:00:00Z'),
       };
 
-      fs.access.mockResolvedValue();
-      fs.readdir.mockResolvedValue(mockEntries);
-      fs.stat.mockResolvedValue(mockStats);
+      mockAccess.mockResolvedValue();
+      mockReaddir.mockResolvedValue(mockEntries);
+      mockStat.mockResolvedValue(mockStats);
 
       // Mock directory size calculation
       discovery.getDirectorySize = jest.fn().mockResolvedValue(1024 * 1024); // 1MB
@@ -78,13 +85,13 @@ describe('WorktreeDiscovery', () => {
         spawnTime: new Date(1234567890).toISOString(),
         createdAt: mockStats.birthtime,
         lastModified: mockStats.mtime,
-        size: 1024 * 1024
+        size: 1024 * 1024,
       });
     });
 
     it('should handle filesystem errors gracefully', async () => {
-      fs.access.mockResolvedValue();
-      fs.readdir.mockRejectedValue(new Error('Permission denied'));
+      mockAccess.mockResolvedValue();
+      mockReaddir.mockRejectedValue(new Error('Permission denied'));
 
       const result = await discovery.scanFilesystemWorktrees();
 
@@ -96,7 +103,7 @@ describe('WorktreeDiscovery', () => {
     it('should parse valid worktree directory names', () => {
       const result = discovery.parseWorktreeInfo(
         'agent-test123-1234567890',
-        '/path/to/agent-test123-1234567890'
+        '/path/to/agent-test123-1234567890',
       );
 
       expect(result).toEqual({
@@ -104,7 +111,7 @@ describe('WorktreeDiscovery', () => {
         path: '/path/to/agent-test123-1234567890',
         agentId: 'agent-test123',
         timestamp: 1234567890,
-        spawnTime: new Date(1234567890).toISOString()
+        spawnTime: new Date(1234567890).toISOString(),
       });
     });
 
@@ -116,7 +123,7 @@ describe('WorktreeDiscovery', () => {
     it('should handle complex agent IDs', () => {
       const result = discovery.parseWorktreeInfo(
         'agent-complex-agent-id-with-dashes-1234567890',
-        '/path/to/worktree'
+        '/path/to/worktree',
       );
 
       expect(result).toEqual({
@@ -124,7 +131,7 @@ describe('WorktreeDiscovery', () => {
         path: '/path/to/worktree',
         agentId: 'agent-complex-agent-id-with-dashes',
         timestamp: 1234567890,
-        spawnTime: new Date(1234567890).toISOString()
+        spawnTime: new Date(1234567890).toISOString(),
       });
     });
   });
@@ -143,7 +150,7 @@ worktree /path/to/.napoleon-worktrees/agent-test456-1234567891
 HEAD ijkl9012
 detached`;
 
-      exec.mockImplementation((cmd, options, callback) => {
+      mockExec.mockImplementation((cmd, options, callback) => {
         callback(null, { stdout: mockGitOutput, stderr: '' });
       });
 
@@ -153,22 +160,22 @@ detached`;
       expect(result[0]).toEqual({
         path: '/main/repo',
         head: 'abcd1234',
-        branch: 'refs/heads/main'
+        branch: 'refs/heads/main',
       });
       expect(result[1]).toEqual({
         path: '/path/to/.napoleon-worktrees/agent-test123-1234567890',
         head: 'efgh5678',
-        branch: 'refs/heads/agent-test123-branch'
+        branch: 'refs/heads/agent-test123-branch',
       });
       expect(result[2]).toEqual({
         path: '/path/to/.napoleon-worktrees/agent-test456-1234567891',
         head: 'ijkl9012',
-        detached: true
+        detached: true,
       });
     });
 
     it('should handle git command failures gracefully', async () => {
-      exec.mockImplementation((cmd, options, callback) => {
+      mockExec.mockImplementation((cmd, options, callback) => {
         callback(new Error('Git command failed'), null, 'fatal: not a git repository');
       });
 
@@ -179,18 +186,18 @@ detached`;
 
     it('should use cached results when cache is valid', async () => {
       const mockGitOutput = 'worktree /test\nHEAD abc123';
-      
-      exec.mockImplementation((cmd, options, callback) => {
+
+      mockExec.mockImplementation((cmd, options, callback) => {
         callback(null, { stdout: mockGitOutput, stderr: '' });
       });
 
       // First call
       const result1 = await discovery.getGitWorktreeList();
-      
+
       // Second call should use cache
       const result2 = await discovery.getGitWorktreeList();
 
-      expect(exec).toHaveBeenCalledTimes(1);
+      expect(mockExec).toHaveBeenCalledTimes(1);
       expect(result1).toEqual(result2);
     });
   });
@@ -205,16 +212,16 @@ detached`;
               agentId: 'agent-test123',
               workingDirectory: '/path/to/.napoleon-worktrees/agent-test123',
               isActive: true,
-              lastActivity: new Date().toISOString()
+              lastActivity: new Date().toISOString(),
             },
             {
               agentId: 'agent-test456',
               workingDirectory: '/path/to/.napoleon-worktrees/agent-test456',
               isActive: true,
-              lastActivity: new Date().toISOString()
-            }
-          ]
-        }
+              lastActivity: new Date().toISOString(),
+            },
+          ],
+        },
       };
 
       discovery.agentManager = mockAgentManager;
@@ -226,13 +233,13 @@ detached`;
         sessionId: 'agent-test123',
         workingDirectory: '/path/to/.napoleon-worktrees/agent-test123',
         isActive: true,
-        lastActivity: expect.any(String)
+        lastActivity: expect.any(String),
       });
       expect(result[1]).toEqual({
         sessionId: 'agent-test456',
         workingDirectory: '/path/to/.napoleon-worktrees/agent-test456',
         isActive: true,
-        lastActivity: expect.any(String)
+        lastActivity: expect.any(String),
       });
     });
 
@@ -250,13 +257,13 @@ detached`;
     const mockWorktree = {
       name: 'agent-test123-1234567890',
       path: '/path/to/.napoleon-worktrees/agent-test123-1234567890',
-      agentId: 'agent-test123'
+      agentId: 'agent-test123',
     };
 
     it('should identify active SDK session by agent ID', () => {
       const activeSessions = [
         { sessionId: 'agent-test123', workingDirectory: '/some/other/path', isActive: true },
-        { sessionId: 'agent-other', workingDirectory: '/other/path', isActive: true }
+        { sessionId: 'agent-other', workingDirectory: '/other/path', isActive: true },
       ];
 
       const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
@@ -267,7 +274,7 @@ detached`;
     it('should identify active SDK session by worktree path', () => {
       const activeSessions = [
         { sessionId: 'agent-other', workingDirectory: '/path/to/.napoleon-worktrees/agent-test123-1234567890', isActive: true },
-        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true }
+        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true },
       ];
 
       const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
@@ -278,7 +285,7 @@ detached`;
     it('should identify active SDK session by working directory contains worktree path', () => {
       const activeSessions = [
         { sessionId: 'agent-other', workingDirectory: '/path/to/.napoleon-worktrees/agent-test123-1234567890/subdirectory', isActive: true },
-        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true }
+        { sessionId: 'agent-different', workingDirectory: '/other/path', isActive: true },
       ];
 
       const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
@@ -289,7 +296,7 @@ detached`;
     it('should return false when no matching SDK sessions found', () => {
       const activeSessions = [
         { sessionId: 'agent-unrelated', workingDirectory: '/unrelated/path', isActive: true },
-        { sessionId: 'agent-different', workingDirectory: '/another/path', isActive: true }
+        { sessionId: 'agent-different', workingDirectory: '/another/path', isActive: true },
       ];
 
       const result = discovery.isWorktreeProcessActive(mockWorktree, activeSessions);
@@ -301,10 +308,10 @@ detached`;
   describe('validateWorktreeState', () => {
     it('should validate consistent worktree state', async () => {
       const mockGitWorktrees = [
-        { path: '/path/to/.napoleon-worktrees/agent-test123-1234567890' }
+        { path: '/path/to/.napoleon-worktrees/agent-test123-1234567890' },
       ];
       const mockFilesystemWorktrees = [
-        { path: '/path/to/.napoleon-worktrees/agent-test123-1234567890' }
+        { path: '/path/to/.napoleon-worktrees/agent-test123-1234567890' },
       ];
 
       discovery.getGitWorktreeList = jest.fn().mockResolvedValue(mockGitWorktrees);
@@ -316,17 +323,17 @@ detached`;
       expect(result).toEqual({
         valid: true,
         inconsistencies: 0,
-        repaired: false
+        repaired: false,
       });
       expect(discovery.pruneInvalidWorktrees).not.toHaveBeenCalled();
     });
 
     it('should detect and repair inconsistencies', async () => {
       const mockGitWorktrees = [
-        { path: '/path/to/.napoleon-worktrees/agent-missing-1234567890' }
+        { path: '/path/to/.napoleon-worktrees/agent-missing-1234567890' },
       ];
       const mockFilesystemWorktrees = [
-        { path: '/path/to/.napoleon-worktrees/agent-orphan-1234567891' }
+        { path: '/path/to/.napoleon-worktrees/agent-orphan-1234567891' },
       ];
 
       discovery.getGitWorktreeList = jest.fn().mockResolvedValue(mockGitWorktrees);
@@ -338,7 +345,7 @@ detached`;
       expect(result).toEqual({
         valid: false,
         inconsistencies: 2,
-        repaired: true
+        repaired: true,
       });
       expect(discovery.pruneInvalidWorktrees).toHaveBeenCalled();
     });
@@ -350,7 +357,7 @@ detached`;
 
       expect(result).toEqual({
         valid: false,
-        error: 'Git error'
+        error: 'Git error',
       });
     });
   });
@@ -359,14 +366,14 @@ detached`;
     it('should categorize worktrees correctly', async () => {
       const mockFilesystemWorktrees = [
         { path: '/worktrees/agent-active-123', agentId: 'agent-active' },
-        { path: '/worktrees/agent-orphan-456', agentId: 'agent-orphan' }
+        { path: '/worktrees/agent-orphan-456', agentId: 'agent-orphan' },
       ];
       const mockGitWorktrees = [
         { path: '/worktrees/agent-active-123' },
-        { path: '/worktrees/agent-orphan-456' }
+        { path: '/worktrees/agent-orphan-456' },
       ];
       const mockProcesses = [
-        { pid: 123, command: 'claude agent-active' }
+        { pid: 123, command: 'claude agent-active' },
       ];
 
       discovery.scanFilesystemWorktrees = jest.fn().mockResolvedValue(mockFilesystemWorktrees);
@@ -375,9 +382,7 @@ detached`;
 
       // Mock the process matching logic to return false for orphan
       const originalIsWorktreeProcessActive = discovery.isWorktreeProcessActive;
-      discovery.isWorktreeProcessActive = jest.fn().mockImplementation((worktree, processes) => {
-        return worktree.agentId === 'agent-active';
-      });
+      discovery.isWorktreeProcessActive = jest.fn().mockImplementation((worktree, processes) => worktree.agentId === 'agent-active');
 
       const result = await discovery.discoverWorktrees();
 
