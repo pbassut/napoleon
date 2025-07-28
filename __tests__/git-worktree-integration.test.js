@@ -1,7 +1,4 @@
-const { spawn, execSync, exec } = require('child_process');
-const fs = require('fs');
 const path = require('path');
-const AgentManager = require('../src/core/agent-manager');
 
 jest.mock('child_process');
 jest.mock('fs', () => ({
@@ -45,11 +42,18 @@ jest.mock('../src/core/worktree-lifecycle-manager', () => {
 // Mock SDKCommunicationManager
 jest.mock('../src/core/sdk/communication-manager', () => {
   return jest.fn().mockImplementation(() => ({
-    executeQuery: jest.fn(),
-    initializeSDKSession: jest.fn(),
-    terminateSession: jest.fn(),
-    getSession: jest.fn(),
-    getActiveSessions: jest.fn(),
+    executeQuery: jest.fn().mockResolvedValue('Mock response'),
+    initializeSDKSession: jest.fn().mockResolvedValue({
+      agentId: 'mock-agent-id',
+      isActive: true,
+      workingDirectory: '/mock/worktree/path'
+    }),
+    terminateSession: jest.fn().mockResolvedValue(),
+    getSession: jest.fn().mockReturnValue({
+      agentId: 'mock-agent-id',
+      isActive: true
+    }),
+    getActiveSessions: jest.fn().mockReturnValue([]),
   }));
 });
 
@@ -68,6 +72,23 @@ jest.mock('../src/core/tool-usage-tracker', () => ({
   cleanupAgent: jest.fn(),
 }));
 
+// Mock worktree lifecycle manager
+jest.mock('../src/core/worktree-lifecycle-manager', () => {
+  return jest.fn().mockImplementation(() => ({
+    initialize: jest.fn().mockResolvedValue(),
+    registerActiveAgent: jest.fn(),
+    deregisterActiveAgent: jest.fn(),
+    isWorktreeActive: jest.fn().mockReturnValue(false),
+    getActiveAgents: jest.fn().mockReturnValue([]),
+    getMetrics: jest.fn().mockReturnValue({}),
+  }));
+});
+
+// Import modules after mocks are set up
+const { spawn, execSync, exec } = require('child_process');
+const fs = require('fs');
+const AgentManager = require('../src/core/agent-manager');
+
 describe('Git Worktree Integration Tests', () => {
   let agentManager;
   let mockProcess;
@@ -78,11 +99,20 @@ describe('Git Worktree Integration Tests', () => {
     timers = [];
 
     // Mock file system
-    fs.existsSync.mockReturnValue(false);
+    fs.existsSync.mockImplementation((path) => {
+      // Return true for worktree paths to simulate successful creation
+      if (path.includes('.napoleon/worktrees/agent-')) {
+        return true;
+      }
+      return false;
+    });
     fs.readFileSync.mockReturnValue('{"sessions": []}');
     fs.writeFileSync.mockImplementation(() => {});
     fs.mkdirSync.mockImplementation(() => {});
     fs.rmSync.mockImplementation(() => {});
+    fs.statSync.mockReturnValue({
+      isDirectory: () => true
+    });
 
     // Mock process
     mockProcess = {
@@ -114,8 +144,13 @@ describe('Git Worktree Integration Tests', () => {
       } else if (cmd.includes('git worktree remove')) {
         const timer = setTimeout(() => callback(null, '', ''), 10);
         timers.push(timer);
+      } else if (cmd.includes('npm install') || cmd.includes('npm ci')) {
+        const timer = setTimeout(() => callback(null, 'Dependencies installed', ''), 10);
+        timers.push(timer);
       } else {
-        callback(new Error('Unknown command'));
+        // Mock all other commands to succeed
+        const timer = setTimeout(() => callback(null, 'Command executed', ''), 10);
+        timers.push(timer);
       }
     });
 
@@ -146,7 +181,7 @@ describe('Git Worktree Integration Tests', () => {
     expect(session.worktreePath).toBeDefined();
     expect(session.worktreeName).toBeDefined();
     expect(session.workingDirectory).toBe(session.worktreePath);
-    expect(session.worktreePath).toContain('.napoleon-worktrees');
+    expect(session.worktreePath).toContain('.napoleon');
     expect(session.worktreeName).toMatch(/^agent-.*-\d+$/);
 
     // Verify git worktree add was called
