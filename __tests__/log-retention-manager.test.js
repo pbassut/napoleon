@@ -75,9 +75,9 @@ describe('LogRetentionManager', () => {
     });
   });
 
-  describe('getDefaultConfig', () => {
+describe('getDefaultConfig', () => {
     it('should return valid default configuration', () => {
-      const defaultConfig = manager.getDefaultConfig();
+      const defaultConfig = LogRetentionManager.getDefaultConfig();
       expect(defaultConfig).toMatchObject({
         enabled: true,
         maxAgeDays: 30,

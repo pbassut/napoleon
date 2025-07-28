@@ -1,19 +1,33 @@
 const path = require('path');
-const AgentManager = require('../src/core/agent-manager');
-const { AgentStatus } = require('../src/core/agent-manager');
 
-jest.mock('child_process', () => ({
+// Set up mocks before importing AgentManager
+const childProcess = {
   exec: jest.fn(),
   execSync: jest.fn(),
-}));
-jest.mock('fs', () => ({
+};
+jest.mock('child_process', () => childProcess);
+const fs = {
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn(),
   statSync: jest.fn(),
   chmodSync: jest.fn(),
-}));
+  createWriteStream: jest.fn().mockReturnValue({
+    write: jest.fn(),
+    end: jest.fn(),
+    on: jest.fn(),
+    once: jest.fn(),
+    emit: jest.fn(),
+  }),
+  promises: {
+    mkdir: jest.fn().mockResolvedValue(undefined),
+    writeFile: jest.fn().mockResolvedValue(undefined),
+    appendFile: jest.fn().mockResolvedValue(undefined),
+    access: jest.fn().mockResolvedValue(undefined),
+  },
+};
+jest.mock('fs', () => fs);
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn(),
   CONFIG_DIR: '/test/.napoleon',
@@ -49,25 +63,38 @@ jest.mock('../src/utils/logger', () => ({
 
 jest.mock('../src/core/logging/agent-log-manager', () => jest.fn());
 
+// Mock tool usage tracker
+jest.mock('../src/core/tool-usage-tracker', () => ({
+  initializeAgent: jest.fn(),
+  trackTodoUpdate: jest.fn(),
+  trackToolCall: jest.fn(),
+  getAgentUsage: jest.fn().mockReturnValue({ todos: [], toolCalls: [] }),
+  cleanupAgent: jest.fn(),
+}));
+
+// Mock claude-code SDK
+jest.mock('@anthropic-ai/claude-code', () => null);
+
+// Import AgentManager after all mocks are set up
+const AgentManager = require('../src/core/agent-manager');
+const { AgentStatus } = require('../src/core/agent-manager');
+
 describe('AgentManager - Persistent Logging Integration', () => {
   let agentManager;
   let mockAgentLogManager;
   let loadConfig;
-  let fs;
   let exec;
   let AgentLogManager;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    jest.useFakeTimers();
 
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
-    // Get the mocked functions
+    // Get the mocked functions - use the defined mock objects
     loadConfig = require('../src/core/config').loadConfig;
-    fs = require('fs');
-    exec = require('child_process').exec;
+    exec = childProcess.exec;
     AgentLogManager = require('../src/core/logging/agent-log-manager');
 
     // Mock configuration with logging enabled
@@ -115,8 +142,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
   });
 
   afterEach(() => {
-    jest.runOnlyPendingTimers();
-    jest.useRealTimers();
+    // Cleanup after each test
   });
 
   describe('AC1: AgentLogManager Integration Setup', () => {

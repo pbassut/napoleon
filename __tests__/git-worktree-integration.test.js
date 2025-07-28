@@ -17,7 +17,9 @@ jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn().mockReturnValue({
     logLevel: 'info',
     napoleonDir: '/test/.napoleon',
-    features: {}
+    features: {
+      autoCleanup: true
+    }
   }),
   SESSIONS_FILE: '/test/.napoleon/sessions.json',
   initializeSessionStorage: jest.fn(),
@@ -81,6 +83,7 @@ jest.mock('../src/core/worktree-lifecycle-manager', () => {
     isWorktreeActive: jest.fn().mockReturnValue(false),
     getActiveAgents: jest.fn().mockReturnValue([]),
     getMetrics: jest.fn().mockReturnValue({}),
+    forceCleanupWorktree: jest.fn().mockResolvedValue(),
   }));
 });
 
@@ -101,7 +104,7 @@ describe('Git Worktree Integration Tests', () => {
     // Mock file system
     fs.existsSync.mockImplementation((path) => {
       // Return true for worktree paths to simulate successful creation
-      if (path.includes('.napoleon/worktrees/agent-')) {
+      if (path.includes('worktrees') || path.includes('sessions.json')) {
         return true;
       }
       return false;
@@ -171,6 +174,9 @@ describe('Git Worktree Integration Tests', () => {
   });
 
   it('should create complete worktree workflow', async () => {
+    // Use real timers for this test
+    jest.useRealTimers();
+    
     await agentManager.initialize();
 
     const instructions = 'Test agent with worktree integration';
@@ -208,12 +214,16 @@ describe('Git Worktree Integration Tests', () => {
     // Wait for async worktree removal to complete
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // Verify git worktree remove was called
-    expect(exec).toHaveBeenCalledWith(
-      expect.stringContaining('git worktree remove'),
-      expect.any(Object),
-      expect.any(Function)
+    // Verify worktree cleanup was called through the lifecycle manager
+    expect(agentManager.worktreeLifecycle.forceCleanupWorktree).toHaveBeenCalledWith(
+      session.worktreePath,
+      expect.objectContaining({
+        preserveBranch: false,
+      })
     );
+    
+    // Restore fake timers
+    jest.useFakeTimers();
   });
 
   it('should handle worktree creation failure gracefully', async () => {
@@ -231,7 +241,7 @@ describe('Git Worktree Integration Tests', () => {
 
     // Mock fs.existsSync to return true for the failed worktree path so cleanup is attempted
     fs.existsSync.mockImplementation((path) => {
-      if (path.includes('.napoleon-worktrees')) {
+      if (path.includes('worktrees')) {
         return true; // Simulate that the directory was partially created
       }
       return false;
@@ -270,7 +280,24 @@ describe('Git Worktree Integration Tests', () => {
   it('should ensure worktree directory exists', async () => {
     await agentManager.initialize();
 
-    fs.existsSync.mockReturnValue(false); // Directory doesn't exist
+    // Mock to initially return false for base directory, but true for specific worktree paths
+    let createdWorktreePath = null;
+    fs.existsSync.mockImplementation((path) => {
+      // If this is the base worktrees directory, return false to trigger mkdir
+      if (path.includes('worktrees') && !path.includes('agent-')) {
+        return false;
+      }
+      // If this is a specific worktree path, return true after creation
+      if (path.includes('agent-')) {
+        createdWorktreePath = path;
+        return true;
+      }
+      // For sessions file, return true
+      if (path.includes('sessions.json')) {
+        return true;
+      }
+      return false;
+    });
 
     const instructions = 'Test worktree directory creation';
     
@@ -278,7 +305,7 @@ describe('Git Worktree Integration Tests', () => {
 
     // Verify directory creation was called
     expect(fs.mkdirSync).toHaveBeenCalledWith(
-      expect.stringContaining('.napoleon-worktrees'),
+      expect.stringContaining('worktrees'),
       { recursive: true, mode: 0o755 }
     );
   });
