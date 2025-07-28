@@ -1245,6 +1245,59 @@ class LogQueryService {
       lastBuilt: this.searchIndex.lastBuilt,
     };
   }
+
+  // Instance method wrappers for static methods (needed for tests)
+  calculateSimilarity(str1, str2) {
+    return LogQueryService.calculateSimilarity(str1, str2);
+  }
+
+  isInDateRange(timestamp, dateRange) {
+    return LogQueryService.isInDateRange(timestamp, dateRange);
+  }
+
+  escapeHtml(text) {
+    return LogQueryService.escapeHtml(text);
+  }
+
+  groupLogsBySession(logs) {
+    return LogQueryService.groupLogsBySession(logs);
+  }
+
+  generatePerformanceInsights(metrics) {
+    return LogQueryService.generatePerformanceInsights(metrics);
+  }
+
+  categorizeError(log) {
+    return LogQueryService.categorizeError(log);
+  }
+
+  extractErrorSignature(log) {
+    return LogQueryService.extractErrorSignature(log);
+  }
+
+  generateErrorRecommendations(patterns, trends) {
+    return LogQueryService.generateErrorRecommendations(patterns, trends);
+  }
+
+  analyzeBehavior(agentLogs) {
+    return LogQueryService.analyzeBehavior(agentLogs);
+  }
+
+  extractPromptPattern(prompt) {
+    return LogQueryService.extractPromptPattern(prompt);
+  }
+
+  generateAgentRecommendations(behavior, performance) {
+    return LogQueryService.generateAgentRecommendations(behavior, performance);
+  }
+
+  parseTimeWindow(timeWindow) {
+    return LogQueryService.parseTimeWindow(timeWindow);
+  }
+
+  analyzeSession(sessionLogs) {
+    return LogQueryService.analyzeSession(sessionLogs);
+  }
 }
 
 module.exports = LogQueryService;

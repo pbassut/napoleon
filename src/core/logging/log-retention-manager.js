@@ -721,6 +721,27 @@ class LogRetentionManager {
 
     logger.info('LogRetentionManager shutdown completed');
   }
+
+  // Instance method wrappers for static methods (needed for tests)
+  getDefaultConfig() {
+    return LogRetentionManager.getDefaultConfig();
+  }
+
+  extractAgentId(filename) {
+    return LogRetentionManager.extractAgentId(filename);
+  }
+
+  async compressFile(filePath) {
+    return LogRetentionManager.compressFile(filePath);
+  }
+
+  async verifyCompressedFile(compressedPath) {
+    return LogRetentionManager.verifyCompressedFile(compressedPath);
+  }
+
+  generateCleanupReport(actions) {
+    return LogRetentionManager.generateCleanupReport(actions);
+  }
 }
 
 module.exports = LogRetentionManager;
