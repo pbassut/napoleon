@@ -1,9 +1,11 @@
 const semver = require('semver');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { EnvironmentValidationError } = require('../../utils/errors');
+const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const GitStatusChecker = require('../../core/git-status-checker');
 const StartupWarningDisplay = require('../../core/startup-warning-display');
+const ApiKeyValidator = require('../../core/api-key-validator');
+const ApiKeySetupGuide = require('../../core/api-key-setup-guide');
 
 const execAsync = promisify(exec);
 
@@ -135,7 +137,55 @@ async function validateEnvironment() {
   });
 }
 
+/**
+ * Validates the API key using the ApiKeyValidator
+ */
+async function validateApiKey() {
+  const validator = new ApiKeyValidator();
+  const setupGuide = new ApiKeySetupGuide();
+
+  try {
+    const result = await validator.validateApiKey();
+
+    if (result.isValid) {
+      console.log(`✅ API key validated: ${result.maskedKey}`);
+      return result;
+    }
+    if (result.error === 'API_KEY_MISSING') {
+      setupGuide.displaySetupInstructions();
+      throw new EnvironmentValidationError(
+        'API key not found in environment variables',
+        'API_KEY_NOT_FOUND',
+        'Set ANTHROPIC_API_KEY environment variable',
+      );
+    } else if (result.error === 'API_KEY_INVALID_FORMAT') {
+      setupGuide.displayFormatError();
+      throw new ConfigurationError(
+        'Invalid API key format: API key appears too short',
+        'INVALID_API_KEY_FORMAT',
+        'Please check your API key format',
+      );
+    } else {
+      throw new EnvironmentValidationError(
+        result.message,
+        result.error,
+        'Please check your API key configuration',
+      );
+    }
+  } catch (error) {
+    if (error instanceof EnvironmentValidationError || error instanceof ConfigurationError) {
+      throw error;
+    }
+    throw new EnvironmentValidationError(
+      'Failed to validate API key',
+      'API_KEY_VALIDATION_ERROR',
+      'Please check your API key configuration',
+    );
+  }
+}
+
 module.exports = {
   validateEnvironment,
   validateGitWorkingTree,
+  validateApiKey,
 };
