@@ -1,19 +1,23 @@
-const fs = require('fs');
-const AgentManager = require('../src/core/agent-manager');
-const { EnvironmentValidationError } = require('../src/utils/errors');
-
-// Mock dependencies
-jest.mock('../src/core/config');
-jest.mock('../src/utils/logger');
-jest.mock('fs', () => ({
+// Create mock functions for fs
+const mockFs = {
   existsSync: jest.fn(),
   readFileSync: jest.fn(),
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn(),
   statSync: jest.fn(),
   rmSync: jest.fn(),
-}));
+};
+
+// Mock dependencies
+jest.mock('../src/core/config');
+jest.mock('../src/utils/logger');
+jest.mock('fs', () => mockFs);
 jest.mock('child_process');
+
+// Import modules after mocks are set up
+const fs = require('fs');
+const AgentManager = require('../src/core/agent-manager');
+const { EnvironmentValidationError } = require('../src/utils/errors');
 
 describe('AgentManager Input Validation', () => {
   let agentManager;
@@ -21,22 +25,6 @@ describe('AgentManager Input Validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-
-    // Mock file system for validation tests
-    fs.statSync.mockImplementation((path) => {
-      // Mock different paths for different test scenarios
-      if (path.includes('valid') || path === '/valid/path') {
-        return { isDirectory: () => true };
-      }
-      if (path.includes('file') || path === '/path/to/file') {
-        return { isDirectory: () => false };
-      }
-      if (path.includes('nonexistent')) {
-        throw new Error('ENOENT: no such file or directory');
-      }
-      // For any unhandled path, return a valid directory to be safe
-      return { isDirectory: () => true };
-    });
 
     agentManager = new AgentManager();
   });
@@ -193,22 +181,32 @@ describe('AgentManager Input Validation', () => {
     it('should validate working directory when provided', () => {
       const path = require('path');
 
-      // Mock fs.statSync to return directory stats
-      fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => true,
+      // Mock fs.statSync to return directory stats for this specific test
+      mockFs.statSync.mockImplementation((testPath) => {
+        if (testPath === path.resolve('/valid/path')) {
+          return { isDirectory: () => true };
+        }
+        // Fall back to default implementation
+        return { isDirectory: () => true };
       });
 
       const options = { workingDirectory: '/valid/path' };
       const result = AgentManager.validateOptions(options);
 
       expect(result.workingDirectory).toBe(path.resolve('/valid/path'));
-      expect(fs.statSync).toHaveBeenCalledWith(path.resolve('/valid/path'));
+      expect(mockFs.statSync).toHaveBeenCalledWith(path.resolve('/valid/path'));
     });
 
     it('should reject non-directory working directory', () => {
-      // Mock fs.statSync to return file stats
-      fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => false,
+      const path = require('path');
+      
+      // Mock fs.statSync to return file stats for this specific test
+      mockFs.statSync.mockImplementation((testPath) => {
+        if (testPath === path.resolve('/path/to/file')) {
+          return { isDirectory: () => false };
+        }
+        // Fall back to default implementation
+        return { isDirectory: () => true };
       });
 
       const options = { workingDirectory: '/path/to/file' };
@@ -217,9 +215,15 @@ describe('AgentManager Input Validation', () => {
     });
 
     it('should reject inaccessible working directory', () => {
-      // Mock fs.statSync to throw error
-      fs.statSync = jest.fn().mockImplementation(() => {
-        throw new Error('ENOENT: no such file or directory');
+      const path = require('path');
+      
+      // Mock fs.statSync to throw error for this specific test
+      mockFs.statSync.mockImplementation((testPath) => {
+        if (testPath === path.resolve('/nonexistent/path')) {
+          throw new Error('ENOENT: no such file or directory');
+        }
+        // Fall back to default implementation
+        return { isDirectory: () => true };
       });
 
       const options = { workingDirectory: '/nonexistent/path' };
@@ -228,8 +232,15 @@ describe('AgentManager Input Validation', () => {
     });
 
     it('should ignore unknown options', () => {
-      fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => true,
+      const path = require('path');
+      
+      // Mock fs.statSync to return directory stats for this specific test
+      mockFs.statSync.mockImplementation((testPath) => {
+        if (testPath === path.resolve('/valid/path')) {
+          return { isDirectory: () => true };
+        }
+        // Fall back to default implementation
+        return { isDirectory: () => true };
       });
 
       const options = {
