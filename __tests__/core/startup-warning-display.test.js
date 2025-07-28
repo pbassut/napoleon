@@ -1,13 +1,13 @@
-const StartupWarningDisplay = require('../../src/core/startup-warning-display');
-const GitStatusChecker = require('../../src/core/git-status-checker');
 const chalk = require('chalk');
 const inquirer = require('inquirer');
+const StartupWarningDisplay = require('../../src/core/startup-warning-display');
+const GitStatusChecker = require('../../src/core/git-status-checker');
 
 // Mock dependencies
 jest.mock('chalk', () => {
   const chained = jest.fn((text) => text);
   chained.bold = jest.fn((text) => text);
-  
+
   return {
     yellow: Object.assign(jest.fn((text) => text), { bold: jest.fn((text) => text) }),
     red: Object.assign(jest.fn((text) => text), { bold: jest.fn((text) => text) }),
@@ -21,15 +21,22 @@ jest.mock('chalk', () => {
       red: jest.fn((text) => text),
       white: jest.fn((text) => text),
       green: jest.fn((text) => text),
-      cyan: jest.fn((text) => text)
-    }
+      cyan: jest.fn((text) => text),
+    },
   };
 });
 
 jest.mock('inquirer', () => ({
-  prompt: jest.fn()
+  prompt: jest.fn().mockResolvedValue({ action: 'continue' }),
 }));
-jest.mock('../../src/core/git-status-checker');
+jest.mock('../../src/core/git-status-checker', () => ({
+  generateWarningMessage: jest.fn().mockReturnValue('Mock warning message'),
+  getDetailedFileInfo: jest.fn().mockReturnValue({
+    modified: 'mock modified files',
+    untracked: 'mock untracked files',
+    staged: 'mock staged files',
+  }),
+}));
 jest.mock('../../src/utils/logger');
 
 // Mock console methods
@@ -46,17 +53,15 @@ afterEach(() => {
 
 describe('StartupWarningDisplay', () => {
   let display;
-  let mockGitChecker;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    mockGitChecker = {
-      generateWarningMessage: jest.fn(),
-      getDetailedFileInfo: jest.fn()
-    };
-    GitStatusChecker.mockImplementation(() => mockGitChecker);
+    // Clear call history but preserve mock functions
+    GitStatusChecker.generateWarningMessage.mockClear();
+    GitStatusChecker.getDetailedFileInfo.mockClear();
+    console.log.mockClear();
+    console.clear.mockClear();
+
     display = new StartupWarningDisplay();
-    display.gitChecker = mockGitChecker; // Ensure mock is always used
   });
 
   describe('constructor', () => {
@@ -73,14 +78,14 @@ describe('StartupWarningDisplay', () => {
         hasUncommittedChanges: true,
         hasUntrackedFiles: false,
         hasStagedChanges: false,
-        details: { modified: ['file1.js'] }
+        details: { modified: ['file1.js'] },
       };
 
-      mockGitChecker.generateWarningMessage.mockReturnValue('• 1 file(s) have uncommitted changes');
-      mockGitChecker.getDetailedFileInfo.mockReturnValue({
+      GitStatusChecker.generateWarningMessage.mockReturnValue('• 1 file(s) have uncommitted changes');
+      GitStatusChecker.getDetailedFileInfo.mockReturnValue({
         modified: '  file1.js (modified)',
         untracked: '',
-        staged: ''
+        staged: '',
       });
 
       inquirer.prompt.mockResolvedValue({ action: 'exit' });
@@ -94,8 +99,8 @@ describe('StartupWarningDisplay', () => {
 
     it('should handle errors gracefully and return safe default', async () => {
       const statusResult = {};
-      
-      mockGitChecker.generateWarningMessage.mockImplementation(() => {
+
+      GitStatusChecker.generateWarningMessage.mockImplementation(() => {
         throw new Error('Test error');
       });
 
@@ -118,11 +123,11 @@ describe('StartupWarningDisplay', () => {
   describe('displayStatusDetails', () => {
     it('should display git status details', () => {
       const statusResult = { hasUncommittedChanges: true };
-      mockGitChecker.generateWarningMessage.mockReturnValue('• 1 file(s) have uncommitted changes');
+      GitStatusChecker.generateWarningMessage.mockReturnValue('• 1 file(s) have uncommitted changes');
 
       display.displayStatusDetails(statusResult);
 
-      expect(mockGitChecker.generateWarningMessage).toHaveBeenCalledWith(statusResult);
+      expect(GitStatusChecker.generateWarningMessage).toHaveBeenCalledWith(statusResult);
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Git Issues Detected'));
     });
   });
@@ -132,10 +137,10 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: true,
         hasUntrackedFiles: false,
-        hasStagedChanges: false
+        hasStagedChanges: false,
       };
 
-      const recommendations = display.generateRecommendations(statusResult);
+      const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
 
       expect(recommendations).toHaveLength(2); // commit + stash
       expect(recommendations[0].action).toContain('Commit your current changes');
@@ -146,10 +151,10 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: false,
         hasUntrackedFiles: true,
-        hasStagedChanges: false
+        hasStagedChanges: false,
       };
 
-      const recommendations = display.generateRecommendations(statusResult);
+      const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
 
       expect(recommendations).toHaveLength(2); // track files + stash
       expect(recommendations[0].action).toContain('Handle untracked files');
@@ -160,10 +165,10 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: false,
         hasUntrackedFiles: false,
-        hasStagedChanges: true
+        hasStagedChanges: true,
       };
 
-      const recommendations = display.generateRecommendations(statusResult);
+      const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
 
       expect(recommendations).toHaveLength(2); // commit staged + stash
       expect(recommendations[0].action).toContain('Commit your staged changes');
@@ -174,26 +179,26 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: true,
         hasUntrackedFiles: true,
-        hasStagedChanges: true
+        hasStagedChanges: true,
       };
 
-      const recommendations = display.generateRecommendations(statusResult);
+      const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
 
       expect(recommendations).toHaveLength(4); // all 3 + stash
-      expect(recommendations.some(r => r.action.includes('Commit your current changes'))).toBe(true);
-      expect(recommendations.some(r => r.action.includes('Handle untracked files'))).toBe(true);
-      expect(recommendations.some(r => r.action.includes('Commit your staged changes'))).toBe(true);
-      expect(recommendations.some(r => r.action.includes('stash your changes'))).toBe(true);
+      expect(recommendations.some((r) => r.action.includes('Commit your current changes'))).toBe(true);
+      expect(recommendations.some((r) => r.action.includes('Handle untracked files'))).toBe(true);
+      expect(recommendations.some((r) => r.action.includes('Commit your staged changes'))).toBe(true);
+      expect(recommendations.some((r) => r.action.includes('stash your changes'))).toBe(true);
     });
 
     it('should always include stash recommendation', () => {
       const statusResult = {
         hasUncommittedChanges: false,
         hasUntrackedFiles: false,
-        hasStagedChanges: false
+        hasStagedChanges: false,
       };
 
-      const recommendations = display.generateRecommendations(statusResult);
+      const recommendations = StartupWarningDisplay.generateRecommendations(statusResult);
 
       expect(recommendations).toHaveLength(1);
       expect(recommendations[0].action).toContain('stash your changes');
@@ -205,34 +210,34 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: true,
         hasUntrackedFiles: false,
-        hasStagedChanges: false
+        hasStagedChanges: false,
       };
 
       const mockFileInfo = {
         modified: '  file1.js (modified)\n  file2.js (modified)',
         untracked: '',
-        staged: ''
+        staged: '',
       };
-      
-      mockGitChecker.getDetailedFileInfo.mockReturnValue(mockFileInfo);
+
+      GitStatusChecker.getDetailedFileInfo.mockReturnValue(mockFileInfo);
 
       display.displayDetailedFileInfo(statusResult);
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Modified files'));
-      expect(mockGitChecker.getDetailedFileInfo).toHaveBeenCalledWith(statusResult);
+      expect(GitStatusChecker.getDetailedFileInfo).toHaveBeenCalledWith(statusResult);
     });
 
     it('should display untracked files when present', () => {
       const statusResult = {
         hasUncommittedChanges: false,
         hasUntrackedFiles: true,
-        hasStagedChanges: false
+        hasStagedChanges: false,
       };
 
-      mockGitChecker.getDetailedFileInfo.mockReturnValue({
+      GitStatusChecker.getDetailedFileInfo.mockReturnValue({
         modified: '',
         untracked: '  newfile.js',
-        staged: ''
+        staged: '',
       });
 
       display.displayDetailedFileInfo(statusResult);
@@ -244,13 +249,13 @@ describe('StartupWarningDisplay', () => {
       const statusResult = {
         hasUncommittedChanges: false,
         hasUntrackedFiles: false,
-        hasStagedChanges: true
+        hasStagedChanges: true,
       };
 
-      mockGitChecker.getDetailedFileInfo.mockReturnValue({
+      GitStatusChecker.getDetailedFileInfo.mockReturnValue({
         modified: '',
         untracked: '',
-        staged: '  staged.js (added)'
+        staged: '  staged.js (added)',
       });
 
       display.displayDetailedFileInfo(statusResult);
@@ -283,15 +288,15 @@ describe('StartupWarningDisplay', () => {
           {
             name: '🚪 Exit to resolve git issues first (recommended)',
             value: 'exit',
-            short: 'Exit (recommended)'
+            short: 'Exit (recommended)',
           },
           {
             name: '⚠️  Continue anyway (I understand the risks)',
             value: 'continue',
-            short: 'Continue with risks'
-          }
+            short: 'Continue with risks',
+          },
         ],
-        default: 'exit'
+        default: 'exit',
       }]);
       expect(result).toBe('continue');
     });
@@ -379,9 +384,9 @@ describe('StartupWarningDisplay', () => {
     });
 
     it('should display generic error for unknown error types', async () => {
-      const validationResult = { 
+      const validationResult = {
         error: 'UNKNOWN_ERROR',
-        message: 'Something went wrong'
+        message: 'Something went wrong',
       };
 
       await display.displayGitValidationError(validationResult);
