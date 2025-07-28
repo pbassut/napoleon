@@ -34,7 +34,7 @@ class GitStatusChecker {
       }
 
       // Get fresh git status
-      const status = await this.getGitStatus();
+      const status = await GitStatusChecker.getGitStatus();
 
       const result = {
         isClean: status.isClean,
