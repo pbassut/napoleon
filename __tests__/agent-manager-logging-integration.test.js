@@ -1,27 +1,75 @@
-const { exec } = require('child_process');
-const fs = require('fs');
 const path = require('path');
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
-const { loadConfig } = require('../src/core/config');
-const AgentLogManager = require('../src/core/logging/agent-log-manager');
 
-jest.mock('child_process');
-jest.mock('fs');
-jest.mock('../src/core/config');
-jest.mock('../src/core/logging/agent-log-manager');
+jest.mock('child_process', () => ({
+  exec: jest.fn(),
+  execSync: jest.fn(),
+}));
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  statSync: jest.fn(),
+  chmodSync: jest.fn(),
+}));
+jest.mock('../src/core/config', () => ({
+  loadConfig: jest.fn(),
+  CONFIG_DIR: '/test/.napoleon',
+  CONFIG_FILE: '/test/.napoleon/config.json',
+  SESSIONS_FILE: '/test/.napoleon/sessions.json',
+  LOGS_DIR: '/test/.napoleon/logs',
+  initializeSessionStorage: jest.fn(),
+  saveConfig: jest.fn(),
+}));
+
+// Mock WorktreeLifecycleManager
+jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
+  initialize: jest.fn().mockResolvedValue(undefined),
+  getMetrics: jest.fn().mockReturnValue({}),
+})));
+
+// Mock SDKCommunicationManager
+jest.mock('../src/core/sdk/communication-manager', () => jest.fn().mockImplementation(() => ({
+  executeQuery: jest.fn(),
+  initializeSDKSession: jest.fn(),
+  terminateSession: jest.fn(),
+  getSession: jest.fn(),
+  getActiveSessions: jest.fn(),
+})));
+
+// Mock logger
+jest.mock('../src/utils/logger', () => ({
+  info: jest.fn(),
+  warn: jest.fn(),
+  error: jest.fn(),
+  debug: jest.fn(),
+}));
+
+jest.mock('../src/core/logging/agent-log-manager', () => jest.fn());
 
 describe('AgentManager - Persistent Logging Integration', () => {
   let agentManager;
   let mockAgentLogManager;
+  let loadConfig;
+  let fs;
+  let exec;
+  let AgentLogManager;
 
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
-    
+
+    // Get the mocked functions
+    loadConfig = require('../src/core/config').loadConfig;
+    fs = require('fs');
+    exec = require('child_process').exec;
+    AgentLogManager = require('../src/core/logging/agent-log-manager');
+
     // Mock configuration with logging enabled
     loadConfig.mockReturnValue({
       napoleonDir: '/test/.napoleon/logs',
@@ -111,7 +159,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     it('should log appropriate status messages for logging initialization', async () => {
       const loggerSpy = jest.spyOn(require('../src/utils/logger'), 'info');
-      
+
       await agentManager.initialize();
 
       expect(loggerSpy).toHaveBeenCalledWith('Persistent agent logging enabled', {
@@ -124,7 +172,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
   describe('AC2: Agent Spawn Logging Integration', () => {
     beforeEach(async () => {
       await agentManager.initialize();
-      
+
       // Mock git validation
       const { execSync } = require('child_process');
       execSync.mockImplementation((cmd) => {
@@ -140,7 +188,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
       expect(mockAgentLogManager.createAgentLog).toHaveBeenCalledWith(
         session.id,
-        instructions
+        instructions,
       );
     });
 
@@ -180,7 +228,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     beforeEach(async () => {
       await agentManager.initialize();
-      
+
       const { execSync } = require('child_process');
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
@@ -206,7 +254,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
         expect.objectContaining({
           content: 'Agent response message',
           type: 'response',
-        })
+        }),
       );
 
       // Check persistent logging (new functionality)
@@ -238,7 +286,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
         expect.objectContaining({
           content: 'Test message',
           type: 'info',
-        })
+        }),
       );
 
       // Should have attempted persistent logging
@@ -248,7 +296,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
     it('should not attempt persistent logging when AgentLogManager is disabled', () => {
       // Clear previous calls from agent spawn
       mockAgentLogManager.writeLogEntry.mockClear();
-      
+
       agentManager.agentLogManager = null;
 
       const message = {
@@ -264,7 +312,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
         expect.objectContaining({
           content: 'Test message',
           type: 'info',
-        })
+        }),
       );
 
       expect(mockAgentLogManager.writeLogEntry).not.toHaveBeenCalled();
@@ -273,7 +321,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
     it('should handle messages with different structures correctly', () => {
       // Clear previous calls from agent spawn
       mockAgentLogManager.writeLogEntry.mockClear();
-      
+
       const messages = [
         { content: 'Simple message' },
         { type: 'error', content: 'Error message' },
@@ -286,9 +334,9 @@ describe('AgentManager - Persistent Logging Integration', () => {
       });
 
       expect(mockAgentLogManager.writeLogEntry).toHaveBeenCalledTimes(messages.length);
-      
+
       // Check that each call had appropriate defaults
-      const calls = mockAgentLogManager.writeLogEntry.mock.calls;
+      const { calls } = mockAgentLogManager.writeLogEntry.mock;
       expect(calls[0][1].type).toBe('sdk_message'); // Default type
       expect(calls[1][1].type).toBe('error'); // Preserved type
       expect(calls[2][1].type).toBe('tool_use'); // Preserved type
@@ -301,7 +349,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     beforeEach(async () => {
       await agentManager.initialize();
-      
+
       const { execSync } = require('child_process');
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
@@ -347,7 +395,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
       // Both should be called
       expect(terminateLogSpy).toHaveBeenCalledWith(agentId);
       expect(sdkTerminateSpy).toHaveBeenCalledWith(agentId);
-      
+
       // Log termination should happen first (check call order by call index)
       const terminateCallOrder = terminateLogSpy.mock.invocationCallOrder[0];
       const sdkCallOrder = sdkTerminateSpy.mock.invocationCallOrder[0];
@@ -397,7 +445,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
     it('should maintain existing session.logs functionality', async () => {
       await agentManager.initialize();
-      
+
       const { execSync } = require('child_process');
       execSync.mockImplementation((cmd) => {
         if (cmd.includes('git rev-parse')) return 'true';
@@ -405,7 +453,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
       });
 
       const session = await agentManager.spawnAgent('Test instructions');
-      
+
       // Test existing logs functionality
       const message = { content: 'Test message', type: 'info' };
       agentManager.handleSDKMessage(session.id, message);
@@ -417,7 +465,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
             content: 'Test message',
             type: 'info',
           }),
-        ])
+        ]),
       );
     });
 
@@ -457,10 +505,10 @@ describe('AgentManager - Persistent Logging Integration', () => {
       });
 
       const session = await agentManager.spawnAgent('Test resilience');
-      
+
       // Send a message
       agentManager.handleSDKMessage(session.id, { content: 'Test message' });
-      
+
       // Terminate agent
       await agentManager.terminateAgent(session.id);
 
@@ -509,7 +557,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
       mockAgentLogManager.writeLogEntry.mockClear();
       agentManager.handleSDKMessage(session.id, { content: 'Message 1', type: 'info' });
       agentManager.handleSDKMessage(session.id, { content: 'Message 2', type: 'response' });
-      
+
       expect(mockAgentLogManager.writeLogEntry).toHaveBeenCalledTimes(2);
 
       // Terminate agent
@@ -549,7 +597,7 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
       // Other agent should still be active
       expect(agentManager.getAgent(session2.id)).toBeDefined();
-      
+
       // Terminate second agent
       await agentManager.terminateAgent(session2.id);
       expect(mockAgentLogManager.terminateAgentLog).toHaveBeenCalledWith(session2.id);
