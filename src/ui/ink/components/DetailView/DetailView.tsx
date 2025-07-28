@@ -191,9 +191,9 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
             {/* Streaming status indicator */}
             <Box marginLeft={1}>
               {isStreaming ? (
-                <Text color="green">🔴 Live</Text>
+                <Text color="green">🟢 Live</Text>
               ) : (
-                <Text color="yellow">⏸ Polling</Text>
+                <Text color="yellow">⏸️ Polling</Text>
               )}
               {streamingError && (
                 <Box marginLeft={1}>
