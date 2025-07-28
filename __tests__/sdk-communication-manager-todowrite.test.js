@@ -2,7 +2,7 @@
 jest.mock('fs', () => ({
   existsSync: jest.fn().mockReturnValue(true),
   statSync: jest.fn().mockReturnValue({
-    isDirectory: jest.fn().mockReturnValue(true)
+    isDirectory: jest.fn().mockReturnValue(true),
   }),
   mkdirSync: jest.fn(),
   writeFileSync: jest.fn(),
@@ -35,18 +35,16 @@ jest.mock('../src/utils/logger', () => ({
   warn: jest.fn(),
 }));
 
-jest.mock('../src/core/logging/agent-log-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    writeLogEntry: jest.fn().mockResolvedValue(true),
-    isInitialized: jest.fn().mockReturnValue(true),
-  }));
-});
+jest.mock('../src/core/logging/agent-log-manager', () => jest.fn().mockImplementation(() => ({
+  writeLogEntry: jest.fn().mockResolvedValue(true),
+  isInitialized: jest.fn().mockReturnValue(true),
+})));
 
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn().mockReturnValue({
     napoleonDir: '/test/.napoleon',
     sessionStorage: '/test/.napoleon/sessions',
-    maxPromptLength: 50
+    maxPromptLength: 50,
   }),
 }));
 
@@ -63,11 +61,11 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup Claude SDK mock
     const { query } = require('@anthropic-ai/claude-code');
     mockQuery = query;
-    
+
     mockAgentLogManager = new AgentLogManager();
     manager = new SDKCommunicationManager(mockAgentLogManager);
   });
@@ -89,8 +87,8 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
           id: 'task-1',
           content: 'Complete implementation',
           priority: 'high',
-          status: 'pending'
-        }
+          status: 'pending',
+        },
       ];
 
       // Mock SDK response with TodoWrite tool usage
@@ -101,19 +99,19 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
           content: [
             {
               type: 'text',
-              text: 'I will track the tasks using TodoWrite.'
+              text: 'I will track the tasks using TodoWrite.',
             },
             {
               type: 'tool_use',
               id: 'tool_123',
               name: 'TodoWrite',
               input: {
-                todos: testTodos
-              }
-            }
+                todos: testTodos,
+              },
+            },
           ],
-          usage: { input: 100, output: 50, total: 150 }
-        }
+          usage: { input: 100, output: 50, total: 150 },
+        },
       ];
 
       // Setup async generator mock - clear previous mocks first
@@ -134,12 +132,12 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
         expect.objectContaining({
           id: 'tool_123',
           name: 'TodoWrite',
-          input: { todos: testTodos }
+          input: { todos: testTodos },
         }),
         expect.objectContaining({
           id: 'msg_1',
-          type: 'assistant'
-        })
+          type: 'assistant',
+        }),
       );
 
       // Verify successful execution
@@ -150,8 +148,8 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
           agentId: testAgentId,
           toolId: 'tool_123',
           messageId: 'msg_1',
-          todoCount: 1
-        })
+          todoCount: 1,
+        }),
       );
     });
 
@@ -168,14 +166,16 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
               name: 'TodoWrite',
               input: {
                 todos: [
-                  { id: '1', content: 'Task 1', priority: 'high', status: 'pending' }
-                ]
-              }
-            }
-          ]
+                  {
+                    id: '1', content: 'Task 1', priority: 'high', status: 'pending',
+                  },
+                ],
+              },
+            },
+          ],
         },
         {
-          id: 'msg_2', 
+          id: 'msg_2',
           content: [
             {
               type: 'tool_use',
@@ -183,13 +183,17 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
               name: 'TodoWrite',
               input: {
                 todos: [
-                  { id: '1', content: 'Task 1', priority: 'high', status: 'completed' },
-                  { id: '2', content: 'Task 2', priority: 'medium', status: 'pending' }
-                ]
-              }
-            }
-          ]
-        }
+                  {
+                    id: '1', content: 'Task 1', priority: 'high', status: 'completed',
+                  },
+                  {
+                    id: '2', content: 'Task 2', priority: 'medium', status: 'pending',
+                  },
+                ],
+              },
+            },
+          ],
+        },
       ];
 
       jest.clearAllMocks();
@@ -206,13 +210,13 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
         1,
         testAgentId,
         expect.objectContaining({ id: 'tool_1' }),
-        expect.objectContaining({ id: 'msg_1' })
+        expect.objectContaining({ id: 'msg_1' }),
       );
       expect(mockToolUsageTracker.trackTodoWrite).toHaveBeenNthCalledWith(
         2,
         testAgentId,
         expect.objectContaining({ id: 'tool_2' }),
-        expect.objectContaining({ id: 'msg_2' })
+        expect.objectContaining({ id: 'msg_2' }),
       );
     });
 
@@ -227,10 +231,10 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
               type: 'tool_use',
               id: 'tool_other',
               name: 'SomeOtherTool',
-              input: { data: 'test' }
-            }
-          ]
-        }
+              input: { data: 'test' },
+            },
+          ],
+        },
       ];
 
       jest.clearAllMocks();
@@ -257,14 +261,13 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
               type: 'tool_use',
               id: 'tool_123',
               name: 'TodoWrite',
-              input: { todos: [] }
-            }
-          ]
-        }
+              input: { todos: [] },
+            },
+          ],
+        },
       ];
 
-      jest.clearAllMocks();
-      // Make trackTodoWrite throw an error AFTER clearing mocks
+      // Make trackTodoWrite throw an error
       mockToolUsageTracker.trackTodoWrite.mockImplementation(() => {
         throw new Error('Tracking failed');
       });
@@ -284,8 +287,8 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
         expect.objectContaining({
           agentId: testAgentId,
           error: 'Tracking failed',
-          messageId: 'msg_1'
-        })
+          messageId: 'msg_1',
+        }),
       );
     });
 
@@ -295,17 +298,17 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
       const mockMessages = [
         {
           id: 'msg_1',
-          type: 'assistant'
+          type: 'assistant',
           // No content property
         },
         {
           id: 'msg_2',
-          content: null
+          content: null,
         },
         {
           id: 'msg_3',
-          content: 'string content instead of array'
-        }
+          content: 'string content instead of array',
+        },
       ];
 
       jest.clearAllMocks();
@@ -325,6 +328,12 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
 
   describe('trackToolUsage method', () => {
     test('should call trackToolUsage method directly', () => {
+      // Clear mocks to ensure clean state for this test
+      jest.clearAllMocks();
+
+      // Reset trackTodoWrite to normal behavior (not throwing error)
+      mockToolUsageTracker.trackTodoWrite.mockImplementation(() => {});
+
       const mockMessage = {
         id: 'msg_test',
         content: [
@@ -334,11 +343,13 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
             name: 'TodoWrite',
             input: {
               todos: [
-                { id: 'direct', content: 'Direct test', priority: 'high', status: 'pending' }
-              ]
-            }
-          }
-        ]
+                {
+                  id: 'direct', content: 'Direct test', priority: 'high', status: 'pending',
+                },
+              ],
+            },
+          },
+        ],
       };
 
       manager.trackToolUsage(testAgentId, mockMessage);
@@ -348,9 +359,9 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
         testAgentId,
         expect.objectContaining({
           id: 'tool_direct',
-          name: 'TodoWrite'
+          name: 'TodoWrite',
         }),
-        mockMessage
+        mockMessage,
       );
 
       expect(logger.debug).toHaveBeenCalledWith(
@@ -359,8 +370,8 @@ describe('SDKCommunicationManager TodoWrite Integration', () => {
           agentId: testAgentId,
           toolId: 'tool_direct',
           messageId: 'msg_test',
-          todoCount: 1
-        })
+          todoCount: 1,
+        }),
       );
     });
   });
