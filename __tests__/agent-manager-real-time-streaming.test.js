@@ -183,6 +183,9 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
     }, 15000);
 
     test('should handle errors in streaming gracefully', async () => {
+      // Use real timers for this test
+      jest.useRealTimers();
+      
       const agentId = 'test-error-agent';
       const instructions = 'Test error handling';
       const errorMessage = 'SDK streaming error';
@@ -229,9 +232,15 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
 
       // Verify handleSDKMessage was called for the instruction (error handling may prevent further calls)
       expect(handleSDKMessageSpy).toHaveBeenCalled();
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     }, 15000);
 
     test('should complete status update when streaming finishes', async () => {
+      // Use real timers for this test
+      jest.useRealTimers();
+      
       const agentId = 'test-completion-agent';
       const instructions = 'Test completion';
 
@@ -271,10 +280,16 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
 
       // Wait for all messages to be processed
       await allMessagesProcessed;
+      
+      // Give additional time for status update to complete
+      await new Promise((resolve) => setTimeout(resolve, 50));
 
       // Verify agent status was updated to IDLE after completion
       const updatedSession = agentManager.agents.get(agentId);
       expect(updatedSession.status).toBe(AgentStatus.IDLE);
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     });
 
     test('should handle missing SDK session gracefully', async () => {
@@ -302,6 +317,9 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
 
   describe('Performance requirements', () => {
     test('should process messages with minimal latency', async () => {
+      // Use real timers for this test
+      jest.useRealTimers();
+      
       const agentId = 'test-performance-agent';
       const instructions = 'Performance test';
 
@@ -347,6 +365,9 @@ describe('AgentManager Real-Time Streaming (US080)', () => {
       expect(firstMessageProcessed).toBe(true);
       expect(processingLatency).toBeGreaterThanOrEqual(0);
       expect(processingLatency).toBeLessThan(1000); // More reasonable expectation
+      
+      // Restore fake timers
+      jest.useFakeTimers();
     }, 15000);
   });
 });
