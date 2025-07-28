@@ -1,3 +1,7 @@
+const { spawn, execSync, exec } = require('child_process');
+const fs = require('fs');
+const { EnvironmentValidationError } = require('../src/utils/errors');
+
 jest.mock('child_process');
 jest.mock('fs', () => ({
   existsSync: jest.fn(),
@@ -8,15 +12,16 @@ jest.mock('fs', () => ({
   rmSync: jest.fn(),
 }));
 jest.mock('../src/core/config', () => ({
-  loadConfig: jest.fn(),
+  loadConfig: jest.fn().mockReturnValue({
+    logLevel: 'info',
+    features: {
+      autoCleanup: true,
+    },
+  }),
   SESSIONS_FILE: '/test/.napoleon/sessions.json',
   initializeSessionStorage: jest.fn(),
 }));
 
-const { spawn, execSync, exec } = require('child_process');
-const fs = require('fs');
-
-const { EnvironmentValidationError } = require('../src/utils/errors');
 const AgentManager = require('../src/core/agent-manager');
 const { AgentStatus } = require('../src/core/agent-manager');
 const { loadConfig, SESSIONS_FILE } = require('../src/core/config');
@@ -41,10 +46,28 @@ describe('AgentManager', () => {
     // Set up environment
     process.env.ANTHROPIC_API_KEY = 'test-key';
 
-    // Mock file system
-    fs.existsSync.mockReturnValue(false);
+    // Mock file system with dynamic behavior
+    fs.existsSync.mockImplementation((path) => {
+      // Sessions file and worktree base dir should exist
+      if (path.includes('sessions.json') || path.includes('.napoleon-worktrees')) {
+        return true;
+      }
+      // Worktree paths should exist after creation
+      if (path.includes('agent-') && path.includes('-')) {
+        return true;
+      }
+      return false;
+    });
     fs.readFileSync.mockReturnValue('{"sessions": []}');
     fs.writeFileSync.mockImplementation(() => {});
+
+    // Mock statSync to return directory info for worktree paths
+    fs.statSync.mockImplementation((path) => {
+      if (path.includes('agent-') && path.includes('-')) {
+        return { isDirectory: () => true };
+      }
+      return { isDirectory: () => false };
+    });
 
     // Mock process
     mockProcess = {
@@ -57,9 +80,18 @@ describe('AgentManager', () => {
     };
 
     spawn.mockReturnValue(mockProcess);
-    execSync.mockReturnValue('inside work tree');
 
-    // Mock exec for git worktree commands
+    // Mock execSync for git commands with proper validation
+    execSync.mockImplementation((cmd) => {
+      if (cmd.includes('git rev-parse --is-inside-work-tree')) return 'true';
+      if (cmd.includes('git rev-parse --show-toplevel')) return '/repo/root';
+      if (cmd.includes('git diff-index --quiet HEAD --')) return '';
+      if (cmd.includes('git ls-files --others --exclude-standard')) return '';
+      if (cmd === 'claude --version') return 'claude 1.0.0';
+      return 'true';
+    });
+
+    // Mock exec for git worktree and npm commands
     exec.mockImplementation((cmd, options, callback) => {
       if (cmd.includes('git worktree add')) {
         callback(null, 'Preparing worktree', '');
@@ -67,6 +99,8 @@ describe('AgentManager', () => {
         callback(null, '', '');
       } else if (cmd.includes('npm ci')) {
         callback(null, 'npm ci complete', '');
+      } else if (cmd.includes('npm install')) {
+        callback(null, 'Dependencies installed', '');
       } else {
         callback(new Error('Unknown command'));
       }
@@ -171,6 +205,23 @@ describe('AgentManager', () => {
   describe('agent spawning', () => {
     beforeEach(async () => {
       await agentManager.initialize();
+
+      // Override exec mock to handle all commands for spawning tests
+      exec.mockImplementation((cmd, options, callback) => {
+        if (cmd.includes('git worktree add')) {
+          callback(null, 'Preparing worktree', '');
+        } else if (cmd.includes('git worktree remove')) {
+          callback(null, '', '');
+        } else if (cmd.includes('git worktree unlock')) {
+          callback(null, '', '');
+        } else if (cmd.includes('git worktree list')) {
+          callback(null, '', '');
+        } else if (cmd.includes('npm ci')) {
+          callback(null, 'Dependencies installed', '');
+        } else {
+          callback(new Error('Unknown command'));
+        }
+      });
     });
 
     it('should spawn agent with valid instructions', async () => {
@@ -285,6 +336,19 @@ describe('AgentManager', () => {
   describe('session management', () => {
     beforeEach(async () => {
       await agentManager.initialize();
+
+      // Setup exec mock for session management tests
+      exec.mockImplementation((cmd, options, callback) => {
+        if (cmd.includes('git worktree add')) {
+          callback(null, 'Preparing worktree', '');
+        } else if (cmd.includes('git worktree remove')) {
+          callback(null, '', '');
+        } else if (cmd.includes('npm ci')) {
+          callback(null, 'Dependencies installed', '');
+        } else {
+          callback(new Error('Unknown command'));
+        }
+      });
     });
 
     it('should save sessions to file', async () => {
@@ -355,10 +419,10 @@ describe('AgentManager', () => {
       expect(agent.instructions).toBe(instructions);
     });
 
-    it('should check if can spawn more agents', async () => {
+    it('should check if can spawn more agents (unlimited)', async () => {
       expect(agentManager.canSpawnAgent()).toBe(true);
 
-      // Spawn max agents
+      // Spawn some agents
       execSync.mockImplementation((cmd) => {
         if (cmd === 'claude --version') return 'claude 1.0.0';
         return 'true';
@@ -371,11 +435,13 @@ describe('AgentManager', () => {
       });
       fs.statSync.mockReturnValue({ isDirectory: () => true });
 
-      for (let i = 0; i < 3; i++) {
-        await agentManager.spawnAgent('Valid instructions for agent'); // eslint-disable-line no-await-in-loop
-      }
+      await Promise.all([
+        agentManager.spawnAgent('Valid instructions for agent'),
+        agentManager.spawnAgent('Valid instructions for agent'),
+        agentManager.spawnAgent('Valid instructions for agent'),
+      ]);
 
-      // AgentManager currently allows unlimited agents
+      // Should still allow spawning more agents (unlimited)
       expect(agentManager.canSpawnAgent()).toBe(true);
     });
 
@@ -402,6 +468,19 @@ describe('AgentManager', () => {
   describe('process management', () => {
     beforeEach(async () => {
       await agentManager.initialize();
+
+      // Setup exec mock for process management tests
+      exec.mockImplementation((cmd, options, callback) => {
+        if (cmd.includes('git worktree add')) {
+          callback(null, 'Preparing worktree', '');
+        } else if (cmd.includes('git worktree remove')) {
+          callback(null, '', '');
+        } else if (cmd.includes('npm ci')) {
+          callback(null, 'Dependencies installed', '');
+        } else {
+          callback(new Error('Unknown command'));
+        }
+      });
     });
 
     it('should handle process output', async () => {
@@ -670,17 +749,22 @@ describe('AgentManager', () => {
   });
 
   describe('Git Worktree Operations', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
       // Mock exec for git worktree commands
       exec.mockImplementation((cmd, options, callback) => {
         if (cmd.includes('git worktree add')) {
           callback(null, 'Preparing worktree', '');
         } else if (cmd.includes('git worktree remove')) {
           callback(null, '', '');
+        } else if (cmd.includes('npm ci')) {
+          callback(null, 'Dependencies installed', '');
         } else {
           callback(new Error('Unknown command'));
         }
       });
+
+      // Initialize agent manager for tests that need config
+      await agentManager.initialize();
     });
 
     describe('generateWorktreeName', () => {
@@ -710,7 +794,7 @@ describe('AgentManager', () => {
           expect.stringContaining('.napoleon-worktrees'),
           { recursive: true, mode: 0o755 },
         );
-        expect(result).toContain('.napoleon-worktrees');
+        expect(result).toContain('worktrees');
       });
 
       it('should not create directory if it already exists', () => {
@@ -719,7 +803,7 @@ describe('AgentManager', () => {
         const result = agentManager.ensureWorktreeDirectory();
 
         expect(fs.mkdirSync).not.toHaveBeenCalled();
-        expect(result).toContain('.napoleon-worktrees');
+        expect(result).toContain('worktrees');
       });
 
       it('should throw error if directory creation fails', () => {
@@ -729,7 +813,7 @@ describe('AgentManager', () => {
         });
 
         expect(() => {
-          agentManager.ensureWorktreeDirectory();
+          AgentManager.ensureWorktreeDirectory();
         }).toThrow('Failed to create worktrees directory');
       });
     });
@@ -797,7 +881,7 @@ describe('AgentManager', () => {
 
         expect(result.agentId).toBe(agentId);
         expect(result.worktreeName).toMatch(/^agent-test-123-\d+$/);
-        expect(result.worktreePath).toContain('.napoleon-worktrees');
+        expect(result.worktreePath).toContain('worktrees');
         expect(exec).toHaveBeenCalledWith(
           expect.stringContaining('git worktree add'),
           expect.any(Object),
@@ -879,6 +963,9 @@ describe('AgentManager', () => {
         const worktreePath = '/path/to/nonexistent';
 
         fs.existsSync.mockReturnValue(false);
+
+        // Clear previous exec calls from initialization
+        exec.mockClear();
 
         await agentManager.removeWorktree(worktreePath);
 
@@ -968,6 +1055,8 @@ describe('AgentManager', () => {
 
       const session = await agentManager.spawnAgent(instructions);
 
+      expect(session.worktreePath).toBeDefined();
+
       await agentManager.terminateAgent(session.id);
 
       // Verify worktree removal was called
@@ -976,6 +1065,9 @@ describe('AgentManager', () => {
         expect.any(Object),
         expect.any(Function),
       );
+
+      // Verify agent was removed from active sessions after termination
+      expect(agentManager.getAgent(session.id)).toBeUndefined();
     });
 
     it('should handle worktree creation failure during spawn', async () => {

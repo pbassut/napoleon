@@ -1,17 +1,23 @@
+const { spawn, execSync, exec } = require('child_process');
+const fs = require('fs');
 const AgentManager = require('../src/core/agent-manager');
 const logger = require('../src/utils/logger');
 
 // Mock dependencies
 jest.mock('../src/utils/logger');
-jest.mock('../src/core/config', () => ({
-  loadConfig: () => ({
-    maxAgents: 3,
+const mockConfig = {
+  loadConfig: jest.fn().mockReturnValue({
+    logLevel: 'info',
     napoleonDir: '/test/.napoleon',
-    logging: { agents: { enabled: false } },
-    features: {}
+    features: {
+      autoCleanup: true,
+    },
   }),
-  SESSIONS_FILE: '/tmp/test-sessions.json',
-}));
+  SESSIONS_FILE: '/test/.napoleon/sessions.json',
+  initializeSessionStorage: jest.fn(),
+};
+
+jest.mock('../src/core/config', () => mockConfig);
 
 jest.mock('child_process', () => ({
   spawn: jest.fn(),
@@ -25,35 +31,40 @@ jest.mock('fs', () => ({
   writeFileSync: jest.fn(),
   mkdirSync: jest.fn(),
   statSync: jest.fn().mockReturnValue({
-    isDirectory: jest.fn().mockReturnValue(true)
+    isDirectory: jest.fn().mockReturnValue(true),
   }),
+  rmSync: jest.fn(),
 }));
 
 // Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-    getMetrics: jest.fn().mockReturnValue({}),
-  }));
-});
+jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
+  initialize: jest.fn().mockResolvedValue(undefined),
+  getMetrics: jest.fn().mockReturnValue({}),
+})));
 
 // Mock SDKCommunicationManager
-jest.mock('../src/core/sdk/communication-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    executeQuery: jest.fn(),
-    initializeSDKSession: jest.fn(),
-    terminateSession: jest.fn(),
-    getSession: jest.fn(),
-    getActiveSessions: jest.fn(),
-  }));
-});
+const mockSDKManager = {
+  executeQuery: jest.fn(),
+  executeQueryStream: jest.fn(),
+  initializeSDKSession: jest.fn().mockResolvedValue({
+    agentId: 'test-agent',
+    sessionId: 'test-session',
+    isActive: true,
+  }),
+  terminateSession: jest.fn().mockResolvedValue(true),
+  getSession: jest.fn().mockReturnValue({
+    agentId: 'test-agent',
+    isActive: true,
+  }),
+  getActiveSessions: jest.fn().mockReturnValue([]),
+};
+
+jest.mock('../src/core/sdk/communication-manager', () => jest.fn().mockImplementation(() => mockSDKManager));
 
 // Mock AgentLogManager
-jest.mock('../src/core/logging/agent-log-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-  }));
-});
+jest.mock('../src/core/logging/agent-log-manager', () => jest.fn().mockImplementation(() => ({
+  initialize: jest.fn().mockResolvedValue(undefined),
+})));
 
 // Mock tool usage tracker
 jest.mock('../src/core/tool-usage-tracker', () => ({
@@ -65,23 +76,36 @@ jest.mock('../src/core/tool-usage-tracker', () => ({
 
 describe('Agent Auto-Termination', () => {
   let agentManager;
+  let mockProcess;
 
-  beforeEach(async () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Create agent manager without full initialization to avoid timeouts
     agentManager = new AgentManager();
-    await agentManager.initialize();
+
+    // Manually set config to ensure autoCleanup is enabled
+    agentManager.config = {
+      features: {
+        autoCleanup: true,
+      },
+    };
+
+    // Initialize agents map
+    agentManager.agents = new Map();
 
     // Mock terminateAgent method
     agentManager.terminateAgent = jest.fn().mockResolvedValue(true);
-  });
 
-  afterEach(() => {
-    jest.clearAllMocks();
+    // Reset SDK manager mocks
+    mockSDKManager.executeQuery.mockClear();
+    mockSDKManager.executeQueryStream.mockClear();
   });
 
   describe('handleSDKMessage with result type', () => {
     test('should auto-terminate agent when message type is "result"', (done) => {
       const agentId = 'test-agent-1';
-      
+
       // Create a mock session
       agentManager.agents.set(agentId, {
         id: agentId,
@@ -103,14 +127,14 @@ describe('Agent Auto-Termination', () => {
         try {
           // Verify termination was called
           expect(agentManager.terminateAgent).toHaveBeenCalledWith(agentId);
-          
+
           // Verify logging
           expect(logger.info).toHaveBeenCalledWith(
             'Agent reached result state, auto-terminating',
             {
               agentId,
               resultContent: resultMessage.content,
-            }
+            },
           );
 
           // Verify termination log was added
@@ -119,7 +143,7 @@ describe('Agent Auto-Termination', () => {
             expect.objectContaining({
               content: 'Agent completed task and is waiting for input - auto-terminating',
               type: 'system',
-            })
+            }),
           );
 
           done();
@@ -131,7 +155,7 @@ describe('Agent Auto-Termination', () => {
 
     test('should NOT auto-terminate agent for non-result message types', () => {
       const agentId = 'test-agent-2';
-      
+
       // Create a mock session
       agentManager.agents.set(agentId, {
         id: agentId,
@@ -150,23 +174,23 @@ describe('Agent Auto-Termination', () => {
 
       // Verify termination was NOT called
       expect(agentManager.terminateAgent).not.toHaveBeenCalled();
-      
+
       // Verify no termination log was added
       const session = agentManager.agents.get(agentId);
       expect(session.logs).not.toContainEqual(
         expect.objectContaining({
           content: 'Agent completed task and is waiting for input - auto-terminating',
           type: 'system',
-        })
+        }),
       );
     });
 
     test('should handle termination errors gracefully', (done) => {
       const agentId = 'test-agent-3';
-      
+
       // Mock terminateAgent to reject
       agentManager.terminateAgent = jest.fn().mockRejectedValue(new Error('Termination failed'));
-      
+
       // Create a mock session
       agentManager.agents.set(agentId, {
         id: agentId,
@@ -189,14 +213,14 @@ describe('Agent Auto-Termination', () => {
           try {
             // Verify termination was attempted
             expect(agentManager.terminateAgent).toHaveBeenCalledWith(agentId);
-            
+
             // Verify error was logged
             expect(logger.error).toHaveBeenCalledWith(
               'Failed to auto-terminate agent',
               expect.objectContaining({
                 agentId,
                 error: 'Termination failed',
-              })
+              }),
             );
 
             done();

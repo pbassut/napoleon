@@ -1,10 +1,18 @@
+const fs = require('fs');
 const AgentManager = require('../src/core/agent-manager');
 const { EnvironmentValidationError } = require('../src/utils/errors');
 
 // Mock dependencies
 jest.mock('../src/core/config');
 jest.mock('../src/utils/logger');
-jest.mock('fs');
+jest.mock('fs', () => ({
+  existsSync: jest.fn(),
+  readFileSync: jest.fn(),
+  writeFileSync: jest.fn(),
+  mkdirSync: jest.fn(),
+  statSync: jest.fn(),
+  rmSync: jest.fn(),
+}));
 jest.mock('child_process');
 
 describe('AgentManager Input Validation', () => {
@@ -13,6 +21,23 @@ describe('AgentManager Input Validation', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
+
+    // Mock file system for validation tests
+    fs.statSync.mockImplementation((path) => {
+      // Mock different paths for different test scenarios
+      if (path.includes('valid') || path === '/valid/path') {
+        return { isDirectory: () => true };
+      }
+      if (path.includes('file') || path === '/path/to/file') {
+        return { isDirectory: () => false };
+      }
+      if (path.includes('nonexistent')) {
+        throw new Error('ENOENT: no such file or directory');
+      }
+      // For any unhandled path, return a valid directory to be safe
+      return { isDirectory: () => true };
+    });
+
     agentManager = new AgentManager();
   });
 
@@ -24,36 +49,36 @@ describe('AgentManager Input Validation', () => {
   describe('validateInstructions', () => {
     it('should accept valid instructions', () => {
       const validInstructions = 'Help me implement a new feature for the project';
-      const result = agentManager.validateInstructions(validInstructions);
+      const result = AgentManager.validateInstructions(validInstructions);
       expect(result).toBe(validInstructions);
     });
 
     it('should reject null instructions', () => {
-      expect(() => agentManager.validateInstructions(null)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions(null)).toThrow('Instructions must be a non-empty string');
+      expect(() => AgentManager.validateInstructions(null)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions(null)).toThrow('Instructions must be a non-empty string');
     });
 
     it('should reject undefined instructions', () => {
-      expect(() => agentManager.validateInstructions(undefined)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions(undefined)).toThrow('Instructions must be a non-empty string');
+      expect(() => AgentManager.validateInstructions(undefined)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions(undefined)).toThrow('Instructions must be a non-empty string');
     });
 
     it('should reject non-string instructions', () => {
-      expect(() => agentManager.validateInstructions(123)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions({})).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions([])).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions(123)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions({})).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions([])).toThrow(EnvironmentValidationError);
     });
 
     it('should accept short instructions (no minimum length)', () => {
-      expect(() => agentManager.validateInstructions('hi')).not.toThrow();
-      expect(() => agentManager.validateInstructions('x')).not.toThrow();
-      expect(() => agentManager.validateInstructions('test')).not.toThrow();
+      expect(() => AgentManager.validateInstructions('hi')).not.toThrow();
+      expect(() => AgentManager.validateInstructions('x')).not.toThrow();
+      expect(() => AgentManager.validateInstructions('test')).not.toThrow();
     });
 
     it('should reject instructions that are too long', () => {
       const longInstructions = 'a'.repeat(5001);
-      expect(() => agentManager.validateInstructions(longInstructions)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions(longInstructions)).toThrow('Agent instructions must be less than 5000 characters');
+      expect(() => AgentManager.validateInstructions(longInstructions)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions(longInstructions)).toThrow('Agent instructions must be less than 5000 characters');
     });
 
     it('should reject instructions with dangerous command substitution patterns', () => {
@@ -64,9 +89,9 @@ describe('AgentManager Input Validation', () => {
         'Test command: $(ls -la)',
       ];
 
-      dangerousInputs.forEach(input => {
-        expect(() => agentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
-        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
+      dangerousInputs.forEach((input) => {
+        expect(() => AgentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
+        expect(() => AgentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
       });
     });
 
@@ -77,25 +102,25 @@ describe('AgentManager Input Validation', () => {
         'Look at the ../config directory',
       ];
 
-      traversalInputs.forEach(input => {
-        expect(() => agentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
-        expect(() => agentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
+      traversalInputs.forEach((input) => {
+        expect(() => AgentManager.validateInstructions(input)).toThrow(EnvironmentValidationError);
+        expect(() => AgentManager.validateInstructions(input)).toThrow('Instructions contain potentially dangerous patterns');
       });
     });
 
     it('should reject instructions starting with dash (option-like)', () => {
-      expect(() => agentManager.validateInstructions('-help with this task')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('-help with this task')).toThrow('Instructions contain potentially dangerous patterns');
+      expect(() => AgentManager.validateInstructions('-help with this task')).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions('-help with this task')).toThrow('Instructions contain potentially dangerous patterns');
     });
 
     it('should reject instructions with null bytes', () => {
-      expect(() => agentManager.validateInstructions('test\0injection')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('test\0injection')).toThrow('Instructions contain potentially dangerous patterns');
+      expect(() => AgentManager.validateInstructions('test\0injection')).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions('test\0injection')).toThrow('Instructions contain potentially dangerous patterns');
     });
 
     it('should reject instructions with invalid control characters', () => {
-      expect(() => agentManager.validateInstructions('test\x01control')).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateInstructions('test\x7Fdelete')).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions('test\x01control')).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateInstructions('test\x7Fdelete')).toThrow(EnvironmentValidationError);
     });
 
     it('should accept instructions with code snippets and technical content', () => {
@@ -112,8 +137,8 @@ describe('AgentManager Input Validation', () => {
         'Variable usage: $HOME directory and $PATH settings',
       ];
 
-      validInputs.forEach(input => {
-        expect(() => agentManager.validateInstructions(input)).not.toThrow();
+      validInputs.forEach((input) => {
+        expect(() => AgentManager.validateInstructions(input)).not.toThrow();
       });
     });
 
@@ -131,95 +156,89 @@ describe('AgentManager Input Validation', () => {
         'Display results where y > 10',
       ];
 
-      validInputs.forEach(input => {
-        expect(() => agentManager.validateInstructions(input)).not.toThrow();
+      validInputs.forEach((input) => {
+        expect(() => AgentManager.validateInstructions(input)).not.toThrow();
       });
     });
 
     it('should trim whitespace from instructions', () => {
       const instruction = '   Help me implement a new feature   ';
-      const result = agentManager.validateInstructions(instruction);
+      const result = AgentManager.validateInstructions(instruction);
       expect(result).toBe('Help me implement a new feature');
     });
   });
 
   describe('validateOptions', () => {
     it('should return empty object for null options', () => {
-      const result = agentManager.validateOptions(null);
+      const result = AgentManager.validateOptions(null);
       expect(result).toEqual({});
     });
 
     it('should return empty object for undefined options', () => {
-      const result = agentManager.validateOptions(undefined);
+      const result = AgentManager.validateOptions(undefined);
       expect(result).toEqual({});
     });
 
     it('should return empty object for non-object options', () => {
-      expect(agentManager.validateOptions('string')).toEqual({});
-      expect(agentManager.validateOptions(123)).toEqual({});
-      expect(agentManager.validateOptions(true)).toEqual({});
+      expect(AgentManager.validateOptions('string')).toEqual({});
+      expect(AgentManager.validateOptions(123)).toEqual({});
+      expect(AgentManager.validateOptions(true)).toEqual({});
     });
 
     it('should return empty object for valid empty options', () => {
-      const result = agentManager.validateOptions({});
+      const result = AgentManager.validateOptions({});
       expect(result).toEqual({});
     });
 
     it('should validate working directory when provided', () => {
-      const fs = require('fs');
       const path = require('path');
-      
+
       // Mock fs.statSync to return directory stats
       fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => true
+        isDirectory: () => true,
       });
-      
+
       const options = { workingDirectory: '/valid/path' };
-      const result = agentManager.validateOptions(options);
-      
+      const result = AgentManager.validateOptions(options);
+
       expect(result.workingDirectory).toBe(path.resolve('/valid/path'));
       expect(fs.statSync).toHaveBeenCalledWith(path.resolve('/valid/path'));
     });
 
     it('should reject non-directory working directory', () => {
-      const fs = require('fs');
-      
       // Mock fs.statSync to return file stats
       fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => false
+        isDirectory: () => false,
       });
-      
+
       const options = { workingDirectory: '/path/to/file' };
-      expect(() => agentManager.validateOptions(options)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateOptions(options)).toThrow('Working directory is not a valid directory');
+      expect(() => AgentManager.validateOptions(options)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateOptions(options)).toThrow('Working directory is not a valid directory');
     });
 
     it('should reject inaccessible working directory', () => {
-      const fs = require('fs');
-      
       // Mock fs.statSync to throw error
       fs.statSync = jest.fn().mockImplementation(() => {
         throw new Error('ENOENT: no such file or directory');
       });
-      
+
       const options = { workingDirectory: '/nonexistent/path' };
-      expect(() => agentManager.validateOptions(options)).toThrow(EnvironmentValidationError);
-      expect(() => agentManager.validateOptions(options)).toThrow('Working directory is not accessible');
+      expect(() => AgentManager.validateOptions(options)).toThrow(EnvironmentValidationError);
+      expect(() => AgentManager.validateOptions(options)).toThrow('Working directory is not accessible');
     });
 
     it('should ignore unknown options', () => {
-      const fs = require('fs');
       fs.statSync = jest.fn().mockReturnValue({
-        isDirectory: () => true
+        isDirectory: () => true,
       });
-      
-      const options = { 
+
+      const options = {
         workingDirectory: '/valid/path',
         unknownOption: 'value',
-        anotherOption: 123
+        anotherOption: 123,
       };
-      const result = agentManager.validateOptions(options);
-      
+      const result = AgentManager.validateOptions(options);
+
       expect(result).toHaveProperty('workingDirectory');
       expect(result).not.toHaveProperty('unknownOption');
       expect(result).not.toHaveProperty('anotherOption');
