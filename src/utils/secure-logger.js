@@ -10,7 +10,7 @@ const fs = require('fs');
 class SecureLogger {
   constructor() {
     this.sensitivePatterns = [
-      /sk-ant-[a-zA-Z0-9\-_]+/gi, // Anthropic API keys
+      /sk-ant-[a-zA-Z0-9\-_]+/g, // Anthropic API keys
       /ANTHROPIC_API_KEY[=:]\s*[^\s]+/gi, // Environment variable assignments
       /CLAUDE_API_KEY[=:]\s*[^\s]+/gi, // Alternative env var name
       /CLAUDE_CODE_API_KEY\s*[=:]\s*[^\s]+/gi, // Alternative env var name with flexible spacing
@@ -19,8 +19,13 @@ class SecureLogger {
     this.logDir = path.join(os.homedir(), '.napoleon', 'logs');
 
     // Ensure log directory exists
-    if (!fs.existsSync(this.logDir)) {
-      fs.mkdirSync(this.logDir, { recursive: true });
+    try {
+      if (!fs.existsSync(this.logDir)) {
+        fs.mkdirSync(this.logDir, { recursive: true });
+      }
+    } catch (error) {
+      // Log directory creation failed, continue without throwing
+      console.warn('Failed to create log directory:', error.message);
     }
 
     // Determine if we're running in terminal UI mode
@@ -92,6 +97,8 @@ class SecureLogger {
     let sanitized = message;
 
     this.sensitivePatterns.forEach((pattern) => {
+      // Reset regex lastIndex to ensure consistent behavior
+      pattern.lastIndex = 0;
       sanitized = sanitized.replace(pattern, '[REDACTED]');
     });
 
@@ -182,7 +189,11 @@ class SecureLogger {
       return false;
     }
 
-    return this.sensitivePatterns.some((pattern) => pattern.test(message));
+    return this.sensitivePatterns.some((pattern) => {
+      // Reset regex lastIndex to ensure consistent testing
+      pattern.lastIndex = 0;
+      return pattern.test(message);
+    });
   }
 
   /**

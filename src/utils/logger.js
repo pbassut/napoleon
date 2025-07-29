@@ -6,8 +6,13 @@ const fs = require('fs');
 const logDir = path.join(os.homedir(), '.napoleon', 'logs');
 
 // Ensure log directory exists
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
+try {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+} catch (error) {
+  // Log directory creation failed, continue without throwing
+  console.warn('Failed to create log directory:', error.message);
 }
 
 // Determine if we're running in terminal UI mode

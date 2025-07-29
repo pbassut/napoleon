@@ -11,8 +11,9 @@ class ApiKeySetupGuide {
    * @param {string} apiKey - The invalid API key
    */
   displayFormatError(apiKey = '') {
-    const maskedKey = apiKey.length > 10
-      ? `${apiKey.substring(0, 7)}***${apiKey.substring(apiKey.length - 6)}`
+    const keyString = apiKey || '';
+    const maskedKey = keyString.length > 10
+      ? `${keyString.substring(0, 7)}***${keyString.substring(keyString.length - 6)}`
       : '***';
 
     console.error('\n❌ Invalid API Key Format');
