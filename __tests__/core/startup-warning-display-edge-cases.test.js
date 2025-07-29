@@ -214,8 +214,22 @@ describe('StartupWarningDisplay Edge Cases', () => {
 
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Modified files'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Untracked files'));
-      expect(console.log).toHaveBeenCalledWith('  modified1.js (modified)');
-      expect(console.log).toHaveBeenCalledWith('  new1.js');
+      
+      // Check that getDetailedFileInfo was called and returned the expected format
+      expect(mockGetDetailedFileInfo).toHaveBeenCalledWith(statusResult);
+      
+      // The actual console.log calls will be chalk.gray(fileInfo.modified) and chalk.gray(fileInfo.untracked)
+      // We need to check that these values were passed to console.log via chalk
+      const consoleCalls = console.log.mock.calls;
+      const hasModifiedCall = consoleCalls.some(call => 
+        call.length > 0 && typeof call[0] === 'string' && call[0].includes('modified1.js (modified)')
+      );
+      const hasUntrackedCall = consoleCalls.some(call => 
+        call.length > 0 && typeof call[0] === 'string' && call[0].includes('new1.js')
+      );
+      
+      expect(hasModifiedCall).toBe(true);
+      expect(hasUntrackedCall).toBe(true);
     });
   });
 
