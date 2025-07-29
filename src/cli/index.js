@@ -38,7 +38,7 @@ async function initializeApplication(program) {
     program
       .name('napoleon')
       .description('Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions')
-      .version('1.0.0');
+      .version(require('../../package.json').version);
 
     // Start command (main TUI)
     program
