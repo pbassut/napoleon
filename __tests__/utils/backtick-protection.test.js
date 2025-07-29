@@ -1,77 +1,122 @@
-const { protectBackticks, isInputSafe } = require('../../src/utils/backtick-protection.js');
+const { protectBackticks, isInputSafe } = require('../../src/utils/backtick-protection');
 
-describe('protectBackticks', () => {
-  it('should return the input unchanged for normal text', () => {
-    const input = 'Normal text without backticks';
-    expect(protectBackticks(input)).toBe(input);
+describe('Backtick Protection', () => {
+  describe('protectBackticks', () => {
+    it('should return string input unchanged', () => {
+      const input = 'console.log(`Hello ${name}`)';
+      const result = protectBackticks(input);
+      expect(result).toBe(input);
+    });
+
+    it('should handle regular strings without backticks', () => {
+      const input = 'Hello world';
+      const result = protectBackticks(input);
+      expect(result).toBe(input);
+    });
+
+    it('should handle empty strings', () => {
+      const input = '';
+      const result = protectBackticks(input);
+      expect(result).toBe('');
+    });
+
+    it('should handle non-string inputs by returning them unchanged', () => {
+      const inputs = [null, undefined, 123, {}, [], true];
+      
+      inputs.forEach(input => {
+        const result = protectBackticks(input);
+        expect(result).toBe(input);
+      });
+    });
+
+    it('should preserve code formatting with backticks', () => {
+      const codeString = `
+        const template = \`
+          Hello \${user.name}!
+          Welcome to \${app.name}
+        \`;
+      `;
+      const result = protectBackticks(codeString);
+      expect(result).toBe(codeString);
+    });
+
+    it('should handle multiple backticks and template literals', () => {
+      const input = '`first template` and `second template` with `${variable}`';
+      const result = protectBackticks(input);
+      expect(result).toBe(input);
+    });
   });
 
-  it('should preserve backticks for code formatting', () => {
-    const input = 'Use `console.log()` to debug';
-    expect(protectBackticks(input)).toBe(input);
-  });
+  describe('isInputSafe', () => {
+    it('should return true for safe string input', () => {
+      const input = 'Hello world';
+      const result = isInputSafe(input);
+      expect(result).toBe(true);
+    });
 
-  it('should preserve multi-line code blocks with backticks', () => {
-    const input = '```javascript\nconst x = 5;\nconsole.log(x);\n```';
-    expect(protectBackticks(input)).toBe(input);
-  });
+    it('should return true for strings with backticks', () => {
+      const input = 'console.log(`Hello ${name}`)';
+      const result = isInputSafe(input);
+      expect(result).toBe(true);
+    });
 
-  it('should handle mixed content with backticks', () => {
-    const input = 'Please fix this `bug` in the code:\n```\nif (x > 0) {\n  return true;\n}\n```';
-    expect(protectBackticks(input)).toBe(input);
-  });
+    it('should return false for empty strings', () => {
+      const input = '';
+      const result = isInputSafe(input);
+      expect(result).toBe(false);
+    });
 
-  it('should handle empty string', () => {
-    expect(protectBackticks('')).toBe('');
-  });
+    it('should return false for whitespace-only strings', () => {
+      const inputs = ['   ', '\t', '\n', '\r\n', ' \t \n '];
+      
+      inputs.forEach(input => {
+        const result = isInputSafe(input);
+        expect(result).toBe(false);
+      });
+    });
 
-  it('should handle non-string input', () => {
-    expect(protectBackticks(null)).toBe(null);
-    expect(protectBackticks(undefined)).toBe(undefined);
-    expect(protectBackticks(123)).toBe(123);
-  });
+    it('should return false for non-string inputs', () => {
+      const inputs = [null, undefined, 123, {}, [], true, false];
+      
+      inputs.forEach(input => {
+        const result = isInputSafe(input);
+        expect(result).toBe(false);
+      });
+    });
 
-  it('should handle nested backticks', () => {
-    const input = '`Use \\`nested\\` backticks like this`';
-    expect(protectBackticks(input)).toBe(input);
-  });
+    it('should return true for strings with meaningful content after trimming', () => {
+      const inputs = [
+        '  hello  ',
+        '\tworld\t',
+        '\n  test  \n',
+        '   `template literal`   '
+      ];
+      
+      inputs.forEach(input => {
+        const result = isInputSafe(input);
+        expect(result).toBe(true);
+      });
+    });
 
-  it('should handle backticks with special characters', () => {
-    const input = '`echo $HOME && ls -la`';
-    expect(protectBackticks(input)).toBe(input);
-  });
-});
+    it('should handle large strings', () => {
+      const largeString = 'a'.repeat(10000);
+      const result = isInputSafe(largeString);
+      expect(result).toBe(true);
+    });
 
-describe('isInputSafe', () => {
-  it('should return true for normal text', () => {
-    expect(isInputSafe('Normal text')).toBe(true);
-  });
-
-  it('should return true for text with backticks', () => {
-    expect(isInputSafe('Use `console.log()` to debug')).toBe(true);
-  });
-
-  it('should return true for multi-line text with backticks', () => {
-    const input = '```javascript\nconst x = 5;\n```';
-    expect(isInputSafe(input)).toBe(true);
-  });
-
-  it('should return false for empty string', () => {
-    expect(isInputSafe('')).toBe(false);
-  });
-
-  it('should return false for whitespace-only string', () => {
-    expect(isInputSafe('   \n\t   ')).toBe(false);
-  });
-
-  it('should return false for non-string input', () => {
-    expect(isInputSafe(null)).toBe(false);
-    expect(isInputSafe(undefined)).toBe(false);
-    expect(isInputSafe(123)).toBe(false);
-    expect(isInputSafe({})).toBe(false);
-  });
-
-  it('should return true for text with special characters and backticks', () => {
-    expect(isInputSafe('`echo $HOME && ls -la`')).toBe(true);
+    it('should handle special characters and unicode', () => {
+      const inputs = [
+        'Hello 世界',
+        'Testing 🚀 emojis',
+        'Special chars: @#$%^&*()',
+        'Quotes: "double" and \'single\'',
+        'Newlines\nand\ttabs'
+      ];
+      
+      inputs.forEach(input => {
+        const result = isInputSafe(input);
+        expect(result).toBe(true);
+      });
+    });
   });
 });
