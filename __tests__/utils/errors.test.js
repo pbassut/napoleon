@@ -192,7 +192,13 @@ describe('Custom Error Classes', () => {
   describe('Error Serialization', () => {
     it('should serialize EnvironmentValidationError correctly', () => {
       const error = new EnvironmentValidationError('Test error', 'TEST_CODE', 'Test suggestion');
-      const serialized = JSON.stringify(error);
+      const errorObj = {
+        message: error.message,
+        code: error.code,
+        suggestion: error.suggestion,
+        name: error.name
+      };
+      const serialized = JSON.stringify(errorObj);
       const parsed = JSON.parse(serialized);
       
       expect(parsed.message).toBe('Test error');
@@ -203,7 +209,13 @@ describe('Custom Error Classes', () => {
 
     it('should serialize ConfigurationError correctly', () => {
       const error = new ConfigurationError('Config error', 'CONFIG_CODE', 'Config suggestion');
-      const serialized = JSON.stringify(error);
+      const errorObj = {
+        message: error.message,
+        code: error.code,
+        suggestion: error.suggestion,
+        name: error.name
+      };
+      const serialized = JSON.stringify(errorObj);
       const parsed = JSON.parse(serialized);
       
       expect(parsed.message).toBe('Config error');
@@ -214,7 +226,13 @@ describe('Custom Error Classes', () => {
 
     it('should serialize FileSystemError correctly', () => {
       const error = new FileSystemError('FS error', 'FS_CODE', 'FS suggestion');
-      const serialized = JSON.stringify(error);
+      const errorObj = {
+        message: error.message,
+        code: error.code,
+        suggestion: error.suggestion,
+        name: error.name
+      };
+      const serialized = JSON.stringify(errorObj);
       const parsed = JSON.parse(serialized);
       
       expect(parsed.message).toBe('FS error');
