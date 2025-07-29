@@ -653,7 +653,7 @@ class AgentManager {
 
         // Create the worktree
         exec(
-          `git worktree add "${worktreePath}" --lock`,
+          `git worktree add "${worktreePath}" origin/main --lock`,
           {
             cwd: process.cwd(),
             timeout: 120000, // 2 minute timeout for large repos
