@@ -12,7 +12,7 @@ jest.mock('fs', () => ({
 
 const { spawn } = require('child_process');
 const fs = require('fs').promises;
-const InkUITester = require('../../../src/testing/ui/InkUITester');
+const { InkUITester } = require('../../../src/testing/ui/InkUITester');
 
 describe('InkUITester', () => {
   let tester;
@@ -590,12 +590,12 @@ describe('InkUITester', () => {
   });
 
   describe('Edge Cases and Error Handling', () => {
-    it('should handle spawn process creation failure', () => {
+    it('should handle spawn process creation failure', async () => {
       spawn.mockImplementation(() => {
         throw new Error('Spawn failed');
       });
       
-      expect(() => new InkUITester().startNapoleonProcess()).rejects.toThrow('Spawn failed');
+      await expect(new InkUITester().startNapoleonProcess()).rejects.toThrow('Spawn failed');
     });
 
     it('should handle missing process in sendToProcess', async () => {
@@ -625,6 +625,244 @@ describe('InkUITester', () => {
     it('should handle empty input normalization', () => {
       const result = tester.normalizeInput({});
       expect(result.data).toBe('');
+    });
+  });
+
+  describe('Additional Coverage Tests', () => {
+    beforeEach(async () => {
+      const startPromise = tester.startProcess();
+      jest.advanceTimersByTime(200);
+      await startPromise;
+    });
+
+    it('should handle process stdin.end error', async () => {
+      mockProcess.stdin.end.mockImplementation(() => {
+        throw new Error('End failed');
+      });
+
+      // Should not throw error
+      await expect(tester.stopProcess()).resolves.toBeUndefined();
+    });
+
+    it('should handle killed process in terminateProcess', async () => {
+      mockProcess.killed = true;
+
+      const terminatePromise = tester.terminateProcess();
+      jest.advanceTimersByTime(6000); // Force timeout
+
+      await terminatePromise;
+      expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
+    });
+
+    it('should handle process that exits before timeout in terminateProcess', async () => {
+      const terminatePromise = tester.terminateProcess();
+      
+      // Simulate process exit before timeout
+      const exitHandler = mockProcess.once.mock.calls.find(call => call[0] === 'exit')[1];
+      exitHandler();
+
+      await terminatePromise;
+      expect(mockProcess.kill).toHaveBeenCalledWith('SIGTERM');
+    });
+
+    it('should handle environment variable inheritance', async () => {
+      const originalEnv = process.env.TEST_VAR;
+      process.env.TEST_VAR = 'original-value';
+
+      const customTester = new InkUITester({
+        env: { CUSTOM_VAR: 'custom-value' },
+      });
+
+      const startPromise = customTester.startProcess();
+      jest.advanceTimersByTime(200);
+      await startPromise;
+
+      const spawnCall = spawn.mock.calls[spawn.mock.calls.length - 1];
+      const spawnEnv = spawnCall[2].env;
+
+      expect(spawnEnv.TEST_VAR).toBe('original-value');
+      expect(spawnEnv.CUSTOM_VAR).toBe('custom-value');
+      expect(spawnEnv.NAPOLEON_UI_MODE).toBe('ink');
+
+      // Cleanup
+      if (originalEnv !== undefined) {
+        process.env.TEST_VAR = originalEnv;
+      } else {
+        delete process.env.TEST_VAR;
+      }
+    });
+
+    it('should handle process error during startup', async () => {
+      const errorSpy = jest.fn();
+      tester.on('process-error', errorSpy);
+
+      const startPromise = tester.startProcess();
+      jest.advanceTimersByTime(200);
+      await startPromise;
+
+      // Simulate process error
+      const errorHandler = mockProcess.on.mock.calls.find(call => call[0] === 'error')[1];
+      const testError = new Error('Process startup error');
+      errorHandler(testError);
+
+      expect(errorSpy).toHaveBeenCalledWith({ error: testError });
+    });
+
+    it('should calculate correct duration in saveResults', async () => {
+      const startTime = Date.now();
+      tester.startTime = startTime;
+
+      // Mock Date.now to return a later time
+      const mockNow = startTime + 5000;
+      const originalDateNow = Date.now;
+      Date.now = jest.fn(() => mockNow);
+
+      await tester.saveResults('test-results.json');
+
+      const savedData = JSON.parse(fs.writeFile.mock.calls[0][1]);
+      expect(savedData.duration).toBe(5000);
+      expect(savedData.startTime).toBe(startTime);
+
+      // Restore Date.now
+      Date.now = originalDateNow;
+    });
+
+    it('should handle output capture with binary data', () => {
+      const stdoutHandler = mockProcess.stdout.on.mock.calls.find(call => call[0] === 'data')[1];
+      const binaryData = Buffer.from([0, 1, 255, 128, 64]);
+      
+      stdoutHandler(binaryData);
+
+      expect(tester.output).toHaveLength(1);
+      expect(tester.output[0].data).toBe(binaryData.toString());
+      expect(tester.output[0].type).toBe('stdout');
+    });
+
+    it('should handle stderr output capture', () => {
+      const stderrHandler = mockProcess.stderr.on.mock.calls.find(call => call[0] === 'data')[1];
+      const errorData = Buffer.from('Error output');
+      
+      stderrHandler(errorData);
+
+      expect(tester.output).toHaveLength(1);
+      expect(tester.output[0].data).toBe('Error output');
+      expect(tester.output[0].type).toBe('stderr');
+    });
+
+    it('should handle large output volumes', () => {
+      const stdoutHandler = mockProcess.stdout.on.mock.calls.find(call => call[0] === 'data')[1];
+      
+      // Add 1000 output entries
+      for (let i = 0; i < 1000; i++) {
+        stdoutHandler(Buffer.from(`Output line ${i}`));
+      }
+
+      expect(tester.output).toHaveLength(1000);
+      expect(tester.output[0].data).toBe('Output line 0');
+      expect(tester.output[999].data).toBe('Output line 999');
+    });
+
+    it('should handle key mappings for all special keys', () => {
+      const specialKeys = [
+        { key: 'up', expected: '\x1b[A' },
+        { key: 'down', expected: '\x1b[B' },
+        { key: 'left', expected: '\x1b[D' },
+        { key: 'right', expected: '\x1b[C' },
+        { key: 'enter', expected: '\r' },
+        { key: 'escape', expected: '\x1b' },
+        { key: 'tab', expected: '\t' },
+        { key: 'backspace', expected: '\x7f' },
+      ];
+
+      specialKeys.forEach(mapping => {
+        const result = tester.normalizeInput({ key: mapping.key });
+        expect(result.data).toBe(mapping.expected);
+      });
+    });
+
+    it('should handle ctrl key combinations', () => {
+      const ctrlKeys = [
+        { key: 'a', expected: '\x01' },
+        { key: 'c', expected: '\x03' },
+        { key: 'z', expected: '\x1a' },
+        { key: 'A', expected: '\x01' }, // Should work with uppercase too
+      ];
+
+      ctrlKeys.forEach(mapping => {
+        const result = tester.normalizeInput({ key: mapping.key, ctrl: true });
+        expect(result.data).toBe(mapping.expected);
+      });
+    });
+
+    it('should handle meta key combinations', () => {
+      const metaKeys = [
+        { key: 'a', expected: '\x1ba' },
+        { key: 'x', expected: '\x1bx' },
+        { key: 'enter', expected: '\x1b\r' },
+      ];
+
+      metaKeys.forEach(mapping => {
+        const result = tester.normalizeInput({ key: mapping.key, meta: true });
+        expect(result.data).toBe(mapping.expected);
+      });
+    });
+
+    it('should handle complex input objects with all properties', () => {
+      const complexInput = {
+        text: 'test input',
+        waitAfter: 500,
+        immediate: true,
+        customProp: 'custom value',
+      };
+
+      const result = tester.normalizeInput(complexInput);
+
+      expect(result.data).toBe('test input');
+      expect(result.text).toBe('test input');
+      expect(result.waitAfter).toBe(500);
+      expect(result.immediate).toBe(true);
+      expect(result.customProp).toBe('custom value');
+    });
+
+    it('should handle waitForStability with immediate stability', async () => {
+      // No output events, should resolve immediately after timeout
+      const stabilityPromise = tester.waitForStability(100);
+      
+      jest.advanceTimersByTime(150);
+      
+      await stabilityPromise;
+      // Should complete without errors
+    });
+
+    it('should handle error in output handler', () => {
+      const originalConsoleError = console.error;
+      console.error = jest.fn();
+
+      // Mock stdout handler to throw error
+      const stdoutHandler = mockProcess.stdout.on.mock.calls.find(call => call[0] === 'data')[1];
+      
+      // Temporarily break the output array to cause an error
+      const originalPush = tester.output.push;
+      tester.output.push = jest.fn(() => {
+        throw new Error('Output handling failed');
+      });
+
+      // Should not crash the process
+      expect(() => stdoutHandler(Buffer.from('test'))).not.toThrow();
+
+      // Restore
+      tester.output.push = originalPush;
+      console.error = originalConsoleError;
+    });
+
+    it('should handle entry point with different extensions', () => {
+      const testerJs = new InkUITester({ entryPoint: 'bin/app.js' });
+      const testerTs = new InkUITester({ entryPoint: 'src/main.ts' });
+      const testerMjs = new InkUITester({ entryPoint: 'dist/index.mjs' });
+
+      expect(testerJs.options.entryPoint).toBe('bin/app.js');
+      expect(testerTs.options.entryPoint).toBe('src/main.ts');
+      expect(testerMjs.options.entryPoint).toBe('dist/index.mjs');
     });
   });
 });
