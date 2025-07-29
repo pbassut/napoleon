@@ -1,5 +1,10 @@
 // Jest global setup for timer cleanup and async handle prevention
 
+// Set NODE_ENV to test if not already set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = 'test';
+}
+
 // Mock process.stdout.write to prevent terminal control sequences
 // from interfering with Jest's async operation detection
 const originalWrite = process.stdout.write;
@@ -83,7 +88,7 @@ afterAll(async () => {
   
   // Wait briefly for cleanup
   await new Promise(resolve => {
-    setImmediate(resolve);
+    setTimeout(resolve, 0);
   });
 });
 

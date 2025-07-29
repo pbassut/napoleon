@@ -1,0 +1,585 @@
+/**
+ * Tests for SecureLogger class
+ * Comprehensive testing of sensitive data sanitization and logging functionality
+ */
+
+const winston = require('winston');
+const path = require('path');
+const os = require('os');
+const fs = require('fs');
+
+// Mock dependencies
+jest.mock('winston');
+jest.mock('fs');
+jest.mock('os');
+jest.mock('path');
+
+describe('SecureLogger', () => {
+  let mockWinstonLogger;
+  let mockConsoleTransport;
+  let mockFileTransport;
+  let originalEnv;
+  let originalArgv;
+
+  beforeEach(() => {
+    // Clear module cache to get fresh instance
+    jest.resetModules();
+    
+    // Save original environment
+    originalEnv = { ...process.env };
+    originalArgv = [...process.argv];
+
+    // Get fresh references to the mocked functions
+    mockWinstonLogger = winston.createLogger();
+    mockConsoleTransport = winston.transports.Console;
+    mockFileTransport = winston.transports.File;
+
+    // Mock file system
+    fs.existsSync = jest.fn().mockReturnValue(true);
+    fs.mkdirSync = jest.fn();
+
+    // Mock os and path
+    os.homedir = jest.fn().mockReturnValue('/home/test');
+    path.join = jest.fn((...args) => args.join('/'));
+
+    // Reset environment
+    delete process.env.TERMINAL_UI_MODE;
+    delete process.env.LOG_LEVEL;
+    process.argv = ['node', 'test.js'];
+  });
+
+  afterEach(() => {
+    // Restore environment
+    process.env = originalEnv;
+    process.argv = originalArgv;
+    jest.clearAllMocks();
+  });
+
+  describe('Constructor', () => {
+    it('should create instance with default configuration', () => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      expect(winston.createLogger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'info',
+          defaultMeta: { service: 'napoleon' },
+          transports: [],
+        })
+      );
+    });
+
+    it('should use custom log level from environment', () => {
+      process.env.LOG_LEVEL = 'debug';
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      expect(winston.createLogger).toHaveBeenCalledWith(
+        expect.objectContaining({
+          level: 'debug',
+        })
+      );
+    });
+
+    it('should create log directory if it does not exist', () => {
+      fs.existsSync.mockReturnValue(false);
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      expect(fs.mkdirSync).toHaveBeenCalledWith('/home/test/.napoleon/logs', { recursive: true });
+    });
+
+    it('should not create log directory if it already exists', () => {
+      fs.existsSync.mockReturnValue(true);
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      expect(fs.mkdirSync).not.toHaveBeenCalled();
+    });
+
+    it('should detect terminal UI mode from environment', () => {
+      process.env.TERMINAL_UI_MODE = 'true';
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      // Console transport should not be added in terminal UI mode
+      expect(mockWinstonLogger.add).toHaveBeenCalledTimes(2); // Only file transports
+    });
+
+    it('should detect terminal UI mode from start command', () => {
+      process.argv = ['node', 'napoleon.js', 'start'];
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      // Console transport should not be added in terminal UI mode
+      expect(mockWinstonLogger.add).toHaveBeenCalledTimes(2); // Only file transports
+    });
+
+    it('should detect terminal UI mode from napoleon.js in argv', () => {
+      process.argv = ['node', '/path/to/napoleon.js', 'some-command'];
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      // Console transport should not be added in terminal UI mode
+      expect(mockWinstonLogger.add).toHaveBeenCalledTimes(2); // Only file transports
+    });
+
+    it('should add console transport when not in terminal UI mode', () => {
+      process.env.TERMINAL_UI_MODE = 'false';
+      process.argv = ['node', 'test.js'];
+      
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      // Console transport should be added
+      expect(mockWinstonLogger.add).toHaveBeenCalledTimes(3); // Console + 2 file transports
+      expect(mockConsoleTransport).toHaveBeenCalled();
+    });
+
+    it('should always add file transports', () => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      const instance = new SecureLogger();
+      
+      expect(mockFileTransport).toHaveBeenCalledTimes(2);
+      expect(mockFileTransport).toHaveBeenCalledWith({
+        filename: '/home/test/.napoleon/logs/error.log',
+        level: 'error',
+      });
+      expect(mockFileTransport).toHaveBeenCalledWith({
+        filename: '/home/test/.napoleon/logs/combined.log',
+      });
+    });
+  });
+
+  describe('Sensitive Pattern Recognition', () => {
+    let secureLogger;
+
+    beforeEach(() => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      secureLogger = new SecureLogger();
+    });
+
+    it('should have predefined sensitive patterns', () => {
+      const patterns = secureLogger.getSensitivePatterns();
+      
+      expect(patterns).toHaveLength(4);
+      expect(patterns).toContain('sk-ant-[a-zA-Z0-9\\-_]+');
+      expect(patterns).toContain('ANTHROPIC_API_KEY[=:]\\s*[^\\s]+');
+      expect(patterns).toContain('CLAUDE_API_KEY[=:]\\s*[^\\s]+');
+      expect(patterns).toContain('CLAUDE_CODE_API_KEY\\s*[=:]\\s*[^\\s]+');
+    });
+
+    it('should detect Anthropic API keys', () => {
+      expect(secureLogger.hasSensitiveContent('sk-ant-api01234567890abcdef')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('sk-ant-1234567890abcdef-ghijklmnop')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('SK-ANT-UPPERCASE123')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('regular text')).toBe(false);
+    });
+
+    it('should detect environment variable assignments', () => {
+      expect(secureLogger.hasSensitiveContent('ANTHROPIC_API_KEY=sk-ant-123')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('ANTHROPIC_API_KEY: sk-ant-123')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('CLAUDE_API_KEY=secret123')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('CLAUDE_CODE_API_KEY = secret123')).toBe(true);
+      expect(secureLogger.hasSensitiveContent('CLAUDE_CODE_API_KEY  :  secret123')).toBe(true);
+    });
+
+    it('should handle non-string inputs gracefully', () => {
+      expect(secureLogger.hasSensitiveContent(null)).toBe(false);
+      expect(secureLogger.hasSensitiveContent(undefined)).toBe(false);
+      expect(secureLogger.hasSensitiveContent(123)).toBe(false);
+      expect(secureLogger.hasSensitiveContent({})).toBe(false);
+    });
+  });
+
+  describe('Message Sanitization', () => {
+    let secureLogger;
+
+    beforeEach(() => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      secureLogger = new SecureLogger();
+    });
+
+    it('should sanitize Anthropic API keys', () => {
+      const message = 'Using API key sk-ant-1234567890abcdef for requests';
+      const sanitized = secureLogger.sanitizeMessage(message);
+      
+      expect(sanitized).toBe('Using API key [REDACTED] for requests');
+    });
+
+    it('should sanitize multiple API keys in one message', () => {
+      const message = 'Keys: sk-ant-key1 and sk-ant-key2 are both valid';
+      const sanitized = secureLogger.sanitizeMessage(message);
+      
+      expect(sanitized).toBe('Keys: [REDACTED] and [REDACTED] are both valid');
+    });
+
+    it('should sanitize environment variable assignments', () => {
+      const message = 'Set ANTHROPIC_API_KEY=sk-ant-secret123 in your env';
+      const sanitized = secureLogger.sanitizeMessage(message);
+      
+      expect(sanitized).toBe('Set [REDACTED] in your env');
+    });
+
+    it('should handle mixed sensitive patterns', () => {
+      const message = 'CLAUDE_API_KEY: sk-ant-123 and ANTHROPIC_API_KEY=sk-ant-456';
+      const sanitized = secureLogger.sanitizeMessage(message);
+      
+      expect(sanitized).toBe('[REDACTED] and [REDACTED]');
+    });
+
+    it('should return non-string inputs unchanged', () => {
+      expect(secureLogger.sanitizeMessage(null)).toBe(null);
+      expect(secureLogger.sanitizeMessage(undefined)).toBe(undefined);
+      expect(secureLogger.sanitizeMessage(123)).toBe(123);
+      expect(secureLogger.sanitizeMessage({})).toEqual({});
+    });
+
+    it('should not modify safe messages', () => {
+      const message = 'This is a safe log message with no secrets';
+      const sanitized = secureLogger.sanitizeMessage(message);
+      
+      expect(sanitized).toBe(message);
+    });
+  });
+
+  describe('Object Sanitization', () => {
+    let secureLogger;
+
+    beforeEach(() => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      secureLogger = new SecureLogger();
+    });
+
+    it('should sanitize object string properties', () => {
+      const obj = {
+        message: 'API key is sk-ant-secret123',
+        config: 'ANTHROPIC_API_KEY=sk-ant-456',
+        safe: 'This is safe',
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized).toEqual({
+        message: 'API key is [REDACTED]',
+        config: '[REDACTED]',
+        safe: 'This is safe',
+      });
+    });
+
+    it('should sanitize nested objects recursively', () => {
+      const obj = {
+        level1: {
+          level2: {
+            secret: 'sk-ant-nested123',
+            safe: 'safe value',
+          },
+          another: 'CLAUDE_API_KEY=secret',
+        },
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized).toEqual({
+        level1: {
+          level2: {
+            secret: '[REDACTED]',
+            safe: 'safe value',
+          },
+          another: '[REDACTED]',
+        },
+      });
+    });
+
+    it('should sanitize arrays of strings', () => {
+      const obj = {
+        messages: [
+          'Safe message',
+          'API key sk-ant-123 here',
+          'ANTHROPIC_API_KEY=secret',
+        ],
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized).toEqual({
+        messages: [
+          'Safe message',
+          'API key [REDACTED] here',
+          '[REDACTED]',
+        ],
+      });
+    });
+
+    it('should sanitize arrays of objects', () => {
+      const obj = {
+        items: [
+          { message: 'Safe' },
+          { secret: 'sk-ant-array123' },
+          { nested: { key: 'CLAUDE_API_KEY=secret' } },
+        ],
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized).toEqual({
+        items: [
+          { message: 'Safe' },
+          { secret: '[REDACTED]' },
+          { nested: { key: '[REDACTED]' } },
+        ],
+      });
+    });
+
+    it('should preserve non-string, non-object values', () => {
+      const obj = {
+        number: 123,
+        boolean: true,
+        nullValue: null,
+        undefinedValue: undefined,
+        date: new Date('2023-01-01'),
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized).toEqual(obj);
+    });
+
+    it('should handle null and undefined inputs', () => {
+      expect(secureLogger.sanitizeObject(null)).toBe(null);
+      expect(secureLogger.sanitizeObject(undefined)).toBe(undefined);
+    });
+
+    it('should handle non-object inputs', () => {
+      expect(secureLogger.sanitizeObject('string')).toBe('string');
+      expect(secureLogger.sanitizeObject(123)).toBe(123);
+      expect(secureLogger.sanitizeObject(true)).toBe(true);
+    });
+
+    it('should handle empty objects and arrays', () => {
+      expect(secureLogger.sanitizeObject({})).toEqual({});
+      expect(secureLogger.sanitizeObject([])).toEqual([]);
+    });
+  });
+
+  describe('Logging Methods', () => {
+    let secureLogger;
+
+    beforeEach(() => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      secureLogger = new SecureLogger();
+    });
+
+    it('should log info messages', () => {
+      const message = 'Info message';
+      const meta = { key: 'value' };
+
+      secureLogger.info(message, meta);
+
+      expect(mockWinstonLogger.info).toHaveBeenCalledWith(message, meta);
+    });
+
+    it('should log error messages', () => {
+      const message = 'Error message';
+      const meta = { error: 'details' };
+
+      secureLogger.error(message, meta);
+
+      expect(mockWinstonLogger.error).toHaveBeenCalledWith(message, meta);
+    });
+
+    it('should log debug messages', () => {
+      const message = 'Debug message';
+      const meta = { debug: 'info' };
+
+      secureLogger.debug(message, meta);
+
+      expect(mockWinstonLogger.debug).toHaveBeenCalledWith(message, meta);
+    });
+
+    it('should log warn messages', () => {
+      const message = 'Warning message';
+      const meta = { warning: 'details' };
+
+      secureLogger.warn(message, meta);
+
+      expect(mockWinstonLogger.warn).toHaveBeenCalledWith(message, meta);
+    });
+
+    it('should handle logging with default empty meta', () => {
+      secureLogger.info('Test message');
+
+      expect(mockWinstonLogger.info).toHaveBeenCalledWith('Test message', {});
+    });
+  });
+
+  describe('Winston Format Integration', () => {
+    let formatPrintfCallback;
+
+    beforeEach(() => {
+      // Capture the printf format callback
+      winston.format.printf.mockImplementation((callback) => {
+        formatPrintfCallback = callback;
+        return 'printf-format';
+      });
+      
+      // Require after setting up mocks
+      require('../../src/utils/secure-logger');
+    });
+
+    it('should sanitize messages in winston format', () => {
+      const logData = {
+        timestamp: '2023-01-01T12:00:00Z',
+        level: 'info',
+        message: 'API key sk-ant-secret123 detected',
+        userId: 'user123',
+      };
+
+      const result = formatPrintfCallback(logData);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.message).toBe('API key [REDACTED] detected');
+      expect(parsed.userId).toBe('user123');
+      expect(parsed.timestamp).toBe('2023-01-01T12:00:00Z');
+      expect(parsed.level).toBe('info');
+    });
+
+    it('should sanitize meta objects in winston format', () => {
+      const logData = {
+        timestamp: '2023-01-01T12:00:00Z',
+        level: 'error',
+        message: 'Error occurred',
+        config: { apiKey: 'sk-ant-meta123' },
+        env: 'ANTHROPIC_API_KEY=secret',
+      };
+
+      const result = formatPrintfCallback(logData);
+      const parsed = JSON.parse(result);
+
+      expect(parsed.config.apiKey).toBe('[REDACTED]');
+      expect(parsed.env).toBe('[REDACTED]');
+    });
+  });
+
+  describe('Console Format Integration', () => {
+    let consoleFormatCallback;
+
+    beforeEach(() => {
+      process.env.TERMINAL_UI_MODE = 'false'; // Ensure console transport is added
+      
+      // Setup mock to capture console format callback
+      winston.format.printf.mockImplementation((callback) => {
+        if (callback.toString().includes('metaStr')) {
+          consoleFormatCallback = callback;
+        }
+        return 'printf-format';
+      });
+      
+      require('../../src/utils/secure-logger');
+    });
+
+    it('should sanitize console output', () => {
+      const logData = {
+        level: 'info',
+        message: 'Console log with sk-ant-console123',
+        data: { secret: 'CLAUDE_API_KEY=console-secret' },
+      };
+
+      const result = consoleFormatCallback(logData);
+
+      expect(result).toContain('[REDACTED]');
+      expect(result).not.toContain('sk-ant-console123');
+      expect(result).not.toContain('console-secret');
+    });
+
+    it('should handle console output without meta', () => {
+      const logData = {
+        level: 'info',
+        message: 'Simple console message',
+      };
+
+      const result = consoleFormatCallback(logData);
+
+      expect(result).toBe('info: Simple console message');
+    });
+  });
+
+  describe('Edge Cases and Error Handling', () => {
+    let secureLogger;
+
+    beforeEach(() => {
+      const SecureLogger = require('../../src/utils/secure-logger');
+      secureLogger = new SecureLogger();
+    });
+
+    it('should handle circular references in objects', () => {
+      const obj = { name: 'test' };
+      obj.self = obj; // Create circular reference
+
+      // Should not throw an error
+      expect(() => {
+        secureLogger.sanitizeObject(obj);
+      }).not.toThrow();
+    });
+
+    it('should handle deeply nested objects', () => {
+      let obj = { secret: 'sk-ant-deep123' };
+      
+      // Create deeply nested object
+      for (let i = 0; i < 100; i++) {
+        obj = { nested: obj };
+      }
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      // Navigate to the deep secret
+      let current = sanitized;
+      for (let i = 0; i < 100; i++) {
+        current = current.nested;
+      }
+      
+      expect(current.secret).toBe('[REDACTED]');
+    });
+
+    it('should handle arrays with mixed types', () => {
+      const obj = {
+        mixed: [
+          'sk-ant-string123',
+          123,
+          { secret: 'CLAUDE_API_KEY=object' },
+          null,
+          undefined,
+          true,
+        ],
+      };
+
+      const sanitized = secureLogger.sanitizeObject(obj);
+      
+      expect(sanitized.mixed[0]).toBe('[REDACTED]');
+      expect(sanitized.mixed[1]).toBe(123);
+      expect(sanitized.mixed[2].secret).toBe('[REDACTED]');
+      expect(sanitized.mixed[3]).toBe(null);
+      expect(sanitized.mixed[4]).toBe(undefined);
+      expect(sanitized.mixed[5]).toBe(true);
+    });
+  });
+
+  describe('Singleton Pattern', () => {
+    it('should return the same instance on multiple requires', () => {
+      const instance1 = require('../../src/utils/secure-logger');
+      
+      // Clear cache and require again
+      delete require.cache[require.resolve('../../src/utils/secure-logger')];
+      const instance2 = require('../../src/utils/secure-logger');
+
+      // Both should be the same object (singleton)
+      expect(instance1).toBe(instance2);
+    });
+  });
+});

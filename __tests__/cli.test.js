@@ -3,7 +3,7 @@ const { initializeApplication } = require('../src/cli/index');
 
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn(),
-  initializeSessionStorage: jest.fn(),
+  initializeSessionStorage: jest.fn().mockResolvedValue(),
 }));
 // Mock dependencies of validators
 jest.mock('../src/core/api-key-validator', () => jest.fn().mockImplementation(() => ({

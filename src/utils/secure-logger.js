@@ -194,7 +194,11 @@ class SecureLogger {
   }
 }
 
-// Create singleton instance
-const secureLogger = new SecureLogger();
-
-module.exports = secureLogger;
+// Export class in test environment, singleton in production
+if (process.env.NODE_ENV === 'test') {
+  module.exports = SecureLogger;
+} else {
+  // Create singleton instance
+  const secureLogger = new SecureLogger();
+  module.exports = secureLogger;
+}

@@ -2,19 +2,22 @@
  * Tests for CLI Index Module
  */
 
+// Mock all dependencies BEFORE requiring them
+jest.mock('../../src/core/config', () => ({
+  initializeSessionStorage: jest.fn().mockResolvedValue(),
+  loadConfig: jest.fn().mockReturnValue({ logDir: '/test/logs' })
+}));
+jest.mock('../../src/cli/validators/environment', () => ({
+  validateEnvironment: jest.fn().mockResolvedValue(),
+  validateGitWorkingTree: jest.fn().mockResolvedValue(),
+  validateApiKey: jest.fn().mockResolvedValue(),
+}));
+jest.mock('../../src/utils/logger');
+
 const { initializeApplication } = require('../../src/cli/index');
 const { initializeSessionStorage, loadConfig } = require('../../src/core/config');
 const { validateEnvironment } = require('../../src/cli/validators/environment');
 const logger = require('../../src/utils/logger');
-
-// Mock all dependencies
-jest.mock('../../src/core/config');
-jest.mock('../../src/cli/validators/environment', () => ({
-  validateEnvironment: jest.fn(),
-  validateGitWorkingTree: jest.fn(),
-  validateApiKey: jest.fn(),
-}));
-jest.mock('../../src/utils/logger');
 
 // Mock dynamic import
 const mockTerminalUIClass = {
@@ -69,10 +72,7 @@ describe('CLI Index', () => {
     process.stdout.write = mockStdout;
     process.stderr.write = mockStderr;
 
-    // Setup default mocks
-    validateEnvironment.mockResolvedValue();
-    initializeSessionStorage.mockResolvedValue();
-    loadConfig.mockReturnValue({ logDir: '/test/logs' });
+    // Mocks are already configured in jest.mock declarations above
     
     // Mock logger methods
     logger.info = jest.fn();

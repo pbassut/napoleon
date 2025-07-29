@@ -4,7 +4,7 @@ const TerminalUI = require('../src/ui/index');
 
 jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn(),
-  initializeSessionStorage: jest.fn(),
+  initializeSessionStorage: jest.fn().mockResolvedValue(),
 }));
 jest.mock('../src/core/api-key-validator', () => {
   return jest.fn().mockImplementation(() => ({

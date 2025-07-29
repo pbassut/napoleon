@@ -36,7 +36,8 @@ describe('LogQueryService', () => {
 
     test('should handle missing logs directory gracefully', async () => {
       const nonExistentDir = path.join(tempDir, 'nonexistent');
-      const service = new LogQueryService({ logsDir: nonExistentDir });
+      const mockAgentLogManager = { logsDir: nonExistentDir };
+      const service = new LogQueryService(mockAgentLogManager);
       
       await expect(service.initialize()).resolves.not.toThrow();
       expect(service.isInitialized()).toBe(true);

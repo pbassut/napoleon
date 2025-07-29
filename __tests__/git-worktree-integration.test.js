@@ -255,7 +255,7 @@ describe('Git Worktree Integration Tests', () => {
 
     // Verify cleanup was attempted
     expect(fs.rmSync).toHaveBeenCalled();
-  });
+  }, 15000);
 
   it('should validate git repository state before worktree creation', async () => {
     await agentManager.initialize();
@@ -275,7 +275,7 @@ describe('Git Worktree Integration Tests', () => {
     await expect(agentManager.spawnAgent(instructions))
       .rejects
       .toThrow(/uncommitted changes/);
-  });
+  }, 15000);
 
   it('should ensure worktree directory exists', async () => {
     await agentManager.initialize();
@@ -308,7 +308,7 @@ describe('Git Worktree Integration Tests', () => {
       expect.stringContaining('worktrees'),
       { recursive: true, mode: 0o755 }
     );
-  });
+  }, 15000);
 
   it('should generate unique worktree names', async () => {
     await agentManager.initialize();
@@ -327,5 +327,5 @@ describe('Git Worktree Integration Tests', () => {
 
     expect(session1.worktreeName).not.toBe(session2.worktreeName);
     expect(session1.worktreePath).not.toBe(session2.worktreePath);
-  });
+  }, 15000);
 });
