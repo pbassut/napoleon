@@ -113,8 +113,8 @@ export function normalizeKey(input: string, key: KeyObject): KeyObject {
       return normalized;
     }
 
-    // Ctrl+A through Ctrl+Z (1-26)
-    if (charCode >= 1 && charCode <= 26) {
+    // Ctrl+A through Ctrl+Z (1-26) and Escape (27)
+    if (charCode >= 1 && charCode <= 27) {
       normalized.ctrl = true;
       normalized.name = String.fromCharCode(charCode + 96); // Convert to letter
 
@@ -246,7 +246,7 @@ export function getKeyDescription(binding: string): string {
 export function debugKey(input: string, key: KeyObject): string {
   const bytes = Array.from(input).map((c) => {
     const code = c.charCodeAt(0);
-    if (code < 32) {
+    if (code < 32 || code === 127) {
       return `\\x${code.toString(16).padStart(2, '0')}`;
     }
     return c;

@@ -516,7 +516,7 @@ describe('Terminal Capabilities', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Terminal Information:');
       expect(consoleSpy).toHaveBeenCalledWith('  Name: iTerm2');
       expect(consoleSpy).toHaveBeenCalledWith('  Colors: 16777216');
-      expect(consoleSpy).toHaveBeenCalledWith('  Unicode: false');
+      expect(consoleSpy).toHaveBeenCalledWith('  Unicode: true');
       expect(consoleSpy).toHaveBeenCalledWith('  Box Drawing: true');
       expect(consoleSpy).toHaveBeenCalledWith('  Hyperlinks: true');
       expect(consoleSpy).toHaveBeenCalledWith('  Platform: darwin');

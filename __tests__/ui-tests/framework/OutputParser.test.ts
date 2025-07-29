@@ -367,7 +367,7 @@ Next line
       const output = 'Command output\nuser@host:~$ ';
       const result = outputParser.getLastPrompt(output);
       
-      expect(result).toBe('user@host:~$ ');
+      expect(result).toBe('user@host:~$');
     });
 
     it('should find prompt with arrow', () => {

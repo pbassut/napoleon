@@ -50,7 +50,6 @@ jest.mock('../../../../src/ui/ink/utils/terminal-capabilities', () => ({
 describe('terminal-test.ts', () => {
   let originalConsoleLog: typeof console.log;
   let consoleLogMock: jest.Mock;
-  let moduleId: number = 0;
 
   beforeEach(() => {
     originalConsoleLog = console.log;
@@ -66,8 +65,6 @@ describe('terminal-test.ts', () => {
     process.env.TERM_PROGRAM = 'vscode';
     process.env.WT_SESSION = '';
     process.env.LANG = 'en_US.UTF-8';
-    
-    moduleId++;
   });
 
   afterEach(() => {
@@ -76,7 +73,7 @@ describe('terminal-test.ts', () => {
 
   it('should import and execute terminal test successfully', async () => {
     // Import the module to trigger execution
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     // Verify console output was called
     expect(consoleLogMock).toHaveBeenCalled();
@@ -94,7 +91,7 @@ describe('terminal-test.ts', () => {
   });
 
   it('should display detected capabilities', async () => {
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const outputText = consoleLogMock.mock.calls.flat().join(' ');
     
@@ -104,7 +101,7 @@ describe('terminal-test.ts', () => {
   });
 
   it('should test box drawing characters', async () => {
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     // Verify box characters were used
     const getBoxChar = require('../../../../src/ui/ink/utils/terminal-capabilities').getBoxChar;
@@ -117,7 +114,7 @@ describe('terminal-test.ts', () => {
   });
 
   it('should test status symbols', async () => {
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const getStatusSymbol = require('../../../../src/ui/ink/utils/terminal-capabilities').getStatusSymbol;
     expect(getStatusSymbol).toHaveBeenCalledWith('running', expect.any(Object));
@@ -129,7 +126,7 @@ describe('terminal-test.ts', () => {
 
   it('should display color tests', async () => {
     const chalk = require('chalk');
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     // Verify chalk colors were used
     expect(chalk.red).toHaveBeenCalledWith('Red');
@@ -143,7 +140,7 @@ describe('terminal-test.ts', () => {
   });
 
   it('should display environment variables', async () => {
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const outputText = consoleLogMock.mock.calls.flat().join(' ');
     
@@ -163,7 +160,7 @@ describe('terminal-test.ts', () => {
     delete process.env.WT_SESSION;
     delete process.env.LANG;
 
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const outputText = consoleLogMock.mock.calls.flat().join(' ');
     
@@ -185,7 +182,7 @@ describe('terminal-test.ts', () => {
       hyperlinks: false,
     });
 
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const outputText = consoleLogMock.mock.calls.flat().join(' ');
     
@@ -194,7 +191,7 @@ describe('terminal-test.ts', () => {
   });
 
   it('should display platform and node version information', async () => {
-    await import(`../../../../src/ui/ink/utils/terminal-test?v=${moduleId}`);
+    await import('../../../../src/ui/ink/utils/terminal-test');
 
     const outputText = consoleLogMock.mock.calls.flat().join(' ');
     

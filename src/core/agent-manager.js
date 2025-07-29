@@ -1774,16 +1774,48 @@ class AgentManager {
    */
   getAgentStatusDisplay(agentId) {
     const session = this.agents.get(agentId);
-    if (!session) return null;
+    if (!session) {
+      return {
+        status: 'unknown',
+        displayText: 'Unknown',
+        color: 'gray'
+      };
+    }
 
-    const runtime = this.getAgentRuntime(agentId);
+    const status = session.status;
+    let displayText = 'Unknown';
+    let color = 'gray';
+
+    switch (status) {
+      case 'running':
+        displayText = 'Running';
+        color = 'green';
+        break;
+      case 'spawning':
+        displayText = 'Spawning';
+        color = 'yellow';
+        break;
+      case 'idle':
+        displayText = 'Idle';
+        color = 'blue';
+        break;
+      case 'error':
+        displayText = 'Error';
+        color = 'red';
+        break;
+      case 'terminated':
+        displayText = 'Terminated';
+        color = 'gray';
+        break;
+      default:
+        displayText = status || 'Unknown';
+        color = 'gray';
+    }
+
     return {
-      id: session.id,
-      status: session.status,
-      runtime: AgentManager.formatRuntime(runtime),
-      spawnTime: session.spawnTime,
-      lastActivity: session.lastActivity,
-      pid: session.pid,
+      status,
+      displayText,
+      color
     };
   }
 
@@ -1831,7 +1863,15 @@ class AgentManager {
     if (!session) return null;
 
     // Get current todos from tool usage tracker
-    const todos = toolUsageTracker.getAgentTodos(agentId);
+    const rawTodos = toolUsageTracker.getAgentTodos(agentId);
+    const todos = Array.isArray(rawTodos) ? rawTodos : [];
+    
+    // Calculate runtime
+    const runtime = this.getAgentRuntime(agentId);
+    const formattedRuntime = AgentManager.formatRuntime(runtime);
+    
+    // Get current task information
+    const currentTask = AgentManager.getCurrentTask(todos) || session.instructions;
 
     return {
       id: session.id,
@@ -1840,12 +1880,16 @@ class AgentManager {
       spawnTime: session.spawnTime,
       lastActivity: session.lastActivity,
       instructions: session.instructions,
+      workingDirectory: session.workingDirectory,
       worktreePath: session.worktreePath,
       worktreeName: session.worktreeName,
       branch: session.branch || 'main',
       environmentVars: session.environmentVars || {},
       process: session.process,
-      todos: todos || [],
+      todos,
+      runtime,
+      formattedRuntime,
+      currentTask,
     };
   }
 

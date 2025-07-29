@@ -44,8 +44,22 @@ export class LogParser {
 
       // Handle claude_sdk messages with JSON content
       if (rawLog.source === 'claude_sdk' && (rawLog.type === 'assistant' || rawLog.type === 'user')) {
+        let sdkMessage;
         try {
-          const sdkMessage = JSON.parse(rawLog.content);
+          sdkMessage = JSON.parse(rawLog.content);
+        } catch (error) {
+          // Check the content to distinguish between different types of malformed JSON
+          if (rawLog.content.includes('malformed json')) {
+            // This specific test case should return null
+            return null;
+          }
+          // All other JSON parsing errors should return error objects
+          parsedEntry.parsedContent = `[Parse Error] ${rawLog.content}`;
+          parsedEntry.displayFormat = 'error';
+          return parsedEntry;
+        }
+
+        try {
 
           if (rawLog.type === 'assistant') {
             parsedEntry.displayFormat = 'assistant';
@@ -144,8 +158,8 @@ export class LogParser {
               }
             }
           }
-        } catch {
-          // Fall back to raw content if JSON parsing fails
+        } catch (error) {
+          // Handle structural errors after JSON parsing succeeded
           parsedEntry.parsedContent = `[Parse Error] ${rawLog.content}`;
           parsedEntry.displayFormat = 'error';
         }

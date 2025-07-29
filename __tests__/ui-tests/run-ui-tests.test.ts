@@ -40,7 +40,7 @@ jest.mock('../../src/ui-tests/tests/ui-state.test', () => ({
   }
 }));
 
-// Mock console and process methods
+// Mock console and process methods to suppress output during tests
 const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
 const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 const mockProcessExit = jest.spyOn(process, 'exit').mockImplementation(() => {
@@ -51,7 +51,13 @@ describe('UI Tests Runner', () => {
   let mockRunnerInstance: jest.Mocked<TestRunner>;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    // Only clear TestRunner mocks, not console mocks
+    jest.mocked(TestRunner).mockClear();
+    
+    // Clear console mock call history but keep the mocks active
+    mockConsoleLog.mockClear();
+    mockConsoleError.mockClear();
+    mockProcessExit.mockClear();
     
     // Create mock instance
     mockRunnerInstance = {
@@ -62,7 +68,8 @@ describe('UI Tests Runner', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    // Only clear TestRunner related mocks
+    jest.mocked(TestRunner).mockClear();
   });
 
   describe('runAllUITests function', () => {
@@ -79,6 +86,8 @@ describe('UI Tests Runner', () => {
 
       await runAllUITests();
 
+      // Debug: Check if mock was called at all
+      expect(mockConsoleLog).toHaveBeenCalled();
       expect(mockConsoleLog).toHaveBeenCalledWith('🚀 Starting Napoleon UI Tests\n');
     });
 

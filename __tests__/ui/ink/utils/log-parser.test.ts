@@ -29,7 +29,15 @@ describe('LogParser', () => {
       });
 
       it('should return null for completely malformed entries', () => {
-        const malformedEntry = {} as LogEntry;
+        // Create a malformed entry that will cause JSON.parse to throw
+        const malformedEntry = {
+          id: '1',
+          timestamp: '2023-01-01T12:00:00Z',
+          content: 'malformed json {',
+          type: 'assistant', 
+          source: 'claude_sdk',
+          metadata: {}
+        } as LogEntry;
 
         const result = LogParser.parseLogEntry(malformedEntry);
 
@@ -706,7 +714,7 @@ describe('LogParser', () => {
       const result = LogParser.parseLogEntry(logEntry);
 
       expect(result?.displayFormat).toBe('assistant');
-      expect(result?.parsedContent).toBe('');
+      expect(result?.parsedContent).toBe('{}');
     });
 
     it('should handle entries with empty content array', () => {

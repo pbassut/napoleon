@@ -300,22 +300,27 @@ describe('Performance Monitor', () => {
       it('should handle multiple components', () => {
         const mockPerformanceNow = performance.now as jest.MockedFunction<typeof performance.now>;
         
+        // Create separate refs for each component
+        const componentARef = { current: 0 };
+        const componentBRef = { current: 0 };
+        
+        // Mock useRef to return different refs for each call
+        mockUseRef.mockReturnValueOnce(componentARef).mockReturnValueOnce(componentBRef);
+        
         // First component
         useRenderTime('ComponentA');
-        mockRef.current = 100;
+        componentARef.current = 100;
         mockPerformanceNow.mockReturnValue(120); // 20ms
-        useEffectCallbacks[1]();
+        useEffectCallbacks[1](); // Trigger second useEffect for ComponentA
         
-        // Reset for second component
-        mockUseRef.mockReturnValue({ current: 0 });
+        // Clear previous effects and set up for second component
         useEffectCallbacks = [];
-        mockUseEffect.mockClear();
         
         // Second component
         useRenderTime('ComponentB');
-        mockRef.current = 200;
+        componentBRef.current = 200;
         mockPerformanceNow.mockReturnValue(230); // 30ms
-        useEffectCallbacks[1]();
+        useEffectCallbacks[1](); // Trigger second useEffect for ComponentB
         
         const stats = getPerformanceStats();
         expect(stats.totalRenders).toBe(2);
@@ -399,10 +404,24 @@ describe('Performance Monitor', () => {
     });
 
     it('should track slow renders (>16.67ms)', () => {
-      mockRef.current = 100;
-      mockPerformanceNow.mockReturnValue(120); // 20ms - slow render
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(100);
       
       useRenderTime('SlowComponent');
+      
+      // Execute first useEffect (sets start time)
+      callbacks[0]();
+      expect(mockRef.current).toBe(100);
+      
+      // Execute second useEffect (calculates duration)
+      mockPerformanceNow.mockReturnValue(120); // 20ms later
+      callbacks[1]();
       
       const stats = getPerformanceStats();
       expect(stats.slowRenders).toBe(1);
@@ -414,10 +433,23 @@ describe('Performance Monitor', () => {
     });
 
     it('should not track fast renders as slow (<16.67ms)', () => {
-      mockRef.current = 100;
-      mockPerformanceNow.mockReturnValue(110); // 10ms - fast render
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(100);
       
       useRenderTime('FastComponent');
+      
+      // Execute first useEffect (sets start time)
+      callbacks[0]();
+      
+      // Execute second useEffect (calculates duration)
+      mockPerformanceNow.mockReturnValue(110); // 10ms later - fast render
+      callbacks[1]();
       
       const stats = getPerformanceStats();
       expect(stats.slowRenders).toBe(0);
@@ -425,12 +457,29 @@ describe('Performance Monitor', () => {
     });
 
     it('should calculate component statistics correctly', () => {
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
       const durations = [10, 20, 30];
       
       durations.forEach((duration, i) => {
-        mockRef.current = 100;
-        mockPerformanceNow.mockReturnValue(100 + duration);
+        // Clear callbacks for each component call
+        callbacks.length = 0;
+        mockRef.current = 0;
+        mockPerformanceNow.mockReturnValue(100);
+        
         useRenderTime('TestComponent');
+        
+        // Execute first useEffect (sets start time)
+        callbacks[0]();
+        expect(mockRef.current).toBe(100);
+        
+        // Execute second useEffect (calculates duration)
+        mockPerformanceNow.mockReturnValue(100 + duration);
+        callbacks[1]();
       });
       
       const stats = getPerformanceStats();
@@ -443,10 +492,24 @@ describe('Performance Monitor', () => {
     });
 
     it('should round component stats to 2 decimal places', () => {
-      mockRef.current = 100;
-      mockPerformanceNow.mockReturnValue(100 + Math.PI); // π ms duration
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(100);
       
       useRenderTime('PiComponent');
+      
+      // Execute first useEffect (sets start time)
+      callbacks[0]();
+      expect(mockRef.current).toBe(100);
+      
+      // Execute second useEffect (calculates duration)
+      mockPerformanceNow.mockReturnValue(100 + Math.PI); // π ms duration
+      callbacks[1]();
       
       const stats = getPerformanceStats();
       expect(stats.componentStats.PiComponent.avg).toBe(3.14);
@@ -455,12 +518,29 @@ describe('Performance Monitor', () => {
     });
 
     it('should sort slowest renders by duration descending', () => {
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
       const durations = [25, 50, 30]; // All > 16.67ms
       
       durations.forEach((duration, i) => {
-        mockRef.current = 100;
-        mockPerformanceNow.mockReturnValue(100 + duration);
+        // Clear callbacks for each component call
+        callbacks.length = 0;
+        mockRef.current = 0;
+        mockPerformanceNow.mockReturnValue(100);
+        
         useRenderTime(`Component${i}`);
+        
+        // Execute first useEffect (sets start time)
+        callbacks[0]();
+        expect(mockRef.current).toBe(100);
+        
+        // Execute second useEffect (calculates duration)
+        mockPerformanceNow.mockReturnValue(100 + duration);
+        callbacks[1]();
       });
       
       const slowest = getSlowestRenders();
@@ -470,11 +550,28 @@ describe('Performance Monitor', () => {
     });
 
     it('should limit recent renders to requested count', () => {
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
       // Add 5 renders
       for (let i = 0; i < 5; i++) {
-        mockRef.current = 100;
-        mockPerformanceNow.mockReturnValue(110);
+        // Clear callbacks for each component call
+        callbacks.length = 0;
+        mockRef.current = 0;
+        mockPerformanceNow.mockReturnValue(100);
+        
         useRenderTime(`Component${i}`);
+        
+        // Execute first useEffect (sets start time)
+        callbacks[0]();
+        expect(mockRef.current).toBe(100);
+        
+        // Execute second useEffect (calculates duration)
+        mockPerformanceNow.mockReturnValue(110); // 10ms duration
+        callbacks[1]();
       }
       
       const recent3 = getRecentRenders(3);
@@ -485,11 +582,28 @@ describe('Performance Monitor', () => {
     });
 
     it('should limit slowest renders to requested count', () => {
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
       // Add 5 slow renders (>16.67ms)
       for (let i = 0; i < 5; i++) {
-        mockRef.current = 100;
-        mockPerformanceNow.mockReturnValue(100 + 20 + i); // 20-24ms
+        // Clear callbacks for each component call
+        callbacks.length = 0;
+        mockRef.current = 0;
+        mockPerformanceNow.mockReturnValue(100);
+        
         useRenderTime(`Component${i}`);
+        
+        // Execute first useEffect (sets start time)
+        callbacks[0]();
+        expect(mockRef.current).toBe(100);
+        
+        // Execute second useEffect (calculates duration)
+        mockPerformanceNow.mockReturnValue(100 + 20 + i); // 20-24ms
+        callbacks[1]();
       }
       
       const slowest2 = getSlowestRenders(2);
@@ -499,14 +613,31 @@ describe('Performance Monitor', () => {
     });
 
     it('should handle memory management (trimming after 1000 renders)', () => {
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
+      
       // This test verifies the theoretical behavior since we can't easily add 1000+ renders
       // The trimming logic keeps the last 500 renders when exceeding 1000
       
       // Add enough renders to verify basic functionality
       for (let i = 0; i < 10; i++) {
-        mockRef.current = 100;
-        mockPerformanceNow.mockReturnValue(110);
+        // Clear callbacks for each component call
+        callbacks.length = 0;
+        mockRef.current = 0;
+        mockPerformanceNow.mockReturnValue(100);
+        
         useRenderTime(`Component${i}`);
+        
+        // Execute first useEffect (sets start time)
+        callbacks[0]();
+        expect(mockRef.current).toBe(100);
+        
+        // Execute second useEffect (calculates duration)
+        mockPerformanceNow.mockReturnValue(110); // 10ms duration
+        callbacks[1]();
       }
       
       const stats = getPerformanceStats();
@@ -529,20 +660,42 @@ describe('Performance Monitor', () => {
       // Mock useRef and useEffect for data generation
       const mockRef = { current: 0 };
       mockUseRef.mockReturnValue(mockRef);
-      mockUseEffect.mockImplementation((callback) => callback());
+      
+      const callbacks: Array<() => void> = [];
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
 
-      // Add some sample performance data
-      mockRef.current = 100;
-      mockPerformanceNow.mockReturnValue(120); // 20ms - slow
+      // Add sample performance data for ComponentA (20ms - slow)
+      callbacks.length = 0;
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(100);
       useRenderTime('ComponentA');
+      callbacks[0](); // Set start time
+      expect(mockRef.current).toBe(100);
+      mockPerformanceNow.mockReturnValue(120);
+      callbacks[1](); // Calculate duration (20ms)
 
-      mockRef.current = 200;
-      mockPerformanceNow.mockReturnValue(250); // 50ms - very slow
+      // Add sample performance data for ComponentB (50ms - very slow)
+      callbacks.length = 0;
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(200);
       useRenderTime('ComponentB');
+      callbacks[0](); // Set start time
+      expect(mockRef.current).toBe(200);
+      mockPerformanceNow.mockReturnValue(250);
+      callbacks[1](); // Calculate duration (50ms)
 
-      mockRef.current = 300;
-      mockPerformanceNow.mockReturnValue(310); // 10ms - fast
+      // Add sample performance data for ComponentC (10ms - fast)
+      callbacks.length = 0;
+      mockRef.current = 0;
+      mockPerformanceNow.mockReturnValue(300);
       useRenderTime('ComponentC');
+      callbacks[0](); // Set start time
+      expect(mockRef.current).toBe(300);
+      mockPerformanceNow.mockReturnValue(310);
+      callbacks[1](); // Calculate duration (10ms)
     });
 
     it('should log component stats when available', () => {
@@ -598,19 +751,30 @@ describe('Performance Monitor', () => {
     });
 
     it('should handle negative durations gracefully', () => {
+      const callbacks: Array<() => void> = [];
       const mockPerformanceNow = jest.fn();
       Object.defineProperty(global, 'performance', {
         value: { now: mockPerformanceNow },
         writable: true,
       });
 
-      const mockRef = { current: 100 };
+      const mockRef = { current: 0 };
       mockUseRef.mockReturnValue(mockRef);
-      mockUseEffect.mockImplementation((callback) => callback());
+      mockUseEffect.mockImplementation((callback) => {
+        callbacks.push(callback);
+        return undefined;
+      });
 
-      mockPerformanceNow.mockReturnValue(90); // Negative duration
-      
+      mockPerformanceNow.mockReturnValue(100);
       useRenderTime('NegativeComponent');
+      
+      // Execute first useEffect (sets start time)
+      callbacks[0]();
+      expect(mockRef.current).toBe(100);
+      
+      // Execute second useEffect with earlier time (negative duration)
+      mockPerformanceNow.mockReturnValue(90); // Negative duration
+      callbacks[1]();
       
       const stats = getPerformanceStats();
       expect(stats.componentStats.NegativeComponent.avg).toBe(-10);
