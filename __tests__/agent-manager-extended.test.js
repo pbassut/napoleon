@@ -470,10 +470,16 @@ describe('AgentManager Extended Coverage', () => {
       });
 
       it('should allow multiple calls without error', () => {
+        const originalSetInterval = global.setInterval;
+        const mockSetInterval = jest.fn();
+        global.setInterval = mockSetInterval;
+        
         expect(() => {
           agentManager.startBackgroundOrphanScanning();
           agentManager.startBackgroundOrphanScanning();
         }).not.toThrow();
+        
+        global.setInterval = originalSetInterval;
         
         // Clean up intervals to prevent Jest open handles
         agentManager.stopBackgroundOrphanScanning();
