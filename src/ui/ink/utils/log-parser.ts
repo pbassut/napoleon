@@ -60,7 +60,6 @@ export class LogParser {
         }
 
         try {
-
           if (rawLog.type === 'assistant') {
             parsedEntry.displayFormat = 'assistant';
 

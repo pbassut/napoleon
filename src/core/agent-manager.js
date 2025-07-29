@@ -1778,11 +1778,11 @@ class AgentManager {
       return {
         status: 'unknown',
         displayText: 'Unknown',
-        color: 'gray'
+        color: 'gray',
       };
     }
 
-    const status = session.status;
+    const { status } = session;
     let displayText = 'Unknown';
     let color = 'gray';
 
@@ -1815,7 +1815,7 @@ class AgentManager {
     return {
       status,
       displayText,
-      color
+      color,
     };
   }
 
@@ -1865,11 +1865,10 @@ class AgentManager {
     // Get current todos from tool usage tracker
     const rawTodos = toolUsageTracker.getAgentTodos(agentId);
     const todos = Array.isArray(rawTodos) ? rawTodos : [];
-    
+
     // Calculate runtime
     const runtime = this.getAgentRuntime(agentId);
     const formattedRuntime = AgentManager.formatRuntime(runtime);
-    
     // Get current task information
     const currentTask = AgentManager.getCurrentTask(todos) || session.instructions;
 
