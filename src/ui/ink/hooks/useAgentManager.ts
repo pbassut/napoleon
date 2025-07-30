@@ -37,6 +37,9 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     lastActivity?: string | number;
     instructions?: string;
     workingDirectory?: string;
+    error?: string | Error;
+    progress?: Record<string, unknown>;
+    todos?: any[];
   }): Agent => ({
     id: agentData.id,
     name: agentData.id, // Use ID as name for now
@@ -73,36 +76,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
             todos: agentDetails?.todos || [],
           };
         });
-        const convertedAgents = enrichedAgents.map((agentData: {
-          id: string;
-          status?: string;
-          spawnTime?: string | number;
-          lastActivity?: string | number;
-          instructions?: string;
-          workingDirectory?: string;
-          error?: string;
-          progress?: number;
-          todos?: unknown[];
-        }) => ({
-          id: agentData.id,
-          name: agentData.id,
-          status: agentData.status || 'unknown',
-          startTime: agentData.spawnTime ? new Date(agentData.spawnTime) : new Date(),
-          lastActivity: agentData.lastActivity ? new Date(agentData.lastActivity) : undefined,
-          instructions: agentData.instructions,
-          workingDirectory: agentData.workingDirectory,
-          error: agentData.error,
-          progress: agentData.progress,
-          todos: agentData.todos || [],
-        }));
+        const convertedAgents = enrichedAgents.map((agent: any) => convertAgent(agent));
 
         // Only update if agents actually changed
         setAgents((prevAgents) => {
           // Helper function to compare todos arrays
           const todosChanged = (prevTodos: unknown[], newTodos: unknown[]) => {
             if (prevTodos.length !== newTodos.length) return true;
-            return prevTodos.some((prevTodo, i) => {
-              const newTodo = newTodos[i];
+            return prevTodos.some((prevTodo: any, i) => {
+              const newTodo: any = newTodos[i];
               return !newTodo
                 || prevTodo.id !== newTodo.id
                 || prevTodo.status !== newTodo.status
@@ -212,8 +194,11 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       if (agentManager) {
         const activeAgents = agentManager.getActiveAgents();
         // Enrich agents with todos data using getAgentDetails
-        const enrichedAgents = activeAgents.map((agent) => agentManager.getAgentDetails(agent.id));
-        const convertedAgents = enrichedAgents.map(convertAgent);
+        const enrichedAgents = activeAgents.map((agent) => {
+          const details = agentManager.getAgentDetails(agent.id);
+          return details || agent;
+        });
+        const convertedAgents = enrichedAgents.map((agent: any) => convertAgent(agent));
         setAgents(convertedAgents);
       }
     } catch (err) {
@@ -246,7 +231,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
             todos: agentDetails?.todos || [],
           };
         });
-        const convertedAgents = enrichedAgents.map(convertAgent);
+        const convertedAgents = enrichedAgents.map((agent: any) => convertAgent(agent));
         setAgents(convertedAgents);
       }
     } catch (err) {

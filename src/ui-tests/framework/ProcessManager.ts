@@ -1,4 +1,4 @@
-import { exec, spawn } from 'child_process';
+import { exec, spawn, ChildProcess } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
@@ -10,7 +10,7 @@ export class ProcessManager {
 
   private bufferIntervals: Map<number, NodeJS.Timeout> = new Map();
 
-  private processes: Map<number, unknown> = new Map();
+  private processes: Map<number, ChildProcess> = new Map();
 
   async spawnNapoleon(env?: Record<string, string>): Promise<number> {
     return new Promise((resolve, reject) => {

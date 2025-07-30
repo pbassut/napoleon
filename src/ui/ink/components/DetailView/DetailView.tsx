@@ -10,7 +10,7 @@ import { LogViewer } from './LogViewer';
 interface DetailViewProps {
   agent: Agent;
   onClose: () => void;
-  agentManager: unknown;
+  agentManager: any;
 }
 
 const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager }) => {
@@ -124,7 +124,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const logs = agentManager && realLogs.length > 0 ? realLogs : mockLogs;
 
   // Handle keyboard input for close
-  useInput((input: string, key: { escape?: boolean }) => {
+  useInput((input: string, key: any) => {
     if (!isFocused) return;
 
     // Close on Escape or 'q'

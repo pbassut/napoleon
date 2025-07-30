@@ -136,9 +136,11 @@ const TerminationDialog: React.FC<TerminationDialogProps> = ({
           <Text color="yellow">
             ⚠️  Choose an action for this agent:
           </Text>
-          <Text dimColor marginTop={1}>
-            • Terminate: Stop agent, keep worktree
-          </Text>
+          <Box marginTop={1}>
+            <Text dimColor>
+              • Terminate: Stop agent, keep worktree
+            </Text>
+          </Box>
           <Text dimColor>
             • Delete: Stop agent and remove worktree permanently
           </Text>

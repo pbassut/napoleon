@@ -17,7 +17,7 @@ class InkUIWrapper {
 
     try {
       // Create AgentManager but don't initialize it yet - this allows UI to render immediately
-      this.agentManager = new AgentManagerClass();
+      this.agentManager = new AgentManagerClass() as any;
 
       // Start Ink UI first with the uninitialized AgentManager
       // This allows the UI to show loading state while heavy operations complete

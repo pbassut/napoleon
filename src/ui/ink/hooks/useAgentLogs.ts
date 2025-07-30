@@ -19,7 +19,7 @@ interface LogStreamEvent {
 
 interface UseAgentLogsParams {
   agentId: string;
-  agentManager: unknown;
+  agentManager: any;
   refreshInterval?: number;
   enableStreaming?: boolean;
 }
