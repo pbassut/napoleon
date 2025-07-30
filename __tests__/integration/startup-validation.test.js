@@ -5,7 +5,6 @@ jest.mock('../../src/utils/logger');
 jest.mock('../../src/core/git-status-checker');
 jest.mock('../../src/core/startup-warning-display');
 jest.mock('../../src/core/api-key-validator');
-jest.mock('../../src/core/api-key-setup-guide');
 
 const { execSync } = require('child_process');
 const { validateEnvironment, validateApiKey } = require('../../src/cli/validators/environment');
@@ -15,7 +14,6 @@ const { initializeSessionStorage, loadConfig } = require('../../src/core/config'
 const GitStatusChecker = require('../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../src/core/startup-warning-display');
 const ApiKeyValidator = require('../../src/core/api-key-validator');
-const ApiKeySetupGuide = require('../../src/core/api-key-setup-guide');
 
 describe.skip('Startup Validation Integration', () => {
   let originalEnv;
@@ -149,15 +147,9 @@ describe.skip('Startup Validation Integration', () => {
           ),
         ),
       };
-      const mockSetupGuide = {
-        displaySetupInstructions: jest.fn(),
-      };
-
       ApiKeyValidator.mockImplementation(() => mockValidator);
-      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
 
       await expect(validateEnvironment()).rejects.toThrow(EnvironmentValidationError);
-      expect(mockSetupGuide.displaySetupInstructions).toHaveBeenCalled();
     });
 
     it('should fail validation with invalid API key format', async () => {
@@ -172,15 +164,9 @@ describe.skip('Startup Validation Integration', () => {
           ),
         ),
       };
-      const mockSetupGuide = {
-        displayFormatError: jest.fn(),
-      };
-
       ApiKeyValidator.mockImplementation(() => mockValidator);
-      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
 
       await expect(validateEnvironment()).rejects.toThrow(ConfigurationError);
-      expect(mockSetupGuide.displayFormatError).toHaveBeenCalled();
     });
   });
 
@@ -250,12 +236,7 @@ describe.skip('Startup Validation Integration', () => {
           ),
         ),
       };
-      const mockSetupGuide = {
-        displaySetupInstructions: jest.fn(),
-      };
-
       ApiKeyValidator.mockImplementation(() => mockValidator);
-      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
 
       // Mock process.exit to actually exit the process flow
       processExitSpy.mockImplementation((code) => {
@@ -284,12 +265,7 @@ describe.skip('Startup Validation Integration', () => {
           ),
         ),
       };
-      const mockSetupGuide = {
-        displayFormatError: jest.fn(),
-      };
-
       ApiKeyValidator.mockImplementation(() => mockValidator);
-      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
 
       // Mock process.exit to actually exit the process flow
       processExitSpy.mockImplementation((code) => {

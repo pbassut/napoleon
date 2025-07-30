@@ -8,7 +8,6 @@ jest.mock('util');
 jest.mock('../../../src/core/git-status-checker');
 jest.mock('../../../src/core/startup-warning-display');
 jest.mock('../../../src/core/api-key-validator');
-jest.mock('../../../src/core/api-key-setup-guide');
 
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -17,7 +16,6 @@ const { EnvironmentValidationError, ConfigurationError } = require('../../../src
 const GitStatusChecker = require('../../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../../src/core/startup-warning-display');
 const ApiKeyValidator = require('../../../src/core/api-key-validator');
-const ApiKeySetupGuide = require('../../../src/core/api-key-setup-guide');
 
 // Mock console methods to avoid noise in tests
 const originalConsoleWarn = console.warn;
@@ -316,7 +314,6 @@ describe('Environment Validator', () => {
 
   describe('validateApiKey', () => {
     let mockValidator;
-    let mockSetupGuide;
 
     beforeEach(() => {
       mockValidator = {
@@ -324,11 +321,6 @@ describe('Environment Validator', () => {
       };
       ApiKeyValidator.mockImplementation(() => mockValidator);
 
-      mockSetupGuide = {
-        displaySetupInstructions: jest.fn(),
-        displayFormatError: jest.fn(),
-      };
-      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
     });
 
     it('should validate API key successfully', async () => {
@@ -357,7 +349,6 @@ describe('Environment Validator', () => {
       await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
       await expect(validateApiKey()).rejects.toThrow('API key not found in environment variables');
       
-      expect(mockSetupGuide.displaySetupInstructions).toHaveBeenCalled();
     });
 
     it('should handle invalid API key format', async () => {
@@ -372,7 +363,6 @@ describe('Environment Validator', () => {
       await expect(validateApiKey()).rejects.toThrow(ConfigurationError);
       await expect(validateApiKey()).rejects.toThrow('Invalid API key format');
       
-      expect(mockSetupGuide.displayFormatError).toHaveBeenCalled();
     });
 
     it('should handle other validation errors', async () => {
@@ -387,7 +377,6 @@ describe('Environment Validator', () => {
       await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
       await expect(validateApiKey()).rejects.toThrow('API key is invalid');
       
-      expect(mockSetupGuide.displaySetupInstructions).not.toHaveBeenCalled();
     });
 
     it('should handle validator exceptions', async () => {

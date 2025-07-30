@@ -11,13 +11,6 @@ jest.mock('../src/core/api-key-validator', () => {
     validateApiKey: jest.fn().mockResolvedValue({ isValid: true })
   }));
 });
-jest.mock('../src/core/api-key-setup-guide', () => {
-  return jest.fn().mockImplementation(() => ({
-    displayFormatError: jest.fn(),
-    displayMissingApiKeyMessage: jest.fn(),
-    displaySetupInstructions: jest.fn()
-  }));
-});
 jest.mock('../src/core/git-status-checker', () => {
   return jest.fn().mockImplementation(() => ({
     validateGitRepository: jest.fn().mockResolvedValue({ isValid: true })
