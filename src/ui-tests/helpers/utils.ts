@@ -109,7 +109,7 @@ export class TestDataBuilder {
   }
 
   static createLongPrompt(length: number = 100): string {
-    return 'A'.repeat(length);
+    return 'A'.repeat(Math.max(0, length));
   }
 
   static createSpecialCharPrompt(): string {

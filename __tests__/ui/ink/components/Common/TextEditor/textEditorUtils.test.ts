@@ -574,6 +574,177 @@ describe('Text Editor Utilities', () => {
       
       expect(result).toBe('  Deeply indented\nLess indented\nNot indented');
     });
+
+    it('should handle empty string', () => {
+      expect(unindentText('')).toBe('');
+    });
+
+    it('should handle text with lines shorter than indent string', () => {
+      const text = '  Long line\n \n  Short';
+      const result = unindentText(text);
+      
+      expect(result).toBe('Long line\n \nShort');
+    });
+  });
+
+  describe('Additional Edge Cases', () => {
+    it('should handle getWordBoundaries with position in non-word character', () => {
+      const text = 'Hello-world!test';
+      const result = getWordBoundaries(text, 5); // Position at '-'
+      
+      expect(result).toEqual({ start: 0, end: 5 }); // Returns start of previous word
+    });
+
+    it('should handle findNextWordPosition from end of text', () => {
+      const text = 'Hello world';
+      expect(findNextWordPosition(text, text.length)).toBe(text.length);
+    });
+
+    it('should handle findPreviousWordPosition with whitespace at start', () => {
+      const text = '   Hello world';
+      expect(findPreviousWordPosition(text, 5)).toBe(3);
+    });
+
+    it('should handle getLineEnd with line beyond text bounds', () => {
+      const text = 'Line 1\nLine 2';
+      expect(getLineEnd(text, text.length + 100)).toBe(text.length);
+    });
+
+    it('should handle positionToLineColumn with empty line array edge case', () => {
+      const text = '';
+      const result = positionToLineColumn(text, 5);
+      
+      expect(result.line).toBe(0);
+      expect(result.column).toBe(0);
+    });
+
+    it('should handle lineColumnToPosition with undefined line edge case', () => {
+      const text = 'Hello';
+      expect(lineColumnToPosition(text, 10, 5)).toBe(6); // Beyond text end
+    });
+
+    it('should handle getLineAtPosition beyond all lines', () => {
+      const text = 'Line 1\nLine 2';
+      expect(getLineAtPosition(text, 1000)).toBe('Line 2'); // Returns last line
+    });
+
+    it('should handle indentText with text containing only newlines', () => {
+      expect(indentText('\n\n')).toBe('\n\n');
+    });
+
+    it('should handle unindentText with line exactly matching indent string', () => {
+      expect(unindentText('  ', '  ')).toBe('');
+    });
+
+    it('should handle very large position in positionToLineColumn', () => {
+      const text = 'a\nb\nc';
+      const result = positionToLineColumn(text, 1000000);
+      
+      expect(result.line).toBe(2);
+      expect(result.position).toBe(1000000);
+    });
+
+    it('should handle word boundaries at very start and end of text', () => {
+      const text = 'word';
+      
+      expect(getWordBoundaries(text, 0)).toEqual({ start: 0, end: 4 });
+      expect(getWordBoundaries(text, 4)).toEqual({ start: 0, end: 4 }); // Beyond end returns last word
+    });
+
+    it('should handle findNextWordPosition with only whitespace remaining', () => {
+      const text = 'word   ';
+      expect(findNextWordPosition(text, 0)).toBe(7);
+    });
+
+    it('should handle findPreviousWordPosition from very beginning', () => {
+      const text = 'hello world';
+      expect(findPreviousWordPosition(text, 1)).toBe(0);
+    });
+
+    it('should handle text operations on single character', () => {
+      expect(countLines('a')).toBe(1);
+      expect(getLineAtPosition('a', 0)).toBe('a');
+      expect(indentText('a')).toBe('  a');
+      expect(unindentText('  a')).toBe('a');
+    });
+
+    it('should handle getTextSelection with positions at text boundaries', () => {
+      const text = 'hello';
+      
+      const startSelection = getTextSelection(text, 0, 0);
+      expect(startSelection.text).toBe('');
+      
+      const endSelection = getTextSelection(text, 5, 5);
+      expect(endSelection.text).toBe('');
+      
+      const fullSelection = getTextSelection(text, 0, 5);
+      expect(fullSelection.text).toBe('hello');
+    });
+
+    it('should handle multi-line operations with various line ending scenarios', () => {
+      const textWithEmptyLines = 'Line1\n\n\nLine4';
+      
+      expect(countLines(textWithEmptyLines)).toBe(4);
+      expect(getLineAtPosition(textWithEmptyLines, 6)).toBe('');
+      expect(getLineAtPosition(textWithEmptyLines, 7)).toBe('');
+      expect(getLineAtPosition(textWithEmptyLines, 8)).toBe('Line4');
+    });
+
+    it('should handle word navigation with punctuation and numbers', () => {
+      const text = 'hello123 world!!! test456';
+      
+      expect(findNextWordPosition(text, 0)).toBe(9);
+      expect(findPreviousWordPosition(text, 15)).toBe(15); // Current position behavior
+      expect(getWordBoundaries(text, 5)).toEqual({ start: 0, end: 8 });
+    });
+
+    it('should handle insertTextAtPosition at various text boundaries', () => {
+      const text = 'abc';
+      
+      const insertAtStart = insertTextAtPosition(text, 0, 'X');
+      expect(insertAtStart).toEqual({ newText: 'Xabc', newPosition: 1 });
+      
+      const insertAtEnd = insertTextAtPosition(text, 3, 'X');
+      expect(insertAtEnd).toEqual({ newText: 'abcX', newPosition: 4 });
+      
+      const insertBeyondEnd = insertTextAtPosition(text, 10, 'X');
+      expect(insertBeyondEnd).toEqual({ newText: 'abcX', newPosition: 11 }); // Position is preserved when beyond end
+    });
+
+    it('should handle deleteTextRange with edge case positions', () => {
+      const text = 'hello world';
+      
+      const deleteFromStart = deleteTextRange(text, 0, 100);
+      expect(deleteFromStart).toEqual({ newText: '', newPosition: 0 });
+      
+      const deleteNothing = deleteTextRange(text, 5, 5);
+      expect(deleteNothing).toEqual({ newText: 'hello world', newPosition: 5 });
+      
+      const deleteBeyondEnd = deleteTextRange(text, 5, 100);
+      expect(deleteBeyondEnd).toEqual({ newText: 'hello', newPosition: 5 });
+    });
+
+    it('should handle replaceSelectedText with various replacement scenarios', () => {
+      const text = 'hello world';
+      
+      const replaceWithLonger = replaceSelectedText(text, 6, 11, 'beautiful universe');
+      expect(replaceWithLonger).toEqual({ 
+        newText: 'hello beautiful universe', 
+        newPosition: 24 
+      });
+      
+      const replaceWithShorter = replaceSelectedText(text, 6, 11, 'hi');
+      expect(replaceWithShorter).toEqual({ 
+        newText: 'hello hi', 
+        newPosition: 8 
+      });
+      
+      const replaceAtBoundaries = replaceSelectedText(text, 0, text.length, 'new');
+      expect(replaceAtBoundaries).toEqual({ 
+        newText: 'new', 
+        newPosition: 3 
+      });
+    });
   });
 
   describe('Edge Cases and Integration', () => {
