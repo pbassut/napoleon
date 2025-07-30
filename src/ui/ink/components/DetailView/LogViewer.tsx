@@ -152,17 +152,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {displayedLogs.map((entry, index) => {
-        const globalIndex = scrollOffset + index;
-        const lineNumber = globalIndex + 1;
-
-        return <LogEntry
-          key={`${entry.id}-${globalIndex}`}
-          entry={entry}
-          lineNumber={lineNumber}
-        />;
-      })}
-      {/* <Static items={displayedLogs}>
+      <Static items={displayedLogs}>
         {(entry, index) => {
           const globalIndex = scrollOffset + index;
           const lineNumber = globalIndex + 1;
@@ -173,7 +163,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
             lineNumber={lineNumber}
           />;
         }}
-      </Static> */}
+      </Static>
     </Box>
   );
 };
