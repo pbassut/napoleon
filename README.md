@@ -40,11 +40,6 @@ The terminal interface will launch by default. You can also explicitly use:
 napoleon start
 ```
 
-### Check agent status
-```bash
-napoleon status
-```
-
 ### Show help
 ```bash
 napoleon --help

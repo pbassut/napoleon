@@ -79,7 +79,6 @@ describe('CLI Default Action', () => {
     
     const commandNames = program.commands.map(cmd => cmd.name());
     expect(commandNames).toContain('start');
-    expect(commandNames).toContain('status');
     expect(commandNames).toContain('logs');
   });
 });

@@ -46,17 +46,6 @@ async function initializeApplication(program) {
       .description('Start the Napoleon terminal interface')
       .action(startTerminalUI);
 
-    // Status command
-    program
-      .command('status')
-      .description('Show current agent status')
-      .action(async () => {
-        // Safe to use console.log here since we're not in terminal UI mode
-        console.log('Agent Status:');
-        console.log('No active agents');
-        // TODO: This will be implemented in later stories
-      });
-
     // logs list command (lazy-load LogsCommand)
     program
       .command('logs list')

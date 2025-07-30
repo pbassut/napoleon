@@ -99,15 +99,6 @@ describe('CLI Application', () => {
       expect(startCommand.description()).toBe('Start the Napoleon terminal interface');
     });
 
-    it('should register status command', async () => {
-      initializeSessionStorage.mockResolvedValue();
-
-      await initializeApplication(program);
-
-      const statusCommand = program.commands.find((cmd) => cmd.name() === 'status');
-      expect(statusCommand).toBeDefined();
-      expect(statusCommand.description()).toBe('Show current agent status');
-    });
 
     // TODO: Fix these tests - they work but the mocking isn't being verified correctly
     it.skip('should initialize session storage', async () => {

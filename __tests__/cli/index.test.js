@@ -121,13 +121,6 @@ describe('CLI Index', () => {
         expect(mockProgram.action).toHaveBeenCalled();
       });
 
-      it('should setup status command', async () => {
-        await initializeApplication(mockProgram);
-
-        expect(mockProgram.command).toHaveBeenCalledWith('status');
-        expect(mockProgram.description).toHaveBeenCalledWith('Show current agent status');
-        expect(mockProgram.action).toHaveBeenCalled();
-      });
 
       it('should setup logs list command', async () => {
         await initializeApplication(mockProgram);
@@ -203,7 +196,6 @@ describe('CLI Index', () => {
 
   describe('Command Actions', () => {
     let startAction;
-    let statusAction;
     let logsListAction;
     let logsViewAction;
     let logsSearchAction;
@@ -216,12 +208,11 @@ describe('CLI Index', () => {
       // Extract the action functions from the mock calls
       const actionCalls = mockProgram.action.mock.calls;
       startAction = actionCalls[0][0]; // start command action
-      statusAction = actionCalls[1][0]; // status command action
-      logsListAction = actionCalls[2][0]; // logs list action
-      logsViewAction = actionCalls[3][0]; // logs view action
-      logsSearchAction = actionCalls[4][0]; // logs search action
-      logsPromptAction = actionCalls[5][0]; // logs prompt action
-      defaultAction = actionCalls[6][0]; // default action
+      logsListAction = actionCalls[1][0]; // logs list action
+      logsViewAction = actionCalls[2][0]; // logs view action
+      logsSearchAction = actionCalls[3][0]; // logs search action
+      logsPromptAction = actionCalls[4][0]; // logs prompt action
+      defaultAction = actionCalls[5][0]; // default action
     });
 
     describe('Start command action', () => {
@@ -279,18 +270,6 @@ describe('CLI Index', () => {
       });
     });
 
-    describe('Status command action', () => {
-      it('should show status information', async () => {
-        const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
-
-        await statusAction();
-
-        expect(mockConsoleLog).toHaveBeenCalledWith('Agent Status:');
-        expect(mockConsoleLog).toHaveBeenCalledWith('No active agents');
-
-        mockConsoleLog.mockRestore();
-      });
-    });
 
     describe('Logs list command action', () => {
       it('should execute logs list command successfully', async () => {
@@ -506,7 +485,7 @@ describe('CLI Index', () => {
 
     it('should handle empty options objects', async () => {
       await initializeApplication(mockProgram);
-      const logsListAction = mockProgram.action.mock.calls[2][0];
+      const logsListAction = mockProgram.action.mock.calls[1][0];
 
       await logsListAction({});
 
@@ -515,7 +494,7 @@ describe('CLI Index', () => {
 
     it('should handle undefined options', async () => {
       await initializeApplication(mockProgram);
-      const logsViewAction = mockProgram.action.mock.calls[3][0];
+      const logsViewAction = mockProgram.action.mock.calls[2][0];
 
       await logsViewAction('test-id', undefined);
 
