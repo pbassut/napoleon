@@ -107,6 +107,13 @@ The goal is quality delivery, not just checking boxes.]]
    - [ ] The PR description should include "Closes #<issue_number>" at the end to link the PR and Issue together
    - [ ] Using `gh` tool to update the issue status to `Ready to Review`.
 
+11. **Pull Request checks passes on Github Actions:**
+
+   [[LLM: We only merge high quality code!]]
+
+   - [ ] Keep pooling your Pull Request state to check if it's passing ALL CI checks.
+   - [ ] If not, go back to step #2 of this checklist
+
 
 ## Final Confirmation
 
