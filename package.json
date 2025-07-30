@@ -103,6 +103,10 @@
     "url": "https://github.com/pbassut/napoleon/issues"
   },
   "homepage": "https://github.com/pbassut/napoleon#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "lint-staged": {
     "*.{js,ts,tsx}": "eslint --cache --fix"
   }
