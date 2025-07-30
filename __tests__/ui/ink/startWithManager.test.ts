@@ -299,6 +299,9 @@ describe('startWithManager', () => {
       // Enable Ink UI
       delete process.env.NAPOLEON_DISABLE_INK;
       delete process.env.NODE_ENV;
+      delete process.env.CI;
+      delete process.env.CONTINUOUS_INTEGRATION;
+      delete process.env.NAPOLEON_TEST_MODE;
     });
 
     it('should successfully start Ink UI', async () => {
@@ -369,6 +372,9 @@ describe('startWithManager', () => {
       // Enable Ink UI
       delete process.env.NAPOLEON_DISABLE_INK;
       delete process.env.NODE_ENV;
+      delete process.env.CI;
+      delete process.env.CONTINUOUS_INTEGRATION;
+      delete process.env.NAPOLEON_TEST_MODE;
     });
 
     it('should handle createApp errors', async () => {
