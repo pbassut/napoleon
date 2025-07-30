@@ -1,8 +1,8 @@
 import React from 'react';
 import {
   Box, useApp, Text, useInput, useStdout,
-} from 'ink'; // eslint-disable-line import/no-unresolved
-import { useAgentManager } from './hooks/useAgentManager'; // eslint-disable-line import/no-unresolved, import/extensions
+} from 'ink';
+import { useAgentManager } from './hooks/useAgentManager';
 import ErrorBoundary from './components/Common/ErrorBoundary';
 import { Header } from './components/Layout/Header';
 import { MainContent } from './components/Layout/MainContent';

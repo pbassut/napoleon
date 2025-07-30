@@ -15,11 +15,3 @@ mockQuery.mockImplementation(({ prompt, abortController, options }) => {
 module.exports = {
   query: mockQuery,
 };
-
-// Add a dummy test to prevent Jest from complaining about no tests
-describe('Claude Code SDK Mock', () => {
-  it('should provide mock query function', () => {
-    expect(mockQuery).toBeDefined();
-    expect(typeof mockQuery).toBe('function');
-  });
-});
