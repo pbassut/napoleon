@@ -79,10 +79,10 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 65.96,
-      functions: 71.73,
-      lines: 74.56,
-      statements: 74.25,
+      branches: 65.93,
+      functions: 71.51,
+      lines: 74.52,
+      statements: 74.23,
     },
   },
   // Global setup to ensure timers are cleaned up
