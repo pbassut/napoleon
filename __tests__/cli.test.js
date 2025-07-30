@@ -86,7 +86,7 @@ describe('CLI Application', () => {
       await initializeApplication(program);
 
       expect(program.name()).toBe('napoleon');
-      expect(program.version()).toBe('1.0.0');
+      expect(program.version()).toBe('1.0.12');
     });
 
     it('should register start command', async () => {

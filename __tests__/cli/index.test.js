@@ -109,7 +109,7 @@ describe('CLI Index', () => {
         expect(initializeSessionStorage).toHaveBeenCalled();
         expect(mockProgram.name).toHaveBeenCalledWith('napoleon');
         expect(mockProgram.description).toHaveBeenCalledWith('Agent Driven Development Manager - CLI tool for managing multiple Claude Code SDK sessions');
-        expect(mockProgram.version).toHaveBeenCalledWith('1.0.0');
+        expect(mockProgram.version).toHaveBeenCalledWith('1.0.12');
         expect(logger.info).toHaveBeenCalledWith('CLI application initialized successfully');
       });
 
