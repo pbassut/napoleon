@@ -24,6 +24,7 @@ import logger from '../../../utils/logger';
  */
 export const useAgentManager = (agentManager: AgentManager | null): AgentManagerHookReturn => {
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [tempAgents, setTempAgents] = useState<Agent[]>([]); // Temporary spawning agents
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -164,9 +165,11 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   const spawnAgent = useCallback(async ({
     instructions,
     workingDirectory,
+    agentId,
   }: {
     instructions: string,
-    workingDirectory: string
+    workingDirectory: string,
+    agentId?: string
   }) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
@@ -180,6 +183,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       logger.debug('useAgentManager: Calling agentManager.spawnAgent', {
         instructions,
         workingDirectory,
+        agentId,
         instructionsType: typeof instructions,
         instructionsEmpty: !instructions || instructions.trim() === '',
       });
@@ -188,6 +192,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
       // Let agent manager create isolated worktree - don't override workingDirectory
       await agentManager.spawnAgent(instructions, {
         // Remove workingDirectory override to allow worktree creation
+        ...(agentId && { agentId }), // Pass agentId if provided
       });
 
       // Trigger a manual refresh without depending on fetchAgents
@@ -240,11 +245,14 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
   }, [agentManager, convertAgent]);
 
+  // Combine regular agents with temporary spawning agents
+  const allAgents = useMemo(() => [...tempAgents, ...agents], [tempAgents, agents]);
+
   // Memoize canSpawnAgent to prevent re-evaluation on every render
   const canSpawnAgent = useMemo(() => agentManager?.canSpawnAgent() ?? false, [agentManager, agents.length]); // Re-evaluate when agent count changes
 
   return {
-    agents,
+    agents: allAgents,
     selectedAgentId,
     selectAgent,
     spawnAgent,
@@ -252,5 +260,15 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     canSpawnAgent,
     isLoading,
     error,
+    // Add methods to manage temporary agents
+    addTempAgent: useCallback((agent: Agent) => {
+      setTempAgents(prev => [...prev, agent]);
+    }, []),
+    removeTempAgent: useCallback((agentId: string) => {
+      setTempAgents(prev => prev.filter(a => a.id !== agentId));
+    }, []),
+    updateTempAgent: useCallback((agentId: string, updates: Partial<Agent>) => {
+      setTempAgents(prev => prev.map(a => (a.id === agentId ? { ...a, ...updates } : a)));
+    }, []),
   };
 };

@@ -12,6 +12,7 @@ import { TerminationDialog } from './components/Dialogs/TerminationDialog';
 import AgentList from './components/AgentList/AgentList';
 import { DetailView } from './components/DetailView/DetailView';
 import logger from '../../utils/logger';
+import AgentManager from '../../core/agent-manager';
 
 const {
   useState, useMemo, useCallback,
@@ -34,6 +35,9 @@ const App = ({ agentManager }) => {
     canSpawnAgent,
     isLoading,
     error,
+    addTempAgent,
+    removeTempAgent,
+    updateTempAgent,
   } = useAgentManager(agentManager);
 
   // Derive selectedIndex from selectedAgentId to maintain single source of truth
@@ -56,6 +60,51 @@ const App = ({ agentManager }) => {
     },
     [agents, selectedAgentId, selectAgent],
   );
+
+  // Define handleSpawnAgent first to avoid use-before-define
+  const handleSpawnAgent = useCallback(async (prompt) => {
+    try {
+      logger.debug('App: Starting agent spawn', { prompt, cwd: process.cwd() });
+      
+      // Generate the real agent ID upfront so temp and real agent use same ID
+      const agentId = AgentManager.generateAgentId();
+      
+      // Create agent entry immediately with SPAWNING status using real ID
+      const newAgent = {
+        id: agentId,
+        name: agentId,
+        status: 'SPAWNING',
+        startTime: new Date(),
+        instructions: prompt,
+        workingDirectory: process.cwd(),
+        todos: [],
+      };
+      
+      // Add to temporary agents list immediately for UI feedback
+      addTempAgent(newAgent);
+      
+      // Spawn agent asynchronously with the pre-generated ID
+      spawnAgent({
+        instructions: prompt,
+        workingDirectory: process.cwd(),
+        agentId, // Pass the pre-generated ID
+      }).then(() => {
+        logger.debug('App: Agent spawned successfully');
+        // Remove temporary agent as real agent with same ID will replace it
+        removeTempAgent(agentId);
+      }).catch(spawnError => {
+        logger.error('App: Error spawning agent:', { error: spawnError });
+        // Update temporary agent to show failed status
+        updateTempAgent(agentId, {
+          status: 'FAILED',
+          error: spawnError instanceof Error ? spawnError.message : 'Failed to spawn agent'
+        });
+      });
+    } catch (syncError) {
+      logger.error('App: Synchronous error in handleSpawnAgent:', { error: syncError });
+      throw syncError;
+    }
+  }, [addTempAgent, spawnAgent, removeTempAgent, updateTempAgent]);
 
   // Handle keyboard shortcuts
   useInput((input, key) => {
@@ -87,6 +136,16 @@ const App = ({ agentManager }) => {
     // Open termination dialog with 'd' (delete)
     if (input === 'd' && selectedAgent) {
       setIsTerminationDialogOpen(true);
+    }
+
+    // Retry failed agent with 'r'
+    if (input === 'r' && selectedAgent && selectedAgent.status === 'FAILED') {
+      logger.debug('App: r key pressed for retry, retrying agent');
+      // Inline retry logic to avoid use-before-define error
+      if (!selectedAgent.instructions) return;
+      logger.debug('App: Retrying failed agent spawn', { agentId: selectedAgent.id });
+      removeTempAgent(selectedAgent.id);
+      handleSpawnAgent(selectedAgent.instructions);
     }
 
     // View agent details with 'enter' or 'i'
@@ -128,27 +187,19 @@ const App = ({ agentManager }) => {
     }
   });
 
-  const handleSpawnAgent = async (prompt) => {
-    try {
-      logger.debug('App: Starting agent spawn', { prompt, cwd: process.cwd() });
-      await spawnAgent({
-        instructions: prompt,
-        workingDirectory: process.cwd(),
-      });
-      logger.debug('App: Agent spawned successfully, closing dialog');
-      setIsSpawnDialogOpen(false);
-    } catch (spawnError) {
-      logger.error('App: Error spawning agent:', { error: spawnError });
-      // Re-throw to let dialog handle the error
-      throw spawnError;
-    }
-  };
-
   const handleTerminateAgent = async (deleteWorktree = false) => {
     if (!selectedAgent) return;
 
     try {
-      // Pass deleteWorktree option to the terminateAgent function
+      // Check if this is a temporary failed agent
+      if (selectedAgent.id.startsWith('temp-') && selectedAgent.status === 'FAILED') {
+        // Remove temporary failed agent directly
+        removeTempAgent(selectedAgent.id);
+        setIsTerminationDialogOpen(false);
+        return;
+      }
+
+      // Pass deleteWorktree option to the terminateAgent function for real agents
       await terminateAgent(selectedAgent.id, { deleteWorktree });
       setIsTerminationDialogOpen(false);
     } catch (terminateError) {

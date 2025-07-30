@@ -790,5 +790,187 @@ describe('LogParser', () => {
 
       expect(result?.parsedContent).toBe('[Tool: TodoWrite]');
     });
+
+    describe('shouldShowLog with tool suppression', () => {
+      it('should suppress tools matching patterns', () => {
+        const entry: ParsedLogEntry = {
+          id: '1',
+          timestamp: '2023-01-01T00:00:00.000Z',
+          content: 'test',
+          type: 'assistant',
+          source: 'test',
+          metadata: {},
+          parsedContent: 'test',
+          displayFormat: 'assistant',
+          isVisible: true,
+          toolUse: {
+            name: 'TestTool',
+            input: {}
+          }
+        };
+
+        const options: LogParserOptions = {
+          toolSuppression: {
+            enabled: true,
+            suppressedTools: ['Test.*']
+          },
+          showAllSources: true,
+          showAllTypes: true,
+          includeSystemLogs: true
+        };
+
+        const result = LogParser.shouldShowLog(entry, options);
+        
+        expect(result).toBe(false);
+      });
+
+      it('should handle malformed message content that is not an array', () => {
+        const sdkMessage = {
+          message: {
+            content: 'not an array' // This should trigger line 135
+          }
+        };
+
+        const logEntry: LogEntry = {
+          id: '1',
+          timestamp: '2023-01-01T12:00:00Z',
+          content: JSON.stringify(sdkMessage),
+          type: 'assistant',
+          source: 'claude_sdk',
+          metadata: {}
+        };
+
+        const result = LogParser.parseLogEntry(logEntry);
+
+        expect(result?.displayFormat).toBe('error');
+        expect(result?.parsedContent).toContain('[Parse Error]');
+      });
+
+      it('should handle completely unparseable content to trigger catch block', () => {
+        // Create content that will cause JSON.parse to throw and hit the catch block (line 183)
+        const logEntry: LogEntry = {
+          id: '1',
+          timestamp: '2023-01-01T12:00:00Z',
+          content: 'malformed json {', // This will cause JSON.parse to throw
+          type: 'assistant',
+          source: 'claude_sdk',
+          metadata: {}
+        };
+
+        const result = LogParser.parseLogEntry(logEntry);
+
+        expect(result).toBeNull(); // Should return null from catch block (line 183)
+      });
+
+      it('should handle invalid timestamp to trigger formatTimestamp catch', () => {
+        // Create an invalid timestamp that will cause toLocaleTimeString to throw
+        const invalidTimestamp = 'not-a-valid-date-at-all';
+
+        const result = LogParser.formatTimestamp(invalidTimestamp);
+
+        expect(result).toBe(invalidTimestamp); // Should return original timestamp (line 236)
+      });
+
+      it('should not suppress tools when pattern does not match', () => {
+        const entry: ParsedLogEntry = {
+          id: '1',
+          timestamp: '2023-01-01T00:00:00.000Z',
+          content: 'test',
+          type: 'assistant',  
+          source: 'test',
+          metadata: {},
+          parsedContent: 'test',
+          displayFormat: 'assistant',
+          isVisible: true,
+          toolUse: {
+            name: 'OtherTool',
+            input: {}
+          }
+        };
+
+        const options: LogParserOptions = {
+          toolSuppression: {
+            enabled: true,
+            suppressedTools: ['Test.*']
+          },
+          showAllSources: true,
+          showAllTypes: true,
+          includeSystemLogs: true
+        };
+
+        const result = LogParser.shouldShowLog(entry, options);
+        
+        expect(result).toBe(true);
+      });
+
+      it('should handle entries without toolUse when suppression enabled', () => {
+        const entry: ParsedLogEntry = {
+          id: '1',
+          timestamp: '2023-01-01T00:00:00.000Z',
+          content: 'test',
+          type: 'assistant',  
+          source: 'test',
+          metadata: {},
+          parsedContent: 'test',
+          displayFormat: 'assistant',
+          isVisible: true
+        };
+
+        const options: LogParserOptions = {
+          toolSuppression: {
+            enabled: true,
+            suppressedTools: ['Test.*']
+          },
+          showAllSources: true,
+          showAllTypes: true,
+          includeSystemLogs: true
+        };
+
+        const result = LogParser.shouldShowLog(entry, options);
+        
+        expect(result).toBe(true);
+      });
+    });
+  });
+
+  describe('Edge cases for complete coverage', () => {
+    it('should handle user SDK message with non-array content (line 135)', () => {
+      const sdkMessage = {
+        message: {
+          content: 'not an array' // This should trigger line 135 in user message handling
+        }
+      };
+      const logEntry: LogEntry = {
+        id: '1',
+        timestamp: '2023-01-01T12:00:00Z',
+        content: JSON.stringify(sdkMessage),
+        type: 'user', // Must be user to reach line 135
+        source: 'claude_sdk',
+        metadata: {}
+      };
+      
+      const result = LogParser.parseLogEntry(logEntry);
+      expect(result?.displayFormat).toBe('error');
+      expect(result?.parsedContent).toContain('[Parse Error]');
+    });
+
+    it('should return null for malformed json entries (line 183)', () => {
+      const logEntry: LogEntry = {
+        id: '1',
+        timestamp: '2023-01-01T12:00:00Z',
+        content: 'malformed json content', // Contains 'malformed json' to trigger line 54 -> null return
+        type: 'assistant',
+        source: 'claude_sdk',
+        metadata: {}
+      };
+      
+      const result = LogParser.parseLogEntry(logEntry);
+      expect(result).toBeNull(); // Should return null for malformed json entries
+    });
+
+    it('should handle timestamp parsing errors (line 236)', () => {
+      const result = LogParser.formatTimestamp('invalid-timestamp');
+      expect(result).toBe('invalid-timestamp'); // Should return the original timestamp on error
+    });
   });
 });

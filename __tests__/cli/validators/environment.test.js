@@ -159,6 +159,7 @@ describe('Environment Validator', () => {
     });
 
     it.skip('should warn about missing Claude SDK in non-test environment', async () => {
+      const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
       
       mockExecAsync.mockImplementation((command) => {
@@ -171,11 +172,14 @@ describe('Environment Validator', () => {
         return Promise.reject(new Error('Unknown command'));
       });
 
-      await validateEnvironment();
+      await validateEnvironment(); // Should not throw
       
       expect(console.warn).toHaveBeenCalledWith(
         'Warning: Claude Code SDK not found. Some features may be limited.'
       );
+      
+      // Restore original environment
+      process.env.NODE_ENV = originalEnv;
     });
 
     it.skip('should validate multiple versions correctly', async () => {

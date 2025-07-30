@@ -55,7 +55,11 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
   const currentTask = getCurrentTask(agent.todos);
   const currentTaskDisplay = currentTask
     ? truncateTask(currentTask.content)
-    : 'No active task';
+    : agent.status === 'SPAWNING' 
+      ? 'Spawning agent...'
+      : agent.status === 'FAILED' && agent.error
+        ? `Error: ${typeof agent.error === 'string' ? agent.error : agent.error.message}`
+        : 'No active task';
 
   return (
     <Box
@@ -95,6 +99,17 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
               <Text color={statusInfo.color}>{statusInfo.text}</Text>
             </Box>
           </>
+        ) : agent.status === 'SPAWNING' ? (
+          <>
+            <ActivityIndicator
+              isActive={true}
+              color="yellow"
+              symbol="●"
+            />
+            <Box marginLeft={1}>
+              <Text color={statusInfo.color}>{statusInfo.text}</Text>
+            </Box>
+          </>
         ) : (
           <>
             <Text>{statusInfo.emoji} </Text>
@@ -105,7 +120,13 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
 
       {/* Current Task column */}
       <Box width={25} marginLeft={2}>
-        <Text color={currentTask ? textColor : 'gray'}>
+        <Text color={
+          agent.status === 'FAILED' && agent.error 
+            ? 'red'
+            : agent.status === 'SPAWNING'
+              ? 'yellow'
+              : currentTask ? textColor : 'gray'
+        }>
           {currentTaskDisplay}
         </Text>
       </Box>
@@ -116,7 +137,8 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
   const agentPropsEqual = prevProps.agent.id === nextProps.agent.id
     && prevProps.agent.status === nextProps.agent.status
     && prevProps.agent.name === nextProps.agent.name
-    && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime();
+    && prevProps.agent.lastActivity?.getTime() === nextProps.agent.lastActivity?.getTime()
+    && prevProps.agent.error === nextProps.agent.error;
 
   const interactionPropsEqual = prevProps.isSelected === nextProps.isSelected
     && prevProps.isFocused === nextProps.isFocused;

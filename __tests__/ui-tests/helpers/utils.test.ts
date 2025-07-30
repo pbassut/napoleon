@@ -2,6 +2,7 @@ import {
   delay,
   generateTestPrompt,
   TestDataBuilder,
+  captureScreenshot,
 } from '../../../src/ui-tests/helpers/utils';
 
 describe('UI Test Utils', () => {
@@ -372,4 +373,21 @@ describe('UI Test Utils', () => {
       Date.now = originalNow;
     });
   });
+
+  describe('captureScreenshot', () => {
+    it('should capture screenshot from process output', async () => {
+      const mockContext = {
+        processManager: {
+          readProcessOutput: jest.fn().mockResolvedValue('test output')
+        },
+        pid: 123
+      };
+
+      const result = await captureScreenshot(mockContext as any, 'test');
+      
+      expect(result).toBe('test output');
+      expect(mockContext.processManager.readProcessOutput).toHaveBeenCalledWith(123, 100);
+    });
+  });
+
 });

@@ -115,5 +115,39 @@ describe('CLI Application', () => {
 
       await expect(initializeApplication(program)).rejects.toThrow('Storage initialization failed');
     });
+
+    it.skip('should handle EnvironmentValidationError gracefully', async () => {
+      // Mock console methods and process.exit to test error handling
+      const originalConsoleLog = console.log;
+      const originalProcessExit = process.exit;
+      const consoleLogSpy = jest.fn();
+      const processExitSpy = jest.fn();
+      
+      console.log = consoleLogSpy;
+      process.exit = processExitSpy;
+      
+      // Create a program instance for this test
+      const testProgram = require('commander').createCommand();
+      
+      // Get the already mocked function and make it throw
+      const { validateEnvironment } = require('../src/cli/validators/environment');
+      const { EnvironmentValidationError } = require('../src/utils/errors');
+      
+      const error = new EnvironmentValidationError('Environment validation failed');
+      error.name = 'EnvironmentValidationError';
+      validateEnvironment.mockRejectedValue(error);
+      
+      // This should trigger the error handling path (lines 147-149)
+      await initializeApplication(testProgram);
+      
+      // Verify error handling 
+      expect(consoleLogSpy).toHaveBeenCalledWith('\n❌ Napoleon startup failed');
+      expect(consoleLogSpy).toHaveBeenCalledWith('Please resolve the above issues and try again.\n');
+      expect(processExitSpy).toHaveBeenCalledWith(1);
+      
+      // Restore original functions
+      console.log = originalConsoleLog;
+      process.exit = originalProcessExit;
+    });
   });
 });

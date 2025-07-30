@@ -470,4 +470,71 @@ describe('useAgentManager Hook - Structural Tests', () => {
       expect(mockUseCallback).toHaveBeenCalled();
     });
   });
+
+  describe('Temporary Agent Management', () => {
+    it('should test temp agent functionality structure', async () => {
+      hookModule = await import('../../../../src/ui/ink/hooks/useAgentManager');
+      
+      const mockAgentManager = {
+        getActiveAgents: jest.fn().mockReturnValue([]),
+        getAgentDetails: jest.fn().mockReturnValue({ todos: [] }),
+        canSpawnAgent: jest.fn().mockReturnValue(true),
+      };
+
+      // Reset mocks for this test
+      jest.clearAllMocks();
+      
+      // Mock useState to return consistent values
+      mockUseState.mockReturnValue([[], jest.fn()]);
+      mockUseMemo.mockImplementation((fn) => fn());
+      mockUseCallback.mockImplementation((fn) => fn);
+
+      // Test that the hook can be called without errors
+      expect(() => {
+        hookModule.useAgentManager(mockAgentManager);
+      }).not.toThrow();
+
+      // Verify the proper hooks are being used
+      expect(mockUseState).toHaveBeenCalled(); // Multiple state variables
+      expect(mockUseCallback).toHaveBeenCalled(); // Callback functions
+      expect(mockUseMemo).toHaveBeenCalled(); // Memoized values
+    });
+
+    it('should handle agent combinations properly', async () => {
+      hookModule = await import('../../../../src/ui/ink/hooks/useAgentManager');
+      
+      const mockAgentManager = {
+        getActiveAgents: jest.fn().mockReturnValue([]),
+        getAgentDetails: jest.fn().mockReturnValue({ todos: [] }),
+        canSpawnAgent: jest.fn().mockReturnValue(true),
+      };
+
+      // Test that the hook handles different combinations
+      expect(() => {
+        hookModule.useAgentManager(mockAgentManager);
+      }).not.toThrow();
+
+      expect(() => {
+        hookModule.useAgentManager(null);
+      }).not.toThrow();
+    });
+
+    it('should test callback optimization', async () => {
+      hookModule = await import('../../../../src/ui/ink/hooks/useAgentManager');
+      
+      const mockAgentManager = {
+        getActiveAgents: jest.fn().mockReturnValue([]),
+        getAgentDetails: jest.fn().mockReturnValue({ todos: [] }),
+        canSpawnAgent: jest.fn().mockReturnValue(true),
+      };
+
+      // Test that useCallback is used for optimization
+      expect(() => {
+        hookModule.useAgentManager(mockAgentManager);
+      }).not.toThrow();
+
+      // Verify useCallback was called
+      expect(mockUseCallback).toHaveBeenCalled();
+    });
+  });
 });

@@ -58,7 +58,7 @@ commands:
   - exit: Say goodbye as the Developer, and then abandon inhabiting this persona
 develop-issue:
   start-issue:
-    - Use the `gh` tool to update the issue status to be "In Progress".
+    - Use the `gh` tool to update the issue status to be "In Progress". THIS IS NOT ADDING A LABEL, IT'S UPDATING THE ISSUE ON THE PROJECT INSTEAD!
   git-branching: 
     - CRITICAL: UNLESS you're told to work off an existing branch, create a comprehensive branch name for the work you're about to do.
     - CRITICAL: DO NOT create a new branch if you're told to work off of an issue that already has a Pull Request attached to it. Make sure to pull the branch attached to that issue and make commits and pushes to that branch.

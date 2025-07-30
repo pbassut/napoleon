@@ -71,4 +71,68 @@ describe('SpawnDialog', () => {
     const { unmount } = render(<SpawnDialog {...defaultProps} />);
     expect(() => unmount()).not.toThrow();
   });
+
+  describe('Immediate Exit Logic', () => {
+    it('should handle SpawnDialog component structure', async () => {
+      const mockOnClose = jest.fn();
+      const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+      
+      // Test that the component can be imported and instantiated
+      const SpawnDialogModule = await import('../../../../../src/ui/ink/components/Dialogs/SpawnDialog');
+      expect(SpawnDialogModule.SpawnDialog).toBeDefined();
+      
+      // Test component renders without error
+      expect(() => {
+        render(
+          <SpawnDialog 
+            isOpen={true} 
+            onClose={mockOnClose} 
+            onSubmit={mockOnSubmit} 
+          />
+        );
+      }).not.toThrow();
+    });
+
+    it('should handle different prop combinations', () => {
+      const mockOnClose = jest.fn();
+      const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+      
+      // Test with open state
+      expect(() => {
+        render(
+          <SpawnDialog 
+            isOpen={true} 
+            onClose={mockOnClose} 
+            onSubmit={mockOnSubmit} 
+          />
+        );
+      }).not.toThrow();
+      
+      // Test with closed state
+      expect(() => {
+        render(
+          <SpawnDialog 
+            isOpen={false} 
+            onClose={mockOnClose} 
+            onSubmit={mockOnSubmit} 
+          />
+        );
+      }).not.toThrow();
+    });
+
+    it('should handle error scenarios', () => {
+      const mockOnClose = jest.fn();
+      const mockOnSubmit = jest.fn().mockRejectedValue(new Error('Test error'));
+      
+      expect(() => {
+        render(
+          <SpawnDialog 
+            isOpen={true} 
+            onClose={mockOnClose} 
+            onSubmit={mockOnSubmit} 
+          />
+        );
+      }).not.toThrow();
+    });
+  });
 });

@@ -619,32 +619,31 @@ describe('Performance Monitor', () => {
         return undefined;
       });
       
-      // This test verifies the theoretical behavior since we can't easily add 1000+ renders
-      // The trimming logic keeps the last 500 renders when exceeding 1000
-      
-      // Add enough renders to verify basic functionality
-      for (let i = 0; i < 10; i++) {
+      // Simulate adding 1001 renders to trigger memory management
+      // Use a loop to efficiently add many renders and test the trimming behavior
+      for (let i = 0; i < 1001; i++) {
         // Clear callbacks for each component call
         callbacks.length = 0;
         mockRef.current = 0;
         mockPerformanceNow.mockReturnValue(100);
         
-        useRenderTime(`Component${i}`);
+        useRenderTime(`Component${i % 50}`); // Reuse component names to avoid memory issues
         
         // Execute first useEffect (sets start time)
         callbacks[0]();
         expect(mockRef.current).toBe(100);
         
         // Execute second useEffect (calculates duration)
-        mockPerformanceNow.mockReturnValue(110); // 10ms duration
+        mockPerformanceNow.mockReturnValue(105); // 5ms duration
         callbacks[1]();
       }
       
       const stats = getPerformanceStats();
-      expect(stats.totalRenders).toBe(10);
+      // After adding 1001 renders, should be trimmed to 500 (last 500 renders)
+      expect(stats.totalRenders).toBe(500);
       
-      const recent = getRecentRenders(100); // Request more than available
-      expect(recent).toHaveLength(10); // Should return all 10
+      const recent = getRecentRenders(1000); // Request more than available
+      expect(recent).toHaveLength(500); // Should return 500 (trimmed amount)
     });
   });
 

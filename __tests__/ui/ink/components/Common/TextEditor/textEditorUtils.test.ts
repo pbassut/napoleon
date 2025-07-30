@@ -306,10 +306,42 @@ describe('Text Editor Utilities', () => {
       expect(result).toBe(multiLineText.length);
     });
 
+    it('should handle line beyond text length', () => {
+      const result = getLineEnd(multiLineText, multiLineText.length + 10);
+      
+      expect(result).toBe(multiLineText.length);
+    });
+
+    it('should handle position in line that exceeds text lines', () => {
+      const text = 'Line 1\nLine 2';
+      const lines = text.split('\n');
+      // Create a position that would result in line >= lines.length in getLineEnd
+      const pos = positionToLineColumn(text, text.length + 100);
+      const result = getLineEnd(text, text.length + 100);
+      
+      expect(result).toBe(text.length);
+    });
+
     it('should handle position beyond text', () => {
       const result = getLineEnd(multiLineText, multiLineText.length + 10);
       
       expect(result).toBe(multiLineText.length);
+    });
+
+    it('should handle text with only newlines', () => {
+      const text = '\n\n\n';
+      const result = getLineEnd(text, 1); // Position at second newline
+      
+      expect(result).toBe(1); // Should find end of current line
+    });
+
+    it('should handle position that maps to line beyond available lines', () => {
+      const text = 'a\nb';
+      // Force a position that when converted to line will exceed the lines array length
+      const position = text.length + 100; // Way beyond text end
+      const result = getLineEnd(text, position);
+      
+      expect(result).toBe(text.length); // Should return text.length (line 148)
     });
   });
 

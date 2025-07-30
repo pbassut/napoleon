@@ -733,4 +733,30 @@ describe('CrossPlatformFocus', () => {
       expect(logger.error).toHaveBeenCalledWith('Linux focus recovery failed', { error: 'Focus failed' });
     });
   });
+
+  describe('Delayed Focus', () => {
+    beforeEach(() => {
+      crossPlatformFocus = new CrossPlatformFocus(mockScreen);
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('should use setTimeout when immediate is false', async () => {
+      const mockElement = { focus: jest.fn() };
+      mockScreen.focused = mockElement;
+
+      const focusPromise = crossPlatformFocus.setFocus(mockElement, { immediate: false });
+      
+      // Fast-forward timers to trigger the setTimeout
+      jest.runAllTimers();
+      
+      const result = await focusPromise;
+      
+      expect(result).toBe(true);
+      expect(mockElement.focus).toHaveBeenCalled();
+    });
+  });
 });

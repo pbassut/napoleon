@@ -18,7 +18,6 @@ const BASIC_PRESET = '/BMad:agents:dev ';
 const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) => {
   const [text, setText] = useState(BASIC_PRESET);
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   // Memoize useFocus options to prevent infinite re-renders
   const focusOptions = useMemo(() => ({ autoFocus: isOpen }), [isOpen]);
@@ -35,7 +34,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
   const inputOptions = useMemo(() => ({ isActive: isOpen && isFocused }), [isOpen, isFocused]);
 
   useInput((input: string, key: { escape?: boolean }) => {
-    if (!isOpen || isLoading) return;
+    if (!isOpen) return;
 
     // Handle Escape to close dialog (global handler)
     if (key.escape) {
@@ -62,23 +61,24 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
     const safePrompt = protectBackticks(prompt);
 
     setError('');
-    setIsLoading(true);
 
+    logger.debug('SpawnDialog: Submitting prompt:', {
+      originalPrompt: prompt,
+      safePrompt,
+      hasBackticks: prompt.includes('`'),
+    });
+
+    // Close modal immediately after validation
+    setText(BASIC_PRESET); // Reset to preset text
+    onClose();
+
+    // Pass prompt to parent without waiting for spawn completion
     try {
-      logger.debug('SpawnDialog: Submitting prompt:', {
-        originalPrompt: prompt,
-        safePrompt,
-        hasBackticks: prompt.includes('`'),
-      });
       await onSubmit(safePrompt);
       logger.debug('SpawnDialog: onSubmit completed successfully');
-      setIsLoading(false);
-      setText(BASIC_PRESET); // Reset to preset text after successful submission
-      // Don't close here - let the parent handle closing after successful spawn
     } catch (err: unknown) {
       logger.error('SpawnDialog: Error in onSubmit:', { error: err });
-      setError(err instanceof Error ? err.message : 'Failed to spawn agent');
-      setIsLoading(false);
+      // Error handling will be done in the parent component now
     }
   };
 
@@ -125,7 +125,7 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
               multiline={true}
               maxLines={20}
               showCursor={true}
-              disabled={isLoading}
+              disabled={false}
               onSubmit={handleSubmit}
               showPositionIndicator={false}
             />
@@ -135,12 +135,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
         {error && (
           <Box>
             <Text color="red">{`Error: ${error}`}</Text>
-          </Box>
-        )}
-
-        {isLoading && (
-          <Box>
-            <Text color="yellow">Creating agent...</Text>
           </Box>
         )}
 

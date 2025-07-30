@@ -27,6 +27,10 @@ export interface AgentManagerHookReturn {
   canSpawnAgent: boolean;
   isLoading: boolean;
   error: Error | null;
+  // Temporary agent management methods
+  addTempAgent: (agent: Agent) => void;
+  removeTempAgent: (agentId: string) => void;
+  updateTempAgent: (agentId: string, updates: Partial<Agent>) => void;
 }
 
 export interface AgentManager {

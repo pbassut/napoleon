@@ -90,7 +90,8 @@ The goal is quality delivery, not just checking boxes.]]
 
    - [ ] Make sure your current branch is rebased with `origin/main` before proceeding.
    - [ ] Come up with a descriptive git branch name that relates to the work being done. Unless you're working on a existing branch
-   - [ ] Commit the work you have done in small commits with short but descriptive messages
+   - [ ] Commit the work you have done in small commits with short but descriptive messages(without using `--no-verify` or `-n`).
+   - [ ] The pre-commit hooks must pass.
 
 9. **Push your work:**
 
@@ -101,7 +102,7 @@ The goal is quality delivery, not just checking boxes.]]
 
 10. **Filling the Pull Request description:**
 
-   [[LLM: Present the work to others]]
+   [[LLM: Present the work to others. DO NOT SKIP ANY STEPS]]
 
    - [ ] The content of the PR description should resemble what you did on the code
    - [ ] The PR description should include "Closes #<issue_number>" at the end to link the PR and Issue together
