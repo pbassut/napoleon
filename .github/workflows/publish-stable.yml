@@ -32,6 +32,6 @@ jobs:
         run: npm run lint
 
       - name: Publish to npm with @latest tag
-        run: npm publish --provenance --access public
+        run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

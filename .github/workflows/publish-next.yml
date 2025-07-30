@@ -89,7 +89,7 @@ jobs:
           npm version ${{ steps.next-version.outputs.version }} --no-git-tag-version
 
       - name: Publish to npm with @next tag
-        run: npm publish --provenance --access public --tag next
+        run: npm publish --access public --tag next
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
