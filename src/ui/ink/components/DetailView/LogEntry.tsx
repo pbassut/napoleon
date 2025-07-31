@@ -1,7 +1,6 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 import { ParsedLogEntry, LogParser } from '../../utils/log-parser';
-import { ScrollArea } from '../Dialogs/ScrollArea';
 
 interface LogEntryProps {
   entry: ParsedLogEntry;
@@ -51,10 +50,10 @@ export const LogEntry: React.FC<LogEntryProps> = ({
       <Text color="gray">
         [{timestamp}]
       </Text>
-      <ScrollArea height={50}>
+      <Text wrap="end">
         {getPrefix()}
         {entry.parsedContent}
-      </ScrollArea>
+      </Text>
     </Box>
   );
 };

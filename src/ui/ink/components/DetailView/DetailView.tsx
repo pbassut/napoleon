@@ -39,7 +39,7 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
 
   // Use real logs with streaming if agentManager is provided
   const {
-    logs: realLogs,
+    logs,
     isLoading,
     isStreaming,
     streamingError,
@@ -51,77 +51,75 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   });
 
   // Generate mock logs for testing when no real logs available
-  const [mockLogs, setMockLogs] = useState<LogEntry[]>([]);
-  useEffect(() => {
-    if (!agentManager || realLogs.length === 0) {
-      const mocks: LogEntry[] = [
-        {
-          id: '1',
-          timestamp: new Date().toISOString(),
-          content: 'Agent started',
-          type: 'system',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '2',
-          timestamp: new Date().toISOString(),
-          content: `Instructions: ${agent.instructions || 'No instructions provided'}`,
-          type: 'system',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '3',
-          timestamp: new Date().toISOString(),
-          content: 'Initializing workspace...',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '4',
-          timestamp: new Date().toISOString(),
-          content: 'Running command: git status',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '5',
-          timestamp: new Date().toISOString(),
-          content: 'On branch main',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '6',
-          timestamp: new Date().toISOString(),
-          content: 'Your branch is up to date',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-      ];
+  // const [mockLogs, setMockLogs] = useState<LogEntry[]>([]);
+  // useEffect(() => {
+  //   if (!agentManager || realLogs.length === 0) {
+  //     const mocks: LogEntry[] = [
+  //       {
+  //         id: '1',
+  //         timestamp: new Date().toISOString(),
+  //         content: 'Agent started',
+  //         type: 'system',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //       {
+  //         id: '2',
+  //         timestamp: new Date().toISOString(),
+  //         content: `Instructions: ${agent.instructions || 'No instructions provided'}`,
+  //         type: 'system',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //       {
+  //         id: '3',
+  //         timestamp: new Date().toISOString(),
+  //         content: 'Initializing workspace...',
+  //         type: 'info',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //       {
+  //         id: '4',
+  //         timestamp: new Date().toISOString(),
+  //         content: 'Running command: git status',
+  //         type: 'info',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //       {
+  //         id: '5',
+  //         timestamp: new Date().toISOString(),
+  //         content: 'On branch main',
+  //         type: 'info',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //       {
+  //         id: '6',
+  //         timestamp: new Date().toISOString(),
+  //         content: 'Your branch is up to date',
+  //         type: 'info',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       },
+  //     ];
 
-      // Add more mock logs
-      for (let i = 0; i < 20; i++) {
-        mocks.push({
-          id: `mock-${i + 7}`,
-          timestamp: new Date(Date.now() + i * 1000).toISOString(),
-          content: `Log entry ${i + 1}: Processing task...`,
-          type: i % 10 === 0 ? 'error' : 'info',
-          source: 'napoleon',
-          metadata: {},
-        });
-      }
+  //     // Add more mock logs
+  //     for (let i = 0; i < 20; i++) {
+  //       mocks.push({
+  //         id: `mock-${i + 7}`,
+  //         timestamp: new Date(Date.now() + i * 1000).toISOString(),
+  //         content: `Log entry ${i + 1}: Processing task...`,
+  //         type: i % 10 === 0 ? 'error' : 'info',
+  //         source: 'napoleon',
+  //         metadata: {},
+  //       });
+  //     }
 
-      setMockLogs(mocks);
-    }
-  }, [agentManager, realLogs.length, agent.instructions]);
-
-  const logs = agentManager && realLogs.length > 0 ? realLogs : mockLogs;
+  //     setMockLogs(mocks);
+  //   }
+  // }, [agentManager, realLogs.length, agent.instructions]);
 
   // Handle keyboard input for close
   useInput((input: string, key: any) => {

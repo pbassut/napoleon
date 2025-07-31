@@ -7,6 +7,7 @@ import {
 import { LogEntry as RawLogEntry } from '../../hooks/useAgentLogs';
 import { LogParser, ParsedLogEntry, LogParserOptions } from '../../utils/log-parser';
 import { LogEntry } from './LogEntry';
+import { ScrollArea } from './ScrollArea';
 
 interface LogViewerProps {
   logs: RawLogEntry[];
@@ -153,20 +154,21 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   return (
     <Box flexDirection="column" flexGrow={1}>
+      <ScrollArea height={50}>
       {parsedLogs.map((entry, index) => {
         const globalIndex = scrollOffset + index;
         const lineNumber = globalIndex + 1;
 
         return (
           <Box key={`${entry.id}-${globalIndex}`}>
-            <Text wrap="end">{entry.parsedContent}</Text>
-            {/* <LogEntry
+            <LogEntry
               entry={entry}
               lineNumber={lineNumber}
-            /> */}
+            />
           </Box>
         );
       })}
+      </ScrollArea>
     </Box>
   );
 };
