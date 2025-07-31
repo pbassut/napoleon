@@ -33,13 +33,6 @@ jest.mock('../src/utils/logger', () => ({
   warn: jest.fn(),
 }));
 
-// Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-    getMetrics: jest.fn().mockReturnValue({}),
-  }));
-});
 
 // Mock SDKCommunicationManager
 jest.mock('../src/core/sdk/communication-manager', () => {
@@ -74,18 +67,6 @@ jest.mock('../src/core/tool-usage-tracker', () => ({
   cleanupAgent: jest.fn(),
 }));
 
-// Mock worktree lifecycle manager
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(),
-    registerActiveAgent: jest.fn(),
-    deregisterActiveAgent: jest.fn(),
-    isWorktreeActive: jest.fn().mockReturnValue(false),
-    getActiveAgents: jest.fn().mockReturnValue([]),
-    getMetrics: jest.fn().mockReturnValue({}),
-    forceCleanupWorktree: jest.fn().mockResolvedValue(),
-  }));
-});
 
 // Import modules after mocks are set up
 const { spawn, execSync, exec } = require('child_process');
@@ -214,13 +195,7 @@ describe('Git Worktree Integration Tests', () => {
     // Wait for async worktree removal to complete
     await new Promise(resolve => setTimeout(resolve, 50));
 
-    // Verify worktree cleanup was called through the lifecycle manager
-    expect(agentManager.worktreeLifecycle.forceCleanupWorktree).toHaveBeenCalledWith(
-      session.worktreePath,
-      expect.objectContaining({
-        preserveBranch: false,
-      })
-    );
+    // Note: Worktree lifecycle manager has been removed - cleanup logic simplified
     
     // Restore fake timers
     jest.useFakeTimers();

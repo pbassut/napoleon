@@ -36,11 +36,6 @@ jest.mock('fs', () => ({
   rmSync: jest.fn(),
 }));
 
-// Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
-  initialize: jest.fn().mockResolvedValue(undefined),
-  getMetrics: jest.fn().mockReturnValue({}),
-})));
 
 // Mock SDKCommunicationManager
 const mockSDKManager = {

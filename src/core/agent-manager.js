@@ -8,7 +8,6 @@ const {
   FileSystemError,
 } = require('../utils/errors');
 const logger = require('../utils/logger');
-const WorktreeLifecycleManager = require('./worktree-lifecycle-manager');
 const SDKCommunicationManager = require('./sdk/communication-manager');
 const { SDKStatus } = require('./sdk/sdk-types');
 const AgentLogManager = require('./logging/agent-log-manager');
@@ -58,7 +57,6 @@ class AgentManager {
   constructor() {
     this.agents = new Map();
     this.config = null;
-    this.worktreeLifecycle = null;
     this.orphanScanInterval = null;
     this.sdkManager = new SDKCommunicationManager();
     this.agentLogManager = null; // Will be initialized based on config
@@ -98,15 +96,8 @@ class AgentManager {
       // Initialize core components in parallel where possible
       const initTasks = [];
 
-      // 1. Initialize worktree lifecycle management
-      this.worktreeLifecycle = new WorktreeLifecycleManager({
-        maxConcurrentCleanups: this.config.maxConcurrentCleanups || 2,
-        retryAttempts: this.config.cleanupRetryAttempts || 3,
-      });
-
       // Run heavy operations in parallel
       initTasks.push(
-        this.worktreeLifecycle.initialize(),
         this.initializeAgentLogging(),
       );
 
@@ -122,7 +113,6 @@ class AgentManager {
 
       logger.info('Agent manager initialized successfully', {
         activeSessions: this.agents.size,
-        worktreeMetrics: this.worktreeLifecycle?.getMetrics(),
         persistentLogging: this.agentLogManager ? 'enabled' : 'disabled',
       });
     } catch (error) {
@@ -1181,14 +1171,6 @@ class AgentManager {
         }
       }
 
-      // Register with worktree lifecycle manager
-      if (this.worktreeLifecycle) {
-        this.worktreeLifecycle.registerActiveAgent(agentId, session);
-        logger.debug('Agent registered with worktree lifecycle manager', {
-          agentId,
-        });
-      }
-
       // Checkpoint 5: Final completion
       const totalSpawnDuration = Date.now() - spawnStartTime;
 
@@ -1633,77 +1615,7 @@ class AgentManager {
         }
       }
 
-      // Clean up worktree through lifecycle manager for consistent behavior
-      if (session.worktreePath && this.worktreeLifecycle) {
-        try {
-          logger.debug('CLEANUP_PATH: terminateAgent routing through lifecycle manager', {
-            agentId,
-            worktreePath: session.worktreePath,
-            autoCleanup: this.config.features?.autoCleanup,
-            deleteWorktree: options.deleteWorktree,
-          });
-
-          // For deletion mode, force cleanup regardless of autoCleanup config
-          if (options.deleteWorktree) {
-            await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
-              force: true,
-              preserveBranch: false,
-              bypassAutoCleanupCheck: true,
-            });
-            logger.info('Agent worktree deleted via deletion mode', {
-              agentId,
-              worktreePath: session.worktreePath,
-            });
-          } else {
-            // Normal termination - respect existing behavior
-            await this.worktreeLifecycle.forceCleanupWorktree(session.worktreePath, {
-              force: options.force || false,
-              preserveBranch: options.preserveBranch || false,
-            });
-            logger.info('Agent worktree cleanup handled by lifecycle manager', {
-              agentId,
-              worktreePath: session.worktreePath,
-            });
-          }
-        } catch (error) {
-          const errorContext = options.deleteWorktree ? 'delete worktree' : 'cleanup worktree via lifecycle manager';
-          logger.error(`Failed to ${errorContext}`, {
-            agentId,
-            worktreePath: session.worktreePath,
-            error: error.message,
-          });
-
-          // For deletion mode, re-throw the error to provide user feedback
-          if (options.deleteWorktree) {
-            throw error;
-          }
-        }
-      } else if (session.worktreePath && !this.worktreeLifecycle) {
-        logger.warn('No lifecycle manager available for worktree cleanup', {
-          agentId,
-          worktreePath: session.worktreePath,
-        });
-      }
-
       this.updateAgentStatus(agentId, AgentStatus.TERMINATING);
-
-      // Unregister agent from worktree lifecycle manager
-      if (this.worktreeLifecycle) {
-        try {
-          await this.worktreeLifecycle.unregisterAgent(agentId, {
-            force: options.force || false,
-            preserveBranch: options.preserveBranch || false,
-          });
-          logger.debug('Agent unregistered from worktree lifecycle manager', {
-            agentId,
-          });
-        } catch (error) {
-          logger.warn('Failed to unregister agent from lifecycle manager', {
-            agentId,
-            error: error.message,
-          });
-        }
-      }
 
       // Clean up tool usage tracking data
       toolUsageTracker.cleanupAgent(agentId);
@@ -1933,21 +1845,8 @@ class AgentManager {
 
     this.orphanScanInterval = setInterval(async () => {
       try {
-        if (this.worktreeLifecycle) {
-          const result = await this.worktreeLifecycle.scanForOrphans();
-
-          if (result.newOrphans > 0) {
-            logger.info('Background orphan scan found new orphaned worktrees', {
-              scanned: result.scanned,
-              newOrphans: result.newOrphans,
-            });
-          } else {
-            logger.debug('Background orphan scan completed', {
-              scanned: result.scanned,
-              newOrphans: result.newOrphans,
-            });
-          }
-        }
+        // Orphan scanning disabled - worktree lifecycle manager removed
+        logger.debug('Background orphan scan skipped - worktree lifecycle manager not available');
       } catch (error) {
         logger.error('Background orphan scan failed', { error: error.message });
       }
@@ -1973,27 +1872,18 @@ class AgentManager {
 
   /**
    * Force cleanup of a specific worktree (manual emergency cleanup)
+   * @deprecated Worktree lifecycle manager has been removed
    */
   async forceCleanupWorktree(worktreePath, options = {}) {
-    if (!this.worktreeLifecycle) {
-      throw new Error('Worktree lifecycle manager not initialized');
-    }
-
-    return this.worktreeLifecycle.forceCleanupWorktree(worktreePath, options);
+    throw new Error('Worktree lifecycle manager not available - feature removed');
   }
 
   /**
    * Get worktree lifecycle status and metrics
+   * @deprecated Worktree lifecycle manager has been removed
    */
   getWorktreeLifecycleStatus() {
-    if (!this.worktreeLifecycle) {
-      return { enabled: false };
-    }
-
-    return {
-      enabled: true,
-      ...this.worktreeLifecycle.getStatus(),
-    };
+    return { enabled: false, reason: 'Worktree lifecycle manager removed' };
   }
 
   /**
@@ -2005,11 +1895,6 @@ class AgentManager {
     try {
       // Stop background scanning
       this.stopBackgroundOrphanScanning();
-
-      // Shutdown worktree lifecycle manager
-      if (this.worktreeLifecycle) {
-        await this.worktreeLifecycle.shutdown();
-      }
 
       // Terminate all active agents
       const activeAgents = Array.from(this.agents.keys());

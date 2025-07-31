@@ -58,14 +58,6 @@ const mockSDKManager = {
 
 jest.mock('../src/core/sdk/communication-manager', () => jest.fn().mockImplementation(() => mockSDKManager));
 
-// Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
-  initialize: jest.fn().mockResolvedValue(undefined),
-  getMetrics: jest.fn().mockReturnValue({}),
-  registerActiveAgent: jest.fn(),
-  unregisterAgent: jest.fn(),
-  forceCleanupWorktree: jest.fn().mockResolvedValue(undefined),
-})));
 
 // Mock AgentLogManager
 jest.mock('../src/core/logging/agent-log-manager', () => jest.fn().mockImplementation(() => ({

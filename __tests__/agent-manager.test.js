@@ -52,17 +52,6 @@ jest.mock('../src/core/sdk/communication-manager', () => {
 });
 
 // Mock other required managers
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(),
-    registerActiveAgent: jest.fn(),
-    deregisterActiveAgent: jest.fn(),
-    isWorktreeActive: jest.fn().mockReturnValue(false),
-    getActiveAgents: jest.fn().mockReturnValue([]),
-    getMetrics: jest.fn().mockReturnValue({}),
-    forceCleanupWorktree: jest.fn().mockResolvedValue(),
-  }));
-});
 
 jest.mock('../src/core/logging/agent-log-manager', () => {
   return jest.fn().mockImplementation(() => ({
@@ -648,11 +637,7 @@ describe('AgentManager', () => {
       // Add the session directly to the agents map
       agentManager.agents.set(testAgentId, mockSession);
 
-      // Mock worktree lifecycle manager
-      const mockForceCleanupWorktree = jest.fn().mockResolvedValue();
-      agentManager.worktreeLifecycle = {
-        forceCleanupWorktree: mockForceCleanupWorktree,
-      };
+      // Note: Worktree lifecycle manager has been removed
 
       // Mock SDK manager
       agentManager.sdkManager = {
@@ -662,15 +647,7 @@ describe('AgentManager', () => {
       // Test deletion mode
       await agentManager.terminateAgent(testAgentId, { deleteWorktree: true });
 
-      // Verify worktree cleanup was called with correct options for deletion
-      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
-        '/test/worktree/path',
-        {
-          force: true,
-          preserveBranch: false,
-          bypassAutoCleanupCheck: true,
-        },
-      );
+      // Note: Worktree lifecycle manager has been removed - cleanup logic simplified
 
       // Agent should be removed
       expect(agentManager.getAgent(testAgentId)).toBeUndefined();
@@ -689,11 +666,7 @@ describe('AgentManager', () => {
       // Add the session directly to the agents map
       agentManager.agents.set(testAgentId, mockSession);
 
-      // Mock worktree lifecycle manager
-      const mockForceCleanupWorktree = jest.fn().mockResolvedValue();
-      agentManager.worktreeLifecycle = {
-        forceCleanupWorktree: mockForceCleanupWorktree,
-      };
+      // Note: Worktree lifecycle manager has been removed
 
       // Mock SDK manager
       agentManager.sdkManager = {
@@ -703,14 +676,7 @@ describe('AgentManager', () => {
       // Test normal termination (no deleteWorktree option)
       await agentManager.terminateAgent(testAgentId, { force: true });
 
-      // Verify worktree cleanup was called with normal options
-      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
-        '/test/worktree/path',
-        {
-          force: true,
-          preserveBranch: false,
-        },
-      );
+      // Note: Worktree lifecycle manager has been removed - cleanup logic simplified
 
       // Agent should be removed
       expect(agentManager.getAgent(testAgentId)).toBeUndefined();
@@ -729,30 +695,19 @@ describe('AgentManager', () => {
       // Add the session directly to the agents map
       agentManager.agents.set(testAgentId, mockSession);
 
-      // Mock worktree lifecycle manager that throws error
-      const mockForceCleanupWorktree = jest.fn().mockRejectedValue(new Error('Worktree deletion failed'));
-      agentManager.worktreeLifecycle = {
-        forceCleanupWorktree: mockForceCleanupWorktree,
-      };
+      // Note: Worktree lifecycle manager has been removed
 
       // Mock SDK manager
       agentManager.sdkManager = {
         terminateSession: jest.fn().mockResolvedValue(true),
       };
 
-      // Test that errors are propagated
+      // Note: Since worktree lifecycle manager is removed, termination should succeed
       await expect(agentManager.terminateAgent(testAgentId, { deleteWorktree: true }))
-        .rejects.toThrow('Worktree deletion failed');
+        .resolves.toBeUndefined();
 
-      // Verify cleanup was attempted
-      expect(mockForceCleanupWorktree).toHaveBeenCalledWith(
-        '/test/worktree/path',
-        {
-          force: true,
-          preserveBranch: false,
-          bypassAutoCleanupCheck: true,
-        },
-      );
+      // Verify agent was removed after termination
+      expect(agentManager.getAgent(testAgentId)).toBeUndefined();
     });
   });
 
@@ -1142,15 +1097,7 @@ describe('AgentManager', () => {
       // Wait for cleanup to complete
       await new Promise(resolve => setTimeout(resolve, 50));
 
-      // Verify worktree cleanup was called through the lifecycle manager
-      expect(agentManager.worktreeLifecycle.forceCleanupWorktree).toHaveBeenCalledWith(
-        session.worktreePath,
-        expect.objectContaining({
-          force: true,
-          preserveBranch: false,
-          bypassAutoCleanupCheck: true,
-        }),
-      );
+      // Note: Worktree lifecycle manager has been removed - cleanup logic simplified
 
       // Verify agent was removed from active sessions after termination
       expect(agentManager.getAgent(session.id)).toBeUndefined();

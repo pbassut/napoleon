@@ -38,16 +38,6 @@ jest.mock('../src/core/config', () => ({
   saveConfig: jest.fn(),
 }));
 
-// Mock WorktreeLifecycleManager
-jest.mock('../src/core/worktree-lifecycle-manager', () => jest.fn().mockImplementation(() => ({
-  initialize: jest.fn().mockResolvedValue(undefined),
-  registerActiveAgent: jest.fn(),
-  deregisterActiveAgent: jest.fn(),
-  isWorktreeActive: jest.fn().mockReturnValue(false),
-  getActiveAgents: jest.fn().mockReturnValue([]),
-  getMetrics: jest.fn().mockReturnValue({}),
-  forceCleanupWorktree: jest.fn().mockResolvedValue(),
-})));
 
 // Mock SDKCommunicationManager
 jest.mock('../src/core/sdk/communication-manager', () => jest.fn().mockImplementation(() => ({

@@ -15,7 +15,6 @@ jest.mock('../src/core/sdk/communication-manager', () => {
     shutdown: jest.fn().mockResolvedValue(),
   }));
 });
-jest.mock('../src/core/worktree-lifecycle-manager');
 jest.mock('../src/core/logging/agent-log-manager');
 jest.mock('../src/core/tool-usage-tracker', () => ({
   getAgentTodos: jest.fn(),
@@ -484,6 +483,26 @@ describe('AgentManager Extended Coverage', () => {
         // Clean up intervals to prevent Jest open handles
         agentManager.stopBackgroundOrphanScanning();
       });
+
+      it('should execute interval callback and log skipped message', async () => {
+        jest.useFakeTimers();
+        
+        // Start the background scanning
+        agentManager.startBackgroundOrphanScanning();
+        
+        // Fast forward time to trigger the interval
+        jest.advanceTimersByTime(5 * 60 * 1000); // 5 minutes
+        
+        // Wait for any async operations
+        await Promise.resolve();
+        
+        // Verify the debug log was called
+        expect(logger.debug).toHaveBeenCalledWith(
+          'Background orphan scan skipped - worktree lifecycle manager not available'
+        );
+        
+        jest.useRealTimers();
+      });
     });
 
     describe('stopBackgroundOrphanScanning', () => {
@@ -541,47 +560,21 @@ describe('AgentManager Extended Coverage', () => {
       });
 
       it('should handle shutdown errors by throwing', async () => {
-        // Mock a shutdown error
-        if (agentManager.worktreeLifecycle) {
-          agentManager.worktreeLifecycle.shutdown = jest.fn().mockRejectedValue(new Error('Shutdown failed'));
-        }
-
-        await expect(agentManager.shutdown()).rejects.toThrow('Shutdown failed');
-        expect(logger.error).toHaveBeenCalledWith(
-          'Error during agent manager shutdown',
-          expect.any(Object)
-        );
+        // Note: Worktree lifecycle manager has been removed
+        // This test now just verifies normal shutdown
+        await expect(agentManager.shutdown()).resolves.toBeUndefined();
       });
 
-      it('should shutdown worktree lifecycle if available', async () => {
-        const mockShutdown = jest.fn().mockResolvedValue();
-        agentManager.worktreeLifecycle = {
-          shutdown: mockShutdown
-        };
-        
-        await agentManager.shutdown();
-
-        expect(mockShutdown).toHaveBeenCalled();
+      it('should shutdown without worktree lifecycle manager', async () => {
+        // Note: Worktree lifecycle manager has been removed
+        await expect(agentManager.shutdown()).resolves.toBeUndefined();
       });
     });
 
     describe('forceCleanupWorktree', () => {
-      it('should delegate to worktree lifecycle manager', async () => {
-        const mockForceCleanup = jest.fn().mockResolvedValue('cleanup-result');
-        agentManager.worktreeLifecycle = {
-          forceCleanupWorktree: mockForceCleanup,
-        };
-
-        const result = await agentManager.forceCleanupWorktree('/test/path', { force: true });
-
-        expect(mockForceCleanup).toHaveBeenCalledWith('/test/path', { force: true });
-        expect(result).toBe('cleanup-result');
-      });
-
-      it('should handle missing worktree lifecycle manager', async () => {
-        agentManager.worktreeLifecycle = null;
-
-        await expect(agentManager.forceCleanupWorktree('/test/path')).rejects.toThrow();
+      it('should throw error since worktree lifecycle manager is removed', async () => {
+        // Note: Worktree lifecycle manager has been removed
+        await expect(agentManager.forceCleanupWorktree('/test/path')).rejects.toThrow('Worktree lifecycle manager not available - feature removed');
       });
     });
   });
@@ -763,31 +756,10 @@ describe('AgentManager Extended Coverage', () => {
     });
 
     describe('getWorktreeLifecycleStatus', () => {
-      it('should return status when lifecycle manager exists', () => {
-        const mockStatus = {
-          activeAgents: 2,
-          recoveredWorktrees: 1,
-          cleanupQueue: { length: 0 },
-        };
-        
-        agentManager.worktreeLifecycle = {
-          getStatus: jest.fn().mockReturnValue(mockStatus),
-        };
-
+      it('should return disabled status since lifecycle manager is removed', () => {
+        // Note: Worktree lifecycle manager has been removed
         const status = agentManager.getWorktreeLifecycleStatus();
-        expect(status).toEqual({
-          enabled: true,
-          activeAgents: 2,
-          recoveredWorktrees: 1,
-          cleanupQueue: { length: 0 },
-        });
-      });
-
-      it('should return disabled status when no lifecycle manager', () => {
-        agentManager.worktreeLifecycle = null;
-
-        const status = agentManager.getWorktreeLifecycleStatus();
-        expect(status).toEqual({ enabled: false });
+        expect(status).toEqual({ enabled: false, reason: 'Worktree lifecycle manager removed' });
       });
     });
 

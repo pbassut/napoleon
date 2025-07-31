@@ -18,12 +18,6 @@ jest.mock('../src/core/config', () => ({
   })),
   SESSIONS_FILE: '/test/.napoleon/sessions.json'
 }));
-jest.mock('../src/core/worktree-lifecycle-manager', () => {
-  return jest.fn().mockImplementation(() => ({
-    initialize: jest.fn().mockResolvedValue(undefined),
-    getMetrics: jest.fn().mockReturnValue({}),
-  }));
-});
 jest.mock('../src/core/sdk/communication-manager', () => {
   return jest.fn().mockImplementation(() => ({
     getSession: jest.fn(),

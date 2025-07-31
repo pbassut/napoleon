@@ -14,7 +14,6 @@ jest.mock('../src/core/sdk/communication-manager', () => {
     shutdown: jest.fn().mockResolvedValue(),
   }));
 });
-jest.mock('../src/core/worktree-lifecycle-manager');
 jest.mock('../src/core/logging/agent-log-manager');
 jest.mock('../src/utils/logger', () => ({
   info: jest.fn(),
