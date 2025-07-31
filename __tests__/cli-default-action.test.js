@@ -79,6 +79,7 @@ describe('CLI Default Action', () => {
     
     const commandNames = program.commands.map(cmd => cmd.name());
     expect(commandNames).toContain('start');
-    expect(commandNames).toContain('logs');
+    expect(commandNames).toContain('status');
+    // logs command was removed as per issue #258
   });
 });

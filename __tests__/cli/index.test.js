@@ -30,16 +30,7 @@ const mockTerminalUIModule = {
 // Mock the dynamic import function
 jest.doMock('../../src/ui/index.ts', () => mockTerminalUIModule, { virtual: true });
 
-// Mock LogsCommand
-const mockLogsCommand = {
-  listLogs: jest.fn(),
-  viewLog: jest.fn(),
-  searchLogs: jest.fn(),
-  searchByPrompt: jest.fn(),
-};
-const MockLogsCommandClass = jest.fn(() => mockLogsCommand);
 
-jest.mock('../../src/cli/commands/logs', () => MockLogsCommandClass);
 
 describe('CLI Index', () => {
   let mockProgram;
@@ -85,11 +76,7 @@ describe('CLI Index', () => {
     mockTerminalUIClass.initialize.mockReset().mockResolvedValue();
     mockTerminalUIModule.default.mockReset().mockReturnValue(mockTerminalUIClass);
     
-    // Reset LogsCommand mock
-    mockLogsCommand.listLogs.mockResolvedValue();
-    mockLogsCommand.viewLog.mockResolvedValue();
-    mockLogsCommand.searchLogs.mockResolvedValue();
-    mockLogsCommand.searchByPrompt.mockResolvedValue();
+
   });
 
   afterEach(() => {
@@ -121,42 +108,12 @@ describe('CLI Index', () => {
         expect(mockProgram.action).toHaveBeenCalled();
       });
 
-
-      it('should setup logs list command', async () => {
+      it('should setup status command', async () => {
         await initializeApplication(mockProgram);
 
-        expect(mockProgram.command).toHaveBeenCalledWith('logs list');
-        expect(mockProgram.description).toHaveBeenCalledWith('List all agent logs');
-        expect(mockProgram.option).toHaveBeenCalledWith('-l, --limit <number>', 'limit number of logs shown', expect.any(Function));
-        expect(mockProgram.option).toHaveBeenCalledWith('-f, --format <format>', 'output format (table|json)', 'table');
-      });
-
-      it('should setup logs view command', async () => {
-        await initializeApplication(mockProgram);
-
-        expect(mockProgram.command).toHaveBeenCalledWith('logs view <identifier>');
-        expect(mockProgram.description).toHaveBeenCalledWith('View a specific log file');
-        expect(mockProgram.option).toHaveBeenCalledWith('-t, --tail <number>', 'show last N lines', expect.any(Function));
-        expect(mockProgram.option).toHaveBeenCalledWith('-f, --follow', 'follow log file like tail -f');
-        expect(mockProgram.option).toHaveBeenCalledWith('-r, --raw', 'show raw log entries without formatting');
-      });
-
-      it('should setup logs search command', async () => {
-        await initializeApplication(mockProgram);
-
-        expect(mockProgram.command).toHaveBeenCalledWith('logs search <term>');
-        expect(mockProgram.description).toHaveBeenCalledWith('Search across all logs for a term');
-        expect(mockProgram.option).toHaveBeenCalledWith('--from <date>', 'search from date (YYYY-MM-DD)');
-        expect(mockProgram.option).toHaveBeenCalledWith('--to <date>', 'search to date (YYYY-MM-DD)');
-        expect(mockProgram.option).toHaveBeenCalledWith('-c, --context <number>', 'lines of context around matches', expect.any(Function), 2);
-      });
-
-      it('should setup logs prompt command', async () => {
-        await initializeApplication(mockProgram);
-
-        expect(mockProgram.command).toHaveBeenCalledWith('logs prompt <keyword>');
-        expect(mockProgram.description).toHaveBeenCalledWith('Find logs by prompt keywords');
-        expect(mockProgram.option).toHaveBeenCalledWith('-l, --limit <number>', 'limit number of results', expect.any(Function));
+        expect(mockProgram.command).toHaveBeenCalledWith('status');
+        expect(mockProgram.description).toHaveBeenCalledWith('Show current agent status');
+        expect(mockProgram.action).toHaveBeenCalled();
       });
 
       it('should setup default action', async () => {
@@ -196,10 +153,7 @@ describe('CLI Index', () => {
 
   describe('Command Actions', () => {
     let startAction;
-    let logsListAction;
-    let logsViewAction;
-    let logsSearchAction;
-    let logsPromptAction;
+    let statusAction;
     let defaultAction;
 
     beforeEach(async () => {
@@ -208,11 +162,8 @@ describe('CLI Index', () => {
       // Extract the action functions from the mock calls
       const actionCalls = mockProgram.action.mock.calls;
       startAction = actionCalls[0][0]; // start command action
-      logsListAction = actionCalls[1][0]; // logs list action
-      logsViewAction = actionCalls[2][0]; // logs view action
-      logsSearchAction = actionCalls[3][0]; // logs search action
-      logsPromptAction = actionCalls[4][0]; // logs prompt action
-      defaultAction = actionCalls[5][0]; // default action
+      statusAction = actionCalls[1][0]; // status command action
+      defaultAction = actionCalls[2][0]; // default action
     });
 
     describe('Start command action', () => {
@@ -270,123 +221,16 @@ describe('CLI Index', () => {
       });
     });
 
+    describe('Status command action', () => {
+      it('should show status information', async () => {
+        const mockConsoleLog = jest.spyOn(console, 'log').mockImplementation(() => {});
 
-    describe('Logs list command action', () => {
-      it('should execute logs list command successfully', async () => {
-        const options = { limit: 10, format: 'table' };
+        await statusAction();
 
-        await logsListAction(options);
+        expect(mockConsoleLog).toHaveBeenCalledWith('Agent Status:');
+        expect(mockConsoleLog).toHaveBeenCalledWith('No active agents');
 
-        expect(loadConfig).toHaveBeenCalled();
-        expect(MockLogsCommandClass).toHaveBeenCalledWith({ logDir: '/test/logs' });
-        expect(mockLogsCommand.listLogs).toHaveBeenCalledWith(options);
-      });
-
-      it('should handle logs list command errors', async () => {
-        const logsError = new Error('Logs command failed');
-        mockLogsCommand.listLogs.mockRejectedValue(logsError);
-
-        // Mock process.exit and console.error
-        const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        await logsListAction({});
-
-        expect(mockConsoleError).toHaveBeenCalledWith(`Error: ${logsError.message}`);
-        expect(mockExit).toHaveBeenCalledWith(1);
-
-        mockExit.mockRestore();
-        mockConsoleError.mockRestore();
-      });
-    });
-
-    describe('Logs view command action', () => {
-      it('should execute logs view command successfully', async () => {
-        const identifier = 'agent-123';
-        const options = { tail: 50, follow: true, raw: false };
-
-        await logsViewAction(identifier, options);
-
-        expect(loadConfig).toHaveBeenCalled();
-        expect(MockLogsCommandClass).toHaveBeenCalledWith({ logDir: '/test/logs' });
-        expect(mockLogsCommand.viewLog).toHaveBeenCalledWith(identifier, options);
-      });
-
-      it('should handle logs view command errors', async () => {
-        const viewError = new Error('View command failed');
-        mockLogsCommand.viewLog.mockRejectedValue(viewError);
-
-        // Mock process.exit and console.error
-        const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        await logsViewAction('agent-123', {});
-
-        expect(mockConsoleError).toHaveBeenCalledWith(`Error: ${viewError.message}`);
-        expect(mockExit).toHaveBeenCalledWith(1);
-
-        mockExit.mockRestore();
-        mockConsoleError.mockRestore();
-      });
-    });
-
-    describe('Logs search command action', () => {
-      it('should execute logs search command successfully', async () => {
-        const term = 'error';
-        const options = { from: '2023-01-01', to: '2023-01-31', context: 5 };
-
-        await logsSearchAction(term, options);
-
-        expect(loadConfig).toHaveBeenCalled();
-        expect(MockLogsCommandClass).toHaveBeenCalledWith({ logDir: '/test/logs' });
-        expect(mockLogsCommand.searchLogs).toHaveBeenCalledWith(term, options);
-      });
-
-      it('should handle logs search command errors', async () => {
-        const searchError = new Error('Search command failed');
-        mockLogsCommand.searchLogs.mockRejectedValue(searchError);
-
-        // Mock process.exit and console.error
-        const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        await logsSearchAction('error', {});
-
-        expect(mockConsoleError).toHaveBeenCalledWith(`Error: ${searchError.message}`);
-        expect(mockExit).toHaveBeenCalledWith(1);
-
-        mockExit.mockRestore();
-        mockConsoleError.mockRestore();
-      });
-    });
-
-    describe('Logs prompt command action', () => {
-      it('should execute logs prompt command successfully', async () => {
-        const keyword = 'test';
-        const options = { limit: 20 };
-
-        await logsPromptAction(keyword, options);
-
-        expect(loadConfig).toHaveBeenCalled();
-        expect(MockLogsCommandClass).toHaveBeenCalledWith({ logDir: '/test/logs' });
-        expect(mockLogsCommand.searchByPrompt).toHaveBeenCalledWith(keyword, options);
-      });
-
-      it('should handle logs prompt command errors', async () => {
-        const promptError = new Error('Prompt command failed');
-        mockLogsCommand.searchByPrompt.mockRejectedValue(promptError);
-
-        // Mock process.exit and console.error
-        const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-        const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        await logsPromptAction('test', {});
-
-        expect(mockConsoleError).toHaveBeenCalledWith(`Error: ${promptError.message}`);
-        expect(mockExit).toHaveBeenCalledWith(1);
-
-        mockExit.mockRestore();
-        mockConsoleError.mockRestore();
+        mockConsoleLog.mockRestore();
       });
     });
 
@@ -400,105 +244,7 @@ describe('CLI Index', () => {
     });
   });
 
-  describe('Option parsing functions', () => {
-    it('should parse limit option correctly', async () => {
-      await initializeApplication(mockProgram);
 
-      // Get the limit option parser from the mock calls
-      const limitOptionCall = mockProgram.option.mock.calls.find(call => 
-        call[0] === '-l, --limit <number>'
-      );
-      const limitParser = limitOptionCall[2];
 
-      expect(limitParser('10')).toBe(10);
-      expect(limitParser('50')).toBe(50);
-      expect(limitParser('abc')).toBe(NaN);
-    });
 
-    it('should parse tail option correctly', async () => {
-      await initializeApplication(mockProgram);
-
-      // Get the tail option parser from the mock calls
-      const tailOptionCall = mockProgram.option.mock.calls.find(call => 
-        call[0] === '-t, --tail <number>'
-      );
-      const tailParser = tailOptionCall[2];
-
-      expect(tailParser('25')).toBe(25);
-      expect(tailParser('100')).toBe(100);
-      expect(tailParser('invalid')).toBe(NaN);
-    });
-
-    it('should parse context option correctly', async () => {
-      await initializeApplication(mockProgram);
-
-      // Get the context option parser from the mock calls
-      const contextOptionCall = mockProgram.option.mock.calls.find(call => 
-        call[0] === '-c, --context <number>'
-      );
-      const contextParser = contextOptionCall[2];
-
-      expect(contextParser('3')).toBe(3);
-      expect(contextParser('5')).toBe(5);
-      expect(contextParser('text')).toBe(NaN);
-    });
-  });
-
-  describe('Edge cases', () => {
-    it('should handle missing config gracefully', async () => {
-      loadConfig.mockReturnValue(null);
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-      const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      await initializeApplication(mockProgram);
-      const logsListAction = mockProgram.action.mock.calls[2][0];
-
-      await logsListAction({});
-
-      expect(MockLogsCommandClass).toHaveBeenCalledWith(null);
-
-      mockExit.mockRestore();
-      mockConsoleError.mockRestore();
-    });
-
-    it('should handle config loading errors', async () => {
-      const configError = new Error('Config loading failed');
-      loadConfig.mockImplementation(() => {
-        throw configError;
-      });
-
-      const mockExit = jest.spyOn(process, 'exit').mockImplementation(() => {});
-      const mockConsoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-      await initializeApplication(mockProgram);
-      const logsListAction = mockProgram.action.mock.calls[2][0];
-
-      await logsListAction({});
-
-      expect(mockConsoleError).toHaveBeenCalledWith(`Error: ${configError.message}`);
-      expect(mockExit).toHaveBeenCalledWith(1);
-
-      mockExit.mockRestore();
-      mockConsoleError.mockRestore();
-    });
-
-    it('should handle empty options objects', async () => {
-      await initializeApplication(mockProgram);
-      const logsListAction = mockProgram.action.mock.calls[1][0];
-
-      await logsListAction({});
-
-      expect(mockLogsCommand.listLogs).toHaveBeenCalledWith({});
-    });
-
-    it('should handle undefined options', async () => {
-      await initializeApplication(mockProgram);
-      const logsViewAction = mockProgram.action.mock.calls[2][0];
-
-      await logsViewAction('test-id', undefined);
-
-      expect(mockLogsCommand.viewLog).toHaveBeenCalledWith('test-id', undefined);
-    });
-  });
 });

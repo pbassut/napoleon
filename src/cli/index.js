@@ -46,81 +46,15 @@ async function initializeApplication(program) {
       .description('Start the Napoleon terminal interface')
       .action(startTerminalUI);
 
-    // logs list command (lazy-load LogsCommand)
+    // Status command
     program
-      .command('logs list')
-      .description('List all agent logs')
-      .option('-l, --limit <number>', 'limit number of logs shown', (value) => parseInt(value, 10))
-      .option('-f, --format <format>', 'output format (table|json)', 'table')
-      .action(async (options) => {
-        try {
-          const config = loadConfig();
-          // eslint-disable-next-line global-require
-          const LogsCommand = require('./commands/logs');
-          const logsCommand = new LogsCommand(config);
-          await logsCommand.listLogs(options);
-        } catch (error) {
-          console.error(`Error: ${error.message}`);
-          process.exit(1);
-        }
-      });
-
-    // logs view command (lazy-load LogsCommand)
-    program
-      .command('logs view <identifier>')
-      .description('View a specific log file')
-      .option('-t, --tail <number>', 'show last N lines', (value) => parseInt(value, 10))
-      .option('-f, --follow', 'follow log file like tail -f')
-      .option('-r, --raw', 'show raw log entries without formatting')
-      .action(async (identifier, options) => {
-        try {
-          const config = loadConfig();
-          // eslint-disable-next-line global-require
-          const LogsCommand = require('./commands/logs');
-          const logsCommand = new LogsCommand(config);
-          await logsCommand.viewLog(identifier, options);
-        } catch (error) {
-          console.error(`Error: ${error.message}`);
-          process.exit(1);
-        }
-      });
-
-    // logs search command (lazy-load LogsCommand)
-    program
-      .command('logs search <term>')
-      .description('Search across all logs for a term')
-      .option('--from <date>', 'search from date (YYYY-MM-DD)')
-      .option('--to <date>', 'search to date (YYYY-MM-DD)')
-      .option('-c, --context <number>', 'lines of context around matches', (value) => parseInt(value, 10), 2)
-      .action(async (term, options) => {
-        try {
-          const config = loadConfig();
-          // eslint-disable-next-line global-require
-          const LogsCommand = require('./commands/logs');
-          const logsCommand = new LogsCommand(config);
-          await logsCommand.searchLogs(term, options);
-        } catch (error) {
-          console.error(`Error: ${error.message}`);
-          process.exit(1);
-        }
-      });
-
-    // logs prompt command (lazy-load LogsCommand)
-    program
-      .command('logs prompt <keyword>')
-      .description('Find logs by prompt keywords')
-      .option('-l, --limit <number>', 'limit number of results', (value) => parseInt(value, 10))
-      .action(async (keyword, options) => {
-        try {
-          const config = loadConfig();
-          // eslint-disable-next-line global-require
-          const LogsCommand = require('./commands/logs');
-          const logsCommand = new LogsCommand(config);
-          await logsCommand.searchByPrompt(keyword, options);
-        } catch (error) {
-          console.error(`Error: ${error.message}`);
-          process.exit(1);
-        }
+      .command('status')
+      .description('Show current agent status')
+      .action(async () => {
+        // Safe to use console.log here since we're not in terminal UI mode
+        console.log('Agent Status:');
+        console.log('No active agents');
+        // TODO: This will be implemented in later stories
       });
 
     // Default action (no command specified) - launch terminal UI
