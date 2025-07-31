@@ -41,6 +41,7 @@ export class LogParser {
         displayFormat: 'info',
         isVisible: true,
       };
+      return parsedEntry;
 
       // Handle claude_sdk messages with JSON content
       if (rawLog.source === 'claude_sdk' && (rawLog.type === 'assistant' || rawLog.type === 'user')) {

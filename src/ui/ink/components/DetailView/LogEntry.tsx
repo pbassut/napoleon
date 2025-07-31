@@ -43,14 +43,14 @@ export const LogEntry: React.FC<LogEntryProps> = ({
   return (
     <Box>
       {lineNumber && (
-        <Text color="gray" dimColor>
+        <Text color="gray">
           {String(lineNumber).padStart(4, ' ')}
         </Text>
       )}
-      <Text color="gray" dimColor>
+      <Text color="gray">
         [{timestamp}]
       </Text>
-      <Text color={textColor} backgroundColor={backgroundColor}>
+      <Text>
         {getPrefix()}
         {entry.parsedContent}
       </Text>
