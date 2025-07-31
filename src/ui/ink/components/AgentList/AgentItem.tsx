@@ -1,10 +1,9 @@
-import React from 'react';
+import React, { memo} from 'react';
 import { Box, Text } from 'ink';
 import { Agent, getCurrentTask } from '../../types';
 import { getStatusInfo } from '../../constants/agentStatus';
 import { ActivityIndicator } from '../Common/ActivityIndicator';
-
-const { memo } = React;
+import AgentItemRuntime from './AgentItemRuntime';
 
 interface AgentItemProps {
   agent: Agent;
@@ -14,26 +13,6 @@ interface AgentItemProps {
 }
 
 // Format runtime duration from seconds to human-readable format
-const formatRuntime = (startTime: Date | undefined, endTime?: Date | undefined): string => {
-  if (!startTime) return '0s';
-
-  const start = new Date(startTime);
-  const end = endTime || new Date();
-  const diffMs = end.getTime() - start.getTime();
-  const diffSecs = Math.floor(diffMs / 1000);
-
-  if (diffSecs < 60) {
-    return `${diffSecs}s`;
-  } if (diffSecs < 3600) {
-    const minutes = Math.floor(diffSecs / 60);
-    const seconds = diffSecs % 60;
-    return `${minutes}m ${seconds}s`;
-  }
-  const hours = Math.floor(diffSecs / 3600);
-  const minutes = Math.floor((diffSecs % 3600) / 60);
-  return `${hours}h ${minutes}m`;
-};
-
 const AgentItem: React.FC<AgentItemProps> = memo(({
   agent, isSelected, isFocused,
 }) => {
@@ -82,7 +61,7 @@ const AgentItem: React.FC<AgentItemProps> = memo(({
       {/* Runtime column - right aligned */}
       <Box width={10} justifyContent="flex-end">
         <Text color={textColor}>
-          {formatRuntime(agent.startTime, agent.status === 'idle' ? agent.lastActivity : undefined)}
+          <AgentItemRuntime agent={agent} />
         </Text>
       </Box>
 

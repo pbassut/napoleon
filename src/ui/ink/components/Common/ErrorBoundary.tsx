@@ -1,5 +1,6 @@
 import React, { Component, ReactNode, ErrorInfo } from 'react';
 import { Box, Text } from 'ink';
+import logger from 'src/utils/logger';
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -21,7 +22,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   render(): ReactNode {
@@ -30,6 +31,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
         <Box borderStyle="round" borderColor="red" padding={1} flexDirection="column">
           <Text color="red" bold>❌ An error occurred:</Text>
           <Text color="red">{this.state.error?.message || 'Unknown error'}</Text>
+          <Text color="red">{this.state.error?.stack || 'Unknown stack trace'}</Text>
           <Text color="gray">Press 'q' to quit</Text>
         </Box>
       );

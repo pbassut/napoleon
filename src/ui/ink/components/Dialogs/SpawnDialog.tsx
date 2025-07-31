@@ -100,10 +100,6 @@ const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) 
 
         <Box marginBottom={1} flexDirection="column">
           <Text color="cyan">Enter instructions for the Claude agent:</Text>
-          <Text>{' '}</Text>
-          <Text color="gray">• Be specific about the task you want the agent to perform</Text>
-          <Text color="gray">• Include any relevant context or constraints</Text>
-          <Text color="gray">• Agent will work in isolated git worktree</Text>
         </Box>
 
         <Box

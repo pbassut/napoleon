@@ -22,14 +22,13 @@ export interface AgentManagerHookReturn {
   agents: Agent[];
   selectedAgentId: string | null;
   selectAgent: (agentId: string) => void;
-  spawnAgent: (options: { instructions: string; workingDirectory: string }) => Promise<void>;
+  spawnAgent: (instructions: string, options?: Record<string, unknown>) => Promise<Agent>;
   terminateAgent: (agentId: string, options?: Record<string, unknown>) => Promise<void>;
   canSpawnAgent: boolean;
   isLoading: boolean;
   error: Error | null;
   // Temporary agent management methods
   addTempAgent: (agent: Agent) => void;
-  removeTempAgent: (agentId: string) => void;
   updateTempAgent: (agentId: string, updates: Partial<Agent>) => void;
 }
 
