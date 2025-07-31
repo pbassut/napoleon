@@ -13,7 +13,7 @@ interface SpawnDialogProps {
   onSubmit: (prompt: string) => Promise<void>;
 }
 
-const BASIC_PRESET = '/BMad:agents:dev ';
+const BASIC_PRESET = '/BMad:agents:dev Generate a todo list with 20 items and go through them one by one';
 
 const SpawnDialog: React.FC<SpawnDialogProps> = ({ isOpen, onClose, onSubmit }) => {
   const [text, setText] = useState(BASIC_PRESET);

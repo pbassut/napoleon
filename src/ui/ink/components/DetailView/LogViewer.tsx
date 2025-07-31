@@ -159,10 +159,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
         return (
           <Box key={`${entry.id}-${globalIndex}`}>
-            <LogEntry
+            <Text wrap="end">{entry.parsedContent}</Text>
+            {/* <LogEntry
               entry={entry}
               lineNumber={lineNumber}
-            />
+            /> */}
           </Box>
         );
       })}
