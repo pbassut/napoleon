@@ -45,7 +45,8 @@ export const LogViewer: React.FC<LogViewerProps> = ({
     includeSystemLogs: false,
     toolSuppression: toolSuppressionConfig || {
       enabled: true,
-      suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      // suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      suppressedTools: [],
       showToolResults: true,
     },
   });
@@ -152,7 +153,7 @@ export const LogViewer: React.FC<LogViewerProps> = ({
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {displayedLogs.map((entry, index) => {
+      {parsedLogs.map((entry, index) => {
         const globalIndex = scrollOffset + index;
         const lineNumber = globalIndex + 1;
 
