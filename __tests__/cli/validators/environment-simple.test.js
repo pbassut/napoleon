@@ -6,13 +6,13 @@
 jest.mock('child_process');
 jest.mock('../../../src/core/git-status-checker');
 jest.mock('../../../src/core/startup-warning-display');
-jest.mock('../../../src/core/api-key-validator');
+jest.mock('../../../src/core/api-key-setup-guide');
 
 const { validateGitWorkingTree, validateApiKey } = require('../../../src/cli/validators/environment');
 const { EnvironmentValidationError, ConfigurationError } = require('../../../src/utils/errors');
 const GitStatusChecker = require('../../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../../src/core/startup-warning-display');
-const ApiKeyValidator = require('../../../src/core/api-key-validator');
+const ApiKeySetupGuide = require('../../../src/core/api-key-setup-guide');
 
 // Mock console methods to avoid noise in tests
 const originalConsoleWarn = console.warn;
@@ -148,118 +148,80 @@ describe('Environment Validator - Simplified', () => {
   });
 
   describe('validateApiKey', () => {
-    let mockValidator;
+    let mockSetupGuide;
+    let originalEnv;
 
     beforeEach(() => {
-      mockValidator = {
-        validateApiKey: jest.fn(),
+      originalEnv = process.env.ANTHROPIC_API_KEY;
+      
+      mockSetupGuide = {
+        displaySetupInstructions: jest.fn(),
+        displayFormatError: jest.fn(),
       };
-      ApiKeyValidator.mockImplementation(() => mockValidator);
+      ApiKeySetupGuide.mockImplementation(() => mockSetupGuide);
+    });
 
+    afterEach(() => {
+      if (originalEnv) {
+        process.env.ANTHROPIC_API_KEY = originalEnv;
+      } else {
+        delete process.env.ANTHROPIC_API_KEY;
+      }
     });
 
     it('should validate API key successfully', async () => {
-      const mockResult = {
-        isValid: true,
-        maskedKey: 'sk-ant-...abc123',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
+      process.env.ANTHROPIC_API_KEY = 'sk-ant-api03-abcdefghijklmnopqrstuvwxyz1234567890abcdef-1234';
 
       const result = await validateApiKey();
 
-      expect(result).toEqual(mockResult);
-      expect(console.log).toHaveBeenCalledWith('✅ API key validated: sk-ant-...abc123');
+      expect(result.isValid).toBe(true);
+      expect(result.maskedKey).toBe('sk-ant-***f-1234');
+      expect(console.log).toHaveBeenCalledWith('✅ API key validated: sk-ant-***f-1234');
     });
 
     it('should handle missing API key', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_MISSING',
-        message: 'API key not found',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
+      delete process.env.ANTHROPIC_API_KEY;
 
       await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
       await expect(validateApiKey()).rejects.toThrow('API key not found in environment variables');
       
+      expect(mockSetupGuide.displaySetupInstructions).toHaveBeenCalled();
     });
 
-    it('should handle invalid API key format', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_INVALID_FORMAT',
-        message: 'Invalid format',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
+    it('should handle invalid API key format - too short', async () => {
+      process.env.ANTHROPIC_API_KEY = 'short';
 
       await expect(validateApiKey()).rejects.toThrow(ConfigurationError);
       await expect(validateApiKey()).rejects.toThrow('Invalid API key format');
       
+      expect(mockSetupGuide.displayFormatError).toHaveBeenCalled();
     });
 
-    it('should handle other validation errors', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_INVALID',
-        message: 'API key is invalid',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateApiKey()).rejects.toThrow('API key is invalid');
-      
-    });
-
-    it('should handle validator exceptions', async () => {
-      mockValidator.validateApiKey.mockRejectedValue(new Error('Network error'));
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateApiKey()).rejects.toThrow('Failed to validate API key');
-    });
-
-    it('should rethrow EnvironmentValidationError and ConfigurationError', async () => {
-      const envError = new EnvironmentValidationError('Test env error', 'TEST_ENV', 'Test hint');
-      mockValidator.validateApiKey.mockRejectedValue(envError);
-
-      await expect(validateApiKey()).rejects.toThrow(envError);
-
-      const configError = new ConfigurationError('Test config error', 'TEST_CONFIG', 'Test hint');
-      mockValidator.validateApiKey.mockRejectedValue(configError);
-
-      await expect(validateApiKey()).rejects.toThrow(configError);
-    });
-
-    it('should handle multiple error conditions in sequence', async () => {
-      // Test API_KEY_MISSING
-      mockValidator.validateApiKey.mockResolvedValueOnce({
-        isValid: false,
-        error: 'API_KEY_MISSING',
-        message: 'API key not found',
-      });
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-
-      // Test API_KEY_INVALID_FORMAT
-      mockValidator.validateApiKey.mockResolvedValueOnce({
-        isValid: false,
-        error: 'API_KEY_INVALID_FORMAT',
-        message: 'Invalid format',
-      });
+    it('should handle invalid API key format - wrong prefix', async () => {
+      process.env.ANTHROPIC_API_KEY = 'invalid-key-format-but-long-enough';
 
       await expect(validateApiKey()).rejects.toThrow(ConfigurationError);
+      await expect(validateApiKey()).rejects.toThrow('Invalid API key format');
+      
+      expect(mockSetupGuide.displayFormatError).toHaveBeenCalled();
+    });
 
-      // Test unknown error
-      mockValidator.validateApiKey.mockResolvedValueOnce({
-        isValid: false,
-        error: 'UNKNOWN_ERROR',
-        message: 'Unknown error occurred',
-      });
+    it('should handle empty string API key', async () => {
+      process.env.ANTHROPIC_API_KEY = ''; // Empty string
 
       await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
+      await expect(validateApiKey()).rejects.toThrow('API key not found in environment variables');
+      
+      expect(mockSetupGuide.displaySetupInstructions).toHaveBeenCalled();
+    });
+
+    it('should mask API key correctly for different lengths', async () => {
+      process.env.ANTHROPIC_API_KEY = 'sk-ant-api03-short-test-key';
+
+      const result = await validateApiKey();
+
+      expect(result.isValid).toBe(true);
+      expect(result.maskedKey).toBe('sk-ant-***st-key');
     });
   });
 });

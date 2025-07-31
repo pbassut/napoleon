@@ -5,3 +5,4 @@
 	- Avoid Prop-drilling: minimize the amount of props you pass to a component. Use React Hooks for this
 - Never use `eslint-disable-line` or anything that disables eslint rules. Fix them instead!
 - Never commit with `--no-verify` or `-n`
+- NEVER lower coverage thresholds without the user asking you to!

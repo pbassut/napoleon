@@ -5,10 +5,6 @@ jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn(),
   initializeSessionStorage: jest.fn().mockResolvedValue(),
 }));
-// Mock dependencies of validators
-jest.mock('../src/core/api-key-validator', () => jest.fn().mockImplementation(() => ({
-  validateApiKey: jest.fn().mockResolvedValue(),
-})));
 jest.mock('../src/utils/logger', () => ({
   info: jest.fn(),
   error: jest.fn(),

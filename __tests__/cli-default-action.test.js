@@ -15,12 +15,6 @@ jest.mock('../src/cli/validators/environment', () => ({
   validateEnvironment: jest.fn().mockResolvedValue(),
 }));
 
-jest.mock('../src/core/api-key-validator', () => {
-  return jest.fn().mockImplementation(() => ({
-    validateApiKey: jest.fn().mockResolvedValue(),
-  }));
-});
-
 jest.mock('../src/ui/index.ts', () => ({
   default: jest.fn().mockImplementation(() => ({
     initialize: jest.fn().mockResolvedValue(),

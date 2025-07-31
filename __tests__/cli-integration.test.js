@@ -6,9 +6,11 @@ jest.mock('../src/core/config', () => ({
   loadConfig: jest.fn(),
   initializeSessionStorage: jest.fn().mockResolvedValue(),
 }));
-jest.mock('../src/core/api-key-validator', () => {
+jest.mock('../src/core/api-key-setup-guide', () => {
   return jest.fn().mockImplementation(() => ({
-    validateApiKey: jest.fn().mockResolvedValue({ isValid: true })
+    displayFormatError: jest.fn(),
+    displayMissingApiKeyMessage: jest.fn(),
+    displaySetupInstructions: jest.fn()
   }));
 });
 jest.mock('../src/core/git-status-checker', () => {

@@ -28,8 +28,9 @@ jest.mock('../../../src/core/startup-warning-display', () => jest.fn().mockImple
   displayContinueMessage: mockDisplayContinueMessage,
   displayNonGitRepoError: mockDisplayNonGitRepoError,
 })));
-jest.mock('../../../src/core/api-key-validator', () => jest.fn().mockImplementation(() => ({
-  validateApiKey: jest.fn(),
+jest.mock('../../../src/core/api-key-setup-guide', () => jest.fn().mockImplementation(() => ({
+  displaySetupInstructions: jest.fn(),
+  displayFormatError: jest.fn(),
 })));
 jest.mock('child_process', () => ({
   execSync: jest.fn(),
@@ -50,7 +51,7 @@ promisify.mockReturnValue(jest.fn());
 const { validateGitWorkingTree, validateEnvironment } = require('../../../src/cli/validators/environment');
 const GitStatusChecker = require('../../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../../src/core/startup-warning-display');
-const ApiKeyValidator = require('../../../src/core/api-key-validator');
+const ApiKeySetupGuide = require('../../../src/core/api-key-setup-guide');
 const { EnvironmentValidationError } = require('../../../src/utils/errors');
 
 // Mock console and process

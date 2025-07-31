@@ -4,7 +4,7 @@ const { promisify } = require('util');
 const { EnvironmentValidationError, ConfigurationError } = require('../../utils/errors');
 const GitStatusChecker = require('../../core/git-status-checker');
 const StartupWarningDisplay = require('../../core/startup-warning-display');
-const ApiKeyValidator = require('../../core/api-key-validator');
+const ApiKeySetupGuide = require('../../core/api-key-setup-guide');
 
 const execAsync = promisify(exec);
 
@@ -137,53 +137,39 @@ async function validateEnvironment() {
 }
 
 /**
- * Validates the API key using the ApiKeyValidator
+ * Validates the API key by checking basic format requirements
  */
 async function validateApiKey() {
-  const validator = new ApiKeyValidator();
+  const setupGuide = new ApiKeySetupGuide();
+  const apiKey = process.env.ANTHROPIC_API_KEY;
 
   try {
-    const result = await validator.validateApiKey();
-
-    if (result.isValid) {
-      console.log(`✅ API key validated: ${result.maskedKey}`);
-      return result;
-    }
-    if (result.error === 'API_KEY_MISSING') {
-      console.error('\n❌ API Key Missing');
-      console.error('\nNo Anthropic API key found. Please set your API key using one of these methods:');
-      console.error('\n🔧 Option 1: Environment Variable');
-      console.error('   export ANTHROPIC_API_KEY="sk-ant-api03-your-key-here"');
-      console.error('\n🔧 Option 2: .env file');
-      console.error('   Create a .env file in your project root:');
-      console.error('   ANTHROPIC_API_KEY=sk-ant-api03-your-key-here');
-      console.error('\n🔗 Get your API key at: https://console.anthropic.com/');
+    if (!apiKey) {
+      setupGuide.displaySetupInstructions();
       throw new EnvironmentValidationError(
         'API key not found in environment variables',
         'API_KEY_NOT_FOUND',
         'Set ANTHROPIC_API_KEY environment variable',
       );
-    } else if (result.error === 'API_KEY_INVALID_FORMAT') {
-      console.error('\n❌ Invalid API Key Format');
-      console.error('\nThe provided API key does not match the expected Anthropic format.');
-      console.error('\n📋 Expected format: sk-ant-api03-[your-key-here]');
-      console.error('\n🔗 Get your API key at: https://console.anthropic.com/');
-      console.error('\n💡 Make sure to:');
-      console.error('   • Copy the complete key including the "sk-ant-" prefix');
-      console.error('   • Check for any extra spaces or characters');
-      console.error('   • Ensure the key is not truncated');
+    }
+
+    // Basic format validation for Anthropic API keys
+    if (typeof apiKey !== 'string' || apiKey.length <= 10 || !apiKey.startsWith('sk-ant-')) {
+      setupGuide.displayFormatError();
       throw new ConfigurationError(
         'Invalid API key format: API key appears too short',
         'INVALID_API_KEY_FORMAT',
         'Please check your API key format',
       );
-    } else {
-      throw new EnvironmentValidationError(
-        result.message,
-        result.error,
-        'Please check your API key configuration',
-      );
     }
+
+    // Mask the API key for safe logging
+    const maskedKey = `${apiKey.substring(0, 7)}***${apiKey.substring(apiKey.length - 6)}`;
+    console.log(`✅ API key validated: ${maskedKey}`);
+    return {
+      isValid: true,
+      maskedKey,
+    };
   } catch (error) {
     if (error instanceof EnvironmentValidationError || error instanceof ConfigurationError) {
       throw error;

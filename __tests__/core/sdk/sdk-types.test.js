@@ -295,5 +295,82 @@ describe('SDK Types', () => {
       
       expect(result.sdkPackagePresent).toBe(true); // Should be true since we have it installed
     });
+
+    test('should handle Node.js version check errors', () => {
+      // Mock process.version to simulate old Node version
+      const originalVersion = process.version;
+      Object.defineProperty(process, 'version', {
+        value: 'v16.14.0',
+        writable: true,
+        configurable: true
+      });
+      
+      const result = checkSDKEnvironment();
+      
+      expect(result.nodeVersionValid).toBe(false);
+      expect(result.errors).toContain('Node.js version v16.14.0 is not supported. Requires >= 18.0.0');
+      
+      // Restore original version
+      Object.defineProperty(process, 'version', {
+        value: originalVersion,
+        writable: true,
+        configurable: true
+      });
+    });
+
+    test.skip('should handle require.resolve errors for SDK package', () => {
+      // Clear require cache to ensure fresh module load
+      const modulePath = require.resolve('../../../src/core/sdk/sdk-types');
+      delete require.cache[modulePath];
+      
+      // Mock require.resolve to throw error
+      const originalResolve = require.resolve;
+      require.resolve = jest.fn().mockImplementation((id) => {
+        if (id === '@anthropic-ai/claude-code') {
+          throw new Error('Cannot find module');
+        }
+        return originalResolve(id);
+      });
+      
+      // Re-require the module with mocked require.resolve
+      const { checkSDKEnvironment: mockedCheckSDKEnvironment } = require('../../../src/core/sdk/sdk-types');
+      const result = mockedCheckSDKEnvironment();
+      
+      expect(result.sdkPackagePresent).toBe(false);
+      expect(result.errors).toContain('@anthropic-ai/claude-code package is not installed');
+      
+      // Restore original require.resolve and cache
+      require.resolve = originalResolve;
+      require.cache[modulePath] = require(modulePath);
+    });
+
+    test('should handle process.version parsing errors', () => {
+      // Mock process.version to simulate error condition
+      const originalVersion = process.version;
+      const originalSplit = String.prototype.split;
+      
+      Object.defineProperty(process, 'version', {
+        value: 'invalid-version',
+        writable: true,
+        configurable: true
+      });
+      
+      // Mock split to throw error
+      String.prototype.split = jest.fn().mockImplementation(() => {
+        throw new Error('Split failed');
+      });
+      
+      const result = checkSDKEnvironment();
+      
+      expect(result.errors.some(error => error.includes('Failed to check Node.js version'))).toBe(true);
+      
+      // Restore mocks
+      Object.defineProperty(process, 'version', {
+        value: originalVersion,
+        writable: true,
+        configurable: true
+      });
+      String.prototype.split = originalSplit;
+    });
   });
 });

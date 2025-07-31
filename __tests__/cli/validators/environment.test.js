@@ -7,7 +7,7 @@ jest.mock('child_process');
 jest.mock('util');
 jest.mock('../../../src/core/git-status-checker');
 jest.mock('../../../src/core/startup-warning-display');
-jest.mock('../../../src/core/api-key-validator');
+jest.mock('../../../src/core/api-key-setup-guide');
 
 const { exec } = require('child_process');
 const { promisify } = require('util');
@@ -15,7 +15,7 @@ const { validateEnvironment, validateGitWorkingTree, validateApiKey } = require(
 const { EnvironmentValidationError, ConfigurationError } = require('../../../src/utils/errors');
 const GitStatusChecker = require('../../../src/core/git-status-checker');
 const StartupWarningDisplay = require('../../../src/core/startup-warning-display');
-const ApiKeyValidator = require('../../../src/core/api-key-validator');
+const ApiKeySetupGuide = require('../../../src/core/api-key-setup-guide');
 
 // Mock console methods to avoid noise in tests
 const originalConsoleWarn = console.warn;
@@ -159,7 +159,6 @@ describe('Environment Validator', () => {
     });
 
     it.skip('should warn about missing Claude SDK in non-test environment', async () => {
-      const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
       
       mockExecAsync.mockImplementation((command) => {
@@ -172,14 +171,11 @@ describe('Environment Validator', () => {
         return Promise.reject(new Error('Unknown command'));
       });
 
-      await validateEnvironment(); // Should not throw
+      await validateEnvironment();
       
       expect(console.warn).toHaveBeenCalledWith(
         'Warning: Claude Code SDK not found. Some features may be limited.'
       );
-      
-      // Restore original environment
-      process.env.NODE_ENV = originalEnv;
     });
 
     it.skip('should validate multiple versions correctly', async () => {
@@ -316,92 +312,6 @@ describe('Environment Validator', () => {
     });
   });
 
-  describe('validateApiKey', () => {
-    let mockValidator;
-
-    beforeEach(() => {
-      mockValidator = {
-        validateApiKey: jest.fn(),
-      };
-      ApiKeyValidator.mockImplementation(() => mockValidator);
-
-    });
-
-    it('should validate API key successfully', async () => {
-      const mockResult = {
-        isValid: true,
-        maskedKey: 'sk-ant-...abc123',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
-
-      const result = await validateApiKey();
-
-      expect(result).toEqual(mockResult);
-      expect(console.log).toHaveBeenCalledWith('✅ API key validated: sk-ant-...abc123');
-    });
-
-    it('should handle missing API key', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_MISSING',
-        message: 'API key not found',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateApiKey()).rejects.toThrow('API key not found in environment variables');
-      
-    });
-
-    it('should handle invalid API key format', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_INVALID_FORMAT',
-        message: 'Invalid format',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
-
-      await expect(validateApiKey()).rejects.toThrow(ConfigurationError);
-      await expect(validateApiKey()).rejects.toThrow('Invalid API key format');
-      
-    });
-
-    it('should handle other validation errors', async () => {
-      const mockResult = {
-        isValid: false,
-        error: 'API_KEY_INVALID',
-        message: 'API key is invalid',
-      };
-
-      mockValidator.validateApiKey.mockResolvedValue(mockResult);
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateApiKey()).rejects.toThrow('API key is invalid');
-      
-    });
-
-    it('should handle validator exceptions', async () => {
-      mockValidator.validateApiKey.mockRejectedValue(new Error('Network error'));
-
-      await expect(validateApiKey()).rejects.toThrow(EnvironmentValidationError);
-      await expect(validateApiKey()).rejects.toThrow('Failed to validate API key');
-    });
-
-    it('should rethrow EnvironmentValidationError and ConfigurationError', async () => {
-      const envError = new EnvironmentValidationError('Test env error', 'TEST_ENV', 'Test hint');
-      mockValidator.validateApiKey.mockRejectedValue(envError);
-
-      await expect(validateApiKey()).rejects.toThrow(envError);
-
-      const configError = new ConfigurationError('Test config error', 'TEST_CONFIG', 'Test hint');
-      mockValidator.validateApiKey.mockRejectedValue(configError);
-
-      await expect(validateApiKey()).rejects.toThrow(configError);
-    });
-  });
 
   describe('Edge Cases and Error Handling', () => {
     it.skip('should handle Promise.allSettled with mixed results', async () => {
