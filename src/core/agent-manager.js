@@ -960,7 +960,7 @@ class AgentManager {
 
       this.setup(session);
 
-      return this.agents;
+      return session;
     } catch (error) {
       logger.error('Failed to spawn agent', {
         error: error.message,
