@@ -1,4 +1,4 @@
-import React, { memo} from 'react';
+import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import { Agent, getCurrentTask } from '../../types';
 import { getStatusInfo } from '../../constants/agentStatus';

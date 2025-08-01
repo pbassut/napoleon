@@ -184,7 +184,7 @@ export class LogParser {
     }
   }
 
-static shouldShowLog(entry: ParsedLogEntry, options: LogParserOptions): boolean {
+  static shouldShowLog(entry: ParsedLogEntry, options: LogParserOptions): boolean {
     // Tool suppression logic - applies only to assistant messages with toolUse
     if (options.toolSuppression?.enabled && entry.toolUse && entry.displayFormat === 'assistant') {
       const toolName = entry.toolUse.name;

@@ -87,75 +87,75 @@ if (process.env.NODE_ENV !== 'test' && typeof jest === 'undefined') {
 
   process.stdin.on('data', (key) => {
   // Ctrl+C or q to quit
-  if (key === '\u0003' || (!inDialog && key === 'q')) {
-    process.exit();
-  }
+    if (key === '\u0003' || (!inDialog && key === 'q')) {
+      process.exit();
+    }
 
-  if (inDialog) {
-    if (dialogType === 'spawn') {
-      if (key === '\r') { // Enter key
-        if (dialogBuffer.trim()) {
-          const newAgent = {
-            id: agents.length + 1,
-            prompt: dialogBuffer.trim(),
-            status: 'running',
-          };
-          agents.push(newAgent);
-          selectedIndex = agents.length - 1; // Select the newly spawned agent
+    if (inDialog) {
+      if (dialogType === 'spawn') {
+        if (key === '\r') { // Enter key
+          if (dialogBuffer.trim()) {
+            const newAgent = {
+              id: agents.length + 1,
+              prompt: dialogBuffer.trim(),
+              status: 'running',
+            };
+            agents.push(newAgent);
+            selectedIndex = agents.length - 1; // Select the newly spawned agent
+          }
+          dialogBuffer = '';
+          inDialog = false;
+          dialogType = null;
+          render();
+        } else if (key === ESC) { // Escape
+          dialogBuffer = '';
+          inDialog = false;
+          dialogType = null;
+          render();
+        } else if (key === '\u007f') { // Backspace
+          dialogBuffer = dialogBuffer.slice(0, -1);
+          render();
+        } else if (key.charCodeAt(0) >= 32 && key.charCodeAt(0) < 127) {
+          dialogBuffer += key;
+          render();
         }
-        dialogBuffer = '';
-        inDialog = false;
-        dialogType = null;
-        render();
-      } else if (key === ESC) { // Escape
-        dialogBuffer = '';
-        inDialog = false;
-        dialogType = null;
-        render();
-      } else if (key === '\u007f') { // Backspace
-        dialogBuffer = dialogBuffer.slice(0, -1);
-        render();
-      } else if (key.charCodeAt(0) >= 32 && key.charCodeAt(0) < 127) {
-        dialogBuffer += key;
-        render();
-      }
-    } else if (dialogType === 'terminate') {
-      if (key === 'y') {
-        agents.splice(selectedIndex, 1);
-        if (selectedIndex >= agents.length && selectedIndex > 0) {
-          selectedIndex--;
+      } else if (dialogType === 'terminate') {
+        if (key === 'y') {
+          agents.splice(selectedIndex, 1);
+          if (selectedIndex >= agents.length && selectedIndex > 0) {
+            selectedIndex--;
+          }
+          inDialog = false;
+          dialogType = null;
+          render();
+        } else if (key === 'n' || key === ESC) {
+          inDialog = false;
+          dialogType = null;
+          render();
         }
-        inDialog = false;
-        dialogType = null;
-        render();
-      } else if (key === 'n' || key === ESC) {
-        inDialog = false;
-        dialogType = null;
-        render();
       }
-    }
-  } else if (key === 'n') {
+    } else if (key === 'n') {
     // Main navigation
-    inDialog = true;
-    dialogType = 'spawn';
-    dialogBuffer = '';
-    render();
-  } else if (key === 't' && agents.length > 0) {
-    inDialog = true;
-    dialogType = 'terminate';
-    render();
-  } else if (key === '\u001b[A') { // Up arrow
-    if (agents.length > 0) {
-      selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : agents.length - 1;
+      inDialog = true;
+      dialogType = 'spawn';
+      dialogBuffer = '';
       render();
-    }
-  } else if (key === '\u001b[B') { // Down arrow
-    if (agents.length > 0) {
-      selectedIndex = (selectedIndex + 1) % agents.length;
+    } else if (key === 't' && agents.length > 0) {
+      inDialog = true;
+      dialogType = 'terminate';
       render();
+    } else if (key === '\u001b[A') { // Up arrow
+      if (agents.length > 0) {
+        selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : agents.length - 1;
+        render();
+      }
+    } else if (key === '\u001b[B') { // Down arrow
+      if (agents.length > 0) {
+        selectedIndex = (selectedIndex + 1) % agents.length;
+        render();
+      }
     }
-  }
-});
+  });
 }
 
 // Initial render

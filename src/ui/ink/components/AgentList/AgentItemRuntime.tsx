@@ -30,20 +30,20 @@ interface AgentItemRuntimeProps {
 const AgentItemRuntime: React.FC<AgentItemRuntimeProps> = memo(({
   agent,
 }) => {
-	logger.debug('AgentItemRuntime: Agent', { agent });
+  logger.debug('AgentItemRuntime: Agent', { agent });
   const [runtime, setRuntime] = useState(agent.startTime);
 
-	useEffect(() => {
-		const interval = setInterval(() => {
-			setRuntime(agent.startTime);
-		}, 1000);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRuntime(agent.startTime);
+    }, 1000);
 
-		return () => clearInterval(interval);
-	}, [agent.startTime, agent.endTime]);
+    return () => clearInterval(interval);
+  }, [agent.startTime, agent.endTime]);
 
   if (agent.status === 'idle') {
-		return <Text>{formatRuntime(agent.startTime, agent.lastActivity)}</Text>;
-	}
+    return <Text>{formatRuntime(agent.startTime, agent.lastActivity)}</Text>;
+  }
 
   return <Text>{formatRuntime(runtime)}</Text>;
 });

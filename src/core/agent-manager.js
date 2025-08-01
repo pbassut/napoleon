@@ -946,6 +946,9 @@ class AgentManager {
         id: agentId,
         name: agentId,
         instructions: sanitizedInstructions,
+        sanitizedInstructions, // Add this for the setup method
+        validationDuration,
+        spawnStartTime: Date.now(),
         spawnTime: new Date().toISOString(),
         status: AgentStatus.SPAWNING,
         lastActivity: new Date().toISOString(),
