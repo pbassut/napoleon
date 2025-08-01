@@ -77,14 +77,15 @@ function render() {
   }
 }
 
-// Input handling
-if (process.stdin.isTTY) {
-  process.stdin.setRawMode(true);
-}
-process.stdin.resume();
-process.stdin.setEncoding('utf8');
+// Input handling - skip during tests to avoid open handles
+if (process.env.NODE_ENV !== 'test' && typeof jest === 'undefined') {
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.resume();
+  process.stdin.setEncoding('utf8');
 
-process.stdin.on('data', (key) => {
+  process.stdin.on('data', (key) => {
   // Ctrl+C or q to quit
   if (key === '\u0003' || (!inDialog && key === 'q')) {
     process.exit();
@@ -155,6 +156,7 @@ process.stdin.on('data', (key) => {
     }
   }
 });
+}
 
 // Initial render
 render();

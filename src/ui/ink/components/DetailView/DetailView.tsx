@@ -21,19 +21,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
   const [filterInfo, setFilterInfo] = useState({ visible: 0, total: 0, isShowingAll: false });
   const { isFocused } = useFocus({ autoFocus: true });
 
-  // Load tool suppression configuration
-  const toolSuppressionConfig = useMemo(() => {
-    if (!agentManager?.config?.ui?.toolSuppression) {
-      // Default configuration if not available
-      return {
-        enabled: false,
-        suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
-        showToolResults: true,
-      };
-    }
-    return agentManager.config.ui.toolSuppression;
-  }, [agentManager]);
-
   // Terminal dimensions
   const terminalHeight = (process.stdout.rows - 2) || 24;
   const contentHeight = terminalHeight - 6; // Header + footer + borders
@@ -126,7 +113,6 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
           isFocused={isFocused}
           onFilterChange={setFilterInfo}
           isStreaming={isStreaming}
-          toolSuppressionConfig={toolSuppressionConfig}
         />
       </Box>
 

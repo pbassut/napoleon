@@ -41,7 +41,6 @@ export class LogParser {
         displayFormat: 'info',
         isVisible: true,
       };
-      return parsedEntry;
 
       // Handle claude_sdk messages with JSON content
       if (rawLog.source === 'claude_sdk' && (rawLog.type === 'assistant' || rawLog.type === 'user')) {
@@ -185,7 +184,7 @@ export class LogParser {
     }
   }
 
-  static shouldShowLog(entry: ParsedLogEntry, options: LogParserOptions): boolean {
+static shouldShowLog(entry: ParsedLogEntry, options: LogParserOptions): boolean {
     // Tool suppression logic - applies only to assistant messages with toolUse
     if (options.toolSuppression?.enabled && entry.toolUse && entry.displayFormat === 'assistant') {
       const toolName = entry.toolUse.name;

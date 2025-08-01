@@ -2,11 +2,12 @@ import React, {
   useState, useEffect, useMemo, useCallback,
 } from 'react';
 import {
-  Box, Text, useInput 
+  Box, Text, useStdout
 } from 'ink';
 import { LogEntry as RawLogEntry } from '../../hooks/useAgentLogs';
 import { LogParser, ParsedLogEntry, LogParserOptions } from '../../utils/log-parser';
 import { LogEntry } from './LogEntry';
+import { calculateAutoScrollOffset, calculateVisibleLogsSlice, calculateMaxScrollOffset } from '../../utils/log-dimensions';
 
 interface LogViewerProps {
   logs: RawLogEntry[];
@@ -37,19 +38,19 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   isFocused,
   onFilterChange,
   isStreaming = false,
-  toolSuppressionConfig,
 }) => {
-  // const [filterOptions, setFilterOptions] = useState<LogParserOptions>({
-  //   showAllSources: false,
-  //   showAllTypes: false,
-  //   includeSystemLogs: false,
-  //   toolSuppression: toolSuppressionConfig || {
-  //     enabled: true,
-  //     // suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
-  //     suppressedTools: [],
-  //     showToolResults: true,
-  //   },
-  // });
+  const { stdout } = useStdout();
+
+  const [filterOptions, setFilterOptions] = useState<LogParserOptions>({
+    showAllSources: false,
+    showAllTypes: false,
+    includeSystemLogs: false,
+    toolSuppression: {
+      enabled: true,
+      suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
+      showToolResults: true,
+    },
+  });
 
   // Update tool suppression config when it changes
   // useEffect(() => {
@@ -66,24 +67,35 @@ export const LogViewer: React.FC<LogViewerProps> = ({
     .map((log) => LogParser.parseLogEntry(log))
     .filter((entry): entry is ParsedLogEntry => entry !== null), [logs]);
 
-  // const visibleLogs = useMemo(() => parsedLogs.filter(
-  //   (entry) => LogParser.shouldShowLog(entry, filterOptions),
-  // ), [parsedLogs, filterOptions]);
+  const visibleLogs = useMemo(() => parsedLogs.filter(
+    (entry) => LogParser.shouldShowLog(entry, filterOptions),
+  ), [parsedLogs, filterOptions]);
 
   // Auto-scroll to bottom when new logs arrive, with special handling for streaming
   // useEffect(() => {
-  //   if (autoScroll && visibleLogs.length > contentHeight) {
-  //     const newOffset = Math.max(0, visibleLogs.length - contentHeight);
+  //   if (autoScroll && visibleLogs.length > 0) {
+  //     const terminalWidth = stdout.columns || 80;
+  //     const newOffset = calculateAutoScrollOffset(
+  //       visibleLogs,
+  //       contentHeight,
+  //       terminalWidth,
+  //       true // includeLineNumbers
+  //     );
   //     onScrollOffsetChange(newOffset);
   //   }
-  // }, [visibleLogs.length, autoScroll, contentHeight, onScrollOffsetChange, isStreaming]);
+  // }, [visibleLogs.length, autoScroll, contentHeight, onScrollOffsetChange, isStreaming, stdout.columns]);
 
-  // Get visible log entries based on scroll offset
-  // const displayedLogs = useMemo(() => {
-  //   const startIndex = Math.max(0, scrollOffset);
-  //   const endIndex = Math.min(visibleLogs.length, startIndex + contentHeight);
-  //   return visibleLogs.slice(startIndex, endIndex);
-  // }, [visibleLogs, scrollOffset, contentHeight]);
+  // Get visible log entries based on scroll offset and actual height calculations
+  const displayedLogs = useMemo(() => {
+    const terminalWidth = stdout.columns || 80;
+    return calculateVisibleLogsSlice(
+      visibleLogs,
+      scrollOffset,
+      contentHeight,
+      terminalWidth,
+      true // includeLineNumbers
+    );
+  }, [visibleLogs, scrollOffset, contentHeight, stdout.columns]);
 
   // Notify parent about filter changes
   // useEffect(() => {
@@ -117,6 +129,13 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   // Handle scroll navigation
   // useInput((input: string, key: { upArrow?: boolean; downArrow?: boolean; pageUp?: boolean; pageDown?: boolean }) => {
   //   if (!isFocused) return;
+  // const terminalWidth = stdout.columns || 80;
+  //   const maxOffset = calculateMaxScrollOffset(
+  //     visibleLogs,
+  //     contentHeight,
+  //     terminalWidth,
+  //     true // includeLineNumbers
+  //   );
 
   //   const maxOffset = Math.max(0, visibleLogs.length - contentHeight);
 
@@ -143,23 +162,24 @@ export const LogViewer: React.FC<LogViewerProps> = ({
   //   }
   // }, { isActive: isFocused });
 
-  if (isLoading && parsedLogs.length === 0) {
+  if (isLoading && displayedLogs.length === 0) {
     return <Text color="yellow">Loading logs...</Text>;
   }
 
-  if (parsedLogs.length === 0) {
+  if (displayedLogs.length === 0) {
     return <Text color="gray">No logs available</Text>;
   }
 
   return (
     <Box flexDirection="column" flexGrow={1}>
-      {parsedLogs.map((entry, index) => {
-        const globalIndex = scrollOffset + index;
-        const lineNumber = globalIndex + 1;
+      {displayedLogs.map((entry, displayIndex) => {
+        // Find the actual index of this entry in the visibleLogs array
+        const actualIndex = visibleLogs.findIndex(log => log.id === entry.id);
+        const lineNumber = actualIndex !== -1 ? actualIndex + 1 : scrollOffset + displayIndex + 1;
 
         return (
           <LogEntry
-            key={`${entry.id}-${globalIndex}`}
+            key={`${entry.id}-${lineNumber}`}
             entry={entry}
             lineNumber={lineNumber}
           />

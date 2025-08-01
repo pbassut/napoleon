@@ -153,7 +153,6 @@ const App = ({ agentManager }) => {
     return (
       <Box flexDirection="column" width="100%" height={stdout.rows - 2}>
         <DetailView
-          isOpen={true}
           agent={selectedAgent}
           onClose={() => setIsDetailViewOpen(false)}
           agentManager={agentManager}

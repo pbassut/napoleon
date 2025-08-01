@@ -25,6 +25,7 @@ module.exports = {
       roots: ['<rootDir>/src', '<rootDir>/__tests__'],
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
       moduleNameMapper: {
+        '^src/(.*)$': '<rootDir>/src/$1',
         '^@anthropic-ai/claude-code$': '<rootDir>/__tests__/__mocks__/@anthropic-ai/claude-code.js',
         '^ink$': '<rootDir>/__tests__/__mocks__/ink.js',
         '^ink-testing-library$': '<rootDir>/__tests__/__mocks__/ink-testing-library.js',
@@ -44,6 +45,7 @@ module.exports = {
       roots: ['<rootDir>/src', '<rootDir>/__tests__'],
       setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
       moduleNameMapper: {
+        '^src/(.*)$': '<rootDir>/src/$1',
         '^@anthropic-ai/claude-code$': '<rootDir>/__tests__/__mocks__/@anthropic-ai/claude-code.js',
         '^ink$': '<rootDir>/__tests__/__mocks__/ink.js',
         '^ink-testing-library$': '<rootDir>/__tests__/__mocks__/ink-testing-library.js',
