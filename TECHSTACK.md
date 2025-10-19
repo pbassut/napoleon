@@ -1,36 +1,27 @@
-# Conductor Tech Stack
+# Napoleon UI Tech Stack
 
-> Analysis of conductor.build (by Melty Labs) - A Mac desktop app for running multiple Claude Code agents in parallel with isolated git workspaces.
+> UI component library for Napoleon - A Tauri-based Mac desktop app for running multiple Claude Code agents in parallel with isolated git workspaces.
 
 ## Overview
 
-Conductor is a modern desktop application built with web technologies and native capabilities, focused on developer productivity and Git workflow management. It enables running multiple Claude Code agents simultaneously, each in isolated git worktrees.
+This repository contains the extracted UI component library for Napoleon, a modern desktop application. The components are built with React and designed to integrate seamlessly with Tauri's native capabilities. This is a pure UI library without Next.js-specific features, ready for Tauri integration.
 
 ---
 
-## Frontend Framework & Build Tools
+## Frontend Framework
 
 ### Core Technologies
-- **React 16+** - Component-based UI framework
-- **TypeScript** (strict mode) - Type-safe JavaScript
-- **Vite** - Modern build tool and dev server
+- **React 19** - Component-based UI framework
+- **TypeScript 5** - Type-safe JavaScript with strict mode
+- **Tailwind CSS 4.1.9** - Utility-first CSS framework
 - **ES Modules** - Modern JavaScript module system
 
----
-
-## Desktop Framework
-
-### Tauri
-- **Rust-based** desktop framework
-- Lightweight alternative to Electron
-- Security-focused architecture
-- Native system integration capabilities
-- Small bundle sizes with near-native performance
-
-**Architecture:**
-- Rust backend handles system calls, file operations, and git commands
-- IPC (Inter-Process Communication) bridge between Rust and JavaScript
-- WebView for rendering the UI
+### Tauri Integration Ready
+This UI library is designed to work within a Tauri desktop application:
+- No Next.js routing or server-side features
+- Pure client-side React components
+- Compatible with Tauri's WebView rendering
+- Works with Tauri's IPC for backend communication
 
 ---
 
@@ -242,55 +233,75 @@ Extensive keyboard shortcuts:
 ## Third-Party Dependencies
 
 ### UI Framework Stack
-```
-react
-react-dom
-typescript
-vite
+```json
+react: ^19
+react-dom: ^19
+typescript: ^5
 ```
 
 ### Component Libraries
-```
-@radix-ui/react-*
-lucide-react
-sonner
-react-virtuoso
-```
-
-### Terminal
-```
-xterm
-xterm-addon-*
+```json
+@radix-ui/react-*: 1.x - 2.x (various versions)
+lucide-react: ^0.454.0
+sonner: ^1.7.4
+framer-motion: latest
+recharts: 2.15.4
 ```
 
-### Development Tools
+### State & Forms
+```json
+zustand: latest
+react-hook-form: ^7.60.0
+@hookform/resolvers: ^3.10.0
+zod: 3.25.76
 ```
-@tauri-apps/api
-@tauri-apps/cli
+
+### Terminal & Interactive
+```json
+xterm: 5.3.0
+vaul: ^0.9.9
+embla-carousel-react: 8.5.1
+react-resizable-panels: ^2.1.7
+```
+
+### Styling
+```json
+tailwindcss: ^4.1.9
+tailwindcss-animate: ^1.0.7
+tailwind-merge: ^2.5.5
+class-variance-authority: ^0.7.1
+next-themes: ^0.4.6
+```
+
+### Utilities
+```json
+date-fns: 4.1.0
+cmdk: 1.0.4
+input-otp: 1.4.1
+immer: latest
 ```
 
 ---
 
-## Platform Support
+## Notable Exclusions
 
-### Current
-- **macOS only** (as of initial release)
-
-### Future Plans
-- Windows support planned
-- Linux support considered
-- Additional IDE integrations beyond Claude Code
+This UI library **does not include**:
+- ❌ Next.js framework or routing
+- ❌ Server-side rendering (SSR)
+- ❌ API routes or backend code
+- ❌ Vercel-specific integrations
+- ❌ Build configurations (handled by parent Tauri app)
 
 ---
 
 ## Summary
 
-Conductor leverages modern web technologies (React, TypeScript, Vite) combined with native capabilities (Tauri, Rust) to create a performant, secure desktop application. The architecture prioritizes:
+This UI component library provides a complete set of modern, accessible React components for the Napoleon Tauri application. The architecture prioritizes:
 
-1. **Developer Experience** - Fast, keyboard-driven workflows
-2. **Performance** - Native speed with web flexibility
-3. **Security** - Local-first, no cloud uploads
-4. **Accessibility** - WCAG-compliant interface
-5. **Maintainability** - Type-safe, component-based architecture
+1. **Reusability** - Modular components for Tauri integration
+2. **Accessibility** - WCAG-compliant with Radix UI primitives
+3. **Type Safety** - Strict TypeScript throughout
+4. **Performance** - Lightweight components optimized for desktop
+5. **Flexibility** - Composable primitives with theming support
 
-The tech stack reflects modern best practices in desktop application development, balancing web ecosystem advantages with native performance requirements.
+The component library is framework-agnostic (no Next.js dependencies) and ready to be integrated into a Tauri desktop application with minimal configuration.
