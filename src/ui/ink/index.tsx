@@ -1,10 +1,11 @@
 // Ink UI entry point for direct testing with real AgentManager
-import './wdyr'; // Must be first import
+// import './wdyr'; // Must be first import
 import React from 'react';
 import { render } from 'ink';
 import App from './App';
 import logger from '../../utils/logger';
 import AgentManagerClass from '../../core/agent-manager';
+import ErrorBoundary from './components/Common/ErrorBoundary';
 
 async function startInkUI() {
   try {
@@ -17,7 +18,7 @@ async function startInkUI() {
     const debugMode = process.env.NAPOLEON_DEBUG_RENDERS === 'true'
                      || process.env.NODE_ENV === 'development';
 
-    const { clear } = render(<App agentManager={agentManager} />, {
+    const { clear } = render(<ErrorBoundary><App agentManager={agentManager} /> </ErrorBoundary>, {
       debug: debugMode,
     });
 

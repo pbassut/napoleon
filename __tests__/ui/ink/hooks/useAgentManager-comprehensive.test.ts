@@ -116,13 +116,14 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       const { result } = renderHook(() => useAgentManager(mockAgentManager));
 
       await act(async () => {
-        await result.current.spawnAgent({
-          instructions: 'Test instructions',
+        await result.current.spawnAgent('Test instructions', {
           workingDirectory: '/test/dir'
         });
       });
 
-      expect(mockAgentManager.spawnAgent).toHaveBeenCalledWith('Test instructions', {});
+      expect(mockAgentManager.spawnAgent).toHaveBeenCalledWith('Test instructions', {
+        workingDirectory: '/test/dir'
+      });
       expect(mockLogger.debug).toHaveBeenCalledWith(
         'useAgentManager: Calling agentManager.spawnAgent',
         expect.objectContaining({
@@ -169,8 +170,7 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
 
       await expect(async () => {
         await act(async () => {
-          await result.current.spawnAgent({
-            instructions: 'Test',
+          await result.current.spawnAgent('Test', {
             workingDirectory: '/test'
           });
         });
@@ -197,8 +197,7 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       const { result } = renderHook(() => useAgentManager(mockAgentManager));
 
       await act(async () => {
-        await result.current.spawnAgent({
-          instructions: 'Test instructions',
+        await result.current.spawnAgent('Test instructions', {
           workingDirectory: '/test/dir'
         });
       });
@@ -334,10 +333,9 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        'useAgentManager: Agents changed',
+        'useAgentManager: Active agents',
         expect.objectContaining({
-          prevCount: expect.any(Number),
-          newCount: expect.any(Number),
+          activeAgents: expect.any(Array),
         })
       );
     });
@@ -364,8 +362,10 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        'useAgentManager: Agents changed',
-        expect.any(Object)
+        'useAgentManager: Active agents',
+        expect.objectContaining({
+          activeAgents: expect.any(Array)
+        })
       );
     });
 
@@ -396,8 +396,10 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        'useAgentManager: Agents changed',
-        expect.any(Object)
+        'useAgentManager: Active agents',
+        expect.objectContaining({
+          activeAgents: expect.any(Array)
+        })
       );
     });
 
@@ -434,8 +436,10 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
       });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
-        'useAgentManager: Agents changed',
-        expect.any(Object)
+        'useAgentManager: Active agents',
+        expect.objectContaining({
+          activeAgents: expect.any(Array)
+        })
       );
     });
   });
@@ -551,22 +555,23 @@ describe('useAgentManager - Comprehensive Coverage Tests', () => {
     it('should call stableFetchAgents on interval', async () => {
       renderHook(() => useAgentManager(mockAgentManager));
 
-      // Initial call
+      // Initial call from stableFetchAgents() at line 145
       expect(mockAgentManager.getActiveAgents).toHaveBeenCalledTimes(1);
 
-      // Advance by interval
+      // Advance by interval - first interval tick
       act(() => {
         jest.advanceTimersByTime(500);
       });
 
-      expect(mockAgentManager.getActiveAgents).toHaveBeenCalledTimes(2);
-
-      // Another interval
-      act(() => {
-        jest.advanceTimersByTime(500);
-      });
-
+      // The first useEffect interval (line 60) and second useEffect interval (line 148) both fire
       expect(mockAgentManager.getActiveAgents).toHaveBeenCalledTimes(3);
+
+      // Another interval - both intervals fire again
+      act(() => {
+        jest.advanceTimersByTime(500);
+      });
+
+      expect(mockAgentManager.getActiveAgents).toHaveBeenCalledTimes(5);
     });
   });
 });

@@ -24,7 +24,6 @@ import logger from '../../../utils/logger';
  */
 export const useAgentManager = (agentManager: AgentManager | null): AgentManagerHookReturn => {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [tempAgents, setTempAgents] = useState<Agent[]>([]); // Temporary spawning agents
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -53,6 +52,19 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     progress: agentData.progress,
     todos: agentData.todos || [], // Include todos from agent data
   }), []);
+
+  // will pull agent updates from the agent manager every 500ms
+  // useEffect(() => {
+  //   if (!agentManager) return;
+
+  //   const interval = setInterval(() => {
+  //     const activeAgents = agentManager.getActiveAgents();
+  //     logger.debug('useAgentManager: Active agents', { activeAgents });
+  //     setAgents(activeAgents.map(convertAgent));
+  //   }, 500);
+
+  //   return () => clearInterval(interval);
+  // }, [agentManager]);
 
   // Set up polling for agent updates
   // Note: In the future, this should be replaced with event-based updates
@@ -109,22 +121,9 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
               return basicChanged || todosChangedResult;
             });
 
-          if (hasChanged) {
-            logger.debug('useAgentManager: Agents changed', {
-              prevCount: prevAgents.length,
-              newCount: convertedAgents.length,
-              agents: convertedAgents.map((a) => ({
-                id: a.id,
-                name: a.name,
-                status: a.status,
-                todosCount: (a.todos || []).length,
-                currentTask: (a.todos || []).find((t) => t.status === 'in_progress')?.content || 'No active task',
-              })),
-            });
-          }
-
           return hasChanged ? convertedAgents : prevAgents;
         });
+
         setError(null);
 
         // Check if selected agent still exists
@@ -136,7 +135,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         });
       } catch (err) {
         setError(err as Error);
-        console.error('Failed to fetch agents:', err);
+        logger.error('Failed to fetch agents:', err);
       } finally {
         setIsLoading(false);
       }
@@ -162,15 +161,7 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }, []);
 
   // Spawn new agent
-  const spawnAgent = useCallback(async ({
-    instructions,
-    workingDirectory,
-    agentId,
-  }: {
-    instructions: string,
-    workingDirectory: string,
-    agentId?: string
-  }) => {
+  const spawnAgent = useCallback(async (instructions, options) => {
     if (!agentManager) {
       throw new Error('AgentManager not initialized');
     }
@@ -181,19 +172,13 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
 
     try {
       logger.debug('useAgentManager: Calling agentManager.spawnAgent', {
+        ...options,
         instructions,
-        workingDirectory,
-        agentId,
         instructionsType: typeof instructions,
         instructionsEmpty: !instructions || instructions.trim() === '',
       });
 
-      // Call with correct signature: spawnAgent(instructions, options)
-      // Let agent manager create isolated worktree - don't override workingDirectory
-      await agentManager.spawnAgent(instructions, {
-        // Remove workingDirectory override to allow worktree creation
-        ...(agentId && { agentId }), // Pass agentId if provided
-      });
+      const newAgent = await agentManager.spawnAgent(instructions, options);
 
       // Trigger a manual refresh without depending on fetchAgents
       if (agentManager) {
@@ -205,6 +190,8 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
         });
         const convertedAgents = enrichedAgents.map((agent: any) => convertAgent(agent));
         setAgents(convertedAgents);
+
+        return newAgent;
       }
     } catch (err) {
       logger.error('useAgentManager: Error in spawnAgent', { error: err });
@@ -245,14 +232,10 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     }
   }, [agentManager, convertAgent]);
 
-  // Combine regular agents with temporary spawning agents
-  const allAgents = useMemo(() => [...tempAgents, ...agents], [tempAgents, agents]);
-
-  // Memoize canSpawnAgent to prevent re-evaluation on every render
-  const canSpawnAgent = useMemo(() => agentManager?.canSpawnAgent() ?? false, [agentManager, agents.length]); // Re-evaluate when agent count changes
+  const canSpawnAgent = true;
 
   return {
-    agents: allAgents,
+    agents,
     selectedAgentId,
     selectAgent,
     spawnAgent,
@@ -260,15 +243,11 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
     canSpawnAgent,
     isLoading,
     error,
-    // Add methods to manage temporary agents
     addTempAgent: useCallback((agent: Agent) => {
-      setTempAgents(prev => [...prev, agent]);
-    }, []),
-    removeTempAgent: useCallback((agentId: string) => {
-      setTempAgents(prev => prev.filter(a => a.id !== agentId));
+      setAgents(prev => [...prev, agent]);
     }, []),
     updateTempAgent: useCallback((agentId: string, updates: Partial<Agent>) => {
-      setTempAgents(prev => prev.map(a => (a.id === agentId ? { ...a, ...updates } : a)));
+      setAgents(prev => prev.map(a => (a.id === agentId ? { ...a, ...updates } : a)));
     }, []),
   };
 };

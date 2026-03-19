@@ -1,3 +1,5 @@
+jest.mock('../../../../src/utils/logger');
+
 import React from 'react';
 import { render } from 'ink-testing-library';
 import AgentList from '../../../../src/ui/ink/components/AgentList/AgentList';

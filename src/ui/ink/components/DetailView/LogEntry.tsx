@@ -41,17 +41,17 @@ export const LogEntry: React.FC<LogEntryProps> = ({
   const timestamp = LogParser.formatTimestamp(entry.timestamp);
 
   return (
-    <Box>
+    <Box width="100%">
       {lineNumber && (
-        <Text color="gray" dimColor>
-          {String(lineNumber).padStart(4, ' ')}
+        <Text color="gray">
+          {String(lineNumber).padStart(4, ' ')}{' '}
         </Text>
       )}
-      <Text color="gray" dimColor>
-        [{timestamp}]
+      <Text color="gray">
+        [{timestamp}]{' '}
       </Text>
-      <Text color={textColor} backgroundColor={backgroundColor}>
-        {getPrefix()}
+      <Text>
+        {/* {getPrefix()} */}
         {entry.parsedContent}
       </Text>
     </Box>

@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box, Text, useInput, useFocus,
 } from 'ink';
 import { Agent } from '../../types';
-import { useAgentLogs, LogEntry } from '../../hooks/useAgentLogs';
+import { useAgentLogs } from '../../hooks/useAgentLogs';
 import { ActivityIndicator } from '../Common/ActivityIndicator';
 import { LogViewer } from './LogViewer';
+import { ModalOverlay } from '../Common/ModalOverlay';
 
 interface DetailViewProps {
+  isOpen: boolean;
   agent: Agent;
   onClose: () => void;
   agentManager: any;
@@ -15,31 +17,17 @@ interface DetailViewProps {
 
 const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager }) => {
   const [scrollOffset, setScrollOffset] = useState(0);
-  const [searchQuery] = useState('');
   const [autoScroll, setAutoScroll] = useState(true);
   const [filterInfo, setFilterInfo] = useState({ visible: 0, total: 0, isShowingAll: false });
   const { isFocused } = useFocus({ autoFocus: true });
 
-  // Load tool suppression configuration
-  const toolSuppressionConfig = useMemo(() => {
-    if (!agentManager?.config?.ui?.toolSuppression) {
-      // Default configuration if not available
-      return {
-        enabled: true,
-        suppressedTools: ['Read', 'Bash', 'LS', 'Glob'],
-        showToolResults: true,
-      };
-    }
-    return agentManager.config.ui.toolSuppression;
-  }, [agentManager]);
-
   // Terminal dimensions
-  const terminalHeight = process.stdout.rows || 24;
+  const terminalHeight = (process.stdout.rows - 2) || 24;
   const contentHeight = terminalHeight - 6; // Header + footer + borders
 
   // Use real logs with streaming if agentManager is provided
   const {
-    logs: realLogs,
+    logs,
     isLoading,
     isStreaming,
     streamingError,
@@ -47,81 +35,8 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
     agentId: agent.id,
     agentManager,
     refreshInterval: 500, // Fallback refresh for detail view
-    enableStreaming: true, // Enable real-time streaming
+    enableStreaming: false, // Enable real-time streaming
   });
-
-  // Generate mock logs for testing when no real logs available
-  const [mockLogs, setMockLogs] = useState<LogEntry[]>([]);
-  useEffect(() => {
-    if (!agentManager || realLogs.length === 0) {
-      const mocks: LogEntry[] = [
-        {
-          id: '1',
-          timestamp: new Date().toISOString(),
-          content: 'Agent started',
-          type: 'system',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '2',
-          timestamp: new Date().toISOString(),
-          content: `Instructions: ${agent.instructions || 'No instructions provided'}`,
-          type: 'system',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '3',
-          timestamp: new Date().toISOString(),
-          content: 'Initializing workspace...',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '4',
-          timestamp: new Date().toISOString(),
-          content: 'Running command: git status',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '5',
-          timestamp: new Date().toISOString(),
-          content: 'On branch main',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-        {
-          id: '6',
-          timestamp: new Date().toISOString(),
-          content: 'Your branch is up to date',
-          type: 'info',
-          source: 'napoleon',
-          metadata: {},
-        },
-      ];
-
-      // Add more mock logs
-      for (let i = 0; i < 20; i++) {
-        mocks.push({
-          id: `mock-${i + 7}`,
-          timestamp: new Date(Date.now() + i * 1000).toISOString(),
-          content: `Log entry ${i + 1}: Processing task...`,
-          type: i % 10 === 0 ? 'error' : 'info',
-          source: 'napoleon',
-          metadata: {},
-        });
-      }
-
-      setMockLogs(mocks);
-    }
-  }, [agentManager, realLogs.length, agent.instructions]);
-
-  const logs = agentManager && realLogs.length > 0 ? realLogs : mockLogs;
 
   // Handle keyboard input for close
   useInput((input: string, key: any) => {
@@ -130,42 +45,14 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
     // Close on Escape or 'q'
     if (key.escape || input === 'q') {
       onClose();
-      return;
-    }
-
-    // Scroll navigation
-    if (key.upArrow || input === 'k') {
-      setScrollOffset((prev) => Math.max(0, prev - 1));
-      setAutoScroll(false);
-    } else if (key.downArrow || input === 'j') {
-      const maxOffset = Math.max(0, logs.length - contentHeight);
-      setScrollOffset((prev) => Math.min(maxOffset, prev + 1));
-      // Re-enable auto-scroll if we're at the bottom
-      if (scrollOffset >= maxOffset - 1) {
-        setAutoScroll(true);
-      }
-    } else if (key.pageUp) {
-      setScrollOffset((prev) => Math.max(0, prev - contentHeight));
-      setAutoScroll(false);
-    } else if (key.pageDown) {
-      const maxOffset = Math.max(0, logs.length - contentHeight);
-      setScrollOffset((prev) => Math.min(maxOffset, prev + contentHeight));
-    } else if (input === 'g') {
-      setScrollOffset(0);
-      setAutoScroll(false);
-    } else if (input === 'G') {
-      const maxOffset = Math.max(0, logs.length - contentHeight);
-      setScrollOffset(maxOffset);
-      setAutoScroll(true);
     }
   }, { isActive: isFocused });
 
   return (
-    <Box flexDirection="column" height="100%">
+    <Box flexDirection="column">
       {/* Header */}
       <Box
         borderStyle="single"
-        borderBottom={false}
         paddingX={1}
         flexDirection="column"
       >
@@ -205,21 +92,15 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
             </Box>
           </Box>
         </Box>
-        {searchQuery && (
-          <Text color="cyan">
-            {`Search: "${searchQuery}"`}
-          </Text>
-        )}
       </Box>
 
       {/* Log content */}
       <Box
-        flexGrow={1}
         borderStyle="single"
-        borderTop={false}
-        borderBottom={false}
         paddingX={1}
         flexDirection="column"
+        height="90%"
+        width="100%"
       >
         <LogViewer
           logs={logs}
@@ -232,14 +113,12 @@ const DetailView: React.FC<DetailViewProps> = ({ agent, onClose, agentManager })
           isFocused={isFocused}
           onFilterChange={setFilterInfo}
           isStreaming={isStreaming}
-          toolSuppressionConfig={toolSuppressionConfig}
         />
       </Box>
 
       {/* Footer */}
       <Box
         borderStyle="single"
-        borderTop={false}
         paddingX={1}
         justifyContent="space-between"
       >

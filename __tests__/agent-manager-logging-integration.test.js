@@ -248,10 +248,13 @@ describe('AgentManager - Persistent Logging Integration', () => {
       const instructions = 'Test agent instructions for logging';
 
       const session = await agentManager.spawnAgent(instructions);
+      
+      // Wait for async setup to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(mockAgentLogManager.createAgentLog).toHaveBeenCalledWith(
         session.id,
-        instructions,
+        instructions.trim(), // AgentManager passes the trimmed version
       );
     });
 
@@ -263,6 +266,9 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
       // The key test - agent spawn should succeed despite log creation failure
       const session = await agentManager.spawnAgent(instructions);
+      
+      // Wait for async setup to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       expect(session).toBeDefined();
       // Check that log creation was attempted (and failed)
@@ -289,6 +295,9 @@ describe('AgentManager - Persistent Logging Integration', () => {
       const instructions = 'Test spawn timing';
 
       await agentManager.spawnAgent(instructions);
+      
+      // Wait for async setup to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Should be called after session storage but before SDK initialization
       expect(mockAgentLogManager.createAgentLog).toHaveBeenCalledTimes(1);
@@ -623,6 +632,10 @@ describe('AgentManager - Persistent Logging Integration', () => {
 
       // Spawn agent
       const session = await agentManager.spawnAgent('Full lifecycle test');
+      
+      // Wait for async setup to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       expect(mockAgentLogManager.createAgentLog).toHaveBeenCalledWith(session.id, 'Full lifecycle test');
 
       // Send messages (clear any calls from spawn first)
@@ -652,6 +665,9 @@ describe('AgentManager - Persistent Logging Integration', () => {
       // Spawn multiple agents
       const session1 = await agentManager.spawnAgent('Agent 1');
       const session2 = await agentManager.spawnAgent('Agent 2');
+      
+      // Wait for async setup to complete
+      await new Promise(resolve => setTimeout(resolve, 200));
 
       // Send messages to each
       agentManager.handleSDKMessage(session1.id, { content: 'Agent 1 message' });

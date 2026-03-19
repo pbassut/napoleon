@@ -2,6 +2,7 @@ import {
   useState, useEffect, useRef, useCallback,
 } from 'react';
 import { promises as fs } from 'fs';
+import logger from 'src/utils/logger';
 
 export interface LogEntry {
   id: string;
@@ -238,7 +239,7 @@ export const useAgentLogs = ({
         cleanupFn = streamingCleanup;
       } else {
         // Fall back to polling
-        console.warn('Streaming not available, falling back to polling mode');
+        logger.warn('Streaming not available, falling back to polling mode');
         cleanupFn = setupPolling();
       }
     };

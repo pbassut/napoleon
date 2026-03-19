@@ -13,15 +13,6 @@ const { SDKStatus } = require('./sdk/sdk-types');
 const AgentLogManager = require('./logging/agent-log-manager');
 const toolUsageTracker = require('./tool-usage-tracker');
 
-// Load claude-code SDK dynamically when needed
-let claudeCodeSDK;
-try {
-  // eslint-disable-next-line global-require
-  claudeCodeSDK = require('@anthropic-ai/claude-code');
-} catch (error) {
-  claudeCodeSDK = null;
-}
-
 // Agent status types as per US004 requirements
 const AgentStatus = {
   SPAWNING: 'spawning',
@@ -466,9 +457,6 @@ class AgentManager {
    */
   async initializeSDKSession(agentId, workingDirectory) {
     try {
-      // Validate API key before initializing session
-      AgentManager.validateAPIKey();
-
       logger.info('Initializing SDK session', { agentId, workingDirectory });
 
       const sdkSession = await this.sdkManager.initializeSDKSession(
@@ -546,64 +534,14 @@ class AgentManager {
    * Validate git repository state for worktree creation
    */
   static validateGitForWorktree() {
-    try {
-      // Check if we're in a git repository
-      const gitValidation = AgentManager.validateGitRepository();
-      if (!gitValidation.isValid) {
-        return gitValidation;
-      }
+    const gitValidation = AgentManager.validateGitRepository();
 
-      // Check for uncommitted changes
-      try {
-        execSync('git diff-index --quiet HEAD --', {
-          stdio: 'ignore',
-          cwd: process.cwd(),
-        });
-      } catch (error) {
-        return {
-          isValid: false,
-          error: 'Repository has uncommitted changes',
-          suggestion:
-            'Please commit or stash your changes before creating worktrees',
-          hasUncommittedChanges: true,
-        };
-      }
-
-      // Check for untracked files that might interfere
-      try {
-        const untrackedFiles = execSync(
-          'git ls-files --others --exclude-standard',
-          {
-            encoding: 'utf8',
-            cwd: process.cwd(),
-          },
-        ).trim();
-
-        if (untrackedFiles.length > 0) {
-          logger.warn('Repository has untracked files', {
-            files: untrackedFiles.split('\n').length,
-          });
-        }
-      } catch (error) {
-        // Non-critical, just log
-        logger.debug('Could not check untracked files', {
-          error: error.message,
-        });
-      }
-
-      return {
-        isValid: true,
-        rootPath: gitValidation.rootPath,
-        currentPath: gitValidation.currentPath,
-        clean: true,
-      };
-    } catch (error) {
-      return {
-        isValid: false,
-        error: `Git validation failed: ${error.message}`,
-        suggestion: 'Please ensure you are in a valid git repository',
-      };
-    }
+    return {
+      isValid: true,
+      rootPath: gitValidation.rootPath,
+      currentPath: gitValidation.currentPath,
+      clean: true,
+    };
   }
 
   /**
@@ -981,8 +919,57 @@ class AgentManager {
    * Spawn a new agent with instructions
    */
   async spawnAgent(instructions, options = {}) {
-    const spawnStartTime = Date.now();
-    let agentId;
+    try {
+      // Checkpoint 1: Input validation
+      const validationStartTime = Date.now();
+
+      const sanitizedInstructions = AgentManager.validateInstructions(instructions);
+      const validatedOptions = AgentManager.validateOptions(options);
+
+      // Generate agent session (or use provided one for pending agent replacement)
+      const agentId = validatedOptions.agentId || options.agentId || AgentManager.generateAgentId();
+
+      const validationDuration = Date.now() - validationStartTime;
+      // Create agent session data
+      const session = {
+        agentId,
+        id: agentId,
+        name: agentId,
+        instructions: sanitizedInstructions,
+        sanitizedInstructions, // Add this for the setup method
+        validationDuration,
+        spawnStartTime: Date.now(),
+        spawnTime: new Date().toISOString(),
+        status: AgentStatus.SPAWNING,
+        lastActivity: new Date().toISOString(),
+        logs: [], // Initialize logs array for detail view
+        sessionId: agentId,
+        sdkStatus: SDKStatus.CONNECTING,
+        lastMessageId: null,
+      };
+
+      // Add to agents map early to show spawning status
+      this.agents.set(agentId, session);
+
+      this.setup(session);
+
+      return session;
+    } catch (error) {
+      logger.error('Failed to spawn agent', {
+        error: error.message,
+      });
+      throw error;
+    }
+  }
+
+  async setup(session) {
+    const {
+      agentId,
+      instructions,
+      validationDuration,
+      spawnStartTime,
+      sanitizedInstructions,
+    } = session;
 
     try {
       // Ensure initialization is complete before spawning agents
@@ -990,16 +977,6 @@ class AgentManager {
         logger.info('Agent manager not yet initialized, waiting...');
         await this.initialize();
       }
-
-      // Checkpoint 1: Input validation
-      const validationStartTime = Date.now();
-
-      const sanitizedInstructions = AgentManager.validateInstructions(instructions);
-      const validatedOptions = AgentManager.validateOptions(options);
-
-      const validationDuration = Date.now() - validationStartTime;
-
-      // No agent limit - allow unlimited agents
 
       // Validate git repository
       const gitValidation = AgentManager.validateGitRepository();
@@ -1010,9 +987,6 @@ class AgentManager {
           gitValidation.suggestion,
         );
       }
-
-      // Generate agent session (or use provided one for pending agent replacement)
-      agentId = validatedOptions.agentId || options.agentId || AgentManager.generateAgentId();
 
       logger.info('SPAWN_FLOW: Starting agent spawn process', {
         agentId,
@@ -1051,6 +1025,14 @@ class AgentManager {
 
       const workingDirectory = worktreeInfo.worktreePath;
 
+      this.agents.set(agentId, {
+        ...session,
+        workingDirectory,
+        worktreePath: worktreeInfo.worktreePath,
+        worktreeName: worktreeInfo.worktreeName,
+        gitRoot: gitValidation.rootPath,
+      });
+
       // Checkpoint 3: Session creation
       const sessionStartTime = Date.now();
 
@@ -1059,27 +1041,6 @@ class AgentManager {
         checkpoint: 'session_creation_start',
         timestamp: new Date().toISOString(),
       });
-
-      // Create agent session data
-      const session = {
-        id: agentId,
-        instructions: sanitizedInstructions,
-        spawnTime: new Date().toISOString(),
-        status: AgentStatus.SPAWNING,
-        workingDirectory,
-        worktreePath: worktreeInfo.worktreePath,
-        worktreeName: worktreeInfo.worktreeName,
-        gitRoot: gitValidation.rootPath,
-        lastActivity: new Date().toISOString(),
-        logs: [], // Initialize logs array for detail view
-        // SDK-specific fields
-        sessionId: agentId,
-        sdkStatus: SDKStatus.CONNECTING,
-        lastMessageId: null,
-      };
-
-      // Add to agents map early to show spawning status
-      this.agents.set(agentId, session);
 
       // Initialize logs array for the session
       session.logs = session.logs || [];
@@ -1213,15 +1174,6 @@ class AgentManager {
       });
       throw error;
     }
-  }
-
-  /**
-   * Validate API key for SDK operations
-   * @private
-   */
-  static validateAPIKey() {
-    // API key validation is currently disabled
-    // TODO: Re-enable when needed
   }
 
   /**
@@ -1786,6 +1738,7 @@ class AgentManager {
 
     return {
       id: session.id,
+      name: session.name,
       status: session.status,
       pid: session.pid,
       spawnTime: session.spawnTime,

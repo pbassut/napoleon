@@ -10,10 +10,19 @@ jest.mock('ink', () => ({
   Text: ({ children }: any) => children,
 }));
 
+// Mock logger
+jest.mock('../../../../../src/utils/logger', () => ({
+  error: jest.fn(),
+  info: jest.fn(),
+  debug: jest.fn(),
+  warn: jest.fn(),
+}));
+
 // Mock console.error to avoid noise in tests
 const originalConsoleError = console.error;
 beforeEach(() => {
   console.error = jest.fn();
+  jest.clearAllMocks();
 });
 
 afterEach(() => {
@@ -59,6 +68,7 @@ describe('ErrorBoundaryWrapper Coverage Tests', () => {
 
   it('should call componentDidCatch', () => {
     const { Box, Text } = require('ink');
+    const logger = require('../../../../../src/utils/logger');
     const ErrorBoundary = createErrorBoundary(React, Box, Text);
     
     // Create instance and call componentDidCatch directly
@@ -67,7 +77,7 @@ describe('ErrorBoundaryWrapper Coverage Tests', () => {
     const errorInfo = { componentStack: 'test stack' };
     
     instance.componentDidCatch(error, errorInfo);
-    expect(console.error).toHaveBeenCalledWith(
+    expect(logger.error).toHaveBeenCalledWith(
       'ErrorBoundary caught an error:',
       error,
       errorInfo
