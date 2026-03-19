@@ -46,7 +46,8 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@anthropic-ai/claude-code": "^1.0.53",
+    "@anthropic-ai/claude-agent-sdk": "^0.2.79",
+    "@anthropic-ai/claude-code": "2.1.79",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
     "diff": "^8.0.2",

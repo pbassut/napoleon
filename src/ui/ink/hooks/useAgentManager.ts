@@ -54,17 +54,17 @@ export const useAgentManager = (agentManager: AgentManager | null): AgentManager
   }), []);
 
   // will pull agent updates from the agent manager every 500ms
-  useEffect(() => {
-    if (!agentManager) return;
+  // useEffect(() => {
+  //   if (!agentManager) return;
 
-    const interval = setInterval(() => {
-      const activeAgents = agentManager.getActiveAgents();
-      logger.debug('useAgentManager: Active agents', { activeAgents });
-      setAgents(activeAgents.map(convertAgent));
-    }, 500);
+  //   const interval = setInterval(() => {
+  //     const activeAgents = agentManager.getActiveAgents();
+  //     logger.debug('useAgentManager: Active agents', { activeAgents });
+  //     setAgents(activeAgents.map(convertAgent));
+  //   }, 500);
 
-    return () => clearInterval(interval);
-  }, [agentManager]);
+  //   return () => clearInterval(interval);
+  // }, [agentManager]);
 
   // Set up polling for agent updates
   // Note: In the future, this should be replaced with event-based updates
